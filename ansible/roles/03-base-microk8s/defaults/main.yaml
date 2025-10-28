@@ -1,0 +1,24 @@
+---
+microk8s_base:
+  prereq_service: "snapd"
+
+  snap_config:
+    name: "microk8s"
+    classic: true
+    channel: "1.32/stable"
+
+  user_group: "microk8s"
+
+  commands:
+    wait_snapd: "snap wait system seed.loaded"
+    wait_ready: "microk8s status --wait-ready"
+    reset: "microk8s reset"
+    stop: "snap stop microk8s"
+
+  aliases:
+    - src: "microk8s.kubectl"
+      alias_name: "kubectl"
+      creates_path: "/snap/bin/kubectl"
+    - src: "microk8s.helm3"
+      alias_name: "helm"
+      creates_path: "/snap/bin/helm"
