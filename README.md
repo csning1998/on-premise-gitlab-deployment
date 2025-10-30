@@ -4,6 +4,8 @@
 
 This repository contains an Infrastructure as Code (IaC) Proof of Concept (PoC) utilizing QEMU-KVM to automate the deployment of a High Availability (HA) Kubernetes Cluster (Kubeadm) in an on-premise environment. This project was developed based on the requirements identified during an internship at Cathay General Hospital to automate the foundation for GitLab on-premise, targeting legacy systems with a repeatable and efficient IaC pipeline. 
 
+(The repository is hosted publicly here as a technical portfolio, in agreement with the organization.)
+
 The machine specifications used for development are as follows, for reference:
 
 -  **Chipset:** Intel® HM770
