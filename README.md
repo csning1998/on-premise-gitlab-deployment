@@ -2,7 +2,7 @@
 
 ## Section 0. Introduction
 
-This project serves as a personal learning initiative for IaC, utilizing QEMU-KVM to set up an HA Kubernetes Cluster in an on-premise environment. I created it mainly because I wanted to learn IaC and Kubernetes, but had exhausted my GCP free credits. Since this is currently being developed independently, the project has only been tested on RHEL 10 and Ubuntu 24 operating systems. Everyone is welcome to fork it for experimentation.
+This repository contains an Infrastructure as Code (IaC) Proof of Concept (PoC) utilizing QEMU-KVM to automate the deployment of a High Availability (HA) Kubernetes Cluster (Kubeadm) in an on-premise environment. This project was developed based on the requirements identified during an internship at Cathay General Hospital to automate the foundation for GitLab on-premise, targeting legacy systems with a repeatable and efficient IaC pipeline. 
 
 The machine specifications used for development are as follows, for reference:
 
