@@ -8,7 +8,7 @@
 
     - name: "Step A2. Comment out swap entries in /etc/fstab to persist change"
       ansible.builtin.replace:
-        path: /etc/fstab
+        path: "{{ redis_base.os_config.fstab_path }}"
         regexp: '^([^#].*?\sswap\s+.*)$'
         replace: '# \1'
       when: ansible_facts['swaptotal_mb'] | default(0) > 0

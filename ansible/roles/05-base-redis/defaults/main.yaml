@@ -1,0 +1,30 @@
+---
+redis_base:
+  apt_repositories:
+    - id: "redis"
+      url_base: "https://packages.redis.io/deb"
+      gpg_url: "https://packages.redis.io/gpg"
+      gpg_keyring_path: "/etc/apt/keyrings/redis.gpg"
+      distribution: "{{ ansible_distribution_release }}"
+      components: "main"
+      filename: "redis"
+
+  packages:
+    apt:
+      - redis-server
+      - redis-sentinel
+
+  services_to_disable:
+    - redis-server
+    - redis-sentinel
+
+  os_config:
+    fstab_path: "/etc/fstab"
+
+# Redis apt Repo
+_redis_base_repo_data: "{{ redis_base.apt_repositories | selectattr('id', 'equalto', 'redis') | first }}"
+_redis_base_repo_string: >
+  deb [signed-by={{ _redis_base_repo_data.gpg_keyring_path }}]
+  {{ _redis_base_repo_data.url_base }}
+  {{ _redis_base_repo_data.distribution }}
+  {{ _redis_base_repo_data.components }}
