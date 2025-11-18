@@ -1,4 +1,3 @@
-UserKnownHostsFile ~/.ssh/known_hosts_${config_name}
 
 %{~ for node in nodes ~}
 Host ${node.key}
@@ -7,5 +6,6 @@ Host ${node.key}
   IdentityFile ${ssh_private_key_path}
   StrictHostKeyChecking yes
   PasswordAuthentication no
+  UserKnownHostsFile ~/.ssh/known_hosts_${config_name}
 
 %{~ endfor ~}
