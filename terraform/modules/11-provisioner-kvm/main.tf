@@ -2,7 +2,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "0.8.3"
+      version = "0.9.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -16,8 +16,11 @@ provider "libvirt" {
 }
 
 locals {
-  nat_net_prefixlen      = split("/", var.libvirt_infrastructure.network.nat.cidr)[1]
-  hostonly_net_prefixlen = split("/", var.libvirt_infrastructure.network.hostonly.cidr)[1]
+  nat_net_prefixlen      = var.libvirt_infrastructure.network.nat.ips.prefix
+  hostonly_net_prefixlen = var.libvirt_infrastructure.network.hostonly.ips.prefix
+
+  #  e.g. Gateway (172.16.86.1) -> split -> first three segments -> join -> "172.16.86"
+  nat_subnet_prefix = join(".", slice(split(".", var.libvirt_infrastructure.network.nat.ips.address), 0, 3))
 
   nodes_config = {
     for node_name, node_config in var.vm_config.all_nodes_map :
@@ -28,8 +31,8 @@ locals {
       nat_mac      = "52:54:00:00:00:${format("%02x", index(keys(var.vm_config.all_nodes_map), node_name))}"
       hostonly_mac = "52:54:00:10:00:${format("%02x", index(keys(var.vm_config.all_nodes_map), node_name))}"
 
-      nat_ip           = "${var.libvirt_infrastructure.network.nat.subnet_prefix}.${split(".", node_config.ip)[3]}"
-      nat_ip_cidr      = "${var.libvirt_infrastructure.network.nat.subnet_prefix}.${split(".", node_config.ip)[3]}/${local.nat_net_prefixlen}"
+      nat_ip           = "${local.nat_subnet_prefix}.${split(".", node_config.ip)[3]}"
+      nat_ip_cidr      = "${local.nat_subnet_prefix}.${split(".", node_config.ip)[3]}/${local.nat_net_prefixlen}"
       hostonly_ip_cidr = "${node_config.ip}/${local.hostonly_net_prefixlen}"
     }
   }
@@ -40,37 +43,55 @@ data "local_file" "ssh_public_key" {
 }
 
 resource "libvirt_network" "nat_net" {
-  name      = var.libvirt_infrastructure.network.nat.name
-  mode      = "nat"
-  bridge    = var.libvirt_infrastructure.network.nat.bridge_name
-  addresses = [var.libvirt_infrastructure.network.nat.cidr]
+  name      = var.libvirt_infrastructure.network.nat.name_network
+  mode      = var.libvirt_infrastructure.network.nat.mode
+  bridge    = var.libvirt_infrastructure.network.nat.name_bridge
   autostart = true
-  dhcp {
-    enabled = true
-  }
-  dns {
-    enabled = true
-  }
+
+  ips = [
+    {
+      address = var.libvirt_infrastructure.network.nat.ips.address
+      prefix  = var.libvirt_infrastructure.network.nat.ips.prefix
+
+      dhcp = var.libvirt_infrastructure.network.nat.ips.dhcp != null ? {
+        ranges = [
+          {
+            start = var.libvirt_infrastructure.network.nat.ips.dhcp.start
+            end   = var.libvirt_infrastructure.network.nat.ips.dhcp.end
+          }
+        ]
+      } : null
+    }
+  ]
 }
 
 resource "libvirt_network" "hostonly_net" {
-  name      = var.libvirt_infrastructure.network.hostonly.name
-  mode      = "route" # To let external network accesses VM directly via IP address
-  bridge    = var.libvirt_infrastructure.network.hostonly.bridge_name
-  addresses = [var.libvirt_infrastructure.network.hostonly.cidr]
+  name      = var.libvirt_infrastructure.network.hostonly.name_network
+  mode      = var.libvirt_infrastructure.network.hostonly.mode
+  bridge    = var.libvirt_infrastructure.network.hostonly.name_bridge
   autostart = true
-  dhcp {
-    enabled = true
-  }
-  dns {
-    enabled = true
-  }
+
+  ips = [
+    {
+      address = var.libvirt_infrastructure.network.hostonly.ips.address
+      prefix  = var.libvirt_infrastructure.network.hostonly.ips.prefix
+
+      dhcp = var.libvirt_infrastructure.network.hostonly.ips.dhcp != null ? {
+        ranges = [
+          {
+            start = var.libvirt_infrastructure.network.hostonly.ips.dhcp.start
+            end   = var.libvirt_infrastructure.network.hostonly.ips.dhcp.end
+          }
+        ]
+      } : null
+    }
+  ]
 }
 
 resource "libvirt_pool" "storage_pool" {
   name = var.libvirt_infrastructure.storage_pool_name
   type = "dir"
-  target {
+  target = {
     path = abspath("/var/lib/libvirt/images/${var.libvirt_infrastructure.storage_pool_name}")
   }
 }
@@ -82,8 +103,13 @@ resource "libvirt_volume" "os_disk" {
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
   pool     = libvirt_pool.storage_pool.name
-  source   = var.vm_config.base_image_path
   format   = "qcow2"
+
+  create = {
+    content = {
+      url = abspath(var.vm_config.base_image_path)
+    }
+  }
 }
 
 resource "libvirt_cloudinit_disk" "cloud_init" {
@@ -92,8 +118,8 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-cloud-init.iso"
-  pool     = libvirt_pool.storage_pool.name
 
+  meta_data = yamlencode({})
   user_data = templatefile("${path.root}/../../templates/user_data.tftpl", {
     hostname       = each.key
     vm_username    = var.credentials.username
@@ -106,62 +132,113 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     nat_ip_cidr      = local.nodes_config[each.key].nat_ip_cidr
     hostonly_mac     = local.nodes_config[each.key].hostonly_mac
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
-    nat_gateway      = var.libvirt_infrastructure.network.nat.gateway
+    nat_gateway      = var.libvirt_infrastructure.network.nat.ips.address
   })
 }
 
-resource "libvirt_domain" "nodes" {
-
+resource "libvirt_volume" "cloud_init_iso" {
   for_each = var.vm_config.all_nodes_map
 
-  autostart = false # Set to true to start the domain on host boot up. If not specified false is assumed.
+  name   = "${each.key}-cloud-init.iso"
+  pool   = libvirt_pool.storage_pool.name
+  format = "iso"
 
-  name   = each.key
-  memory = each.value.ram
-  vcpu   = each.value.vcpu
-
-  cloudinit = libvirt_cloudinit_disk.cloud_init[each.key].id
-
-  network_interface {
-    network_name = libvirt_network.nat_net.name
-    addresses    = [local.nodes_config[each.key].nat_ip]
-    mac          = local.nodes_config[each.key].nat_mac
-  }
-
-  network_interface {
-    network_name = libvirt_network.hostonly_net.name
-    addresses    = [each.value.ip]
-    mac          = local.nodes_config[each.key].hostonly_mac
-  }
-
-  disk {
-    volume_id = libvirt_volume.os_disk[each.key].id
-  }
-
-  # Serial console (ttyS0), often used for basic interaction and debugging.
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
-  }
-
-  # Virtio console (hvc0), expected by modern cloud-init versions to avoid startup hangs.
-  # This is the critical fix: https://bugs.launchpad.net/cloud-images/+bug/1573095
-  console {
-    type        = "pty"
-    target_type = "virtio"
-    target_port = "1"
-  }
-
-  graphics {
-    type           = "vnc"
-    listen_type    = "address"
-    autoport       = true
-    listen_address = "0.0.0.0"
-  }
-
-  video {
-    type = "vga"
+  create = {
+    content = {
+      url = libvirt_cloudinit_disk.cloud_init[each.key].path
+    }
   }
 }
 
+resource "libvirt_domain" "nodes" {
+  for_each = var.vm_config.all_nodes_map
+
+  # 1. Basic Configuration (Required)
+  name      = each.key
+  vcpu      = each.value.vcpu
+  memory    = each.value.ram
+  unit      = "MiB"
+  autostart = false
+  running   = true
+
+  # 2. OS Configuration
+  os = {
+    type = "hvm"
+    arch = "x86_64"
+  }
+
+  # 3. Hardware Device Configuration (Attributes)
+  devices = {
+    disks = [
+      # First Disk: Operating System
+      {
+        device = "disk"
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+        source = {
+          pool   = libvirt_pool.storage_pool.name
+          volume = libvirt_volume.os_disk[each.key].name
+        }
+      },
+      # Second Disk: Cloud-Init ISO
+      {
+        device = "cdrom"
+        target = {
+          dev = "sda"
+          bus = "sata"
+        }
+        source = {
+          pool   = libvirt_pool.storage_pool.name
+          volume = libvirt_volume.cloud_init_iso[each.key].name
+        }
+      }
+    ]
+
+    # Network Interfaces
+    interfaces = [
+      # NAT Network for Outbound
+      {
+        type = "network"
+        source = {
+          network = libvirt_network.nat_net.name
+        }
+        mac = local.nodes_config[each.key].nat_mac
+      },
+      # Hostonly Network for Internal
+      {
+        type = "network"
+        source = {
+          network = libvirt_network.hostonly_net.name
+        }
+        mac = local.nodes_config[each.key].hostonly_mac
+      }
+    ]
+
+    # Other Peripherals
+    consoles = [
+      {
+        type        = "pty"
+        target_port = 0
+        target_type = "serial"
+      },
+      {
+        type        = "pty"
+        target_port = 1
+        target_type = "virtio"
+      }
+    ]
+
+    graphics = {
+      vnc = {
+        listen   = "0.0.0.0"
+        autoport = "yes"
+      }
+    }
+
+    video = {
+      type = "vga"
+    }
+  }
+}

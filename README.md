@@ -8,10 +8,10 @@ This repository contains an Infrastructure as Code (IaC) Proof of Concept (PoC) 
 
 The machine specifications used for development are as follows, for reference:
 
--  **Chipset:** Intel® HM770
--  **CPU:** Intel® Core™ i7 processor 14700HX
--  **RAM:** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
--  **SSD:** WD PC SN560 SDDPNQE-1T00-1032
+-   **Chipset:** Intel® HM770
+-   **CPU:** Intel® Core™ i7 processor 14700HX
+-   **RAM:** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
+-   **SSD:** WD PC SN560 SDDPNQE-1T00-1032
 
 You can clone the project using the following command:
 
@@ -21,18 +21,18 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
 ### A. Disclaimer
 
--  This project currently only works on Linux devices with CPU virtualization support, and has **not yet** been tested on other distros such as Fedora 41, Arch, CentOS, and WSL2.
--  Currently, these features have only been tested on my personal computer through several system reinstallations, so there may inevitably be some functionality issues. I've tried my best to prevent and address these.
+-   This project currently only works on Linux devices with CPU virtualization support, and has **not yet** been tested on other distros such as Fedora 41, Arch, CentOS, and WSL2.
+-   Currently, these features have only been tested on my personal computer through several system reinstallations, so there may inevitably be some functionality issues. I've tried my best to prevent and address these.
 
 ### B. Prerequisites
 
 Before you begin, ensure you have the following:
 
--  A Linux host (RHEL 10 or Ubuntu 24 recommended).
--  A CPU with virtualization support enabled (VT-x or AMD-V).
--  `sudo` access.
--  `podman` and `podman compose` installed (for containerized mode).
--  `whois` package installed (for the `mkpasswd` command).
+-   A Linux host (RHEL 10 or Ubuntu 24 recommended).
+-   A CPU with virtualization support enabled (VT-x or AMD-V).
+-   `sudo` access.
+-   `podman` and `podman compose` installed (for containerized mode).
+-   `whois` package installed (for the `mkpasswd` command).
 
 ### C. Note
 
@@ -44,9 +44,9 @@ lscpu | grep Virtualization
 
 The output may show:
 
--  Virtualization: VT-x (Intel)
--  Virtualization: AMD-V (AMD)
--  If there is no output, virtualization might not be supported.
+-   Virtualization: VT-x (Intel)
+-   Virtualization: AMD-V (AMD)
+-   If there is no output, virtualization might not be supported.
 
 ### D. The Entrypoint: `entry.sh`
 
@@ -77,44 +77,44 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
 
 1. If you select `11) Build Packer Base Image`
 
-   ```text
-   >>> Please select an action: 11
-   # Entering Packer build selection menu...
-   #### Checking status of libvirt service...
-   --> libvirt service is already running.
+    ```text
+    >>> Please select an action: 11
+    # Entering Packer build selection menu...
+    #### Checking status of libvirt service...
+    --> libvirt service is already running.
 
-   1) 02-base-kubeadm
-   2) 03-base-microk8s
-   3) 04-base-postgres
-   4) Back to Main Menu
-   >>> Please select an action:
-   ```
+    1) 02-base-kubeadm
+    2) 03-base-microk8s
+    3) 04-base-postgres
+    4) Back to Main Menu
+    >>> Please select an action:
+    ```
 
 2. If you select `12) Provision Terraform Layer 10`
 
-   ```text
-   >>> Please select an action: 12
-   # Entering Terraform layer management menu...
-   #### Checking status of libvirt service...
-   --> libvirt service is already running.
+    ```text
+    >>> Please select an action: 12
+    # Entering Terraform layer management menu...
+    #### Checking status of libvirt service...
+    --> libvirt service is already running.
 
-   1) 10-provision-harbor          3) 10-provision-postgres        5) Back to Main Menu
-   2) 10-provision-kubeadm         4) 50-provision-kubeadm-addons
-   >>> Please select an action:
-   ```
+    1) 10-provision-harbor          3) 10-provision-postgres        5) Back to Main Menu
+    2) 10-provision-kubeadm         4) 50-provision-kubeadm-addons
+    >>> Please select an action:
+    ```
 
 3. If you select `13) [DEV] Rebuild Layer 10 via Ansible Command`
 
-   ```text
-   >>> Please select an action: 13
-   # Executing [DEV] Rebuild via direct Ansible command...
-   #### Checking status of libvirt service...
-   --> libvirt service is already running.
+    ```text
+    >>> Please select an action: 13
+    # Executing [DEV] Rebuild via direct Ansible command...
+    #### Checking status of libvirt service...
+    --> libvirt service is already running.
 
-   1) 10-provision-kubeadm.yaml   3) 10-provision-postgres.yaml
-   2) 10-provision-harbor.yaml    4) Back to Main Menu
-   >>> Please select an action:
-   ```
+    1) 10-provision-kubeadm.yaml   3) 10-provision-postgres.yaml
+    2) 10-provision-harbor.yaml    4) Back to Main Menu
+    >>> Please select an action:
+    ```
 
 **A description of how to use this script follows below.**
 
@@ -128,26 +128,26 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
 
 1. **Install HashiCorp Toolkit - Terraform and Packer**
 
-   Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `5` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
+    Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `5` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
 
-   > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
-   > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_ > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
+    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_ > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
 
-   Expected output should reflect the latest versions. For instance (in zsh):
+    Expected output should reflect the latest versions. For instance (in zsh):
 
-   ```text
-   ...
-   >>> Please select an action: 4
-   >>> STEP: Verifying full native IaC environment...
-   >>> Verifying Libvirt/KVM environment...
-   #### QEMU/KVM: Installed
-   #### Libvirt Client (virsh): Installed
-   >>> Verifying Core IaC Tools (HashiCorp/Ansible)...
-   #### HashiCorp Packer: Installed
-   #### HashiCorp Terraform: Installed
-   #### HashiCorp Vault: Installed
-   #### Red Hat Ansible: Installed
-   ```
+    ```text
+    ...
+    >>> Please select an action: 4
+    >>> STEP: Verifying full native IaC environment...
+    >>> Verifying Libvirt/KVM environment...
+    #### QEMU/KVM: Installed
+    #### Libvirt Client (virsh): Installed
+    >>> Verifying Core IaC Tools (HashiCorp/Ansible)...
+    #### HashiCorp Packer: Installed
+    #### HashiCorp Terraform: Installed
+    #### HashiCorp Vault: Installed
+    #### Red Hat Ansible: Installed
+    ```
 
 ### B. Option 2. Run IaC tools inside Container: Podman
 
@@ -157,54 +157,54 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
 
 2. After completing the Podman installation, please switch to the project root directory:
 
-   1. If using for the first time, execute the following command
+    1. If using for the first time, execute the following command
 
-      ```shell
-      sudo podman compose up --build
-      ```
+        ```shell
+        sudo podman compose up --build
+        ```
 
-   2. After creating the Container, you only need to run the container to perform operations:
+    2. After creating the Container, you only need to run the container to perform operations:
 
-      ```shell
-      sudo podman compose up -d
-      ```
+        ```shell
+        sudo podman compose up -d
+        ```
 
-   3. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
+    3. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
 
-      ```shell
-      sudo podman exec -it iac-controller bash
-      ```
+        ```shell
+        sudo podman exec -it iac-controller bash
+        ```
 
-      Where `iac-controller` is the Container name for the project.
+        Where `iac-controller` is the Container name for the project.
 
-   **Attention:** When switching between a Podman container and a native environment, you might encounter inconsistencies in Terraform's state within Virsh. If this happens, you can delete the `terraform/terraform.tfstate` file and run the following command to fix it.
+    **Attention:** When switching between a Podman container and a native environment, you might encounter inconsistencies in Terraform's state within Virsh. If this happens, you can delete the `terraform/terraform.tfstate` file and run the following command to fix it.
 
-   ```shell
-   sudo virsh pool-destroy iac-kubeadm
-   sudo virsh pool-undefine iac-kubeadm
-   ```
+    ```shell
+    sudo virsh pool-destroy iac-kubeadm
+    sudo virsh pool-undefine iac-kubeadm
+    ```
 
 ### C. Miscellaneous
 
--  **Suggested Plugins for VSCode:** Enhance productivity with syntax support:
+-   **Suggested Plugins for VSCode:** Enhance productivity with syntax support:
 
-   1. Ansible language support extension. [Marketplace Link of Ansible](https://marketplace.visualstudio.com/items?itemName=redhat.ansible)
+    1. Ansible language support extension. [Marketplace Link of Ansible](https://marketplace.visualstudio.com/items?itemName=redhat.ansible)
 
-      ```shell
-      code --install-extension redhat.ansible
-      ```
+        ```shell
+        code --install-extension redhat.ansible
+        ```
 
-   2. HCL language support extension for Terraform. [Marketplace Link of HashiCorp HCL](https://marketplace.visualstudio.com/items?itemName=HashiCorp.HCL)
+    2. HCL language support extension for Terraform. [Marketplace Link of HashiCorp HCL](https://marketplace.visualstudio.com/items?itemName=HashiCorp.HCL)
 
-      ```shell
-      code --install-extension HashiCorp.HCL
-      ```
+        ```shell
+        code --install-extension HashiCorp.HCL
+        ```
 
-   3. Packer tool extension. [Marketplace Link of Packer Powertools](https://marketplace.visualstudio.com/items?itemName=szTheory.vscode-packer-powertools)
+    3. Packer tool extension. [Marketplace Link of Packer Powertools](https://marketplace.visualstudio.com/items?itemName=szTheory.vscode-packer-powertools)
 
-      ```shell
-      code --install-extension szTheory.vscode-packer-powertools
-      ```
+        ```shell
+        code --install-extension szTheory.vscode-packer-powertools
+        ```
 
 ## Section 2. Configuration
 
@@ -226,88 +226,88 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 1. Ensure the user's account is a member of the `libvirt` group.
 
-   ```shell
-   sudo usermod -aG libvirt $(whoami)
-   ```
+    ```shell
+    sudo usermod -aG libvirt $(whoami)
+    ```
 
-   **Note:** After completing this step, you must fully log out and log back in, or restart your computer, for the new group membership to take effect in your shell session.
+    **Note:** After completing this step, you must fully log out and log back in, or restart your computer, for the new group membership to take effect in your shell session.
 
 2. Modify the `libvirtd` configuration file to explicitly state that the `libvirt` group should manage the socket.
 
-   ```shell
-   # If you use vim
-   sudo vim /etc/libvirt/libvirtd.conf
-   # If you use nano
-   sudo nano /etc/libvirt/libvirtd.conf
-   ```
+    ```shell
+    # If you use vim
+    sudo vim /etc/libvirt/libvirtd.conf
+    # If you use nano
+    sudo nano /etc/libvirt/libvirtd.conf
+    ```
 
-   Locate and uncomment (remove the `#` from the beginning of the line) the following two lines.
+    Locate and uncomment (remove the `#` from the beginning of the line) the following two lines.
 
-   ```toml
-   unix_sock_group = "libvirt"
-   # ...
-   unix_sock_rw_perms = "0770"
-   ```
+    ```toml
+    unix_sock_group = "libvirt"
+    # ...
+    unix_sock_rw_perms = "0770"
+    ```
 
 3. Override the `systemd` socket unit settings, as `systemd`'s socket configuration takes precedence over `libvirtd.conf`.
 
-   1. Executing the following command will open a `nano` editor.
+    1. Executing the following command will open a `nano` editor.
 
-      ```shell
-      sudo systemctl edit libvirtd.socket
-      ```
+        ```shell
+        sudo systemctl edit libvirtd.socket
+        ```
 
-   2. In the opened editor, paste the following content. Make sure to paste it above the line that says `### Edits below this comment will be discarded` to prevent the configuration file from becoming invalid.
+    2. In the opened editor, paste the following content. Make sure to paste it above the line that says `### Edits below this comment will be discarded` to prevent the configuration file from becoming invalid.
 
-      ```toml
-      [Socket]
-      SocketGroup=libvirt
-      SocketMode=0770
-      ```
+        ```toml
+        [Socket]
+        SocketGroup=libvirt
+        SocketMode=0770
+        ```
 
-      Once done, use `Ctrl+O` to save and `Ctrl+X` to exit the editor.
+        Once done, use `Ctrl+O` to save and `Ctrl+X` to exit the editor.
 
 4. Now, the services need to be restarted in the correct order for all the settings to take effect.
 
-   1. Reload `systemd` configurations:
+    1. Reload `systemd` configurations:
 
-      ```shell
-      sudo systemctl daemon-reload
-      ```
+        ```shell
+        sudo systemctl daemon-reload
+        ```
 
-   2. Stop all related services to ensure a clean state:
+    2. Stop all related services to ensure a clean state:
 
-      ```shell
-      sudo systemctl stop libvirtd.service libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket
-      ```
+        ```shell
+        sudo systemctl stop libvirtd.service libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket
+        ```
 
-   3. Disable `libvirtd.service` to fully hand over management to Socket Activation:
+    3. Disable `libvirtd.service` to fully hand over management to Socket Activation:
 
-      ```shell
-      sudo systemctl disable libvirtd.service
-      ```
+        ```shell
+        sudo systemctl disable libvirtd.service
+        ```
 
-   4. Restart `libvirtd.socket`
+    4. Restart `libvirtd.socket`
 
-      ```shell
-      sudo systemctl restart libvirtd.socket
-      ```
+        ```shell
+        sudo systemctl restart libvirtd.socket
+        ```
 
 5. Verification
 
-   1. Check the socket permissions: The output should show the group as `libvirt` and the permissions as `srwxrwx---`.
+    1. Check the socket permissions: The output should show the group as `libvirt` and the permissions as `srwxrwx---`.
 
-      ```shell
-      ls -la /var/run/libvirt/libvirt-sock
-      ```
+        ```shell
+        ls -la /var/run/libvirt/libvirt-sock
+        ```
 
-   2. Execute `virsh` commands as a **non-root** user.
+    2. Execute `virsh` commands as a **non-root** user.
 
-      ```shell
-      virsh list --all
-      ```
+        ```shell
+        virsh list --all
+        ```
 
-      If the command executes successfully and lists the virtual machines (even if the list is empty), it means you have all the necessary permissions.
+        If the command executes successfully and lists the virtual machines (even if the list is empty), it means you have all the necessary permissions.
 
 #### **Step B.1. Create Confidential Variable File for HashiCorp Vault**
 
@@ -317,68 +317,68 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 2. Switch to the project's root directory and run the following command to start the Vault server.
 
-   -  If you prefer to run it on the host:
+    - If you prefer to run it on the host:
 
-      ```shell
-      vault server -config=vault/vault.hcl
-      ```
+        ```shell
+        vault server -config=vault/vault.hcl
+        ```
 
-   -  If you prefer to run it in a container (side-car mode):
+    - If you prefer to run it in a container (side-car mode):
 
-      ```shell
-      sudo podman compose up -d iac-vault-server
-      ```
+        ```shell
+        sudo podman compose up -d iac-vault-server
+        ```
 
-   After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If you need to reinitialize Vault, you must manually clear all files within the `vault/data/` directory.
+    After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If you need to reinitialize Vault, you must manually clear all files within the `vault/data/` directory.
 
-   **Note:** Please open a new terminal window or tab for subsequent operations.
+    **Note:** Please open a new terminal window or tab for subsequent operations.
 
 3. Once the previous steps are complete, you can run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
 
 4. Next, you only need to manually modify the following variables used in the project.
 
-   -  **For Common Variables in this Project**
+    - **For Common Variables in this Project**
 
-      ```shell
-      vault kv put \
-         -address="https://127.0.0.1:8200" \
-         -ca-cert="${PWD}/vault/tls/ca.pem" \
-         secret/on-premise-gitlab-deployment/variables \
-         ssh_username="some-user-name-for-ssh" \
-         ssh_password="some-user-password-for-ssh" \
-         ssh_password_hash=$(echo -n "$ssh_password" | mkpasswd -m sha-512 -P 0) \
-         vm_username="some-user-name-for-vm" \
-         vm_password="some-user-password-for-vm" \
-         ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
-         ssh_private_key_path="~/.ssh/some-ssh-key-name"
-      ```
+        ```shell
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/variables \
+            ssh_username="some-user-name-for-ssh" \
+            ssh_password="some-user-password-for-ssh" \
+            ssh_password_hash=$(echo -n "$ssh_password" | mkpasswd -m sha-512 -P 0) \
+            vm_username="some-user-name-for-vm" \
+            vm_password="some-user-password-for-vm" \
+            ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
+            ssh_private_key_path="~/.ssh/some-ssh-key-name"
+        ```
 
-   -  **For Databases**
+    - **For Databases**
 
-      ```shell
-      vault kv put \
-         -address="https://127.0.0.1:8200" \
-         -ca-cert="${PWD}/vault/tls/ca.pem" \
-         secret/on-premise-gitlab-deployment/databases \
-         pg_superuser_password="a-more-secure-pwd-for-superuser" \
-         pg_replication_password="a-more-secure-pwd-for-replication"
-      ```
+        ```shell
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/databases \
+            pg_superuser_password="a-more-secure-pwd-for-superuser" \
+            pg_replication_password="a-more-secure-pwd-for-replication"
+        ```
 
-   -  **Note 1:**
+    - **Note 1:**
 
-      In which `ssh_username` and `ssh_password` are the account and password used to log into the virtual machine; while `ssh_password_hash` is the hashed password required for virtual machine automatic installation (Cloud-init). This password needs to be generated using the password string from `ssh_password`. For instance, if the password is `HelloWorld@k8s`, then the corresponding password hash should be generated using the following command:
+        In which `ssh_username` and `ssh_password` are the account and password used to log into the virtual machine; while `ssh_password_hash` is the hashed password required for virtual machine automatic installation (Cloud-init). This password needs to be generated using the password string from `ssh_password`. For instance, if the password is `HelloWorld@k8s`, then the corresponding password hash should be generated using the following command:
 
-      ```shell
-      mkpasswd -m sha-512 HelloWorld@k8s
-      ```
+        ```shell
+        mkpasswd -m sha-512 HelloWorld@k8s
+        ```
 
-      If it shows `mkpasswd` command not found, possibly due to lack of `whois` package.
+        If it shows `mkpasswd` command not found, possibly due to lack of `whois` package.
 
-      In which `ssh_public_key_path` needs to be changed to the **public key** name generated earlier, the public key will be in `*.pub` format.
+        In which `ssh_public_key_path` needs to be changed to the **public key** name generated earlier, the public key will be in `*.pub` format.
 
-   -  **Note 2:**
+    - **Note 2:**
 
-      The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `node_config` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
+        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `node_config` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
 
 5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use option `7` in `entry.sh` to unseal the Vault database; Alternatively, you may use container as described in B.1-2.
 
@@ -386,124 +386,220 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 1. You can create the `terraform/layers/10-cluster-provision/terraform.tfvars` file using the following command:
 
-   ```shell
-   cat << EOF > terraform/layers/10-cluster-provision/terraform.tfvars
-   # Defines the hardware and IP addresses for each virtual machine in the cluster.
-   kubeadm_cluster_config = {
-      nodes = {
-         masters = [
+    ```shell
+    cat << EOF > terraform/layers/10-cluster-provision/terraform.tfvars
+    # Defines the hardware and IP addresses for each virtual machine in the cluster.
+    kubeadm_cluster_config = {
+    cluster_name = "10-kubeadm-cluster"
+    nodes = {
+        masters = [
             { ip = "172.16.134.200", vcpu = 4, ram = 4096 },
             { ip = "172.16.134.201", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.202", vcpu = 4, ram = 4096 }
-         ]
-         workers = [
+            { ip = "172.16.134.202", vcpu = 4, ram = 4096 },
+        ]
+        workers = [
             { ip = "172.16.134.210", vcpu = 4, ram = 4096 },
             { ip = "172.16.134.211", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.212", vcpu = 4, ram = 4096 }
-         ]
-      }
-      ha_virtual_ip = "172.16.134.250"
-   }
+            { ip = "172.16.134.212", vcpu = 4, ram = 4096 },
+        ]
+    }
+    ha_virtual_ip = "172.16.134.250"
+    registry_host = "172.16.135.200:5000"
+    }
 
-   cluster_infrastructure = {
-      network = {
-         nat = {
-            name        = "iac-kubeadm-nat-net"
-            cidr        = "172.16.86.0/24"
-            bridge_name = "kubeadm-nat-br" # IFNAMSIZ is 15 user-visible characters with the null terminator included.
-         }
-         hostonly = {
-            name        = "iac-kubeadm-hostonly-net"
-            cidr        = "172.16.134.0/24"
-            bridge_name = "kubeadm-host-br"
-         }
-      }
-   }
-   EOF
-   ```
+    kubeadm_infrastructure = {
+        network = {
+            nat = {
+            name_network = "iac-kubeadm-nat-net"
+            name_bridge  = "kubeadm-nat-br"
 
-   For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
+            ips = {
+                address = "172.16.86.1"
+                prefix  = 24
+                dhcp = {
+                    start = "172.16.86.2"
+                    end   = "172.16.86.254"
+                }
+            }
+        }
+
+        hostonly = {
+            name_network = "iac-kubeadm-hostonly-net"
+            name_bridge  = "kubeadm-host-br"
+
+            ips = {
+                address = "172.16.134.1"
+                prefix  = 24
+                dhcp    = null # dhcp is not used in hostonly network.
+            }
+        }
+    }
+    storage_pool_name = "iac-kubeadm"
+    }
+    EOF
+    ```
+
+    For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
 2. The variable file for the (HA) Harbor in `terraform/layers/10-provision-harbor/terraform.tfvars` can be created using the following command:
 
-   ```bash
-   cat << EOF > terraform/layers/10-provision-harbor/terraform.tfvars
-   # Defines the hardware and IP addresses for each virtual machine in the cluster.
-   harbor_cluster_config = {
-      cluster_name = "10-harbor-cluster"
-      nodes = {
-         harbor = [
+    ```bash
+    cat << EOF > terraform/layers/10-provision-harbor/terraform.tfvars
+    # Defines the hardware and IP addresses for each virtual machine in the cluster.
+    harbor_cluster_config = {
+    cluster_name = "10-harbor-cluster"
+    nodes = {
+        harbor = [
             { ip = "172.16.135.200", vcpu = 2, ram = 4096 },
             { ip = "172.16.135.201", vcpu = 2, ram = 4096 },
             { ip = "172.16.135.202", vcpu = 2, ram = 4096 },
-         ]
-      }
-   }
+        ]
+    }
+    }
 
-   cluster_infrastructure = {
-      network = {
-         nat = {
-            name        = "iac-registry-nat-net"
-            cidr        = "172.16.87.0/24"
-            bridge_name = "reg-nat-br" # IFNAMSIZ is 15 user-visible characters with the null terminator included.
-         }
-         hostonly = {
-            name        = "iac-registry-hostonly-net"
-            cidr        = "172.16.135.0/24"
-            bridge_name = "reg-host-br"
-         }
-      }
-   }
-   EOF
-   ```
+    harbor_infrastructure = {
+        network = {
+            nat = {
+                name_network = "iac-harbor-nat-net"
+                name_bridge  = "reg-nat-br"
 
-   This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
+                ips = {
+                    address = "172.16.87.1"
+                    prefix  = 24
+                    dhcp = {
+                        start = "172.16.87.2"
+                        end   = "172.16.87.254"
+                    }
+                }
+            }
+
+            hostonly = {
+                name_network = "iac-harbor-hostonly-net"
+                name_bridge  = "reg-host-br"
+
+                ips = {
+                    address = "172.16.135.1"
+                    prefix  = 24
+                    dhcp    = null
+                }
+            }
+        }
+        storage_pool_name = "iac-harbor"
+    }
+    ```
+
+    This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
 
 3. The variable file for the (HA) Postgres / etcd in `terraform/layers/10-provision-postgres/terraform.tfvars` can be created using the following command:
 
-   ```bash
-   cat << EOF > terraform/layers/10-provision-postgres/terraform.tfvars
-   # Defines the hardware and IP addresses for each virtual machine in the cluster.
-   postgres_cluster_config = {
-      cluster_name = "10-postgres-cluster"
-      nodes = {
-         postgres = [
-            { ip = "172.16.136.200", vcpu = 4, ram = 4096 },
-            # { ip = "172.16.136.201", vcpu = 4, ram = 4096 }, # for HA Postgres
-            # { ip = "172.16.136.202", vcpu = 4, ram = 4096 },
-         ],
-         etcd = [
-            { ip = "172.16.136.210", vcpu = 2, ram = 2048 },
-            # { ip = "172.16.136.211", vcpu = 2, ram = 2048 }, # for HA etcd
-            # { ip = "172.16.136.212", vcpu = 2, ram = 2048 }
-         ],
-         haproxy = [
-            { ip = "172.16.136.220", vcpu = 2, ram = 2048 }
-         ]
-      }
-   }
+    ```bash
+    cat << EOF > terraform/layers/10-provision-postgres/terraform.tfvars
+    # Defines the hardware and IP addresses for each virtual machine in the cluster.
+    postgres_cluster_config = {
+        cluster_name = "10-postgres-cluster"
+        nodes = {
+            postgres = [
+                { ip = "172.16.136.200", vcpu = 4, ram = 4096 },
+                { ip = "172.16.136.201", vcpu = 4, ram = 4096 },
+                { ip = "172.16.136.202", vcpu = 4, ram = 4096 },
+            ],
+            etcd = [
+                { ip = "172.16.136.210", vcpu = 2, ram = 2048 },
+                { ip = "172.16.136.211", vcpu = 2, ram = 2048 },
+                { ip = "172.16.136.212", vcpu = 2, ram = 2048 }
+            ],
+            haproxy = [
+                { ip = "172.16.136.220", vcpu = 2, ram = 2048 }
+            ]
+        }
+    }
 
-   postgres_infrastructure = {
-      network = {
-         nat = {
-            name        = "iac-postgres-nat-net"
-            cidr        = "172.16.88.0/24"
-            bridge_name = "pos-nat-br" # IFNAMSIZ is 15 user-visible characters with the null terminator included.
-         }
-         hostonly = {
-            name        = "iac-postgres-hostonly-net"
-            cidr        = "172.16.136.0/24"
-            bridge_name = "pos-host-br"
-         }
-         postgres_allowed_subnet = "172.16.136.0/24"
-      }
-   }
-   EOF
-   ```
+    postgres_infrastructure = {
+        network = {
+            nat = {
+                name_network = "iac-postgres-nat-net"
+                name_bridge  = "pos-nat-br"
 
-   This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
+                ips = {
+                    address = "172.16.88.1"
+                    prefix  = 24
+                    dhcp = {
+                    start = "172.16.88.2"
+                    end   = "172.16.88.254"
+                    }
+                }
+            }
 
-   Because Postgres resources will be callable by other Terraform layers (e.g. GitLab and Harbor in the future), the `bridge_name` and virtual machine naming logic _may still_ be modified.
+            hostonly = {
+                name_network = "iac-postgres-hostonly-net"
+                name_bridge  = "pos-host-br"
+
+                ips = {
+                    address = "172.16.136.1"
+                    prefix  = 24
+                    dhcp    = null
+                }
+            }
+        }
+        postgres_allowed_subnet = "172.16.136.0/24"
+        storage_pool_name       = "iac-postgres"
+    }
+    EOF
+    ```
+
+    This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
+
+    Because Postgres resources will be callable by other Terraform layers (e.g. GitLab and Harbor in the future), the `bridge_name` and virtual machine naming logic _may still_ be modified.
+
+4. The variable file for the (HA) Redis in `terraform/layers/10-provision-redis/terraform.tfvars` can be created using the following command:
+
+    ```bash
+    cat << EOF > terraform/layers/10-provision-redis/terraform.tfvars
+    # Defines the hardware and IP addresses for each virtual machine in the cluster.
+
+    redis_cluster_config = {
+        cluster_name = "10-redis-cluster"
+        nodes = {
+            redis = [
+                { ip = "172.16.137.200", vcpu = 4, ram = 4096 },
+                { ip = "172.16.137.201", vcpu = 4, ram = 4096 },
+                { ip = "172.16.137.202", vcpu = 4, ram = 4096 },
+            ]
+        }
+    }
+
+    redis_infrastructure = {
+        network = {
+            nat = {
+                name_network = "iac-redis-nat-net"
+                name_bridge  = "redis-nat-br"
+
+                ips = {
+                    address = "172.16.89.1"
+                    prefix  = 24
+                    dhcp = {
+                    start = "172.16.89.2"
+                    end   = "172.16.89.254"
+                    }
+                }
+            }
+
+            hostonly = {
+                name_network = "iac-redis-hostonly-net"
+                name_bridge  = "redis-host-br"
+
+                ips = {
+                    address = "172.16.137.1"
+                    prefix  = 24
+                    dhcp    = null
+                }
+            }
+        }
+        redis_allowed_subnet = "172.16.137.0/24"
+        storage_pool_name    = "iac-redis"
+    }
+    EOF
+    ```
 
 **Note:** The `bridge_name` in `terraform.tfvars` must not exceed 15 characters due to the `IFNAMSIZ(15)` limitation.
 
@@ -511,41 +607,41 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 1. The project currently uses Ubuntu 24.04.3 for VM deployment. If you wish to use other distro as virtual machine, it is recommended that you first verify the Ubuntu Server version and checksum.
 
-   -  The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
-   -  The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
-   -  After selecting your version, please verify the checksum.
-      -  For latest Noble version: <https://releases.ubuntu.com/noble/SHA256SUMS>
-      -  For "Noble-old-release" version: <https://old-releases.ubuntu.com/releases/noble/SHA256SUMS>
+    - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
+    - The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
+    - After selecting your version, please verify the checksum.
+        - For latest Noble version: <https://releases.ubuntu.com/noble/SHA256SUMS>
+        - For "Noble-old-release" version: <https://old-releases.ubuntu.com/releases/noble/SHA256SUMS>
 
-   Deploying other Linux distro would be supported if I have time. I'm still a full-time university student.
+    Deploying other Linux distro would be supported if I have time. I'm still a full-time university student.
 
 2. **To deploy a complete HA Kubernetes cluster from scratch**:
 
-   -  **First Step**: Enter the main menu `11) Rebuild Packer Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
+    - **First Step**: Enter the main menu `11) Rebuild Packer Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
-   -  **Second Step**: After the previous step is complete, return to the main menu and enter `12) Manage Terraform Layer`, then select `10-provision-kubeadm` to deploy the entire Kubernetes cluster.
+    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Manage Terraform Layer`, then select `10-provision-kubeadm` to deploy the entire Kubernetes cluster.
 
-      Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
+        Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
 3. **Isolated Testing and Development**:
 
-   The `11`, `12`, and `13` menus can be used for separate testing
+    The `11`, `12`, and `13` menus can be used for separate testing
 
-   -  To test Packer image building independently, use `11) Rebuild Packer Image`.
+    - To test Packer image building independently, use `11) Rebuild Packer Image`.
 
-   -  To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Manage Terraform Layer`.
+    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Manage Terraform Layer`.
 
-   -  To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Run Ansible Playbook`.
+    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Run Ansible Playbook`.
 
 4. **Resource Cleanup**:
 
-   -  **`9) Purge All Libvirt Resources`**:
+    - **`9) Purge All Libvirt Resources`**:
 
-      This option executes `purge_libvirt_resources "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
+        This option executes `purge_libvirt_resources "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
 
-   -  **`10) Reset Packer and Terraform`**:
+    - **`10) Reset Packer and Terraform`**:
 
-      This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
+        This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
 
 ## Section 3. System Architecture
 
@@ -558,34 +654,34 @@ The entire automated deployment process is triggered by option `12` _"Rebuild Ku
 
 ```mermaid
 sequenceDiagram
-   actor User
-   participant Entrypoint as entry.sh
-   participant Packer
-   participant Terraform
-   participant Ansible
-   participant Libvirt as Libvirt/QEMU
+    actor User
+    participant Entrypoint as entry.sh
+    participant Packer
+    participant Terraform
+    participant Ansible
+    participant Libvirt as Libvirt/QEMU
 
-   User->>+Entrypoint: Execute 'Rebuild All'
+    User->>+Entrypoint: Execute 'Rebuild All'
 
-   Entrypoint->>+Packer: 1. Execute 'build_packer'
-   Packer->>+Libvirt: 1a. Build VM from ISO
-   note right of Packer: Provisioner 'ansible' is triggered
-   Packer->>+Ansible: 1b. Execute Playbook<br>(00-provision-base-image.yaml)
-   Ansible-->>-Packer: (Bake k8s components into image)
-   Libvirt-->>-Packer: 1c. Output Golden Image (.qcow2)
-   Packer-->>-Entrypoint: Image creation complete
+    Entrypoint->>+Packer: 1. Execute 'packer_build'
+    Packer->>+Libvirt: 1a. Build VM from ISO
+    note right of Packer: Provisioner 'ansible' is triggered
+    Packer->>+Ansible: 1b. Execute Playbook<br>(00-provision-base-image.yaml)
+    Ansible-->>-Packer: (Bake k8s components into image)
+    Libvirt-->>-Packer: 1c. Output Golden Image (.qcow2)
+    Packer-->>-Entrypoint: Image creation complete
 
-   Entrypoint->>+Terraform: 2. Execute 'apply_terraform_10-cluster-provision'
-   note right of Terraform: Reads .tf definitions
-   Terraform->>+Libvirt: 2a. Create Network, Pool, Volumes (from .qcow2), Cloud-init ISOs
-   Terraform->>+Libvirt: 2b. Create and Start VMs (Domains)
-   note right of Terraform: Provisioner 'local-exec' is triggered
-   Terraform->>+Ansible: 2c. Execute Playbook<br>(10-provision-kubeadm.yaml)
-   Ansible->>Libvirt: (via SSH) 2d. Configure HA (Keepalived/HAProxy)
-   Ansible->>Libvirt: (via SSH) 2e. Init/Join Kubernetes Cluster
-   Ansible-->>-Terraform: Playbook execution complete
-   Terraform-->>-Entrypoint: 'apply' complete
-   Entrypoint-->>-User: Display 'Rebuild All workflow completed'
+    Entrypoint->>+Terraform: 2. Execute 'apply_terraform_10-cluster-provision'
+    note right of Terraform: Reads .tf definitions
+    Terraform->>+Libvirt: 2a. Create Network, Pool, Volumes (from .qcow2), Cloud-init ISOs
+    Terraform->>+Libvirt: 2b. Create and Start VMs (Domains)
+    note right of Terraform: Provisioner 'local-exec' is triggered
+    Terraform->>+Ansible: 2c. Execute Playbook<br>(10-provision-kubeadm.yaml)
+    Ansible->>Libvirt: (via SSH) 2d. Configure HA (Keepalived/HAProxy)
+    Ansible->>Libvirt: (via SSH) 2e. Init/Join Kubernetes Cluster
+    Ansible-->>-Terraform: Playbook execution complete
+    Terraform-->>-Entrypoint: 'apply' complete
+    Entrypoint-->>-User: Display 'Rebuild All workflow completed'
 ```
 
 ### B. Toolchain Roles and Responsibilities
@@ -598,41 +694,41 @@ sequenceDiagram
 
 1. **Packer + Ansible: Provisioning base Kubernetes Golden Image**
 
-   Packer plays the role of an "image factory" in this project, with its core task being to automate the creation of a standardized virtual machine template (Golden Image) pre-configured with all Kubernetes dependencies. The project uses `packer/source.pkr.hcl` as its definition file and it's driven by `packer/02-base-kubeadm.pkrvars.hcl`, with a workflow that includes: automatically downloading the `Ubuntu Server 24.04 ISO` file and completing unattended installation using cloud-init; starting SSH connection and invoking the Ansible Provisioner after installation; executing `ansible/playbooks/00-provision-base-image.yaml` to install necessary components such as `kubelet`, `kubeadm`, `kubectl`, and `CRI-O` (also configure it to use `cgroup` driver); finally shutting down the virtual machine and producing a `*.qcow2` format template for Terraform to use. The goal of this phase is to "bake" all infrequently changing software and configurations into the image to reduce the time required for subsequent deployments.
+    Packer plays the role of an "image factory" in this project, with its core task being to automate the creation of a standardized virtual machine template (Golden Image) pre-configured with all Kubernetes dependencies. The project uses `packer/source.pkr.hcl` as its definition file and it's driven by `packer/02-base-kubeadm.pkrvars.hcl`, with a workflow that includes: automatically downloading the `Ubuntu Server 24.04 ISO` file and completing unattended installation using cloud-init; starting SSH connection and invoking the Ansible Provisioner after installation; executing `ansible/playbooks/00-provision-base-image.yaml` to install necessary components such as `kubelet`, `kubeadm`, `kubectl`, and `CRI-O` (also configure it to use `cgroup` driver); finally shutting down the virtual machine and producing a `*.qcow2` format template for Terraform to use. The goal of this phase is to "bake" all infrequently changing software and configurations into the image to reduce the time required for subsequent deployments.
 
 2. **Terraform: The Infrastructure Orchestrator**
 
-   Terraform is responsible for managing the infrastructure lifecycle and serves as the core orchestration component of the entire architecture. Terraform reads the image template produced by Packer and deploys the actual virtual machine cluster in Libvirt/QEMU. The definition files are the `.tf` files in the `terraform/` directory, with the **workflow as follows:**
+    Terraform is responsible for managing the infrastructure lifecycle and serves as the core orchestration component of the entire architecture. Terraform reads the image template produced by Packer and deploys the actual virtual machine cluster in Libvirt/QEMU. The definition files are the `.tf` files in the `terraform/` directory, with the **workflow as follows:**
 
-   -  **Node Deployment (Layer 10)**:
+    - **Node Deployment (Layer 10)**:
 
-      -  Based on `kubeadm_cluster_config` defined in `terraform/terraform.tfvars`, Terraform calculates the number of nodes that need to be created.
-      -  Next, Terraform's libvirt provider will quickly clone virtual machines based on the `.qcow2` file. Under the hardware resources listed in Section 0, cloning 6 virtual machines can be completed in approximately 15 seconds.
+        - Based on `kubeadm_cluster_config` defined in `terraform/terraform.tfvars`, Terraform calculates the number of nodes that need to be created.
+        - Next, Terraform's libvirt provider will quickly clone virtual machines based on the `.qcow2` file. Under the hardware resources listed in Section 0, cloning 6 virtual machines can be completed in approximately 15 seconds.
 
-   -  **Cluster Configuration (Layer 50)**:
-      -  Once all nodes are ready, Terraform dynamically generates `ansible/inventory.yaml` list file.
-      -  Then, Terraform invokes Ansible to execute the `ansible/playbooks/10-provision-kubeadm.yaml` Playbook to complete the initialization of the Kubernetes cluster.
+    - **Cluster Configuration (Layer 50)**:
+        - Once all nodes are ready, Terraform dynamically generates `ansible/inventory.yaml` list file.
+        - Then, Terraform invokes Ansible to execute the `ansible/playbooks/10-provision-kubeadm.yaml` Playbook to complete the initialization of the Kubernetes cluster.
 
 3. **Ansible: The Configuration Manager**
 
-   This is the twice call for Ansible, serving as the configuration manager at different stages. The project's Playbooks are stored in the `ansible/playbooks/ directory`. In terms of role assignment, Ansible is primarily responsible for cluster initialization (invoked by Terraform), executing the following tasks through the `10-provision-kubeadm.yaml` Playbook:
+    This is the twice call for Ansible, serving as the configuration manager at different stages. The project's Playbooks are stored in the `ansible/playbooks/ directory`. In terms of role assignment, Ansible is primarily responsible for cluster initialization (invoked by Terraform), executing the following tasks through the `10-provision-kubeadm.yaml` Playbook:
 
-   1. Setup HA Load Balancer on all master nodes if it's not a cluster with single master node.
-   2. Initialize the primary master node
-   3. Generate and fetch join commands from primary master
-   4. Executing `kubeadm join` on
-      1. Other master node if it's HA Cluster
-      2. Worker nodes to join them to the cluster.
+    1. Setup HA Load Balancer on all master nodes if it's not a cluster with single master node.
+    2. Initialize the primary master node
+    3. Generate and fetch join commands from primary master
+    4. Executing `kubeadm join` on
+        1. Other master node if it's HA Cluster
+        2. Worker nodes to join them to the cluster.
 
 4. **HashiCorp Vault (with TLS)**
 
-   HashiCorp Vault is integrated into this project to serve as a centralized and secure backend for managing all sensitive data, such as SSH credentials and user passwords. This approach removes the need to store plaintext secrets in version-controlled files like `*.tfvars` or `*.pkrvars.hcl`, aligning with Infrastructure as Code best practices.
+    HashiCorp Vault is integrated into this project to serve as a centralized and secure backend for managing all sensitive data, such as SSH credentials and user passwords. This approach removes the need to store plaintext secrets in version-controlled files like `*.tfvars` or `*.pkrvars.hcl`, aligning with Infrastructure as Code best practices.
 
-   Both the `native` (host-based) and `container` (Podman-based) IaC execution strategies can connect to the same containerized Vault instance through the host network (`network_mode: "host"`). The Vault server is configured to start automatically on system boot if you use container, ensuring the secrets backend is always available for the IaC workflow without manual intervention.
+    Both the `native` (host-based) and `container` (Podman-based) IaC execution strategies can connect to the same containerized Vault instance through the host network (`network_mode: "host"`). The Vault server is configured to start automatically on system boot if you use container, ensuring the secrets backend is always available for the IaC workflow without manual intervention.
 
-   -  **Packer:** During the image-building phase, Packer authenticates with the Vault server and uses the `vault()` function within its HCL files to dynamically fetch the necessary secrets (e.g., `ssh_username`, `ssh_password_hash`) required for the unattended OS installation.
+    - **Packer:** During the image-building phase, Packer authenticates with the Vault server and uses the `vault()` function within its HCL files to dynamically fetch the necessary secrets (e.g., `ssh_username`, `ssh_password_hash`) required for the unattended OS installation.
 
-   -  **Terraform:** Similarly, Terraform utilizes the Vault Provider to read infrastructure-related secrets, such as `vm_username` and `ssh_private_key_path`, directly from Vault at runtime. This allows Terraform to provision VMs and configure SSH access without exposing any sensitive credentials in its configuration files.
+    - **Terraform:** Similarly, Terraform utilizes the Vault Provider to read infrastructure-related secrets, such as `vm_username` and `ssh_private_key_path`, directly from Vault at runtime. This allows Terraform to provision VMs and configure SSH access without exposing any sensitive credentials in its configuration files.
 
 ### C. Infrastructures
 

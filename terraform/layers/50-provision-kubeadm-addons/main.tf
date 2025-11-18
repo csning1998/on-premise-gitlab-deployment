@@ -10,7 +10,7 @@ module "k8s_metric_server" {
 }
 
 module "k8s_ingress_nginx" {
-  source     = "../../modules/23-kubeadm-ingress-nginx"
+  source     = "../../modules/53-kubeadm-ingress-nginx"
   depends_on = [module.k8s_calico]
 }
 

@@ -20,16 +20,16 @@ module "provisioner_kvm" {
   libvirt_infrastructure = {
     network = {
       nat = {
-        name          = var.harbor_infrastructure.network.nat.name
-        cidr          = var.harbor_infrastructure.network.nat.cidr
-        gateway       = local.harbor_nat_network_gateway
-        subnet_prefix = local.harbor_nat_network_subnet_prefix
-        bridge_name   = var.harbor_infrastructure.network.nat.bridge_name
+        name_network = var.harbor_infrastructure.network.nat.name_network
+        name_bridge  = var.harbor_infrastructure.network.nat.name_bridge
+        mode         = "nat"
+        ips          = var.harbor_infrastructure.network.nat.ips
       }
       hostonly = {
-        name        = var.harbor_infrastructure.network.hostonly.name
-        cidr        = var.harbor_infrastructure.network.hostonly.cidr
-        bridge_name = var.harbor_infrastructure.network.hostonly.bridge_name
+        name_network = var.harbor_infrastructure.network.hostonly.name_network
+        name_bridge  = var.harbor_infrastructure.network.hostonly.name_bridge
+        mode         = "route"
+        ips          = var.harbor_infrastructure.network.hostonly.ips
       }
     }
     storage_pool_name = var.harbor_infrastructure.storage_pool_name

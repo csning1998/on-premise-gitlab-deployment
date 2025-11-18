@@ -22,6 +22,5 @@ locals {
 
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
-  postgres_nat_network_gateway       = cidrhost(var.postgres_infrastructure.network.nat.cidr, 1)
-  postgres_nat_network_subnet_prefix = join(".", slice(split(".", split("/", var.postgres_infrastructure.network.nat.cidr)[0]), 0, 3))
+  postgres_nat_network_subnet_prefix = join(".", slice(split(".", var.postgres_infrastructure.network.nat.ips.address), 0, 3))
 }

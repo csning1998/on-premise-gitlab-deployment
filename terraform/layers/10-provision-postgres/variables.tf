@@ -1,4 +1,3 @@
-
 # Registry Server Topology & Configuration
 
 variable "postgres_cluster_config" {
@@ -38,14 +37,28 @@ variable "postgres_infrastructure" {
   type = object({
     network = object({
       nat = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
       hostonly = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
     })
     postgres_allowed_subnet = optional(string, "172.16.136.0/24")
