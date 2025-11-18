@@ -40,9 +40,9 @@ data "local_file" "ssh_public_key" {
 }
 
 resource "libvirt_network" "nat_net" {
-  name      = var.libvirt_infrastructure.network.nat.name
+  name      = var.libvirt_infrastructure.network.nat.name_network
   mode      = var.libvirt_infrastructure.network.nat.mode
-  bridge    = var.libvirt_infrastructure.network.nat.bridge_name
+  bridge    = var.libvirt_infrastructure.network.nat.name_bridge
   autostart = true
 
   ips = [
@@ -63,9 +63,9 @@ resource "libvirt_network" "nat_net" {
 }
 
 resource "libvirt_network" "hostonly_net" {
-  name      = var.libvirt_infrastructure.network.hostonly.name
+  name      = var.libvirt_infrastructure.network.hostonly.name_network
   mode      = var.libvirt_infrastructure.network.hostonly.mode
-  bridge    = var.libvirt_infrastructure.network.hostonly.bridge_name
+  bridge    = var.libvirt_infrastructure.network.hostonly.name_bridge
   autostart = true
 
   ips = [

@@ -36,9 +36,8 @@ variable "cluster_infrastructure" {
   type = object({
     network = object({
       nat = object({
-        name        = string
-        bridge_name = string
-
+        name_network = string
+        name_bridge  = string
         ips = object({
           address = string
           prefix  = number
@@ -49,8 +48,8 @@ variable "cluster_infrastructure" {
         })
       })
       hostonly = object({
-        name        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
 
         ips = object({
           address = string

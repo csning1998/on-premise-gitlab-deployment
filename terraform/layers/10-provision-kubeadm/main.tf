@@ -20,16 +20,16 @@ module "provisioner_kvm" {
   libvirt_infrastructure = {
     network = {
       nat = {
-        name        = var.cluster_infrastructure.network.nat.name
-        bridge_name = var.cluster_infrastructure.network.nat.bridge_name
-        mode        = "nat"
-        ips         = var.cluster_infrastructure.network.nat.ips
+        name_network = var.cluster_infrastructure.network.nat.name_network
+        name_bridge  = var.cluster_infrastructure.network.nat.name_bridge
+        mode         = "nat"
+        ips          = var.cluster_infrastructure.network.nat.ips
       }
       hostonly = {
-        name        = var.cluster_infrastructure.network.hostonly.name
-        bridge_name = var.cluster_infrastructure.network.hostonly.bridge_name
-        mode        = "route"
-        ips         = var.cluster_infrastructure.network.hostonly.ips
+        name_network = var.cluster_infrastructure.network.hostonly.name_network
+        name_bridge  = var.cluster_infrastructure.network.hostonly.name_bridge
+        mode         = "route"
+        ips          = var.cluster_infrastructure.network.hostonly.ips
       }
     }
     storage_pool_name = var.cluster_infrastructure.storage_pool_name
