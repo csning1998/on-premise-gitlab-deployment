@@ -151,57 +151,94 @@ resource "libvirt_volume" "cloud_init_iso" {
 }
 
 resource "libvirt_domain" "nodes" {
-
   for_each = var.vm_config.all_nodes_map
 
-  autostart = false # Set to true to start the domain on host boot up. If not specified false is assumed.
+  # 1. Basic Configuration (Required)
+  name      = each.key
+  vcpu      = each.value.vcpu
+  memory    = each.value.ram
+  unit      = "MiB"
+  autostart = false
+  running   = true
 
-  name   = each.key
-  memory = each.value.ram
-  vcpu   = each.value.vcpu
-
-  cloudinit = libvirt_cloudinit_disk.cloud_init[each.key].id
-
-  network_interface {
-    network_name = libvirt_network.nat_net.name
-    addresses    = [local.nodes_config[each.key].nat_ip]
-    mac          = local.nodes_config[each.key].nat_mac
+  # 2. OS Configuration
+  os = {
+    type = "hvm"
+    arch = "x86_64"
   }
 
-  network_interface {
-    network_name = libvirt_network.hostonly_net.name
-    addresses    = [each.value.ip]
-    mac          = local.nodes_config[each.key].hostonly_mac
-  }
+  # 3. Hardware Device Configuration (Attributes)
+  devices = {
+    disks = [
+      # First Disk: Operating System
+      {
+        device = "disk"
+        target = {
+          dev = "vda"
+          bus = "virtio"
+        }
+        source = {
+          pool   = libvirt_pool.storage_pool.name
+          volume = libvirt_volume.os_disk[each.key].name
+        }
+      },
+      # Second Disk: Cloud-Init ISO
+      {
+        device = "cdrom"
+        target = {
+          dev = "sda"
+          bus = "sata"
+        }
+        source = {
+          pool   = libvirt_pool.storage_pool.name
+          volume = libvirt_volume.cloud_init_iso[each.key].name
+        }
+      }
+    ]
 
-  disk {
-    volume_id = libvirt_volume.os_disk[each.key].id
-  }
+    # Network Interfaces
+    interfaces = [
+      # NAT Network for Outbound
+      {
+        type = "network"
+        source = {
+          network = libvirt_network.nat_net.name
+        }
+        mac = local.nodes_config[each.key].nat_mac
+      },
+      # Hostonly Network for Internal
+      {
+        type = "network"
+        source = {
+          network = libvirt_network.hostonly_net.name
+        }
+        mac = local.nodes_config[each.key].hostonly_mac
+      }
+    ]
 
-  # Serial console (ttyS0), often used for basic interaction and debugging.
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
-  }
+    # Other Peripherals
+    consoles = [
+      {
+        type        = "pty"
+        target_port = 0
+        target_type = "serial"
+      },
+      {
+        type        = "pty"
+        target_port = 1
+        target_type = "virtio"
+      }
+    ]
 
-  # Virtio console (hvc0), expected by modern cloud-init versions to avoid startup hangs.
-  # This is the critical fix: https://bugs.launchpad.net/cloud-images/+bug/1573095
-  console {
-    type        = "pty"
-    target_type = "virtio"
-    target_port = "1"
-  }
+    graphics = {
+      vnc = {
+        listen   = "0.0.0.0"
+        autoport = "yes"
+      }
+    }
 
-  graphics {
-    type           = "vnc"
-    listen_type    = "address"
-    autoport       = true
-    listen_address = "0.0.0.0"
-  }
-
-  video {
-    type = "vga"
+    video = {
+      type = "vga"
+    }
   }
 }
-
