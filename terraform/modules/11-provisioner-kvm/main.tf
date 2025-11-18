@@ -91,7 +91,7 @@ resource "libvirt_network" "hostonly_net" {
 resource "libvirt_pool" "storage_pool" {
   name = var.libvirt_infrastructure.storage_pool_name
   type = "dir"
-  target {
+  target = {
     path = abspath("/var/lib/libvirt/images/${var.libvirt_infrastructure.storage_pool_name}")
   }
 }
@@ -103,8 +103,13 @@ resource "libvirt_volume" "os_disk" {
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
   pool     = libvirt_pool.storage_pool.name
-  source   = var.vm_config.base_image_path
   format   = "qcow2"
+
+  create = {
+    content = {
+      url = abspath(var.vm_config.base_image_path)
+    }
+  }
 }
 
 resource "libvirt_cloudinit_disk" "cloud_init" {
@@ -113,8 +118,8 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-cloud-init.iso"
-  pool     = libvirt_pool.storage_pool.name
 
+  meta_data = yamlencode({})
   user_data = templatefile("${path.root}/../../templates/user_data.tftpl", {
     hostname       = each.key
     vm_username    = var.credentials.username
@@ -127,8 +132,22 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     nat_ip_cidr      = local.nodes_config[each.key].nat_ip_cidr
     hostonly_mac     = local.nodes_config[each.key].hostonly_mac
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
-    nat_gateway      = var.libvirt_infrastructure.network.nat.gateway
+    nat_gateway      = var.libvirt_infrastructure.network.nat.ips.address
   })
+}
+
+resource "libvirt_volume" "cloud_init_iso" {
+  for_each = var.vm_config.all_nodes_map
+
+  name   = "${each.key}-cloud-init.iso"
+  pool   = libvirt_pool.storage_pool.name
+  format = "iso"
+
+  create = {
+    content = {
+      url = libvirt_cloudinit_disk.cloud_init[each.key].path
+    }
+  }
 }
 
 resource "libvirt_domain" "nodes" {
