@@ -32,19 +32,34 @@ variable "kubeadm_cluster_config" {
 # Kubernetes Cluster Infrastructure Network Configuration
 
 variable "cluster_infrastructure" {
-  description = "All Libvirt-level infrastructure configurations for the Kuberentes Cluster."
+  description = "All Libvirt-level infrastructure configurations for the Kubernetes Cluster."
   type = object({
     network = object({
       nat = object({
         name        = string
-        cidr        = string
         bridge_name = string
 
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
       hostonly = object({
         name        = string
-        cidr        = string
         bridge_name = string
+
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
     })
     storage_pool_name = optional(string, "iac-kubeadm")

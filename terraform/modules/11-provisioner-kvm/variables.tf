@@ -32,16 +32,30 @@ variable "libvirt_infrastructure" {
   type = object({
     network = object({
       nat = object({
-        name          = string
-        cidr          = string
-        gateway       = string
-        subnet_prefix = string
-        bridge_name   = string
+        name_network = string
+        name_bridge  = string
+        mode         = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = optional(string)
+            end   = optional(string)
+          }))
+        })
       })
       hostonly = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        mode         = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = optional(string)
+            end   = optional(string)
+          }))
+        })
       })
     })
     storage_pool_name = string

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "0.8.3"
+      version = "0.9.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -41,30 +41,48 @@ data "local_file" "ssh_public_key" {
 
 resource "libvirt_network" "nat_net" {
   name      = var.libvirt_infrastructure.network.nat.name
-  mode      = "nat"
+  mode      = var.libvirt_infrastructure.network.nat.mode
   bridge    = var.libvirt_infrastructure.network.nat.bridge_name
-  addresses = [var.libvirt_infrastructure.network.nat.cidr]
   autostart = true
-  dhcp {
-    enabled = true
-  }
-  dns {
-    enabled = true
-  }
+
+  ips = [
+    {
+      address = var.libvirt_infrastructure.network.nat.ips.address
+      prefix  = var.libvirt_infrastructure.network.nat.ips.prefix
+
+      dhcp = var.libvirt_infrastructure.network.nat.ips.dhcp != null ? {
+        ranges = [
+          {
+            start = var.libvirt_infrastructure.network.nat.ips.dhcp.start
+            end   = var.libvirt_infrastructure.network.nat.ips.dhcp.end
+          }
+        ]
+      } : null
+    }
+  ]
 }
 
 resource "libvirt_network" "hostonly_net" {
   name      = var.libvirt_infrastructure.network.hostonly.name
-  mode      = "route" # To let external network accesses VM directly via IP address
+  mode      = var.libvirt_infrastructure.network.hostonly.mode
   bridge    = var.libvirt_infrastructure.network.hostonly.bridge_name
-  addresses = [var.libvirt_infrastructure.network.hostonly.cidr]
   autostart = true
-  dhcp {
-    enabled = true
-  }
-  dns {
-    enabled = true
-  }
+
+  ips = [
+    {
+      address = var.libvirt_infrastructure.network.hostonly.ips.address
+      prefix  = var.libvirt_infrastructure.network.hostonly.ips.prefix
+
+      dhcp = var.libvirt_infrastructure.network.hostonly.ips.dhcp != null ? {
+        ranges = [
+          {
+            start = var.libvirt_infrastructure.network.hostonly.ips.dhcp.start
+            end   = var.libvirt_infrastructure.network.hostonly.ips.dhcp.end
+          }
+        ]
+      } : null
+    }
+  ]
 }
 
 resource "libvirt_pool" "storage_pool" {
