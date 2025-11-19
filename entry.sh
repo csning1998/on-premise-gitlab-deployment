@@ -12,16 +12,17 @@ readonly SCRIPTS_LIB_DIR="${SCRIPT_DIR}/scripts"
 readonly TERRAFORM_DIR="${SCRIPT_DIR}/terraform"
 readonly PACKER_DIR="${SCRIPT_DIR}/packer"
 readonly USER_HOME_DIR="${HOME}"
+readonly ANSIBLE_DIR="${SCRIPT_DIR}/ansible"
 
 source "${SCRIPTS_LIB_DIR}/utils_environment.sh"
 
 ###
 # MAIN ENVIRONMENT BOOTSTRAP LOGIC
 ###
-check_os_details
-check_virtual_support
-generate_env_file
-discover_and_update_layers
+host_os_detail_handler
+cpu_virt_support_checker
+env_file_bootstrapper
+iac_layer_discoverer
 
 # Source the .env file to export its variables to any sub-processes
 set -o allexport
@@ -48,10 +49,6 @@ if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
   fi
 fi
 
-# Set user and other readonly variables after loading configs
-
-readonly ANSIBLE_DIR="${SCRIPT_DIR}/ansible"
-
 # Set Terraform directory based on the selected provider
 
 read -r -a ALL_PACKER_BASES <<< "$ALL_PACKER_BASES"
@@ -65,7 +62,7 @@ echo "Environment: ${ENVIRONMENT_STRATEGY^^}"
 if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
   echo "Engine: PODMAN"
 fi
-display_vault_status
+vault_status_reporter
 echo
 
 PS3=">>> Please select an action: "
@@ -95,86 +92,86 @@ select opt in "${options[@]}"; do
   case $opt in
     "[ONCE-ONLY] Set up CA Certs for TLS")
       echo "# INFO: Follow the instruction below"
-      generate_tls_files
+      vault_tls_generator
       break
       ;;
     "[ONCE-ONLY] Initialize Vault")
       echo "# WARNING: This is a destructive operation for existing data."
-      initialize_vault
+      vault_cluster_bootstrapper
       break
       ;;
     "[ONCE-ONLY] Generate SSH Key")
       echo "# Generate SSH Key for this project..."
-      generate_ssh_key
+      ssh_key_generator_handler
       echo "# SSH Key successfully generated in the path '~/.ssh'."
       break
       ;;
     "[ONCE-ONLY] Setup KVM / QEMU for Native")
       echo "# Executing Setup KVM / QEMU workflow..."
-      if prompt_install_libvirt_tools; then
-        setup_libvirt_environment
+      if libvirt_install_handler; then
+        libvirt_environment_setup_handler
       fi
       echo "# Setup KVM / QEMU workflow completed."
       break
       ;;
     "[ONCE-ONLY] Setup Core IaC Tools for Native")
       echo "# Executing Setup Core IaC Tools workflow..."
-      if prompt_install_iac_tools; then
-        setup_iac_tools
+      if iac_tools_install_prompter; then
+        iac_tools_installation_handler
       fi
       echo "# Setup Core IaC Tools workflow completed."
       break
       ;;
     "[ONCE-ONLY] Verify IaC Environment for Native")
-      verify_iac_environment
+      env_native_verifier
       break
       ;;
     "Unseal Vault")
       echo "# Executing standard Vault startup workflow..."
-      unseal_vault
+      vault_seal_handler
       break
       ;;
     "Switch Environment Strategy")
-      switch_environment_strategy_handler
+      strategy_switch_handler
       ;;
     "Purge All Libvirt Resources")
-      ensure_libvirt_services_running
-      purge_libvirt_resources "all"
+      libvirt_service_manager
+      libvirt_resource_purger "all"
       break
       ;;
     "Purge All Packer and Terraform Resources")
       echo "# Executing Reset All workflow..."
-      cleanup_packer_output "all"
-      cleanup_terraform_layer "all"
-      report_execution_time
+      packer_artifact_cleaner "all"
+      terraform_artifact_cleaner "all"
+      execution_time_reporter
       echo "# Reset All workflow completed."
       break
       ;;
     "Build Packer Base Image")
       echo "# Entering Packer build selection menu..."
-      ensure_libvirt_services_running
-      selector_packer_build
+      libvirt_service_manager
+      packer_menu_handler
       break
       ;;
     "Provision Terraform Layer 10")
       echo "# Entering Terraform layer management menu..."
-      ensure_libvirt_services_running
-      selector_terraform_layer
+      libvirt_service_manager
+      terraform_layer_selector
       break
       ;;
     "[DEV] Rebuild Layer 10 via Ansible Command")
       echo "# Executing [DEV] Rebuild via direct Ansible command..."
-      if ! check_ssh_key_exists; then break; fi
-      ensure_libvirt_services_running
-      selector_playbook
-      report_execution_time
+      if ! ssh_key_verifier; then break; fi
+      libvirt_service_manager
+      ansible_menu_handler
+      execution_time_reporter
       echo "# [DEV] Rebuild via direct Ansible command completed."
       break
       ;;
     "Verify SSH")
       echo "# Executing Verify SSH workflow..."
-      if ! check_ssh_key_exists; then break; fi
-      prompt_verify_ssh
+      if ! ssh_key_verifier; then break; fi
+      ssh_verification_handler
       echo "# Verify SSH workflow completed."
       break
       ;;
@@ -184,22 +181,22 @@ select opt in "${options[@]}"; do
       ;;
     # "Rebuild Terraform Layer 10: KVM Provision Only")
     #   echo "# Executing Rebuild Terraform workflow for KVM Provisioner only..."
-    #   if ! check_ssh_key_exists; then break; fi
-    #   purge_libvirt_resources
-    #   ensure_libvirt_services_running
+    #   if ! ssh_key_verifier; then break; fi
+    #   libvirt_resource_purger
+    #   libvirt_service_manager
     #   destroy_terraform_layer "10-provision-kubeadm"
-    #   cleanup_terraform_layer "10-provision-kubeadm"
-    #   apply_terraform_layer "10-provision-kubeadm" "module.provisioner_kvm"
-    #   report_execution_time
+    #   terraform_artifact_cleaner "10-provision-kubeadm"
+    #   terraform_layer_executor "10-provision-kubeadm" "module.provisioner_kvm"
+    #   execution_time_reporter
     #   echo "# Rebuild Terraform KVM Provisioner workflow completed."
     #   break
     #   ;;
     # "Rebuild Terraform Layer 10: Ansible Bootstrapper Only")
     #   echo "# Executing Rebuild Terraform workflow for Ansible Bootstrapper only..."
-    #   if ! check_ssh_key_exists; then break; fi
-    #   ensure_libvirt_services_running
+    #   if ! ssh_key_verifier; then break; fi
+    #   libvirt_service_manager
     #   bootstrap_kubernetes_cluster
-    #   report_execution_time
+    #   execution_time_reporter
     #   echo "# Rebuild Terraform Ansible Bootstrapper workflow completed."
     #   break
     #   ;;

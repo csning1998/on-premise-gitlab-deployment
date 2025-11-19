@@ -27,7 +27,7 @@ declare -A NET_MAP=(
 )
 
 # Function: Ensure libvirt service is running before executing a command.
-ensure_libvirt_services_running() {
+libvirt_service_manager() {
   echo "#### Checking status of libvirt service..."
 
   # Use 'is-active' for a clean check without parsing text.
@@ -50,10 +50,10 @@ ensure_libvirt_services_running() {
 }
 
 # Function: Forcefully clean up all libvirt resources associated with this project.
-purge_libvirt_resources() {
+libvirt_resource_purger() {
   if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <target1> [target2...] | all"
-    echo "Available targets: ${!DOMAIN_MAP[@]}"
+    echo "Available targets: ${!DOMAIN_MAP[*]}"
     return 1
   fi
 
@@ -67,26 +67,31 @@ purge_libvirt_resources() {
   for target in "${targets_to_process[@]}"; do
     if [[ "$target" == "all" ]]; then
       echo "#### Target 'all' selected. Preparing to purge all known resources."
-      domain_prefixes_to_purge+=(${DOMAIN_MAP[@]})
-      pool_names_to_purge+=(${POOL_MAP[@]})
-      net_prefixes_to_purge+=(${NET_MAP[@]})
+      domain_prefixes_to_purge+=("${DOMAIN_MAP[@]}")
+      pool_names_to_purge+=("${POOL_MAP[@]}")
+      net_prefixes_to_purge+=("${NET_MAP[@]}")
       break # 'all' overrides everything else
     fi
 
     if [[ -v "DOMAIN_MAP[$target]" ]]; then
       echo "#### Adding resources for target: $target"
-      domain_prefixes_to_purge+=(${DOMAIN_MAP[$target]})
-      pool_names_to_purge+=(${POOL_MAP[$target]})
-      net_prefixes_to_purge+=(${NET_MAP[$target]})
+      domain_prefixes_to_purge+=("${DOMAIN_MAP[$target]}")
+      pool_names_to_purge+=("${POOL_MAP[$target]}")
+      net_prefixes_to_purge+=("${NET_MAP[$target]}")
     else
       echo "Warning: Unknown target '$target'. Skipping."
     fi
   done
 
   # --- 2. Deduplicate the resource lists ---
-  local unique_domain_prefixes=$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-  local unique_pool_names=$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-  local unique_net_prefixes=$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+  local unique_domain_prefixes
+	unique_domain_prefixes="$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+  
+	local unique_pool_names
+	unique_pool_names="$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+  
+	local unique_net_prefixes
+	unique_net_prefixes="$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 
   # --- 3. Purge VMs (Domains) ---
   echo ">>> STEP: Purging Virtual Machines (Domains)..."

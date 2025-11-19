@@ -42,6 +42,7 @@ build {
       "--extra-vars", "expected_hostname=${local.final_vm_name}",
       "--extra-vars", "public_key_file=${local.ssh_public_key_path}",
       "--extra-vars", "ssh_user=${local.ssh_username}",
+      "--extra-vars", "ansible_ssh_transfer_method=piped",
       "-v",
     ]
   }

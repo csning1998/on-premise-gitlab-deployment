@@ -42,13 +42,13 @@ resource "null_resource" "ssh_config_include" {
   }
 
   provisioner "local-exec" {
-    command     = ". ${path.module}/../../../scripts/utils_ssh.sh && integrate_ssh_config ${self.triggers.config_path}"
+    command     = ". ${path.module}/../../../scripts/utils_ssh.sh && ssh_config_bootstrapper ${self.triggers.config_path}"
     interpreter = ["/bin/bash", "-c"]
   }
 
   provisioner "local-exec" {
     when        = destroy
-    command     = ". ${path.module}/../../../scripts/utils_ssh.sh && deintegrate_ssh_config ${self.triggers.config_path}"
+    command     = ". ${path.module}/../../../scripts/utils_ssh.sh && ssh_config_include_unbootstrapper ${self.triggers.config_path}"
     interpreter = ["/bin/bash", "-c"]
   }
 }
@@ -72,7 +72,7 @@ resource "null_resource" "prepare_ssh_access" {
       set -e
       echo ">>> Verifying VM liveness and preparing SSH access..."
       . ${path.module}/../../../scripts/utils_ssh.sh
-      bootstrap_ssh_known_hosts "${var.config_name}" ${join(" ", [for node in var.nodes : node.ip])}
+      known_hosts_bootstrapper "${var.config_name}" ${join(" ", [for node in var.nodes : node.ip])}
       echo ">>> Liveness check passed. SSH access is ready."
     EOT
     interpreter = ["/bin/bash", "-c"]

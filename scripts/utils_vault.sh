@@ -3,11 +3,11 @@
 # --- Global Vault Variables ---
 readonly VAULT_KEYS_DIR="${SCRIPT_DIR}/vault/keys"
 readonly VAULT_INIT_OUTPUT_FILE="${VAULT_KEYS_DIR}/init-output.json"
-readonly VAULT_UNSEAL_KEYS_FILE="${VAULT_KEYS_DIR}/unseal.key"
+readonly VAULT_SEAL_HANDLER_KEYS_FILE="${VAULT_KEYS_DIR}/unseal.key"
 readonly VAULT_ROOT_TOKEN_FILE="${VAULT_KEYS_DIR}/root-token.txt"
 
 # Function: Display the current status of the Vault server.
-display_vault_status() {
+vault_status_reporter() {
   local status_color_red='\033[0;31m'
   local status_color_green='\033[0;32m'
   local status_color_yellow='\033[0;33m'
@@ -34,7 +34,7 @@ display_vault_status() {
 }
 
 # Function: Idempotently ensure the KVv2 secrets engine is enabled at 'secret/'.
-ensure_kv_engine_enabled() {
+vault_engine_enforcer() {
   echo ">>> Ensuring KV secrets engine is enabled at 'secret/'..."
   if ! vault secrets list -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json | jq -e '."secret/"' > /dev/null; then
     echo "#### 'secret/' path not found, enabling kv-v2 secrets engine..."
@@ -45,14 +45,14 @@ ensure_kv_engine_enabled() {
 }
 
 # Function (ONCE-ONLY): Initialize, unseal, and configure a new Vault server.
-initialize_vault() {
+vault_cluster_bootstrapper() {
   echo ">>> STEP: Vault First-Time Initialization..."
   echo
   echo "############################################################################"
   echo "### Proceeding will DESTROY ALL existing data and generate new keys.     ###"
   echo "############################################################################"
   echo 
-  read -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
+  read -r -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
   if [[ "$confirmation" != "yes" ]]; then
     echo "#### Re-initialization cancelled."
     return 1
@@ -61,23 +61,23 @@ initialize_vault() {
   echo "#### Initializing Vault..."
   vault operator init -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json > "$VAULT_INIT_OUTPUT_FILE"
 
-  jq -r .unseal_keys_b64[] "$VAULT_INIT_OUTPUT_FILE" > "$VAULT_UNSEAL_KEYS_FILE"
-  chmod 600 "$VAULT_UNSEAL_KEYS_FILE"
+  jq -r .unseal_keys_b64[] "$VAULT_INIT_OUTPUT_FILE" > "$VAULT_SEAL_HANDLER_KEYS_FILE"
+  chmod 600 "$VAULT_SEAL_HANDLER_KEYS_FILE"
   jq -r .root_token "$VAULT_INIT_OUTPUT_FILE" > "$VAULT_ROOT_TOKEN_FILE"
   chmod 600 "$VAULT_ROOT_TOKEN_FILE"
 
   echo "#### Automatically updating VAULT_TOKEN in .env file..."
   local new_token
   new_token=$(cat "$VAULT_ROOT_TOKEN_FILE")
-  update_env_var "VAULT_TOKEN" "${new_token}"
+  env_var_mutator "VAULT_TOKEN" "${new_token}"
 
   echo "#### Unsealing the new Vault instance..."
-  unseal_vault
+  vault_seal_handler
 
   # Login into Vault
   vault login -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${new_token}"
 
-  ensure_kv_engine_enabled
+  vault_engine_enforcer
 
   echo "####"
   echo "#### Vault is initialized and ready."
@@ -86,28 +86,29 @@ initialize_vault() {
 }
 
 # Function: Unseal a user-started Vault instance.
-unseal_vault() {
+vault_seal_handler() {
   echo ">>> STEP: Unsealing Vault..."
-  if [ ! -f "$VAULT_UNSEAL_KEYS_FILE" ]; then
+  if [ ! -f "$VAULT_SEAL_HANDLER_KEYS_FILE" ]; then
     echo "#### ERROR: Unseal keys not found. Run 'Initialize Vault' first." >&2; return 1;
   fi
 
   if [[ "$(vault status -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json 2>/dev/null | jq .sealed)" == "true" ]]; then
     echo "#### Vault is sealed. Unsealing with saved keys...";
-    mapfile -t keys < "$VAULT_UNSEAL_KEYS_FILE";
+    mapfile -t keys < "$VAULT_SEAL_HANDLER_KEYS_FILE";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[0]}";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[1]}";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[2]}";
     echo "#### Unseal process complete.";
-    export VAULT_TOKEN=$(cat "$VAULT_ROOT_TOKEN_FILE"); 
-    update_env_var "VAULT_TOKEN" "$VAULT_TOKEN"
+    VAULT_TOKEN=$(cat "$VAULT_ROOT_TOKEN_FILE")
+    export VAULT_TOKEN
+    env_var_mutator "VAULT_TOKEN" "$VAULT_TOKEN"
   else
     echo "#### Vault is already unsealed or unreachable.";
   fi
 }
 
 # Function: Automatically Set up CA Certs for TLS  
-generate_tls_files() {
+vault_tls_generator() {
   echo ">>> Step: Generating CA Root files for TLS"
 
   echo "#############################################################################"
@@ -115,7 +116,7 @@ generate_tls_files() {
   echo "###   generate new keys.                                                  ###"
   echo "#############################################################################"
   echo 
-  read -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
+  read -r -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
   if [[ "$confirmation" != "yes" ]]; then
     echo "#### Re-initialization cancelled."
     return 1
