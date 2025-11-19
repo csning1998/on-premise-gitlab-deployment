@@ -68,10 +68,10 @@ env_native_verifier() {
 # Function: Prompt user to install Libvirt tools (interactive).
 libvirt_install_handler() {
   if libvirt_tools_verifier; then
-    read -p "######## Libvirt/KVM is already installed. Reinstall? (y/n): " answer
+    read -r -p "######## Libvirt/KVM is already installed. Reinstall? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   else
-    read -p "######## Libvirt/KVM is not installed. Proceed with installation? (y/n): " answer
+    read -r -p "######## Libvirt/KVM is not installed. Proceed with installation? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   fi
   return 0
@@ -80,10 +80,10 @@ libvirt_install_handler() {
 # Function: Prompt user to install Core IaC tools (interactive).
 iac_tools_install_prompter() {
   if iac_tools_verifier; then
-    read -p "######## Core IaC tools are already installed. Reinstall? (y/n): " answer
+    read -r -p "######## Core IaC tools are already installed. Reinstall? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   else
-    read -p "######## Some Core IaC tools are missing. Proceed with installation? (y/n): " answer
+    read -r -p "######## Some Core IaC tools are missing. Proceed with installation? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   fi
   return 0
@@ -137,7 +137,7 @@ libvirt_environment_setup_handler() {
     echo "#### To ensure Packer and Terraform can operate correctly, several system-level"
     echo "#### configurations are required for KVM on Debian-based systems."
     echo
-    read -p "#### Do you want to proceed with these automated changes? (y/n): " -n 1 -r
+    read -r -p "#### Do you want to proceed with these automated changes? (y/n): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "#### Proceeding with KVM configuration fixes..."

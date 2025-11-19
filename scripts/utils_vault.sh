@@ -52,7 +52,7 @@ vault_cluster_bootstrapper() {
   echo "### Proceeding will DESTROY ALL existing data and generate new keys.     ###"
   echo "############################################################################"
   echo 
-  read -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
+  read -r -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
   if [[ "$confirmation" != "yes" ]]; then
     echo "#### Re-initialization cancelled."
     return 1
@@ -115,7 +115,7 @@ vault_tls_generator() {
   echo "###   generate new keys.                                                  ###"
   echo "#############################################################################"
   echo 
-  read -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
+  read -r -p "### Type 'yes' to confirm and proceed with initialization: " confirmation
   if [[ "$confirmation" != "yes" ]]; then
     echo "#### Re-initialization cancelled."
     return 1

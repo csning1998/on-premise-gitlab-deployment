@@ -27,7 +27,7 @@ ssh_key_generator_handler() {
   local key_name
 
   echo "#### This utility will generate an SSH key for IaC automation (unattended mode)."
-  read -p "#### Enter the desired key name (default: ${default_key_name}): " key_name
+  read -r -p "#### Enter the desired key name (default: ${default_key_name}): " key_name
   
   key_name=${key_name:-$default_key_name}
   
@@ -36,7 +36,7 @@ ssh_key_generator_handler() {
 
   if [ -f "$private_key_path" ]; then
     echo "#### Warning: Key file '${private_key_path}' already exists."
-    read -p "#### Overwrite? (y/n): " overwrite_answer
+    read -r -p "#### Overwrite? (y/n): " overwrite_answer
     if [[ ! "$overwrite_answer" =~ ^[Yy]$ ]]; then
       echo "#### Skipping key generation."
       return
@@ -136,7 +136,7 @@ ssh_connection_verifier() {
 
 # Function: Check if user wants to verify SSH connections
 ssh_verification_handler() {
-  read -p "#### Do you want to verify SSH connections? (y/n): " answer
+  read -r -p "#### Do you want to verify SSH connections? (y/n): " answer
   if [[ "${answer}" =~ ^[Yy]$ ]]; then
     ssh_connection_verifier
   else
