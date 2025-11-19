@@ -29,7 +29,7 @@ var verifyCmd = &cobra.Command{
 
 		// Execute the specific function within the shell script.
 		// Common pattern for calling shell functions from a non-interactive shell.
-		commandString := fmt.Sprintf("source %s && prompt_verify_ssh", scriptPath)
+		commandString := fmt.Sprintf("source %s && ssh_verification_handler", scriptPath)
 		err := executor.ExecuteCommand("bash", "-c", commandString)
 
 		if err != nil {

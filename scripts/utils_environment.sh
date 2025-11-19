@@ -1,6 +1,7 @@
+#!/bin/bash
 
 # Function: Scans project directories to find all Packer and Terraform layers.
-discover_and_update_layers() {
+iac_layer_discoverer() {
   echo ">>> Discovering Packer Base and Terraform layers..."
   cd "${SCRIPT_DIR}" || return 1
 
@@ -13,7 +14,7 @@ discover_and_update_layers() {
       tr '\n' ' ') 
   fi
   # Remove trailing space
-  update_env_var "ALL_PACKER_BASES" "${packer_layers_str% }"
+  env_var_mutator "ALL_PACKER_BASES" "${packer_layers_str% }"
 
   # Discover Terraform Layers
   local terraform_layers_str=""
@@ -22,13 +23,13 @@ discover_and_update_layers() {
       sort | \
       tr '\n' ' ')
   fi
-  update_env_var "ALL_TERRAFORM_LAYERS" "${terraform_layers_str% }"
+  env_var_mutator "ALL_TERRAFORM_LAYERS" "${terraform_layers_str% }"
   
   echo "#### Layer discovery complete and .env updated."
 }
 
 # Function: Check the host operating system
-check_os_details() {
+host_os_detail_handler() {
   if [ -f /etc/os-release ]; then
     . /etc/os-release
     if [[ "$ID_LIKE" == *"fedora"* || "$ID" == "fedora" || "$ID" == "rhel" || "$ID" == "centos" ]]; then
@@ -46,7 +47,7 @@ check_os_details() {
 }
 
 # Function: Check for CPU hardware virtualization support (VT-x or AMD-V).
-check_virtual_support() {
+cpu_virt_support_checker() {
   if grep -E -q '^(vmx|svm)' /proc/cpuinfo; then
     export VIRT_SUPPORTED="true"
   else
@@ -55,8 +56,8 @@ check_virtual_support() {
 }
 
 # Function to generate the .env file with intelligent defaults if it doesn't exist.
-generate_env_file() {
-  cd ${SCRIPT_DIR}
+env_file_bootstrapper() {
+  cd "${SCRIPT_DIR}" || exit 1
   if [ -f .env ]; then
     return 0 # File already exists, do nothing.
   fi
@@ -111,12 +112,12 @@ EOF
   echo "#### .env file created successfully."
 
   # 4. perform the initial discovery.
-  discover_and_update_layers
+  iac_layer_discoverer
 }
 
 # Function to update a specific variable in the .env file
-update_env_var() {
-  cd ${SCRIPT_DIR}
+env_var_mutator() {
+  cd "${SCRIPT_DIR}" || exit 1
   local key="$1"
   local value="$2"
   # This sed command finds the key and replaces its value, handling paths with slashes.
@@ -128,20 +129,20 @@ switch_strategy() {
   local var_name="$1"
   local new_value="$2"
   
-  update_env_var "$var_name" "$new_value"
+  env_var_mutator "$var_name" "$new_value"
   echo
   echo "Strategy '${var_name}' in .env updated to '${new_value}'."
-  cd ${SCRIPT_DIR} && ./entry.sh
+  cd "${SCRIPT_DIR}" && ./entry.sh
 }
 
-switch_environment_strategy_handler() {
+strategy_switch_handler() {
   echo
   echo "INFO: Resetting Terraform state before switching strategy to prevent inconsistencies..."
   (cd "${TERRAFORM_DIR}" && rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup)
   rm -rf "$HOME/.ssh/on-premise-gitlab-deployment_config"
   echo "#### Terraform state reset."
   echo "INFO: Purge libvirt resources (VMs, networks, storage pools)"
-  purge_libvirt_resources
+  libvirt_resource_purger
   
   # Check if the storage pool exists before attempting to destroy or undefine
   if sudo virsh pool-info iac-kubeadm >/dev/null 2>&1; then
