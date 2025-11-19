@@ -81,7 +81,6 @@ packer_build_executor() {
 packer_menu_handler() {
   local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Back to Main Menu")
 
-  local PS3_SUB=">>> Select a Packer build to run: "
   echo
   select build_base in "${packer_build_executor_options[@]}"; do
     if [[ "$build_base" == "Back to Main Menu" ]]; then

@@ -56,7 +56,7 @@ cpu_virt_support_checker() {
 
 # Function to generate the .env file with intelligent defaults if it doesn't exist.
 env_file_bootstrapper() {
-  cd ${SCRIPT_DIR}
+  cd "${SCRIPT_DIR}" || exit 1
   if [ -f .env ]; then
     return 0 # File already exists, do nothing.
   fi
@@ -116,7 +116,7 @@ EOF
 
 # Function to update a specific variable in the .env file
 env_var_mutator() {
-  cd ${SCRIPT_DIR}
+  cd "${SCRIPT_DIR}" || exit 1
   local key="$1"
   local value="$2"
   # This sed command finds the key and replaces its value, handling paths with slashes.

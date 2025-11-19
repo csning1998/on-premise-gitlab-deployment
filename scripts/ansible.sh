@@ -133,7 +133,6 @@ ansible_menu_handler() {
   done
   inventory_options+=("Back to Main Menu")
 
-  local PS3_SUB=">>> Select a Cluster Inventory to run its Playbook: "
   echo
   select inventory in "${inventory_options[@]}"; do
     

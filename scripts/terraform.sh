@@ -76,7 +76,6 @@ terraform_layer_executor() {
 # Function: Display a sub-menu to select a Terraform layer for a full rebuild.
 terraform_layer_selector() {
   local layer_options=("${ALL_TERRAFORM_LAYERS[@]}" "Back to Main Menu")
-  local PS3_SUB_LAYER=">>> Select a Terraform layer to REBUILD: "
 
   echo
   select layer in "${layer_options[@]}"; do
