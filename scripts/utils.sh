@@ -114,7 +114,7 @@ check_and_fix_permissions() {
 }
 
 # Function: Report execution time
-report_execution_time() {
+execution_time_reporter() {
   local END_TIME DURATION MINUTES SECONDS
   END_TIME=$(date +%s)
   DURATION=$((END_TIME - START_TIME))

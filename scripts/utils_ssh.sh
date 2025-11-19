@@ -6,7 +6,7 @@ readonly SSH_CONFIG="$HOME/.ssh/config"
 # readonly KNOWN_HOSTS_FILE="$HOME/.ssh/k8s_cluster_known_hosts"
 
 # Function: Check if the required SSH private key exists
-check_ssh_key_exists() {
+ssh_key_verifier() {
   if [ -z "$SSH_PRIVATE_KEY" ]; then
       echo "#### Error: SSH_PRIVATE_KEY variable is not set."
       return 1
@@ -22,7 +22,7 @@ check_ssh_key_exists() {
 }
 
 # Function: Generate an SSH key for IaC automation (unattended mode)
-generate_ssh_key() {
+ssh_key_generator_handler() {
   local default_key_name="id_ed25519_on-premise-gitlab-deployment"
   local key_name
 
@@ -51,7 +51,7 @@ generate_ssh_key() {
   echo "--------------------------------------------------"
   echo ">>> Updating SSH_PRIVATE_KEY in .env file to: ${private_key_path}"
   # Call the helper function to update the .env file
-  update_env_var "SSH_PRIVATE_KEY" "${private_key_path}"
+  env_var_mutator "SSH_PRIVATE_KEY" "${private_key_path}"
 
   echo "#### IMPORTANT: Please update your configuration file"
   echo "####   e.g., in 'packer/secret.auto.pkrvars.hcl' or terraform/*.tfvars"
@@ -62,7 +62,7 @@ generate_ssh_key() {
 }
 
 # Function: Verify SSH access to hosts defined in ~/.ssh/on-premise-gitlab-deployment_config
-verify_ssh() {
+ssh_connection_verifier() {
   echo ">>> STEP: Performing strict SSH access verification for all IaC configurations..."
 
   local ssh_config_file
@@ -135,21 +135,21 @@ verify_ssh() {
 }
 
 # Function: Check if user wants to verify SSH connections
-prompt_verify_ssh() {
+ssh_verification_handler() {
   read -p "#### Do you want to verify SSH connections? (y/n): " answer
   if [[ "${answer}" =~ ^[Yy]$ ]]; then
-    verify_ssh
+    ssh_connection_verifier
   else
     echo "#### Skipping SSH verification."
   fi
 }
 
 # Function: Prepend the Include directive to ~/.ssh/config for the k8s cluster
-integrate_ssh_config() {
+ssh_config_bootstrapper() {
   # Default to ~/.ssh/config if not set, though it should be set by the caller.
   local k8s_config_path="$1"
   if [[ -z "${k8s_config_path}" ]]; then
-    echo "Error: No config path provided to integrate_ssh_config." >&2
+    echo "Error: No config path provided to ssh_config_bootstrapper." >&2
     return 1
   fi
 
@@ -210,10 +210,10 @@ integrate_ssh_config() {
 }
 
 # Function: Remove the Include directive from ~/.ssh/config for the k8s cluster
-deintegrate_ssh_config() {
+ssh_config_include_unbootstrapper() {
   local k8s_config_path="$1"
   if [[ -z "${k8s_config_path}" ]]; then
-    echo "Error: No config path provided to deintegrate_ssh_config." >&2
+    echo "Error: No config path provided to ssh_config_include_unbootstrapper." >&2
     return 1
   fi
   
@@ -231,9 +231,9 @@ deintegrate_ssh_config() {
   fi
 }
 
-bootstrap_ssh_known_hosts() {
+known_hosts_bootstrapper() {
   if [ $# -lt 2 ]; then
-    echo "#### Error: Not enough arguments. Usage: bootstrap_ssh_known_hosts <config_name> [skip_poll] <host1> [<host2>...]" >&2
+    echo "#### Error: Not enough arguments. Usage: known_hosts_bootstrapper <config_name> [skip_poll] <host1> [<host2>...]" >&2
     return 1
   fi
 
@@ -249,7 +249,7 @@ bootstrap_ssh_known_hosts() {
 
   # After potential shifts, if no arguments remain, there are no hosts to process.
   if [ $# -eq 0 ]; then
-    echo "#### Error: No hosts provided to bootstrap_ssh_known_hosts." >&2
+    echo "#### Error: No hosts provided to known_hosts_bootstrapper." >&2
     return 1
   fi
 
@@ -300,7 +300,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 # Function: Report execution time
-report_execution_time() {
+execution_time_reporter() {
   local END_TIME DURATION MINUTES SECONDS
   END_TIME=$(date +%s)
   DURATION=$((END_TIME - START_TIME))

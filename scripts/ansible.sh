@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Extracts confidential variables from Vault for specific playbooks.
-extractor_confidential_var() {
+vault_secret_extractor() {
   local playbook_file="$1"
   local extra_vars_string=""
   local secrets_json
@@ -54,12 +54,12 @@ extractor_confidential_var() {
 }
 
 # [Dev] This function is for faster reset and re-execute the Ansible Playbook
-run_ansible_playbook() {
+ansible_playbook_executor() {
   local playbook_file="$1"  # (e.g., "10-provision-kubeadm.yaml").
   local inventory_file="$2" # (e.g., "inventory-kubeadm-cluster.yaml").
 
   if [ -z "$playbook_file" ] || [ -z "$inventory_file" ]; then
-    echo "FATAL: Playbook or inventory file not specified for run_ansible_playbook function." >&2
+    echo "FATAL: Playbook or inventory file not specified for ansible_playbook_executor function." >&2
     return 1
   fi
 
@@ -100,12 +100,12 @@ run_ansible_playbook() {
   readarray -t hosts_array <<< "${all_hosts}"
 
   # --- STEP 3: Call the function used by Terraform ---
-  bootstrap_ssh_known_hosts "${config_name}" "skip_poll" "${hosts_array[@]}"
+  known_hosts_bootstrapper "${config_name}" "skip_poll" "${hosts_array[@]}"
 
   echo ">>> STEP: Running Ansible Playbook [${playbook_file}] with inventory [${inventory_file}]"
 
   local extra_vars
-  if ! extra_vars=$(extractor_confidential_var "${playbook_file}"); then
+  if ! extra_vars=$(vault_secret_extractor "${playbook_file}"); then
     return 1  # the extractor func will print its err
   fi
 
@@ -121,7 +121,7 @@ run_ansible_playbook() {
 }
 
 # Function: Display a sub-menu to select and run a Layer 10 playbook.
-selector_playbook() {
+ansible_menu_handler() {
   local inventory_options=()
   
   local inventory_dir="${ANSIBLE_DIR}" 
@@ -153,7 +153,7 @@ selector_playbook() {
       echo "Derived Playbook:   ${playbook}"
       echo "==========================="
       
-      run_ansible_playbook "$playbook" "$inventory"
+      ansible_playbook_executor "$playbook" "$inventory"
       break
 
     else

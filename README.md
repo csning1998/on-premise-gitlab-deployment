@@ -2,7 +2,7 @@
 
 ## Section 0. Introduction
 
-This repository contains an Infrastructure as Code (IaC) Proof of Concept (PoC) utilizing QEMU-KVM to automate the deployment of a High Availability (HA) Kubernetes Cluster (Kubeadm) in an on-premise environment. This project was developed based on the requirements identified during an internship at Cathay General Hospital to automate the foundation for GitLab on-premise, targeting legacy systems with a repeatable and efficient IaC pipeline. 
+This repository contains an Infrastructure as Code (IaC) Proof of Concept (PoC) utilizing QEMU-KVM to automate the deployment of a High Availability (HA) Kubernetes Cluster (Kubeadm) in an on-premise environment. This project was developed based on the requirements identified during an internship at Cathay General Hospital to automate the foundation for GitLab on-premise, targeting legacy systems with a repeatable and efficient IaC pipeline.
 
 (The repository is hosted publicly here as a technical portfolio, in agreement with the organization.)
 
@@ -637,7 +637,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **`9) Purge All Libvirt Resources`**:
 
-        This option executes `purge_libvirt_resources "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
+        This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
 
     - **`10) Reset Packer and Terraform`**:
 
@@ -663,7 +663,7 @@ sequenceDiagram
 
     User->>+Entrypoint: Execute 'Rebuild All'
 
-    Entrypoint->>+Packer: 1. Execute 'packer_build'
+    Entrypoint->>+Packer: 1. Execute 'packer_build_executor'
     Packer->>+Libvirt: 1a. Build VM from ISO
     note right of Packer: Provisioner 'ansible' is triggered
     Packer->>+Ansible: 1b. Execute Playbook<br>(00-provision-base-image.yaml)

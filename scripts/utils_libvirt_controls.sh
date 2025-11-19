@@ -27,7 +27,7 @@ declare -A NET_MAP=(
 )
 
 # Function: Ensure libvirt service is running before executing a command.
-ensure_libvirt_services_running() {
+libvirt_service_manager() {
   echo "#### Checking status of libvirt service..."
 
   # Use 'is-active' for a clean check without parsing text.
@@ -50,7 +50,7 @@ ensure_libvirt_services_running() {
 }
 
 # Function: Forcefully clean up all libvirt resources associated with this project.
-purge_libvirt_resources() {
+libvirt_resource_purger() {
   if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <target1> [target2...] | all"
     echo "Available targets: ${!DOMAIN_MAP[@]}"

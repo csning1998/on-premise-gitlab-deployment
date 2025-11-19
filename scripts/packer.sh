@@ -3,12 +3,12 @@
 # This script contains functions for managing the Packer image build process.
 
 # Function: Clean up Packer output directory and related artifacts
-cleanup_packer_output() {
+packer_artifact_cleaner() {
   echo ">>> STEP: Cleaning Packer artifacts..."
 
   local target_layer="$1"
   if [ -z "$target_layer" ]; then
-    echo "FATAL: No Packer layer specified for cleanup_packer_output function." >&2
+    echo "FATAL: No Packer layer specified for packer_artifact_cleaner function." >&2
     return 1
   fi
 
@@ -25,9 +25,9 @@ cleanup_packer_output() {
     layers_to_clean=("$target_layer")
   fi
 
-  for layer_name in "${layers_to_clean[@]}"; do
-    echo "#### Cleaning output for layer: ${layer_name}"
-    rm -rf "${PACKER_DIR}/output/${layer_name}"
+  for base_name in "${layers_to_clean[@]}"; do
+    echo "#### Cleaning output for layer: ${base_name}"
+    rm -rf "${PACKER_DIR}/output/${base_name}"
   done
 
   # --- Generic Packer Cache Cleanup ---
@@ -43,29 +43,29 @@ cleanup_packer_output() {
 }
 
 # Function: Execute Packer build
-# The layer_name now corresponds to the *.pkrvars.hcl file to use.
-build_packer() {
-  local layer_name="$1"
-  if [ -z "$layer_name" ]; then
-    echo "FATAL: No Packer build type specified for build_packer function." >&2
+# The base_name now corresponds to the *.pkrvars.hcl file to use.
+packer_build_executor() {
+  local base_name="$1"
+  if [ -z "$base_name" ]; then
+    echo "FATAL: No Packer build type specified for packer_build_executor function." >&2
     return 1
   fi
 
   # Construct the path to the specific var file.
-  local build_var_file="${PACKER_DIR}/${layer_name}.pkrvars.hcl"
+  local build_var_file="${PACKER_DIR}/${base_name}.pkrvars.hcl"
 
   if [ ! -f "$build_var_file" ]; then
     echo "FATAL: Packer var file not found: ${build_var_file}" >&2
     return 1
   fi
 
-  echo ">>> STEP: Starting new Packer build for [${layer_name}]..."
+  echo ">>> STEP: Starting new Packer build for [${base_name}]..."
 
   # The command now loads the common values file first, then the specific
   # build var file, and runs from the root Packer directory.
   local cmd="packer init . && packer build \
     -var-file=values.pkrvars.hcl \
-    -var-file=${layer_name}.pkrvars.hcl \
+    -var-file=${base_name}.pkrvars.hcl \
     ."
 
   # Add this to abort and debug if packer build failed.
@@ -73,28 +73,27 @@ build_packer() {
 
   run_command "${cmd}" "${PACKER_DIR}"
 
-  echo "#### Packer build complete. New base image for [${layer_name}] is ready."
+  echo "#### Packer build complete. New base image for [${base_name}] is ready."
   echo "--------------------------------------------------"
 }
 
 # Function: Display a sub-menu to select and run a Packer build.
-selector_packer_build() {
-  # Source packer base array from .env file
-  local packer_build_options=("${ALL_PACKER_BASES[@]}" "Back to Main Menu")
+packer_menu_handler() {
+  local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Back to Main Menu")
 
   local PS3_SUB=">>> Select a Packer build to run: "
   echo
-  select build_layer in "${packer_build_options[@]}"; do
-    if [[ "$build_layer" == "Back to Main Menu" ]]; then
+  select build_base in "${packer_build_executor_options[@]}"; do
+    if [[ "$build_base" == "Back to Main Menu" ]]; then
       echo "# Returning to main menu..."
       break
-    elif [[ " ${ALL_PACKER_BASES[*]} " =~ " ${build_layer} " ]]; then
-      echo "# Executing Rebuild Packer workflow for [${build_layer}]..."
-      if ! check_ssh_key_exists; then break; fi
-      ensure_libvirt_services_running
-      cleanup_packer_output "${build_layer}"
-      build_packer "${build_layer}"
-      report_execution_time
+    elif [[ " ${ALL_PACKER_BASES[*]} " =~ " ${build_base} " ]]; then
+      echo "# Executing Rebuild Packer workflow for [${build_base}]..."
+      if ! ssh_key_verifier; then break; fi
+      libvirt_service_manager
+      packer_artifact_cleaner "${build_base}"
+      packer_build_executor "${build_base}"
+      execution_time_reporter
       break 2
     else
       echo "Invalid option $REPLY"
