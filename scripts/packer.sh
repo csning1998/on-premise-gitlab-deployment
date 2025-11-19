@@ -86,7 +86,7 @@ packer_menu_handler() {
     if [[ "$build_base" == "Back to Main Menu" ]]; then
       echo "# Returning to main menu..."
       break
-    elif [[ " ${ALL_PACKER_BASES[*]} " =~ " ${build_base} " ]]; then
+    elif [[ " ${ALL_PACKER_BASES[*]} " =~ ${build_base} ]]; then
       echo "# Executing Rebuild Packer workflow for [${build_base}]..."
       if ! ssh_key_verifier; then break; fi
       libvirt_service_manager

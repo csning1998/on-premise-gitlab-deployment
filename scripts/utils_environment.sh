@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # Function: Scans project directories to find all Packer and Terraform layers.
 iac_layer_discoverer() {
@@ -131,7 +132,7 @@ switch_strategy() {
   env_var_mutator "$var_name" "$new_value"
   echo
   echo "Strategy '${var_name}' in .env updated to '${new_value}'."
-  cd ${SCRIPT_DIR} && ./entry.sh
+  cd "${SCRIPT_DIR}" && ./entry.sh
 }
 
 strategy_switch_handler() {

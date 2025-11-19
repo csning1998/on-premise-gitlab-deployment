@@ -53,7 +53,7 @@ libvirt_service_manager() {
 libvirt_resource_purger() {
   if [[ $# -eq 0 ]]; then
     echo "Usage: $0 <target1> [target2...] | all"
-    echo "Available targets: ${!DOMAIN_MAP[@]}"
+    echo "Available targets: ${!DOMAIN_MAP[*]}"
     return 1
   fi
 
@@ -67,26 +67,31 @@ libvirt_resource_purger() {
   for target in "${targets_to_process[@]}"; do
     if [[ "$target" == "all" ]]; then
       echo "#### Target 'all' selected. Preparing to purge all known resources."
-      domain_prefixes_to_purge+=(${DOMAIN_MAP[@]})
-      pool_names_to_purge+=(${POOL_MAP[@]})
-      net_prefixes_to_purge+=(${NET_MAP[@]})
+      domain_prefixes_to_purge+=("${DOMAIN_MAP[@]}")
+      pool_names_to_purge+=("${POOL_MAP[@]}")
+      net_prefixes_to_purge+=("${NET_MAP[@]}")
       break # 'all' overrides everything else
     fi
 
     if [[ -v "DOMAIN_MAP[$target]" ]]; then
       echo "#### Adding resources for target: $target"
-      domain_prefixes_to_purge+=(${DOMAIN_MAP[$target]})
-      pool_names_to_purge+=(${POOL_MAP[$target]})
-      net_prefixes_to_purge+=(${NET_MAP[$target]})
+      domain_prefixes_to_purge+=("${DOMAIN_MAP[$target]}")
+      pool_names_to_purge+=("${POOL_MAP[$target]}")
+      net_prefixes_to_purge+=("${NET_MAP[$target]}")
     else
       echo "Warning: Unknown target '$target'. Skipping."
     fi
   done
 
   # --- 2. Deduplicate the resource lists ---
-  local unique_domain_prefixes=$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-  local unique_pool_names=$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-  local unique_net_prefixes=$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+  local unique_domain_prefixes
+	unique_domain_prefixes="$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+  
+	local unique_pool_names
+	unique_pool_names="$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
+  
+	local unique_net_prefixes
+	unique_net_prefixes="$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 
   # --- 3. Purge VMs (Domains) ---
   echo ">>> STEP: Purging Virtual Machines (Domains)..."
@@ -103,7 +108,7 @@ libvirt_resource_purger() {
   # --- 4. Purge Storage Volumes and Pools ---
   echo ">>> STEP: Purging Storage Volumes and Pools..."
   for pool in ${unique_pool_names}; do
-    if sudo virsh pool-info "$pool" >/dev/null 2>&1; then
+    if sudo virsh pool-info "$pool" 	>/dev/null 2>&1; then
       # Delete all volumes within the pool
       for vol in $(sudo virsh vol-list "$pool" | awk 'NR>2 {print $1}' || true); do
         if [[ -n "$vol" ]]; then

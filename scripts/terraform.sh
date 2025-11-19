@@ -83,7 +83,7 @@ terraform_layer_selector() {
       echo "# Returning to main menu..."
       break
 
-    elif [[ " ${ALL_TERRAFORM_LAYERS[*]} " =~ " ${layer} " ]]; then
+    elif [[ " ${ALL_TERRAFORM_LAYERS[*]} " =~ ${layer} ]]; then
       echo "# Executing Full Rebuild for [${layer}]..."
       if ! ssh_key_verifier; then break; fi
       libvirt_resource_purger "${layer}"
