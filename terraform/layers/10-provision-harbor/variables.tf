@@ -1,4 +1,3 @@
-
 # Registry Server Topology & Configuration
 
 variable "harbor_cluster_config" {
@@ -27,14 +26,28 @@ variable "harbor_infrastructure" {
   type = object({
     network = object({
       nat = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
       hostonly = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
     })
     storage_pool_name = optional(string, "iac-harbor")

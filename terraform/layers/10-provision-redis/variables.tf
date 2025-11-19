@@ -1,4 +1,3 @@
-
 # Registry Server Topology & Configuration
 
 variable "redis_cluster_config" {
@@ -27,14 +26,28 @@ variable "redis_infrastructure" {
   type = object({
     network = object({
       nat = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
       hostonly = object({
-        name        = string
-        cidr        = string
-        bridge_name = string
+        name_network = string
+        name_bridge  = string
+        ips = object({
+          address = string
+          prefix  = number
+          dhcp = optional(object({
+            start = string
+            end   = string
+          }))
+        })
       })
     })
     redis_allowed_subnet = optional(string, "172.16.137.0/24")

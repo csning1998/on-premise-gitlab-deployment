@@ -4,7 +4,7 @@
 # Infrastructure as Code (IaC) environment.
 
 # Function: Verify if Libvirt/KVM tools are installed (non-interactive).
-verify_libvirt_tools_installed() {
+libvirt_tools_verifier() {
   echo ">>> Verifying Libvirt/KVM environment..."
   local all_installed=true
   local tools_to_check=(
@@ -25,7 +25,7 @@ verify_libvirt_tools_installed() {
 }
 
 # Function: Verify if Core IaC tools are installed (non-interactive).
-verify_core_iac_tools_installed() {
+iac_tools_verifier() {
   echo ">>> Verifying Core IaC Tools (HashiCorp/Ansible)..."
   local all_installed=true
   local tools_to_check=(
@@ -49,12 +49,12 @@ verify_core_iac_tools_installed() {
 
 
 # Function: Verify all native environment tools (non-interactive).
-verify_iac_environment() {
+env_native_verifier() {
   echo ">>> STEP: Verifying full native IaC environment..."
   local libvirt_ok=true
   local iac_ok=true
-  verify_libvirt_tools_installed || libvirt_ok=false
-  verify_core_iac_tools_installed || iac_ok=false
+  libvirt_tools_verifier || libvirt_ok=false
+  iac_tools_verifier || iac_ok=false
   echo "--------------------------------------------------"
   if $libvirt_ok && $iac_ok; then
     echo "#### Verification successful: All required tools are installed."
@@ -66,31 +66,31 @@ verify_iac_environment() {
 }
 
 # Function: Prompt user to install Libvirt tools (interactive).
-prompt_install_libvirt_tools() {
-  if verify_libvirt_tools_installed; then
-    read -p "######## Libvirt/KVM is already installed. Reinstall? (y/n): " answer
+libvirt_install_handler() {
+  if libvirt_tools_verifier; then
+    read -r -p "######## Libvirt/KVM is already installed. Reinstall? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   else
-    read -p "######## Libvirt/KVM is not installed. Proceed with installation? (y/n): " answer
+    read -r -p "######## Libvirt/KVM is not installed. Proceed with installation? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   fi
   return 0
 }
 
 # Function: Prompt user to install Core IaC tools (interactive).
-prompt_install_iac_tools() {
-  if verify_core_iac_tools_installed; then
-    read -p "######## Core IaC tools are already installed. Reinstall? (y/n): " answer
+iac_tools_install_prompter() {
+  if iac_tools_verifier; then
+    read -r -p "######## Core IaC tools are already installed. Reinstall? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   else
-    read -p "######## Some Core IaC tools are missing. Proceed with installation? (y/n): " answer
+    read -r -p "######## Some Core IaC tools are missing. Proceed with installation? (y/n): " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then return 1; fi
   fi
   return 0
 }
 
 # Function: Setup KVM, QEMU, and Libvirt environment
-setup_libvirt_environment() {
+libvirt_environment_setup_handler() {
   echo ">>> STEP: Setting up Libvirt/KVM environment for OS Family: ${HOST_OS_FAMILY^^}..."
 
   if [[ "${HOST_OS_FAMILY}" == "rhel" ]]; then
@@ -137,7 +137,7 @@ setup_libvirt_environment() {
     echo "#### To ensure Packer and Terraform can operate correctly, several system-level"
     echo "#### configurations are required for KVM on Debian-based systems."
     echo
-    read -p "#### Do you want to proceed with these automated changes? (y/n): " -n 1 -r
+    read -r -p "#### Do you want to proceed with these automated changes? (y/n): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "#### Proceeding with KVM configuration fixes..."
@@ -191,7 +191,7 @@ setup_libvirt_environment() {
 }
 
 # Function: Install OS-specific base dependencies
-install_os_dependencies() {
+os_dependency_install_handler() {
   echo "#### Installing OS-specific base packages for ${HOST_OS_FAMILY^^}..."
 
   if [[ "${HOST_OS_FAMILY}" == "rhel" ]]; then
@@ -206,7 +206,7 @@ install_os_dependencies() {
 }
 
 # Function: Install Ansible using pip
-install_ansible_core() {
+ansible_core_install_handler() {
   echo "#### Installing Ansible Core using pip..."
   sudo pip3 install ansible-core
 
@@ -215,7 +215,7 @@ install_ansible_core() {
 }
 
 # Function: Install HashiCorp tools using the universal binary method
-install_hashicorp_tools() {
+hashicorp_tool_install_handler() {
   echo "#### Installing HashiCorp Toolkits (Terraform, Packer, Vault)..."
   local tools="terraform packer vault"
 
@@ -252,19 +252,19 @@ install_hashicorp_tools() {
 }
 
 # Function: Main Orchestration of installation ---
-setup_iac_tools() {
+iac_tools_installation_handler() {
   echo ">>> STEP: Setting up core IaC tools..."
   
   # Ensure core commands needed by the script itself are present
   command -v curl >/dev/null 2>&1 || { echo "FATAL: curl is not installed. Please install it first." >&2; exit 1; }
   command -v jq >/dev/null 2>&1 || { echo "FATAL: jq is not installed. Please install it first." >&2; exit 1; }
 
-  install_os_dependencies
-  install_ansible_core
-  install_hashicorp_tools
+  os_dependency_install_handler
+  ansible_core_install_handler
+  hashicorp_tool_install_handler
 
   echo "#### Verifying installed tools..."
-  verify_core_iac_tools_installed
+  iac_tools_verifier
 
   echo "#### Core IaC tools setup and verification completed."
   echo "--------------------------------------------------"
