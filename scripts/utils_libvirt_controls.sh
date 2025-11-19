@@ -108,7 +108,7 @@ libvirt_resource_purger() {
   # --- 4. Purge Storage Volumes and Pools ---
   echo ">>> STEP: Purging Storage Volumes and Pools..."
   for pool in ${unique_pool_names}; do
-    if sudo virsh pool-info "$pool" 	>/dev/null 2>&1; then
+    if sudo virsh pool-info "$pool" >/dev/null 2>&1; then
       # Delete all volumes within the pool
       for vol in $(sudo virsh vol-list "$pool" | awk 'NR>2 {print $1}' || true); do
         if [[ -n "$vol" ]]; then

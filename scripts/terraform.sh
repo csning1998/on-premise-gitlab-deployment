@@ -77,13 +77,13 @@ terraform_layer_executor() {
 terraform_layer_selector() {
   local layer_options=("${ALL_TERRAFORM_LAYERS[@]}" "Back to Main Menu")
 
-  echo
+  PS3=">>> Select a Terraform layer to REBUILD: "
   select layer in "${layer_options[@]}"; do
     if [[ "$layer" == "Back to Main Menu" ]]; then
       echo "# Returning to main menu..."
       break
 
-    elif [[ " ${ALL_TERRAFORM_LAYERS[*]} " =~ ${layer} ]]; then
+    elif [[ " ${ALL_TERRAFORM_LAYERS[*]} " == *"${layer}"* ]]; then
       echo "# Executing Full Rebuild for [${layer}]..."
       if ! ssh_key_verifier; then break; fi
       libvirt_resource_purger "${layer}"

@@ -82,11 +82,12 @@ packer_menu_handler() {
   local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Back to Main Menu")
 
   echo
+	PS3=">>> Select a Packer build to run: "
   select build_base in "${packer_build_executor_options[@]}"; do
     if [[ "$build_base" == "Back to Main Menu" ]]; then
       echo "# Returning to main menu..."
       break
-    elif [[ " ${ALL_PACKER_BASES[*]} " =~ ${build_base} ]]; then
+    elif [[ " ${ALL_PACKER_BASES[*]} " == *"${build_base}"* ]]; then
       echo "# Executing Rebuild Packer workflow for [${build_base}]..."
       if ! ssh_key_verifier; then break; fi
       libvirt_service_manager

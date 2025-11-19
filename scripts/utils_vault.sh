@@ -3,7 +3,7 @@
 # --- Global Vault Variables ---
 readonly VAULT_KEYS_DIR="${SCRIPT_DIR}/vault/keys"
 readonly VAULT_INIT_OUTPUT_FILE="${VAULT_KEYS_DIR}/init-output.json"
-readonly vault_seal_handler_KEYS_FILE="${VAULT_KEYS_DIR}/unseal.key"
+readonly VAULT_SEAL_HANDLER_KEYS_FILE="${VAULT_KEYS_DIR}/unseal.key"
 readonly VAULT_ROOT_TOKEN_FILE="${VAULT_KEYS_DIR}/root-token.txt"
 
 # Function: Display the current status of the Vault server.
@@ -61,8 +61,8 @@ vault_cluster_bootstrapper() {
   echo "#### Initializing Vault..."
   vault operator init -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json > "$VAULT_INIT_OUTPUT_FILE"
 
-  jq -r .unseal_keys_b64[] "$VAULT_INIT_OUTPUT_FILE" > "$vault_seal_handler_KEYS_FILE"
-  chmod 600 "$vault_seal_handler_KEYS_FILE"
+  jq -r .unseal_keys_b64[] "$VAULT_INIT_OUTPUT_FILE" > "$VAULT_SEAL_HANDLER_KEYS_FILE"
+  chmod 600 "$VAULT_SEAL_HANDLER_KEYS_FILE"
   jq -r .root_token "$VAULT_INIT_OUTPUT_FILE" > "$VAULT_ROOT_TOKEN_FILE"
   chmod 600 "$VAULT_ROOT_TOKEN_FILE"
 
@@ -88,13 +88,13 @@ vault_cluster_bootstrapper() {
 # Function: Unseal a user-started Vault instance.
 vault_seal_handler() {
   echo ">>> STEP: Unsealing Vault..."
-  if [ ! -f "$vault_seal_handler_KEYS_FILE" ]; then
+  if [ ! -f "$VAULT_SEAL_HANDLER_KEYS_FILE" ]; then
     echo "#### ERROR: Unseal keys not found. Run 'Initialize Vault' first." >&2; return 1;
   fi
 
   if [[ "$(vault status -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json 2>/dev/null | jq .sealed)" == "true" ]]; then
     echo "#### Vault is sealed. Unsealing with saved keys...";
-    mapfile -t keys < "$vault_seal_handler_KEYS_FILE";
+    mapfile -t keys < "$VAULT_SEAL_HANDLER_KEYS_FILE";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[0]}";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[1]}";
     vault operator unseal -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" "${keys[2]}";

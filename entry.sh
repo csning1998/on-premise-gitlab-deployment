@@ -12,6 +12,7 @@ readonly SCRIPTS_LIB_DIR="${SCRIPT_DIR}/scripts"
 readonly TERRAFORM_DIR="${SCRIPT_DIR}/terraform"
 readonly PACKER_DIR="${SCRIPT_DIR}/packer"
 readonly USER_HOME_DIR="${HOME}"
+readonly ANSIBLE_DIR="${SCRIPT_DIR}/ansible"
 
 source "${SCRIPTS_LIB_DIR}/utils_environment.sh"
 
@@ -47,10 +48,6 @@ if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
     exit 1
   fi
 fi
-
-# Set user and other readonly variables after loading configs
-
-readonly ANSIBLE_DIR="${SCRIPT_DIR}/ansible"
 
 # Set Terraform directory based on the selected provider
 
