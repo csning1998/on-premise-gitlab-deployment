@@ -11,11 +11,11 @@ all:
     redis_master:
       hosts:
         ${keys(redis_nodes)[0]}:
-          ansible_host: ${redis_nodes[keys(redis_nodes)[0]].ip}
+          advertise_ip: ${redis_nodes[keys(redis_nodes)[0]].ip}
 
     redis_replicas:
       hosts:
 %{ for key in slice(keys(redis_nodes), 1, length(keys(redis_nodes))) ~}
         ${key}:
-          ansible_host: ${redis_nodes[key].ip}
+          advertise_ip: ${redis_nodes[key].ip}
 %{ endfor ~}
