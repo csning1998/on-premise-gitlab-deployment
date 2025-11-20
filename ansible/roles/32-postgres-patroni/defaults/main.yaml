@@ -1,0 +1,10 @@
+---
+# PostgreSQL Version
+postgres_version: 18
+
+# Network Access Control
+postgres_allowed_subnet: "172.16.0.0/16"
+
+# Ports
+postgres_port: 5432
+patroni_restapi_port: 8008

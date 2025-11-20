@@ -6,7 +6,7 @@
         cmd: python3 -m venv /opt/patroni-venv
         creates: /opt/patroni-venv/bin/activate
 
-    - name: "Step A2. Install Patroni and dependencies into virtual environment"
+    - name: "Step A2. Install Patroni and dependencies"
       ansible.builtin.pip:
         name:
           - patroni[etcd3]
@@ -16,7 +16,7 @@
 
 - name: "Section B: Stop and Disable default PostgreSQL service"
   block:
-    - name: "Step B1. Ensure default postgresql service is stopped and disabled"
+    - name: "Step B1. Ensure default postgresql service is stopped"
       ansible.builtin.systemd:
         name: postgresql
         state: stopped
@@ -26,7 +26,7 @@
 
 - name: "Section C: Configure Patroni Service"
   block:
-    - name: "Step C1. Create Patroni config file from template"
+    - name: "Step C1. Create Patroni config file"
       ansible.builtin.template:
         src: patroni.yml.j2
         dest: /etc/patroni.yml
@@ -35,7 +35,7 @@
         mode: "0600"
       notify: Restart Patroni
 
-    - name: "Step C2. Create Patroni systemd service file from template"
+    - name: "Step C2. Create Patroni systemd service file"
       ansible.builtin.template:
         src: patroni.service.j2
         dest: /etc/systemd/system/patroni.service
@@ -46,15 +46,9 @@
 
 - name: "Section D: Start and Enable Patroni Service"
   block:
-    - name: "Step D1. Flush handlers to apply config changes"
-      ansible.builtin.meta: flush_handlers
-
-    - name: "Step D2. Reload systemd daemon"
-      ansible.builtin.systemd:
-        daemon_reload: true
-
-    - name: "Step D3. Enable and start the Patroni service"
+    - name: "Step D1. Reload systemd and start Patroni"
       ansible.builtin.systemd:
         name: patroni
         state: started
         enabled: true
+        daemon_reload: true

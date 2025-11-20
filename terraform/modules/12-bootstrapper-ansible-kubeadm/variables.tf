@@ -33,9 +33,9 @@ variable "ansible_config" {
     registry_host   = string
     ssh_config_path = string
     extra_vars = object({
-      k8s_master_ips        = list(string)
-      k8s_ha_virtual_ip     = string
-      k8s_pod_subnet        = string
+      kubeadm_master_ips    = list(string)
+      kubeadm_ha_virtual_ip = string
+      kubeadm_pod_subnet    = string
       k8s_nat_subnet_prefix = string
     })
   })

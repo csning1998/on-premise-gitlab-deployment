@@ -1,0 +1,22 @@
+---
+# Kubernetes Version & CRI
+kubeadm_version: "v1.32.0"
+kubeadm_cri_socket: "unix:///var/run/crio/crio.sock"
+kubeadm_cgroup_driver: "systemd"
+
+# Networking Defaults
+# Defaulting to the inventory variables if they exist to ensure backward compatibility
+kubeadm_pod_subnet: "{{ kubeadm_pod_subnet | default('10.244.0.0/16') }}"
+kubeadm_ha_virtual_ip: "{{ kubeadm_ha_virtual_ip | default('') }}"
+kubeadm_master_ips: "{{ kubeadm_master_ips | default([]) }}"
+
+# API Server Cert SANs (Subject Alternative Names)
+# Including the standard Kubernetes DNS names that were previously hardcoded
+kubeadm_extra_sans:
+  - "kubernetes"
+  - "kubernetes.default"
+  - "kubernetes.default.svc"
+  - "kubernetes.default.svc.cluster.local"
+
+# Local path to save the fetched kubeconfig
+kubeadm_fetched_kubeconfig_path: "{{ playbook_dir }}/../fetched/kubeconfig"

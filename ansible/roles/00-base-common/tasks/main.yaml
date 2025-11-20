@@ -1,0 +1,7 @@
+---
+- name: "Step 1. Install Common Base Packages"
+  ansible.builtin.apt:
+    name: "{{ common.ubuntu.packages }}"
+    state: present
+    update_cache: true
+  no_log: true

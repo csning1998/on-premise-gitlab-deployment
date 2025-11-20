@@ -8,5 +8,5 @@ all:
       hosts:
 %{ for node in harbor_nodes ~}
         ${node.key}:
-          advertise_ip: ${node.ip}
+          microk8s_advertise_ip: ${node.ip}
 %{ endfor ~}

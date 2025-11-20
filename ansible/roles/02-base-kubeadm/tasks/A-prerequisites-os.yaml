@@ -1,21 +1,16 @@
 ---
-- name: Section A. Run OS prerequisites setup
+- name: Block A. Run OS prerequisites setup
   block:
     - name: "Step 1. Action: Add Universe and Multiverse repositories"
       ansible.builtin.apt_repository:
-        repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} main restricted universe multiverse"
+        repo: "{{ _kubeadm_base_repo_community_string }}"
         state: present
-        filename: 'ubuntu-with-community'
+        filename: "{{ _kubeadm_base_repo_community_data.filename }}"
         update_cache: true
 
     - name: "Step 2. Action: Install build dependencies"
       ansible.builtin.apt:
-        name:
-          - build-essential
-          - dkms
-          - "linux-headers-{{ ansible_kernel }}"
-          - perl
-          - libelf-dev
+        name: "{{ kubeadm_base.packages.apt.prereq }}"
         state: present
         update_cache: true
 

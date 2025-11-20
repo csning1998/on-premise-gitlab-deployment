@@ -1,29 +1,35 @@
 ---
-- name: "Play: Provision Docker base image"
+- name: "Play: Provision Common Operation on Base Image"
+  hosts: "all"
+  become: true
+  roles:
+    - 00-base-common
+
+- name: "Play: Provision Docker Base Image"
   hosts: "01-base-docker"
   become: true
   roles:
     - 01-base-docker
 
-- name: "Play: Provision Kubernetes (Kubeadm) base image"
+- name: "Play: Provision Kubernetes (Kubeadm) Base Image"
   hosts: "02-base-kubeadm"
   become: true
   roles:
     - 02-base-kubeadm
 
-- name: "Play: Provision MicroK8s base image"
+- name: "Play: Provision MicroK8s Base Image"
   hosts: "03-base-microk8s"
   become: true
   roles:
     - 03-base-microk8s
 
-- name: "Play: Provision Postgres (Singular) base image"
+- name: "Play: Provision Postgres (Singular) Base Image"
   hosts: "04-base-postgres"
   become: true
   roles:
     - 04-base-postgres
 
-- name: "Play: Provision Redis (Singular) base image"
+- name: "Play: Provision Redis (Singular) Base Image"
   hosts: "05-base-redis"
   become: true
   roles:

@@ -5,15 +5,15 @@ nodeRegistration:
   name: "{{ inventory_hostname }}"
   kubeletExtraArgs:
     - name: "cgroup-driver"
-      value: "systemd"
+      value: "{{ k8s_cgroup_driver }}"
 discovery:
   bootstrapToken:
-    apiServerEndpoint: "{{ k8s_ha_virtual_ip }}:6443"
+    apiServerEndpoint: "{{ kubeadm_ha_virtual_ip }}:6443"
     token: "{{ hostvars[groups['master'][0]]['kubeadm_token'] }}"
     caCertHashes:
       - "sha256:{{ hostvars[groups['master'][0]]['kubeadm_ca_hash'] }}"
-    unsafeSkipCAVerification: false
+    unsafeSkipCAVerification: {{ k8s_join_skip_ca_verification | lower }}
 controlPlane:
   localAPIEndpoint:
-    advertiseAddress: "{{ advertise_ip }}"
+    advertiseAddress: "{{ kubeadm_advertise_ip }}"
   certificateKey: "{{ hostvars[groups['master'][0]]['kubeadm_cert_key'] }}"

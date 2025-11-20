@@ -10,20 +10,20 @@
   ansible.builtin.file:
     path: /etc/kubernetes/calico-operator-installed.flag
     state: touch
-    mode: '0600'
+    mode: "0600"
 
 - name: Create certificate key flag file
   ansible.builtin.file:
     path: /etc/kubernetes/cert-key.flag
     state: touch
-    mode: '0644'
+    mode: "0644"
   listen: Create certificate key flag file
 
 - name: Create token flag file
   ansible.builtin.file:
     path: /etc/kubernetes/token.flag
     state: touch
-    mode: '0644'
+    mode: "0644"
   listen: Create token flag file
 
 - name: Restart crio service

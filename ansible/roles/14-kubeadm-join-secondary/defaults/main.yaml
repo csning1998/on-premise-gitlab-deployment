@@ -1,0 +1,8 @@
+---
+# Join Configuration
+k8s_cgroup_driver: "systemd"
+k8s_join_skip_ca_verification: false
+
+# Preflight checks to ignore during join (e.g., Port-6443 is occupied by HAProxy)
+k8s_join_ignore_preflight_errors:
+  - "Port-6443"

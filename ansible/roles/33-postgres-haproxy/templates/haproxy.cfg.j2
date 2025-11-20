@@ -17,37 +17,35 @@ defaults
     timeout client  50000
     timeout server  50000
 
-# HAProxy status monitoring page
+# Status Page
 listen stats
-    bind *:{{ haproxy_stats_port | default(7000) }}
+    bind *:{{ haproxy_stats_port }}
     mode http
     stats enable
     stats uri /
     stats refresh 10s
     stats admin if TRUE
 
-# Read-Write Frontend
-# Routes all traffic to port 5000 to the Leader node
+# Read-Write Frontend (Route to Leader)
 listen postgres_readwrite
-    bind *:{{ haproxy_rw_port | default(5000) }}
+    bind *:{{ haproxy_rw_port }}
     mode tcp
     option httpchk OPTIONS /master
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     balance first
-    {% for ip in postgres_cluster_ips %}
-    server pg-node-{{ loop.index0 }} {{ ip }}:{{ postgres_port | default(5432) }} check port {{ patroni_api_port | default(8008) }}
-    {% endfor %}
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ postgres_port }} check port {{ patroni_api_port }}
+{% endfor %}
 
-# Read-Only Frontend
-# Routes all traffic to port 5001 to the Replica nodes
+# Read-Only Frontend (Route to Replicas)
 listen postgres_readonly
-    bind *:{{ haproxy_ro_port | default(5001) }}
+    bind *:{{ haproxy_ro_port }}
     mode tcp
     option httpchk OPTIONS /replica
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     balance roundrobin
-    {% for ip in postgres_cluster_ips %}
-    server pg-node-{{ loop.index0 }} {{ ip }}:{{ postgres_port | default(5432) }} check port {{ patroni_api_port | default(8008) }}
-    {% endfor %}
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ postgres_port }} check port {{ patroni_api_port }}
+{% endfor %}

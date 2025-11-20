@@ -14,19 +14,19 @@ all:
       hosts:
 %{ for key, node in etcd_nodes ~}
         ${key}:
-          ansible_host: ${node.ip}
+          advertise_ip: ${node.ip}
 %{ endfor ~}
 
     postgres_nodes:
       hosts:
 %{ for key, node in postgres_nodes ~}
         ${key}:
-          ansible_host: ${node.ip}
+          advertise_ip: ${node.ip}
 %{ endfor ~}
 
     haproxy_nodes:
       hosts:
 %{ for key, node in haproxy_nodes ~}
         ${key}:
-          ansible_host: ${node.ip}
+          advertise_ip: ${node.ip}
 %{ endfor ~}

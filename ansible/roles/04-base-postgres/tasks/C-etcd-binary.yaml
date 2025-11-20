@@ -1,37 +1,31 @@
 ---
-- name: "Section C: Install etcd Binaries"
+- name: "Block C: Install etcd Binaries"
   become: true
-  vars:
-    etcd_version: "v3.5.14"
-    etcd_download_url: "https://github.com/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-    etcd_install_dir: "/usr/local/bin"
   block:
-    - name: "Step C1. Download etcd package"
+    - name: "Step 1. Download etcd package ({{ postgres_base.versions.etcd }})"
       ansible.builtin.get_url:
-        url: "{{ etcd_download_url }}"
-        dest: "/tmp/etcd-{{ etcd_version }}.tar.gz"
+        url: "{{ _postgres_base_etcd_download_url }}"
+        dest: "{{ _postgres_base_etcd_temp_path }}"
         mode: "0644"
 
-    - name: "Step C2. Extract etcd package"
+    - name: "Step 2. Extract etcd package"
       ansible.builtin.unarchive:
-        src: "/tmp/etcd-{{ etcd_version }}.tar.gz"
+        src: "{{ _postgres_base_etcd_temp_path }}"
         dest: /tmp
         remote_src: true
 
-    - name: "Step C3. Copy etcd binaries to install directory"
+    - name: "Step 3. Copy etcd binaries to install directory"
       ansible.builtin.copy:
-        src: "/tmp/etcd-{{ etcd_version }}-linux-amd64/{{ item }}"
-        dest: "{{ etcd_install_dir }}/{{ item }}"
+        src: "{{ _postgres_base_etcd_temp_extract_path }}/{{ item }}"
+        dest: "{{ _postgres_base_etcd_data.install_path }}/{{ item }}"
         remote_src: true
         mode: "0755"
-      loop:
-        - etcd
-        - etcdctl
+      loop: "{{ _postgres_base_etcd_data.binaries_in_archive }}"
 
-    - name: "Step C4. Clean up temporary etcd files"
+    - name: "Step 4. Clean up temporary etcd files"
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       loop:
-        - "/tmp/etcd-{{ etcd_version }}.tar.gz"
-        - "/tmp/etcd-{{ etcd_version }}-linux-amd64"
+        - "{{ _postgres_base_etcd_temp_path }}"
+        - "{{ _postgres_base_etcd_temp_extract_path }}"

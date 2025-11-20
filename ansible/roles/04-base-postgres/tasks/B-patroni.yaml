@@ -1,12 +1,8 @@
 ---
-- name: "Section B: Install Patroni Runtime Dependencies"
+- name: "Block B: Install Patroni Runtime Dependencies"
   become: true
   block:
-    - name: "Step B1. Install Python environment and build tools"
+    - name: "Step 1. Install Python environment and build tools"
       ansible.builtin.apt:
-        name:
-          - python3-venv
-          - python3-pip
-          - libpq-dev
-          - build-essential
+        name: "{{ postgres_base.packages.apt.patroni_deps }}"
         state: present

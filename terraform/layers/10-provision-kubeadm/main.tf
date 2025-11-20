@@ -56,9 +56,9 @@ module "bootstrapper_ansible_cluster" {
     registry_host   = var.kubeadm_cluster_config.registry_host
     ssh_config_path = module.ssh_config_manager_kubeadm.ssh_config_file_path
     extra_vars = {
-      k8s_master_ips        = local.k8s_master_ips
-      k8s_ha_virtual_ip     = var.kubeadm_cluster_config.ha_virtual_ip
-      k8s_pod_subnet        = var.kubeadm_cluster_config.pod_subnet
+      kubeadm_master_ips    = local.kubeadm_master_ips
+      kubeadm_ha_virtual_ip = var.kubeadm_cluster_config.ha_virtual_ip
+      kubeadm_pod_subnet    = var.kubeadm_cluster_config.pod_subnet
       k8s_nat_subnet_prefix = local.k8s_cluster_nat_network_subnet_prefix
     }
   }

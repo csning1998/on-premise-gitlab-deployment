@@ -22,6 +22,7 @@
   become: true
   roles:
     - 24-microk8s-setup-kubeconfig
+#
 # - name: "Play 5: Deploy Harbor application via Helm"
 #   hosts: "{{ groups['nodes'][0] | default([]) }}"
 #   become: true

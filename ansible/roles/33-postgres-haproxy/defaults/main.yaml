@@ -1,0 +1,9 @@
+---
+# HAProxy Port Configuration, RW for Primary, RO for Replicas
+haproxy_stats_port: 7000
+haproxy_rw_port: 5000
+haproxy_ro_port: 5001
+
+# Backend Health Check Port (Patroni API)
+patroni_api_port: 8008
+postgres_port: 5432

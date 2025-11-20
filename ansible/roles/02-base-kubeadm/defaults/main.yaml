@@ -1,0 +1,95 @@
+---
+kubeadm_base:
+  versions:
+    repo_major: "v1.32"
+    binary_full: "v1.32.0"
+    package_spec: "1.32.0-1.1"
+
+  binaries:
+    - name: "crictl"
+      url_base: "https://github.com/kubernetes-sigs/cri-tools/releases/download"
+      dest_path: "/usr/local/bin"
+
+  apt_repositories:
+    - id: "ubuntu_community"
+      url_base: "http://archive.ubuntu.com/ubuntu"
+      filename: "ubuntu-with-community"
+      distribution: "{{ ansible_distribution_release }}"
+      components: "main restricted universe multiverse"
+      gpg_keyring_path: null
+
+    - id: "crio"
+      url_base: "https://pkgs.k8s.io/addons:/cri-o:/stable:"
+      filename: "crio"
+      distribution: "/"
+      components: ""
+      version_key: "repo_major"
+      gpg_keyring_path: "/etc/apt/keyrings/cri-o-apt-keyring.gpg"
+      gpg_key_temp_path: "/tmp/crio.key"
+
+    - id: "kubernetes"
+      url_base: "https://pkgs.k8s.io/core:/stable:"
+      filename: "kubernetes"
+      distribution: "/"
+      components: ""
+      version_key: "repo_major"
+      gpg_keyring_path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+      gpg_key_temp_path: "/tmp/kubernetes-apt-keyring.asc"
+
+  packages:
+    apt:
+      prereq:
+        - "dkms"
+        - "linux-headers-{{ ansible_kernel }}"
+        - "perl"
+        - "libelf-dev"
+      cri:
+        - "cri-o"
+      kubernetes:
+        - "kubelet"
+        - "kubeadm"
+        - "kubectl"
+
+  config_paths:
+    modules: "/etc/modules-load.d/k8s.conf"
+    sysctl: "/etc/sysctl.d/k8s.conf"
+    cgroup: "/etc/crio/crio.conf.d/02-cgroup-manager.conf"
+
+# Binaries (crictl)
+_kubeadm_base_crictl_data: "{{ kubeadm_base.binaries | selectattr('name', 'equalto', 'crictl') | first }}"
+_kubeadm_base_crictl_archive_name: "crictl-{{ kubeadm_base.versions.binary_full }}-linux-amd64.tar.gz"
+_kubeadm_base_crictl_download_url: "{{ _kubeadm_base_crictl_data.url_base }}/{{ kubeadm_base.versions.binary_full }}/{{ _kubeadm_base_crictl_archive_name }}"
+_kubeadm_base_crictl_temp_path: "/tmp/{{ _kubeadm_base_crictl_archive_name }}"
+
+# Apt Repos (Data Lookups)
+_kubeadm_base_repo_community_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'ubuntu_community') | first }}"
+_kubeadm_base_repo_crio_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'crio') | first }}"
+_kubeadm_base_repo_k8s_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'kubernetes') | first }}"
+
+# Apt Repos (Computed Strings)
+_kubeadm_base_repo_community_string: >
+  deb [arch=amd64]
+  {{ _kubeadm_base_repo_community_data.url_base }}
+  {{ _kubeadm_base_repo_community_data.distribution }}
+  {{ _kubeadm_base_repo_community_data.components }}
+
+_kubeadm_base_repo_crio_version: "{{ kubeadm_base.versions[_kubeadm_base_repo_crio_data.version_key] }}"
+_kubeadm_base_repo_crio_url_full: "{{ _kubeadm_base_repo_crio_data.url_base }}/{{ _kubeadm_base_repo_crio_version }}/deb/"
+_kubeadm_base_repo_crio_gpg_url: "{{ _kubeadm_base_repo_crio_url_full }}Release.key"
+_kubeadm_base_repo_crio_string: >
+  deb [signed-by={{ _kubeadm_base_repo_crio_data.gpg_keyring_path }}]
+  {{ _kubeadm_base_repo_crio_url_full }}
+  {{ _kubeadm_base_repo_crio_data.distribution }}
+  {{ _kubeadm_base_repo_crio_data.components }}
+
+_kubeadm_base_repo_k8s_version: "{{ kubeadm_base.versions[_kubeadm_base_repo_k8s_data.version_key] }}"
+_kubeadm_base_repo_k8s_url_full: "{{ _kubeadm_base_repo_k8s_data.url_base }}/{{ _kubeadm_base_repo_k8s_version }}/deb/"
+_kubeadm_base_repo_k8s_gpg_url: "{{ _kubeadm_base_repo_k8s_url_full }}Release.key"
+_kubeadm_base_repo_k8s_string: >
+  deb [signed-by={{ _kubeadm_base_repo_k8s_data.gpg_keyring_path }}]
+  {{ _kubeadm_base_repo_k8s_url_full }}
+  {{ _kubeadm_base_repo_k8s_data.distribution }}
+  {{ _kubeadm_base_repo_k8s_data.components }}
+
+_kubeadm_base_k8s_versioned_packages: >
+  {{ kubeadm_base.packages.apt.kubernetes | map('regex_replace', '^(.*)$', '\1=' + kubeadm_base.versions.package_spec) | list }}

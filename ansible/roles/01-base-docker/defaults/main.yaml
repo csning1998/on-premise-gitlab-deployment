@@ -1,0 +1,26 @@
+---
+docker_base:
+  packages:
+    pip:
+      - docker
+    apt:
+      - containerd.io
+      - docker-ce
+      - docker-ce-cli
+      - docker-buildx-plugin
+      - docker-compose-plugin
+
+  group_name: "docker"
+
+  os_config:
+    ubuntu:
+      source_url: "https://download.docker.com/linux/ubuntu"
+      gpg_keyring_dir: "/etc/apt/keyrings"
+      gpg_filename: "docker.asc"
+
+_docker_base_gpg_url: "{{ docker_base.os_config.ubuntu.source_url }}/gpg"
+_docker_base_gpg_path: "{{ docker_base.os_config.ubuntu.gpg_keyring_dir }}/{{ docker_base.os_config.ubuntu.gpg_filename }}"
+_docker_base_repo_string: >
+  deb [arch=amd64 signed-by={{ _docker_base_gpg_path }}]
+  {{ docker_base.os_config.ubuntu.source_url }}
+  {{ ansible_distribution_release | lower }} stable

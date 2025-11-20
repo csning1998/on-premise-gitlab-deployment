@@ -7,7 +7,7 @@
       changed_when: false
       failed_when: hostname_result.stdout != expected_hostname
 
-    - name: "Step 12. Ensure .ssh directory exists with correct permissions"
+    - name: "Step 2. Ensure .ssh directory exists with correct permissions"
       ansible.builtin.file:
         path: "/home/{{ ssh_user }}/.ssh"
         state: directory

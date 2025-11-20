@@ -9,8 +9,8 @@ locals {
     "kubeadm-worker-${format("%02d", idx)}" => config
   }
 
-  all_nodes_map  = merge(local.masters_map, local.workers_map)
-  k8s_master_ips = [for config in var.kubeadm_cluster_config.nodes.masters : config.ip]
+  all_nodes_map      = merge(local.masters_map, local.workers_map)
+  kubeadm_master_ips = [for config in var.kubeadm_cluster_config.nodes.masters : config.ip]
 
   k8s_cluster_nat_network_subnet_prefix = join(".", slice(split(".", var.kubeadm_infrastructure.network.nat.ips.address), 0, 3))
 

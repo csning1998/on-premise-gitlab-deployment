@@ -1,5 +1,5 @@
 ---
-- name: "Section 0: Dynamically discover the Host-only network interface"
+- name: "Block A: Dynamically discover the Host-only network interface"
   block:
     - name: "Step 1. Find the NAT interface to exclude"
       ansible.builtin.shell:
@@ -10,7 +10,7 @@
       register: nat_iface_result
       changed_when: false
 
-    - name: "Step 2. Find the Host-only interface by excluding NAT and loopback"
+    - name: "Step 2. Find the Host-only interface"
       ansible.builtin.shell:
         cmd: |
           set -o pipefail
@@ -19,7 +19,7 @@
       register: hostonly_iface_result
       changed_when: false
 
-    - name: "Step 3. Set k8s_ha_interface fact for use in templates"
+    - name: "Step 3. Set k8s_ha_interface fact"
       ansible.builtin.set_fact:
         k8s_ha_interface: "{{ hostonly_iface_result.stdout }}"
       when: hostonly_iface_result.stdout | length > 0
@@ -29,87 +29,64 @@
         msg: "Could not dynamically determine the Host-Only network interface."
       when: k8s_ha_interface is not defined or k8s_ha_interface | length == 0
 
-- name: "Section A: Install HAProxy and Keepalived packages"
+- name: "Block B: Install and Configure HA Services"
   block:
-    - name: "Step 1. Allow binding to non-local IP addresses"
+    - name: "Step 1. Enable non-local binding (Required for VIP)"
       ansible.posix.sysctl:
-        name: net.ipv4.ip_nonlocal_bind
+        name: "net.ipv4.ip_nonlocal_bind"
         value: "1"
         state: present
         reload: true
 
-    - name: "Step 2. Install Necessary Packages"
+    - name: "Step 2. Install HAProxy and Keepalived"
       ansible.builtin.apt:
         name:
           - keepalived
           - haproxy
           - rsyslog
-          - etcd-client
         state: present
         update_cache: true
 
-- name: "Section B: Configure Keepalived"
-  block:
-    - name: "Step 1. Ensure keepalived_script user exists for security context"
+    - name: "Step 3. Create keepalived_script user"
       ansible.builtin.user:
-        name: keepalived_script
+        name: "keepalived_script"
         system: true
-        shell: /sbin/nologin
+        shell: "/usr/sbin/nologin"
         state: present
 
-    - name: "Step 2. Configure Keepalived from template"
+- name: "Block C: Configure Services"
+  block:
+    - name: "Step 1. Configure Keepalived"
       ansible.builtin.template:
-        src: keepalived.conf.j2 # This template uses k8s_ha_virtual_ip etc.
+        src: keepalived.conf.j2
         dest: /etc/keepalived/keepalived.conf
-        owner: root
-        group: root
         mode: "0644"
-      notify: Restart keepalived # Notify handler to restart the service on change
+        validate: keepalived --config-test %s
+      notify: Restart keepalived
 
-    - name: "Step 3. Verify Keepalived configuration syntax"
-      ansible.builtin.command: keepalived --config-test
-      changed_when: false
-
-- name: "Section C: Configure HAProxy"
-  block:
-    - name: "Step 1. Configure HAProxy from template"
+    - name: "Step 2. Configure HAProxy"
       ansible.builtin.template:
-        src: haproxy.cfg.j2 # This template loops through groups['master']
+        src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
-        owner: root
-        group: root
         mode: "0644"
-      notify: Restart haproxy # Notify handler to restart the service on change
+        validate: haproxy -c -f %s
+      notify: Restart haproxy
 
-    - name: "Step 2. Verify HAProxy configuration syntax"
-      ansible.builtin.command: haproxy -c -f /etc/haproxy/haproxy.cfg
-      changed_when: false
-
-- name: "Section D: Configure Logging"
-  block:
-    - name: "Step 1. Ensure rsyslog is configured for keepalived"
+    - name: "Step 3. Configure Rsyslog for Keepalived"
       ansible.builtin.lineinfile:
         path: /etc/rsyslog.conf
         line: "local0.* /var/log/keepalived.log"
         create: true
         mode: "0644"
       notify: Restart rsyslog
+      changed_when: false
 
-    - name: "Step 2. Force handlers to run now for logging to take effect"
-      # Meta task to ensure rsyslog is restarted before other services
-      ansible.builtin.meta: flush_handlers
-
-- name: "Section E: Ensure HA services are running"
-  block:
-    - name: "Ensure Keepalived and HAProxy services are enabled and started"
-      # This final task ensures that regardless of changes, the services are running
-      # before this role completes, making the VIP and Load Balancer available
-      # for the next Play.
+    - name: "4. Ensure services are started and enabled"
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started
         enabled: true
-        daemon_reload: true # Reload systemd if config has changed
+        daemon_reload: true
       loop:
         - keepalived
         - haproxy

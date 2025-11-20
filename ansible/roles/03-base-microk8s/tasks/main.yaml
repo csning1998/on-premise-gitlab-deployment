@@ -1,71 +1,59 @@
 ---
-- name: "Section A: Ensure Snapd service is ready"
+- name: "Block A: Ensure Snapd service is ready"
   become: true
   block:
-    - name: "Step A1. Install prerequisites for Snap"
-      ansible.builtin.apt:
-        name:
-          - snapd
-        state: present
-        update_cache: true
-
     - name: "Step A2. Ensure snapd service is started and enabled"
       ansible.builtin.systemd:
-        name: snapd
+        name: "{{ microk8s_base.prereq_service }}"
         state: started
         enabled: true
 
     - name: "Step A3. Wait for snapd to become fully ready"
       ansible.builtin.command:
-        cmd: "snap wait system seed.loaded"
+        cmd: "{{ microk8s_base.commands.wait_snapd }}"
       changed_when: false
       retries: 10
       delay: 5
 
-- name: "Section B: Install MicroK8s and create aliases"
+- name: "Block B: Install MicroK8s and create aliases"
   become: true
   block:
     - name: "Step B1. Install MicroK8s via Snap"
       community.general.snap:
-        name: microk8s
-        classic: true
-        channel: "1.32/stable"
+        name: "{{ microk8s_base.snap_config.name }}"
+        classic: "{{ microk8s_base.snap_config.classic }}"
+        channel: "{{ microk8s_base.snap_config.channel }}"
 
     - name: "Step B2. Wait for MicroK8s to be ready"
       ansible.builtin.command:
-        cmd: "microk8s status --wait-ready"
+        cmd: "{{ microk8s_base.commands.wait_ready }}"
       changed_when: false
 
-    - name: "Step B3. Alias microk8s.kubectl to kubectl"
+    - name: "Step B3. Create MicroK8s aliases (kubectl, helm)"
       ansible.builtin.command:
-        cmd: "snap alias microk8s.kubectl kubectl"
+        cmd: "snap alias {{ item.src }} {{ item.alias_name }}"
       args:
-        creates: /snap/bin/kubectl
+        creates: "{{ item.creates_path }}"
+      loop: "{{ microk8s_base.aliases }}"
 
-    - name: "Step B4. Alias microk8s.helm3 to helm"
-      ansible.builtin.command:
-        cmd: "snap alias microk8s.helm3 helm"
-      args:
-        creates: /snap/bin/helm
-
-- name: "Section C: Add SSH user to the 'microk8s' group for basic access"
+- name: "Block C: Add SSH user to the 'microk8s' group for basic access"
   become: true
   block:
     - name: "Step C1. Add user to the 'microk8s' group"
       ansible.builtin.user:
         name: "{{ ssh_user }}"
-        groups: microk8s
+        groups: "{{ microk8s_base.user_group }}"
         append: true
 
-- name: "Section D: Reset MicroK8s state for golden image"
+- name: "Block D: Reset MicroK8s state for golden image"
   become: true
   block:
     - name: "Step D1. Leave the current cluster to reset node state"
       ansible.builtin.command:
-        cmd: "microk8s reset"
+        cmd: "{{ microk8s_base.commands.reset }}"
       changed_when: true
 
     - name: "Step D2. Stop the MicroK8s service for clean state"
       ansible.builtin.command:
-        cmd: "snap stop microk8s"
+        cmd: "{{ microk8s_base.commands.stop }}"
       changed_when: true

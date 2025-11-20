@@ -1,0 +1,8 @@
+---
+# Sentinel Configuration
+sentinel_master_name: "mymaster"
+sentinel_quorum: 2
+
+# Sentinel Tuning
+sentinel_down_after_milliseconds: 5000
+sentinel_failover_timeout: 180000

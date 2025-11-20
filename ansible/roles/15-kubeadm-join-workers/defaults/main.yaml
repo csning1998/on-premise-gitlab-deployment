@@ -1,0 +1,4 @@
+---
+# Join Configuration
+k8s_cgroup_driver: "systemd"
+k8s_join_skip_ca_verification: false

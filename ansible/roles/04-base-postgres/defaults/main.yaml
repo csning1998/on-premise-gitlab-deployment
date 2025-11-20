@@ -1,0 +1,51 @@
+---
+postgres_base:
+  versions:
+    postgres: "18"
+    etcd: "v3.5.14"
+
+  apt_repositories:
+    - id: "postgresql"
+      url_base: "https://apt.postgresql.org/pub/repos/apt"
+      gpg_url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+      gpg_store_path: "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
+      gpg_signed_by_path: "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc"
+      distribution: "{{ ansible_distribution_release }}-pgdg"
+      components: "main"
+      filename: "pgdg"
+
+  binaries:
+    - name: "etcd"
+      url_base: "https://github.com/etcd-io/etcd/releases/download"
+      install_path: "/usr/local/bin"
+      binaries_in_archive:
+        - etcd
+        - etcdctl
+
+  packages:
+    apt:
+      postgres:
+        - postgresql
+        - postgresql-contrib
+      patroni_deps:
+        - python3-venv
+        - libpq-dev
+
+# Apt Repo (PostgreSQL)
+_postgres_base_repo_data: "{{ postgres_base.apt_repositories | selectattr('id', 'equalto', 'postgresql') | first }}"
+_postgres_base_repo_string: >
+  deb [signed-by={{ _postgres_base_repo_data.gpg_signed_by_path }}]
+  {{ _postgres_base_repo_data.url_base }}
+  {{ _postgres_base_repo_data.distribution }}
+  {{ _postgres_base_repo_data.components }}
+
+# Apt Packages (PostgreSQL)
+_postgres_base_versioned_packages: >
+  {{ postgres_base.packages.apt.postgres | map('regex_replace', '^(.*)$', '\1-' + postgres_base.versions.postgres) | list }}
+
+# Binaries (etcd)
+_postgres_base_etcd_data: "{{ postgres_base.binaries | selectattr('name', 'equalto', 'etcd') | first }}"
+_postgres_base_etcd_archive_name: "etcd-{{ postgres_base.versions.etcd }}-linux-amd64.tar.gz"
+_postgres_base_etcd_download_url: "{{ _postgres_base_etcd_data.url_base }}/{{ postgres_base.versions.etcd }}/{{ _postgres_base_etcd_archive_name }}"
+_postgres_base_etcd_temp_path: "/tmp/{{ _postgres_base_etcd_archive_name }}"
+_postgres_base_etcd_temp_extract_path: "/tmp/etcd-{{ postgres_base.versions.etcd }}-linux-amd64"

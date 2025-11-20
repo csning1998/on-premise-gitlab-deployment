@@ -1,7 +1,7 @@
 
 module "k8s_calico" {
   source     = "../../modules/51-kubeadm-tigera-calico"
-  pod_subnet = data.terraform_remote_state.cluster_provision.outputs.k8s_pod_subnet
+  pod_subnet = data.terraform_remote_state.cluster_provision.outputs.kubeadm_pod_subnet
 }
 
 module "k8s_metric_server" {

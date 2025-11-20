@@ -1,18 +1,17 @@
 # [ETCD]
 ETCD_NAME={{ inventory_hostname }}
-
 ETCD_DATA_DIR="/var/lib/etcd"
 
-ETCD_LISTEN_PEER_URLS="http://{{ ansible_host }}:2380"
-ETCD_LISTEN_CLIENT_URLS="http://{{ ansible_host }}:2379,http://127.0.0.1:2379"
+ETCD_LISTEN_PEER_URLS="http://{{ advertise_ip }}:{{ etcd_peer_port }}"
+ETCD_LISTEN_CLIENT_URLS="http://{{ advertise_ip }}:{{ etcd_client_port }},http://127.0.0.1:{{ etcd_client_port }}"
 
-ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ ansible_host }}:2380"
-ETCD_ADVERTISE_CLIENT_URLS="http://{{ ansible_host }}:2379"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ advertise_ip }}:{{ etcd_peer_port }}"
+ETCD_ADVERTISE_CLIENT_URLS="http://{{ advertise_ip }}:{{ etcd_client_port }}"
 
 ETCD_INITIAL_CLUSTER={% for host in groups['etcd_nodes'] -%}
-  {{- hostvars[host]['inventory_hostname'] }}=http://{{ hostvars[host]['ansible_host'] }}:2380
+  {{- hostvars[host]['inventory_hostname'] }}=http://{{ hostvars[host]['advertise_ip'] }}:{{ etcd_peer_port }}
   {%- if not loop.last %},{% endif -%}
 {%- endfor %}
 
-ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-postgres"
-ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_INITIAL_CLUSTER_TOKEN="{{ etcd_initial_cluster_token }}"
+ETCD_INITIAL_CLUSTER_STATE="{{ etcd_initial_cluster_state }}"

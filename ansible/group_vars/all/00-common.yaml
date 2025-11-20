@@ -1,0 +1,21 @@
+---
+common:
+  ubuntu:
+    packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+      - gnupg-agent
+      - software-properties-common
+      - build-essential
+      - python3-pip
+      - wget
+      - git
+      - vim
+      - jq
+      - snapd
+      - tree
+      - gh
+      - htop
+      - net-tools
