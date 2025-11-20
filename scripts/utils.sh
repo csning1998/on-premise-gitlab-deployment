@@ -10,10 +10,10 @@ run_command() {
   if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
 
     # --- Containerized Execution Path ---
-    local compose_cmd="sudo podman compose"
+    local compose_cmd="podman compose"
     local compose_file="compose.yml"
     local container_name="iac-controller-qemu"
-    local engine_cmd="sudo podman"
+    local engine_cmd="podman"
     local service_name="iac-controller"
 
     # 1. Check if Podman is installed
