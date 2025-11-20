@@ -5,9 +5,6 @@
     - name: "Step1. Enable core addons for MicroK8s"
       ansible.builtin.command:
         cmd: "microk8s enable {{ item }}"
-      loop:
-        - dns
-        - hostpath-storage
-        - helm3
+      loop: "{{ microk8s_addons }}"
       register: enable_result
       changed_when: "'is already enabled' not in enable_result.stdout"

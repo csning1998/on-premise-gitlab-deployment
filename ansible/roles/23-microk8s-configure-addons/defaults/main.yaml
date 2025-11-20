@@ -1,0 +1,6 @@
+---
+# List of MicroK8s addons to enable
+microk8s_addons:
+  - dns
+  - hostpath-storage
+  - helm3
