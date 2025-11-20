@@ -3,7 +3,7 @@
 
 build_spec = {
   suffix   = "05-base-redis"
-  vnc_port = 5905
+  vnc_port = 5995
 }
 
 # The following common variables are inherited from the main 'values.pkrvars.hcl'

@@ -2,7 +2,7 @@
 # This file defines the variables for building the 'docker-base' image.
 build_spec = {
   suffix   = "01-base-docker"
-  vnc_port = 5901
+  vnc_port = 5991
 }
 
 # The following common variables are inherited from the main 'values.pkrvars.hcl'
