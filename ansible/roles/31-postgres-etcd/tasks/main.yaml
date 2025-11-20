@@ -1,20 +1,19 @@
 ---
 - name: "Section A: Prepare etcd User and Directories"
   block:
-    - name: "Step A0. Install HAProxy package"
+    - name: "Step A1. Install etcd client tools"
       ansible.builtin.apt:
-        name:
-          - etcd-client
+        name: etcd-client
         state: present
         update_cache: true
 
-    - name: "Step A1. Ensure the 'etcd' group exists"
+    - name: "Step A2. Ensure the 'etcd' group exists"
       ansible.builtin.group:
         name: etcd
         state: present
         system: true
 
-    - name: "Step A2. Ensure the 'etcd' user exists"
+    - name: "Step A3. Ensure the 'etcd' user exists"
       ansible.builtin.user:
         name: etcd
         group: etcd
@@ -22,20 +21,16 @@
         system: true
         create_home: false
 
-    - name: "Step A3. Create the etcd data directory"
+    - name: "Step A4. Create data and config directories"
       ansible.builtin.file:
-        path: /var/lib/etcd
+        path: "{{ item.path }}"
         state: directory
-        owner: etcd
-        group: etcd
-        mode: "0700"
-    - name: "Step A4. Create the etcd configuration directory"
-      ansible.builtin.file:
-        path: /etc/etcd
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "/var/lib/etcd", owner: "etcd", group: "etcd", mode: "0700" }
+        - { path: "/etc/etcd", owner: "root", group: "root", mode: "0755" }
 
 - name: "Section B: Configure etcd Service"
   block:

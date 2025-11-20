@@ -9,7 +9,7 @@
         state: present
         update_cache: true
 
-    - name: "Step A2. Create HAProxy configuration from template"
+    - name: "Step A2. Create HAProxy configuration"
       ansible.builtin.template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
@@ -20,10 +20,7 @@
 
 - name: "Section B: Start and Enable HAProxy Service"
   block:
-    - name: "Step B1. Flush handlers to apply config changes"
-      ansible.builtin.meta: flush_handlers
-
-    - name: "Step B2. Enable and start the HAProxy service"
+    - name: "Step B1. Enable and start the HAProxy service"
       ansible.builtin.systemd:
         name: haproxy
         state: started
