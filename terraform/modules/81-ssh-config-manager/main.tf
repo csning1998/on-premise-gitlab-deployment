@@ -9,7 +9,8 @@ terraform {
 
 locals {
   # Dynamically construct file paths based on the provided config_name
-  ssh_config_path = pathexpand("~/.ssh/config_iac-${var.config_name}")
+  ssh_config_path  = pathexpand("~/.ssh/config_iac-${var.config_name}")
+  known_hosts_path = pathexpand("~/.ssh/known_hosts_${var.config_name}")
 }
 
 /*
@@ -23,6 +24,7 @@ resource "local_file" "ssh_config" {
     ssh_user             = var.vm_credentials.username
     ssh_private_key_path = var.vm_credentials.ssh_private_key_path
     config_name          = var.config_name
+    known_hosts_path     = local.known_hosts_path
   })
   filename        = local.ssh_config_path
   file_permission = "0600"

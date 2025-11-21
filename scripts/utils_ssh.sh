@@ -267,8 +267,13 @@ known_hosts_bootstrapper() {
       echo "#### Waiting for SSH on ${host} to be ready..."
       local success=false
       for ((attempt=1; attempt<=100; attempt++)); do
-        if ssh-keyscan -T 2 -H "${host}" >> "${known_hosts_file}" 2>/dev/null; then
-          echo "      - Scanned key for ${host} and added to ${known_hosts_file}"
+        local keys_found
+        keys_found=$(ssh-keyscan -t ed25519 -T 2 -H "${host}" 2>/dev/null || true)
+        if [[ -n "${keys_found}" ]] && [[ "${keys_found}" == *"ssh-ed25519"* ]]; then
+          echo "${keys_found}" >> "${known_hosts_file}"
+          echo "      - Scanned ED25519 key for ${host} and added to ${known_hosts_file}"
+					# For debug use only.
+					# echo "      > Entry: ${keys_found}"
           success=true
           break
         fi
