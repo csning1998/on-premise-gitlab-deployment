@@ -67,7 +67,7 @@ services:
     cap_add:
       - NET_ADMIN
     devices:
-      - /dev/kvm:/dev/kvmrun_command
+      - /dev/kvm:/dev/kvm
       - /dev/net/tun:/dev/net/tun
 
   # Service 2: Terraform (With keep-groups)
