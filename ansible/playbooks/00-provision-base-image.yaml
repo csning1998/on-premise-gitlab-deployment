@@ -35,6 +35,12 @@
   roles:
     - 05-base-redis
 
+- name: "Play: Provision MinIO (Singular) Base Image"
+  hosts: "06-base-minio"
+  become: true
+  roles:
+    - 06-base-minio
+
 - name: "Play: Final Permission Check and Clean up"
   hosts: "all"
   become: true
