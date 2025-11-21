@@ -29,15 +29,9 @@ terraform_artifact_cleaner() {
     fi
 
     echo ">>> STEP: Cleaning Terraform artifacts for layer [${layer_name}]..."
-    rm -rf "${layer_dir}/.terraform" \
-      "${layer_dir}/.terraform.lock.hcl" \
+    rm -rf "${layer_dir}/.terraform.lock.hcl" \
       "${layer_dir}/terraform.tfstate" \
       "${layer_dir}/terraform.tfstate.backup"
-
-    if [[ "${layer_name}" == "10-cluster-provision" ]]; then
-      rm -f "${USER_HOME_DIR}/.ssh/on-premise-gitlab-deployment_config"
-      echo "#### Removed global SSH configuration for cluster."
-    fi
 
     echo "#### Terraform artifact cleanup for [${layer_name}] completed."
     echo "--------------------------------------------------"

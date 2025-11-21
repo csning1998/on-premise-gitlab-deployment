@@ -1,0 +1,51 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+kubeadm_cluster_config = {
+  cluster_name = "10-kubeadm-cluster"
+  nodes = {
+    masters = [
+      { ip = "172.16.134.200", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.201", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.202", vcpu = 4, ram = 4096 },
+    ]
+    workers = [
+      { ip = "172.16.134.210", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.211", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.212", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.213", vcpu = 4, ram = 4096 },
+      # { ip = "172.16.134.214", vcpu = 4, ram = 4096 },
+
+    ]
+  }
+  ha_virtual_ip = "172.16.134.250"
+  registry_host = "172.16.135.200:5000"
+}
+
+kubeadm_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-kubeadm-nat-net"
+      name_bridge  = "kubeadm-nat-br"
+
+      ips = {
+        address = "172.16.86.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.86.2"
+          end   = "172.16.86.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-kubeadm-hostonly-net"
+      name_bridge  = "kubeadm-host-br"
+
+      ips = {
+        address = "172.16.134.1"
+        prefix  = 24
+        dhcp    = null # dhcp is not used in hostonly network.
+      }
+    }
+  }
+  storage_pool_name = "iac-kubeadm"
+}

@@ -1,0 +1,41 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+harbor_cluster_config = {
+  cluster_name = "10-harbor-cluster"
+  nodes = {
+    harbor = [
+      { ip = "172.16.135.200", vcpu = 2, ram = 4096 },
+      { ip = "172.16.135.201", vcpu = 2, ram = 4096 },
+      { ip = "172.16.135.202", vcpu = 2, ram = 4096 },
+    ]
+  }
+}
+
+harbor_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-harbor-nat-net"
+      name_bridge  = "reg-nat-br"
+
+      ips = {
+        address = "172.16.87.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.87.2"
+          end   = "172.16.87.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-harbor-hostonly-net"
+      name_bridge  = "reg-host-br"
+
+      ips = {
+        address = "172.16.135.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  storage_pool_name = "iac-harbor"
+}

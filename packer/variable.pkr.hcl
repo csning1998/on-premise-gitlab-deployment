@@ -24,3 +24,13 @@ variable "common_spec" {
   })
   description = "Defines common parameters shared across all builds."
 }
+
+variable "net_bridge" {
+  type    = string
+  default = "virbr0"
+}
+
+variable "net_device" {
+  type    = string
+  default = "virtio-net"
+}

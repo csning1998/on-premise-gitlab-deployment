@@ -26,8 +26,8 @@ source "qemu" "ubuntu" {
 
   # --- Common Hardcoded Settings ---
   disk_interface = "virtio"
-  net_bridge     = "virbr0"
-  net_device     = "virtio-net"
+  net_bridge     = var.net_bridge
+  net_device     = var.net_device
   accelerator    = "kvm"
   qemu_binary    = "/usr/bin/qemu-system-x86_64"
   qemuargs       = [["-cpu", "host"]]

@@ -6,6 +6,6 @@ Host ${node.key}
   IdentityFile ${ssh_private_key_path}
   StrictHostKeyChecking yes
   PasswordAuthentication no
-  UserKnownHostsFile ~/.ssh/known_hosts_${config_name}
+  UserKnownHostsFile ${known_hosts_path}
 
 %{~ endfor ~}

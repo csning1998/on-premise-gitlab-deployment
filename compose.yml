@@ -2,7 +2,9 @@ services:
   iac-vault-server:
     image: docker.io/hashicorp/vault:1.20.2
     container_name: iac-vault-server
-    user: "${HOST_UID}:${HOST_GID}"
+    user: "0:0"
+    entrypoint: "vault"
+    command: server -config=/vault/vault.hcl
     volumes:
       - ./vault/vault.hcl:/vault/vault.hcl:z
       - ./vault/data:/vault/data:z
@@ -11,7 +13,11 @@ services:
       - IPC_LOCK
       - SETFCAP
     network_mode: "host"
-    command: server -config=/vault/vault.hcl
+    security_opt:
+      - label=disable
+    environment:
+      - SKIP_SETCAP=true
+      - VAULT_ADDR=https://127.0.0.1:8200
     healthcheck:
       test:
         [
@@ -22,7 +28,9 @@ services:
       timeout: 3s
       retries: 5
 
-  iac-controller:
+  # Common Configuration (x-iac-base)
+  x-iac-base: &iac-base
+    container_name: iac-controller-base
     build:
       context: .
       dockerfile: Containerfile
@@ -31,27 +39,47 @@ services:
         HOST_GID: ${HOST_GID}
         LIBVIRT_GID: ${LIBVIRT_GID}
         USERNAME: ${UNAME}
-    image: iac-kubeadm-controller:qemu-latest
-    container_name: iac-controller-qemu
-    privileged: true
-    cap_add:
-      - NET_ADMIN
+    image: on-premise-iac-controller:qemu-latest
     network_mode: "host"
+    user: "0:0"
     security_opt:
       - label=disable
-      - apparmor=unconfined # Do not apply any AppArmor security profile to it
-    group_add:
-      - "${LIBVIRT_GID}" # Add container user to the host's libvirt group by GID
+      - apparmor=unconfined
     env_file:
       - .env
     environment:
       - VAULT_CACERT=/app/vault/tls/ca.pem
+      - HOME=/home/${UNAME}
     volumes:
-      - .:/app:U,z
-      - ${UHOME}/.cache/packer:/home/${UNAME}/.cache/packer:U,z
-      - ${UHOME}/.ssh:/home/${UNAME}/.ssh:U,z
+      - .:/app:z
+      - ${UHOME}/.cache/packer:/home/${UNAME}/.cache/packer:z
+      - ${UHOME}/.ssh:/home/${UNAME}/.ssh:z
       - /dev/kvm:/dev/kvm
       - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
       - /dev/net/tun:/dev/net/tun
     tty: true
     stdin_open: true
+
+  # Service 1: Packer (No keep-groups)
+  iac-packer:
+    <<: *iac-base
+    container_name: iac-controller-packer
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/kvm:/dev/kvm
+      - /dev/net/tun:/dev/net/tun
+
+  # Service 2: Terraform (With keep-groups)
+  iac-terraform:
+    <<: *iac-base
+    container_name: iac-controller-terraform
+    group_add:
+      - "keep-groups" # Needs for libvirt socket
+
+  # Service 3: Ansible (With keep-groups)
+  iac-ansible:
+    <<: *iac-base
+    container_name: iac-controller-ansible
+    group_add:
+      - "keep-groups" # Ensure able to read mapped SSH key

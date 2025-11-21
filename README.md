@@ -30,7 +30,7 @@ Before you begin, ensure you have the following:
 
 -   A Linux host (RHEL 10 or Ubuntu 24 recommended).
 -   A CPU with virtualization support enabled (VT-x or AMD-V).
--   `sudo` access.
+-   `sudo` access for Libvirt.
 -   `podman` and `podman compose` installed (for containerized mode).
 -   `whois` package installed (for the `mkpasswd` command).
 
@@ -83,10 +83,12 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     #### Checking status of libvirt service...
     --> libvirt service is already running.
 
-    1) 02-base-kubeadm
-    2) 03-base-microk8s
-    3) 04-base-postgres
-    4) Back to Main Menu
+    1) 01-base-docker
+    2) 02-base-kubeadm
+    3) 03-base-microk8s
+    4) 04-base-postgres
+    5) 05-base-redis
+    6) Back to Main Menu
     >>> Please select an action:
     ```
 
@@ -98,8 +100,8 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     #### Checking status of libvirt service...
     --> libvirt service is already running.
 
-    1) 10-provision-harbor          3) 10-provision-postgres        5) Back to Main Menu
-    2) 10-provision-kubeadm         4) 50-provision-kubeadm-addons
+    1) 10-provision-harbor          2) 10-provision-postgres        3) 10-provision-redis
+    4) 10-provision-kubeadm         5) 50-provision-kubeadm-addons  6) Back to Main Menu
     >>> Please select an action:
     ```
 
@@ -111,8 +113,9 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     #### Checking status of libvirt service...
     --> libvirt service is already running.
 
-    1) 10-provision-kubeadm.yaml   3) 10-provision-postgres.yaml
-    2) 10-provision-harbor.yaml    4) Back to Main Menu
+    1) 10-provision-kubeadm.yaml   2) 10-provision-harbor.yaml
+    3) 10-provision-postgres.yaml  4) 10-provision-redis.yaml
+    5) Back to Main Menu
     >>> Please select an action:
     ```
 
@@ -151,33 +154,53 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
 
 ### B. Option 2. Run IaC tools inside Container: Podman
 
-0. _I am still looking for a method that does not require `sudo`._
-
 1. Please ensure Podman is installed correctly. You can refer to the following URL and choose the installation method corresponding to your platform
 
 2. After completing the Podman installation, please switch to the project root directory:
 
-    1. If using for the first time, execute the following command
+    1. Default memlock limit (`ulimit -l`) is usually too low for HashiCorp Vault. Rootless Podman inherits this low limit, causing Vault's mlock system call to fail. You can modify it by running the following command:
 
         ```shell
-        sudo podman compose up --build
+        sudo tee -a /etc/security/limits.conf <<EOT
+        ${USER}    soft    memlock    unlimited
+        ${USER}    hard    memlock    unlimited
+        EOT
         ```
 
-    2. After creating the Container, you only need to run the container to perform operations:
+        And then reboot the system to take effect. This prevents sensitive data from being swapped to unencrypted swap space.
+
+    2. If using for the first time, execute the following command
 
         ```shell
-        sudo podman compose up -d
+        podman compose up --build
         ```
 
-    3. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
+    3. After creating the Container, you only need to run the container to perform operations:
 
         ```shell
-        sudo podman exec -it iac-controller bash
+        podman compose up -d
         ```
 
-        Where `iac-controller` is the Container name for the project.
+    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
 
-    **Attention:** When switching between a Podman container and a native environment, you might encounter inconsistencies in Terraform's state within Virsh. If this happens, you can delete the `terraform/terraform.tfstate` file and run the following command to fix it.
+        ```shell
+        podman exec -it iac-controller-base bash
+        ```
+
+        Where `iac-controller-base` is the root Container name for the project.
+
+    5. Default Container output after `podman compose up -d` and `podman ps -a` is akin to the following:
+
+        ```text
+        CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
+        61be68ae276e  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  15 minutes ago  Up 15 minutes (healthy)  8200/tcp    iac-vault-server
+        79b918f440f1  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-base
+        0a4eb3495697  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-packer
+        482f58b67295  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-terraform
+        aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
+        ```
+
+    **Attention:** When switching between a Podman container and a native environment, you might encounter inconsistencies in Terraform's state within Virsh. If this happens, you can delete the `terraform/terraform.tfstate` file and run the following commands to fix it.
 
     ```shell
     sudo virsh pool-destroy iac-kubeadm
@@ -361,7 +384,9 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/databases \
             pg_superuser_password="a-more-secure-pwd-for-superuser" \
-            pg_replication_password="a-more-secure-pwd-for-replication"
+            pg_replication_password="a-more-secure-pwd-for-replication" \
+            redis_requirepass="a-more-secure-pwd-for-requirepass" \
+            redis_masterauth="a-more-secure-pwd-for-masterauth"
         ```
 
     - **Note 1:**
@@ -384,228 +409,15 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 #### **Step B.2. Create Variable File for Terraform:**
 
-1. You can create the `terraform/layers/10-cluster-provision/terraform.tfvars` file using the following command:
+1. You can RENAME the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
 
     ```shell
-    cat << EOF > terraform/layers/10-cluster-provision/terraform.tfvars
-    # Defines the hardware and IP addresses for each virtual machine in the cluster.
-    kubeadm_cluster_config = {
-    cluster_name = "10-kubeadm-cluster"
-    nodes = {
-        masters = [
-            { ip = "172.16.134.200", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.201", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.202", vcpu = 4, ram = 4096 },
-        ]
-        workers = [
-            { ip = "172.16.134.210", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.211", vcpu = 4, ram = 4096 },
-            { ip = "172.16.134.212", vcpu = 4, ram = 4096 },
-        ]
-    }
-    ha_virtual_ip = "172.16.134.250"
-    registry_host = "172.16.135.200:5000"
-    }
-
-    kubeadm_infrastructure = {
-        network = {
-            nat = {
-            name_network = "iac-kubeadm-nat-net"
-            name_bridge  = "kubeadm-nat-br"
-
-            ips = {
-                address = "172.16.86.1"
-                prefix  = 24
-                dhcp = {
-                    start = "172.16.86.2"
-                    end   = "172.16.86.254"
-                }
-            }
-        }
-
-        hostonly = {
-            name_network = "iac-kubeadm-hostonly-net"
-            name_bridge  = "kubeadm-host-br"
-
-            ips = {
-                address = "172.16.134.1"
-                prefix  = 24
-                dhcp    = null # dhcp is not used in hostonly network.
-            }
-        }
-    }
-    storage_pool_name = "iac-kubeadm"
-    }
-    EOF
+    for f in terraform/layers/*/terraform.tfvars.example; do cp -n "$f" "${f%.example}"; done
     ```
 
-    For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
+    Then, you can modify the `terraform.tfvars` file based on your requirements.
 
-2. The variable file for the (HA) Harbor in `terraform/layers/10-provision-harbor/terraform.tfvars` can be created using the following command:
-
-    ```bash
-    cat << EOF > terraform/layers/10-provision-harbor/terraform.tfvars
-    # Defines the hardware and IP addresses for each virtual machine in the cluster.
-    harbor_cluster_config = {
-    cluster_name = "10-harbor-cluster"
-    nodes = {
-        harbor = [
-            { ip = "172.16.135.200", vcpu = 2, ram = 4096 },
-            { ip = "172.16.135.201", vcpu = 2, ram = 4096 },
-            { ip = "172.16.135.202", vcpu = 2, ram = 4096 },
-        ]
-    }
-    }
-
-    harbor_infrastructure = {
-        network = {
-            nat = {
-                name_network = "iac-harbor-nat-net"
-                name_bridge  = "reg-nat-br"
-
-                ips = {
-                    address = "172.16.87.1"
-                    prefix  = 24
-                    dhcp = {
-                        start = "172.16.87.2"
-                        end   = "172.16.87.254"
-                    }
-                }
-            }
-
-            hostonly = {
-                name_network = "iac-harbor-hostonly-net"
-                name_bridge  = "reg-host-br"
-
-                ips = {
-                    address = "172.16.135.1"
-                    prefix  = 24
-                    dhcp    = null
-                }
-            }
-        }
-        storage_pool_name = "iac-harbor"
-    }
-    ```
-
-    This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
-
-3. The variable file for the (HA) Postgres / etcd in `terraform/layers/10-provision-postgres/terraform.tfvars` can be created using the following command:
-
-    ```bash
-    cat << EOF > terraform/layers/10-provision-postgres/terraform.tfvars
-    # Defines the hardware and IP addresses for each virtual machine in the cluster.
-    postgres_cluster_config = {
-        cluster_name = "10-postgres-cluster"
-        nodes = {
-            postgres = [
-                { ip = "172.16.136.200", vcpu = 4, ram = 4096 },
-                { ip = "172.16.136.201", vcpu = 4, ram = 4096 },
-                { ip = "172.16.136.202", vcpu = 4, ram = 4096 },
-            ],
-            etcd = [
-                { ip = "172.16.136.210", vcpu = 2, ram = 2048 },
-                { ip = "172.16.136.211", vcpu = 2, ram = 2048 },
-                { ip = "172.16.136.212", vcpu = 2, ram = 2048 }
-            ],
-            haproxy = [
-                { ip = "172.16.136.220", vcpu = 2, ram = 2048 }
-            ]
-        }
-    }
-
-    postgres_infrastructure = {
-        network = {
-            nat = {
-                name_network = "iac-postgres-nat-net"
-                name_bridge  = "pos-nat-br"
-
-                ips = {
-                    address = "172.16.88.1"
-                    prefix  = 24
-                    dhcp = {
-                    start = "172.16.88.2"
-                    end   = "172.16.88.254"
-                    }
-                }
-            }
-
-            hostonly = {
-                name_network = "iac-postgres-hostonly-net"
-                name_bridge  = "pos-host-br"
-
-                ips = {
-                    address = "172.16.136.1"
-                    prefix  = 24
-                    dhcp    = null
-                }
-            }
-        }
-        postgres_allowed_subnet = "172.16.136.0/24"
-        storage_pool_name       = "iac-postgres"
-    }
-    EOF
-    ```
-
-    This architecture was designed primarily to conform to the structural specifications of the variables in the `terraform/modules/11-provisioner-kvm/variables.tf` module.
-
-    Because Postgres resources will be callable by other Terraform layers (e.g. GitLab and Harbor in the future), the `bridge_name` and virtual machine naming logic _may still_ be modified.
-
-4. The variable file for the (HA) Redis in `terraform/layers/10-provision-redis/terraform.tfvars` can be created using the following command:
-
-    ```bash
-    cat << EOF > terraform/layers/10-provision-redis/terraform.tfvars
-    # Defines the hardware and IP addresses for each virtual machine in the cluster.
-
-    redis_cluster_config = {
-        cluster_name = "10-redis-cluster"
-        nodes = {
-            redis = [
-                { ip = "172.16.137.200", vcpu = 4, ram = 4096 },
-                { ip = "172.16.137.201", vcpu = 4, ram = 4096 },
-                { ip = "172.16.137.202", vcpu = 4, ram = 4096 },
-            ]
-        }
-    }
-
-    redis_infrastructure = {
-        network = {
-            nat = {
-                name_network = "iac-redis-nat-net"
-                name_bridge  = "redis-nat-br"
-
-                ips = {
-                    address = "172.16.89.1"
-                    prefix  = 24
-                    dhcp = {
-                    start = "172.16.89.2"
-                    end   = "172.16.89.254"
-                    }
-                }
-            }
-
-            hostonly = {
-                name_network = "iac-redis-hostonly-net"
-                name_bridge  = "redis-host-br"
-
-                ips = {
-                    address = "172.16.137.1"
-                    prefix  = 24
-                    dhcp    = null
-                }
-            }
-        }
-        redis_allowed_subnet = "172.16.137.0/24"
-        storage_pool_name    = "iac-redis"
-    }
-    EOF
-    ```
-
-**Note:** The `bridge_name` in `terraform.tfvars` must not exceed 15 characters due to the `IFNAMSIZ(15)` limitation.
-
-### Step C. Build / Rebuild / Reset
-
-1. The project currently uses Ubuntu 24.04.3 for VM deployment. If you wish to use other distro as virtual machine, it is recommended that you first verify the Ubuntu Server version and checksum.
+2. For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
     - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
     - The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
@@ -615,7 +427,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     Deploying other Linux distro would be supported if I have time. I'm still a full-time university student.
 
-2. **To deploy a complete HA Kubernetes cluster from scratch**:
+3. **To deploy a complete HA Kubernetes cluster from scratch**:
 
     - **First Step**: Enter the main menu `11) Rebuild Packer Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
@@ -623,7 +435,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
-3. **Isolated Testing and Development**:
+4. **Isolated Testing and Development**:
 
     The `11`, `12`, and `13` menus can be used for separate testing
 
@@ -633,7 +445,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Run Ansible Playbook`.
 
-4. **Resource Cleanup**:
+5. **Resource Cleanup**:
 
     - **`9) Purge All Libvirt Resources`**:
 

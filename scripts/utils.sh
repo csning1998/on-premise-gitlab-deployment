@@ -10,11 +10,24 @@ run_command() {
   if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
 
     # --- Containerized Execution Path ---
-    local compose_cmd="sudo podman compose"
+    local compose_cmd="podman compose"
     local compose_file="compose.yml"
-    local container_name="iac-controller-qemu"
-    local engine_cmd="sudo podman"
-    local service_name="iac-controller"
+    local container_name=""
+    local engine_cmd="podman"
+    local service_name=""
+
+		# 0. Determine the Container to use
+		case "$cmd_string" in
+      packer*)    service_name="iac-packer" ;;
+      terraform*) service_name="iac-terraform" ;;
+      ansible*)   service_name="iac-ansible" ;;
+      *)          
+        service_name="iac-ansible"
+        echo "DEBUG: Defaulting command '${cmd_string}' to '${service_name}' container." 
+        ;;
+    esac
+
+		local container_name="iac-controller-${service_name#iac-}"
 
     # 1. Check if Podman is installed
     if ! command -v podman >/dev/null 2>&1; then
@@ -31,7 +44,7 @@ run_command() {
     # 3. Ensure the controller service is running.
     if ! ${engine_cmd} ps -q --filter "name=${container_name}" | grep -q .; then
       echo ">>> Starting container service '${container_name}' using ${compose_file}..."
-      (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" up -d)
+      (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" up -d "${service_name}")
     fi
 
     # 4. Execute the command within the container.

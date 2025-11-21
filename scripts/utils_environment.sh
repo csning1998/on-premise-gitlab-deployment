@@ -55,6 +55,23 @@ cpu_virt_support_checker() {
   fi
 }
 
+# Function: Configure Packer network settings based on strategy
+packer_net_configurator() {
+  local bridge_val=""
+  local device_val="virtio-net"
+
+  if ip link show virbr0 >/dev/null 2>&1; then
+    bridge_val="virbr0"
+    echo "    - Network Mode: Bridge detected (virbr0). Using performance networking."
+  else
+    echo "WARN: 'virbr0' bridge not found. Defaulting to user-mode/SLIRP networking."
+    bridge_val=""
+  fi
+
+  env_var_mutator "PKR_VAR_NET_BRIDGE" "${bridge_val}"
+  env_var_mutator "PKR_VAR_NET_DEVICE" "${device_val}"
+}
+
 # Function to generate the .env file with intelligent defaults if it doesn't exist.
 env_file_bootstrapper() {
   cd "${SCRIPT_DIR}" || exit 1
@@ -105,6 +122,10 @@ HOST_GID=$(id -g)
 UNAME=$(whoami)
 UHOME=${HOME}
 
+# For Unpriviledged Podman
+PKR_VAR_NET_DEVICE="virtio-net"
+PKR_VAR_NET_BRIDGE=""
+
 # For Podman on Ubuntu to get the GID of the libvirt group on the host
 LIBVIRT_GID=${default_libvirt_gid}
 EOF
@@ -113,6 +134,9 @@ EOF
 
   # 4. perform the initial discovery.
   iac_layer_discoverer
+
+	# 5. Configure Packer network settings based on strategy
+	packer_net_configurator "${default_strategy}"
 }
 
 # Function to update a specific variable in the .env file
@@ -132,7 +156,7 @@ switch_strategy() {
   env_var_mutator "$var_name" "$new_value"
   echo
   echo "Strategy '${var_name}' in .env updated to '${new_value}'."
-  cd "${SCRIPT_DIR}" && ./entry.sh
+cd "${SCRIPT_DIR}" && exec ./entry.sh
 }
 
 strategy_switch_handler() {
@@ -142,7 +166,7 @@ strategy_switch_handler() {
   rm -rf "$HOME/.ssh/on-premise-gitlab-deployment_config"
   echo "#### Terraform state reset."
   echo "INFO: Purge libvirt resources (VMs, networks, storage pools)"
-  libvirt_resource_purger
+  libvirt_resource_purger "all"
   
   # Check if the storage pool exists before attempting to destroy or undefine
   if sudo virsh pool-info iac-kubeadm >/dev/null 2>&1; then
@@ -156,5 +180,8 @@ strategy_switch_handler() {
 
   local new_strategy
   new_strategy=$([[ "$ENVIRONMENT_STRATEGY" == "container" ]] && echo "native" || echo "container")
+
+	# Configure Packer network settings based on strategy
+	packer_net_configurator "${new_strategy}"
   switch_strategy "ENVIRONMENT_STRATEGY" "$new_strategy"
 }
