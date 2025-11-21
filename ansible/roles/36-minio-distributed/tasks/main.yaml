@@ -1,0 +1,61 @@
+---
+- name: "Section A: Prepare Data Drives"
+  block:
+    - name: "Step A1. Install XFS progs"
+      ansible.builtin.apt:
+        name: xfsprogs
+        state: present
+        update_cache: true
+
+    - name: "Step A2. Create XFS filesystem on data drives"
+      community.general.filesystem:
+        fstype: xfs
+        dev: "{{ item.device }}"
+      loop: "{{ minio_data_drives }}"
+
+    - name: "Step A3. Create mount points"
+      ansible.builtin.file:
+        path: "{{ item.mount_point }}"
+        state: directory
+        owner: "{{ minio_user }}"
+        group: "{{ minio_group }}"
+        mode: "0750"
+      loop: "{{ minio_data_drives }}"
+
+    - name: "Step A4. Mount drives and persist in fstab"
+      ansible.posix.mount:
+        path: "{{ item.mount_point }}"
+        src: "{{ item.device }}"
+        fstype: xfs
+        opts: noatime
+        state: mounted
+      loop: "{{ minio_data_drives }}"
+
+    - name: "Step A5. Ensure ownership of mount points (Recursive)"
+      ansible.builtin.file:
+        path: "{{ item.mount_point }}"
+        state: directory
+        owner: "{{ minio_user }}"
+        group: "{{ minio_group }}"
+        recurse: true
+      loop: "{{ minio_data_drives }}"
+
+- name: "Section B: Configure Distributed MinIO"
+  block:
+    - name: "Step B1. Create MinIO environment file"
+      ansible.builtin.template:
+        src: minio-default.j2
+        dest: /etc/default/minio
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart MinIO
+
+- name: "Section C: Start Service"
+  block:
+    - name: "Step C1. Enable and start MinIO service"
+      ansible.builtin.systemd:
+        name: minio
+        state: started
+        enabled: true
+        daemon_reload: true

@@ -1,0 +1,9 @@
+---
+minio_base:
+  user: "minio-user"
+  group: "minio-user"
+  install_path: "/usr/local/bin/minio"
+  data_dir: "/var/lib/minio"
+  config_dir: "/etc/minio"
+  go_package: "golang-go"
+  release_version: "RELEASE.2025-10-15T17-29-55Z"

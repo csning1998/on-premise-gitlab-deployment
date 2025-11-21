@@ -1,0 +1,59 @@
+minio_cluster_config = {
+  cluster_name = "10-minio-cluster"
+  nodes = {
+    minio = [
+      {
+        ip = "172.16.138.200", vcpu = 2, ram = 2048,
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      },
+      {
+        ip = "172.16.138.201", vcpu = 2, ram = 2048,
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 },
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      },
+      {
+        ip = "172.16.138.202", vcpu = 2, ram = 2048,
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 },
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      },
+      {
+        ip = "172.16.138.203", vcpu = 2, ram = 2048,
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 },
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      }
+    ]
+  }
+}
+
+minio_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-minio-nat-net"
+      name_bridge  = "minio-nat-br"
+      ips = {
+        address = "172.16.90.1"
+        prefix  = 24
+        dhcp    = { start = "172.16.90.2", end = "172.16.90.254" }
+      }
+    }
+    hostonly = {
+      name_network = "iac-minio-hostonly-net"
+      name_bridge  = "minio-host-br"
+      ips = {
+        address = "172.16.138.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  storage_pool_name = "iac-minio"
+}

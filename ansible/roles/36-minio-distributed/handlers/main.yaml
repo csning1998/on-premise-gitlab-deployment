@@ -1,0 +1,5 @@
+---
+- name: Restart MinIO
+  ansible.builtin.systemd:
+    name: minio
+    state: restarted

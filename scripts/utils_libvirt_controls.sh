@@ -8,6 +8,7 @@ declare -A DOMAIN_MAP=(
   ["10-provision-harbor"]="harbor-"
   ["10-provision-postgres"]="postgres- haproxy- etcd-"
   ["10-provision-redis"]="redis-"
+	["10-provision-minio"]="minio-"
 )
 
 # Storage Pool names.
@@ -16,6 +17,7 @@ declare -A POOL_MAP=(
   ["10-provision-harbor"]="iac-harbor"
   ["10-provision-postgres"]="iac-postgres"
   ["10-provision-redis"]="iac-redis"
+	["10-provision-minio"]="iac-minio"
 )
 
 # Network prefixes.
@@ -24,6 +26,7 @@ declare -A NET_MAP=(
   ["10-provision-harbor"]="iac-harbor"
   ["10-provision-postgres"]="iac-postgres"
   ["10-provision-redis"]="iac-redis"
+	["10-provision-minio"]="iac-minio"
 )
 
 # Function: Ensure libvirt service is running before executing a command.

@@ -1,0 +1,6 @@
+---
+- name: "Play 1: Configure MinIO High Availability Cluster"
+  hosts: all
+  become: true
+  roles:
+    - 36-minio-distributed
