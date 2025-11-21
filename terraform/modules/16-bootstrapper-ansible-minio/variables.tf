@@ -19,14 +19,13 @@ variable "vm_credentials" {
   })
 }
 
-# variable "minio_credentials" {
-#   description = "Credentials for Ansible to access the target Databases."
-#   type = object({
-#     requirepass = string
-#     masterauth  = string
-#   })
-#   sensitive = true
-# }
+variable "minio_credentials" {
+  description = "Credentials for Ansible to access the target Databases."
+  type = object({
+    root_password = string
+  })
+  sensitive = true
+}
 
 # Ansible Playbook Configuration
 

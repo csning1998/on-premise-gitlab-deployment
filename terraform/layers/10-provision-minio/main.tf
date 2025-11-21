@@ -64,10 +64,9 @@ module "bootstrapper_ansible_cluster" {
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  # minio_credentials = {
-  #   requirepass = data.vault_generic_secret.db_vars.data["minio_requirepass"]
-  #   masterauth  = data.vault_generic_secret.db_vars.data["minio_masterauth"]
-  # }
+  minio_credentials = {
+    root_password = data.vault_generic_secret.db_vars.data["minio_root_password"]
+  }
 
   minio_nodes    = local.minio_nodes_map
   status_trigger = module.ssh_config_manager_minio.ssh_access_ready_trigger
