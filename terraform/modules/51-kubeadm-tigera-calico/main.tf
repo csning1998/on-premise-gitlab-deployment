@@ -25,6 +25,10 @@ resource "helm_release" "tigera_operator" {
           type = "Calico"
         }
         calicoNetwork = {
+          nodeAddressAutodetectionV4 = {
+            # Configure Calico to auto-detect interfaces matching the HostOnly network segment.
+            cidrs = ["172.16.134.0/16"]
+          }
           ipPools = [
             {
               cidr          = var.pod_subnet
