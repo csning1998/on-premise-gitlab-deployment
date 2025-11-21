@@ -3,8 +3,7 @@
 minio_user: "minio-user"
 minio_group: "minio-user"
 
-# Cluster Configuration Syntax. e.g. http://IP-{start...end}/data{1...n}
-minio_cluster_vol_string: "http://{{ minio_cluster_start_ip | default('172.16.138.20') }}{0...3}:9000/data{1...2}"
+# Cluster Configuration
 minio_root_user: "admin"
 
 # Disk Configuration corresponding to Terraform-mounted vdb, vdc
