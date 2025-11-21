@@ -1,0 +1,21 @@
+---
+all:
+  vars:
+    ansible_user: "${ansible_ssh_user}"
+    minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
+    minio_initial_master_ip: "${minio_nodes[keys(minio_nodes)[0]].ip}"
+    sentinel_master_name: "minio-master" 
+    sentinel_quorum: ${floor(length(minio_nodes)/2) + 1}
+
+  children:
+    minio_master:
+      hosts:
+        ${keys(minio_nodes)[0]}:
+          advertise_ip: ${minio_nodes[keys(minio_nodes)[0]].ip}
+
+    minio_replicas:
+      hosts:
+%{ for key in slice(keys(minio_nodes), 1, length(keys(minio_nodes))) ~}
+        ${key}:
+          advertise_ip: ${minio_nodes[key].ip}
+%{ endfor ~}
