@@ -56,8 +56,6 @@ services:
     environment:
       - VAULT_CACERT=/app/vault/tls/ca.pem
       - HOME=/home/${UNAME}
-      - PKR_VAR_net_device=user
-      - PKR_VAR_net_bridge=
     volumes:
       - .:/app:z
       - ${UHOME}/.cache/packer:/home/${UNAME}/.cache/packer:z

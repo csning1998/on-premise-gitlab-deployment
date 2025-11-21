@@ -55,6 +55,35 @@ cpu_virt_support_checker() {
   fi
 }
 
+# Function: Configure Packer network settings based on strategy
+packer_net_configurator() {
+  local strategy="$1"
+  local bridge_val=""
+  local device_val="virtio-net"
+
+  echo ">>> Configuring Packer network settings for strategy: ${strategy}..."
+
+  if [[ "${strategy}" == "container" ]]; then
+    bridge_val=""
+    device_val="virtio-net"
+    echo "    - Mode: Container (Rootless). Using User Mode Networking (SLIRP)."
+    
+  elif [[ "${strategy}" == "native" ]]; then
+    if ip link show virbr0 >/dev/null 2>&1; then
+      bridge_val="virbr0"
+      echo "    - Mode: Native. Detected bridge 'virbr0'."
+    else
+      echo "WARN: Native mode selected but 'virbr0' not found via 'ip link'."
+      echo "      Defaulting to 'virbr0' anyway, but Packer may fail if network is missing."
+      bridge_val="virbr0"
+    fi
+    device_val="virtio-net"
+  fi
+
+  env_var_mutator "PKR_VAR_NET_BRIDGE" "${bridge_val}"
+  env_var_mutator "PKR_VAR_NET_DEVICE" "${device_val}"
+}
+
 # Function to generate the .env file with intelligent defaults if it doesn't exist.
 env_file_bootstrapper() {
   cd "${SCRIPT_DIR}" || exit 1
@@ -105,6 +134,10 @@ HOST_GID=$(id -g)
 UNAME=$(whoami)
 UHOME=${HOME}
 
+# For Unpriviledged Podman
+PKR_VAR_NET_DEVICE="virtio-net"
+PKR_VAR_NET_BRIDGE=""
+
 # For Podman on Ubuntu to get the GID of the libvirt group on the host
 LIBVIRT_GID=${default_libvirt_gid}
 EOF
@@ -113,6 +146,9 @@ EOF
 
   # 4. perform the initial discovery.
   iac_layer_discoverer
+
+	# 5. Configure Packer network settings based on strategy
+	packer_net_configurator "${default_strategy}"
 }
 
 # Function to update a specific variable in the .env file
@@ -156,5 +192,8 @@ strategy_switch_handler() {
 
   local new_strategy
   new_strategy=$([[ "$ENVIRONMENT_STRATEGY" == "container" ]] && echo "native" || echo "container")
+
+	# Configure Packer network settings based on strategy
+	packer_net_configurator "${new_strategy}"
   switch_strategy "ENVIRONMENT_STRATEGY" "$new_strategy"
 }

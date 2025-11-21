@@ -61,11 +61,22 @@ packer_build_executor() {
 
   echo ">>> STEP: Starting new Packer build for [${base_name}]..."
 
+	local override_args=""
+
+	if [[ -n "${PKR_VAR_NET_BRIDGE+x}" ]]; then
+		override_args+=" -var net_bridge=${PKR_VAR_NET_BRIDGE}"
+	fi
+
+	if [[ -n "${PKR_VAR_NET_DEVICE+x}" ]]; then
+		override_args+=" -var net_device=${PKR_VAR_NET_DEVICE}"
+	fi
+
   # The command now loads the common values file first, then the specific
   # build var file, and runs from the root Packer directory.
   local cmd="packer init . && packer build \
     -var-file=values.pkrvars.hcl \
     -var-file=${base_name}.pkrvars.hcl \
+		${override_args} \
     ."
 
   # Add this to abort and debug if packer build failed.
