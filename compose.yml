@@ -30,6 +30,7 @@ services:
 
   # Common Configuration (x-iac-base)
   x-iac-base: &iac-base
+    container_name: iac-controller-base
     build:
       context: .
       dockerfile: Containerfile
