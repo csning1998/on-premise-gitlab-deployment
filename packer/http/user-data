@@ -10,13 +10,19 @@ autoinstall:
     layout:
       name: direct
 
+  refresh-installer:
+    # To prevent Exit 100 during packer build
+    update: no
+
+  updates: "security"
+
   # Network Configuration
   network:
     version: 2
     ethernets:
-      id-net-eth0:
+      default:
         match:
-          name: en*
+          name: e*
         dhcp4: true
 
   # User and Hostname Configuration

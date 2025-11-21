@@ -20,6 +20,7 @@ build {
   # --- Common Provisioners ---
   provisioner "shell" {
     inline = [
+      "/usr/bin/cloud-init status --wait",
       "sudo apt-get update",
       "sudo apt-get install -y openssh-sftp-server",
       "sudo systemctl restart ssh"
