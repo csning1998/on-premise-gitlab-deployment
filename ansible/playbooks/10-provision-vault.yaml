@@ -1,0 +1,6 @@
+---
+- name: "Play 1: Configure Vault Load Balancer (HAProxy)"
+  hosts: vault_haproxy
+  become: true
+  roles:
+    - 41-vault-loadbalancer
