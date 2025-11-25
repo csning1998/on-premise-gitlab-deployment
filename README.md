@@ -380,6 +380,16 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             minio_root_password="a-more-secure-pwd-for-rootpassword"
         ```
 
+    - **For Infrastructure Variables in this Project**
+
+        ```shell
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/infrastructure \
+            vault_keepalived_auth_pass="a-more-secure-pwd-for-keepalivedauthpass"
+        ```
+
     - **Note 1:**
 
         In which `ssh_username` and `ssh_password` are the account and password used to log into the virtual machine; while `ssh_password_hash` is the hashed password required for virtual machine automatic installation (Cloud-init). This password needs to be generated using the password string from `ssh_password`. For instance, if the password is `HelloWorld@k8s`, then the corresponding password hash should be generated using the following command:
