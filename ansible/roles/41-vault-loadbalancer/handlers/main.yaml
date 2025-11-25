@@ -3,3 +3,8 @@
   ansible.builtin.systemd:
     name: haproxy
     state: restarted
+
+- name: Restart keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    state: restarted
