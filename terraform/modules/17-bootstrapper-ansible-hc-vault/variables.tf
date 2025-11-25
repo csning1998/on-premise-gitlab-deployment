@@ -28,6 +28,15 @@ variable "vm_credentials" {
   })
 }
 
+variable "keepalived_credentials" {
+  description = "Credentials for Ansible to access the target Databases."
+  type = object({
+    auth_pass = string
+  })
+  sensitive = true
+}
+
+
 # Ansible Playbook Configuration
 
 variable "ansible_config" {

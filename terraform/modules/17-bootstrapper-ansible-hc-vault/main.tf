@@ -47,6 +47,7 @@ resource "null_resource" "provision_cluster" {
         --private-key ${nonsensitive(var.vm_credentials.ssh_private_key_path)} \
         --ssh-common-args='-F ${var.ansible_config.ssh_config_path}' \
         --extra-vars "ansible_ssh_user=${nonsensitive(var.vm_credentials.username)}" \
+        --extra-vars "vault_keepalived_auth_pass=${nonsensitive(var.keepalived_credentials.auth_pass)}" \
         -v \
         ${var.ansible_config.root_path}/playbooks/10-provision-vault.yaml
     EOT
