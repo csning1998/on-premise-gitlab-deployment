@@ -49,29 +49,36 @@ module "ssh_config_manager_postgres" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/14-bootstrapper-ansible-postgres"
+  source = "../../modules/16-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_postgres.ssh_config_file_path
-    extra_vars = {
-      postgres_allowed_subnet = var.postgres_infrastructure.postgres_allowed_subnet
-    }
+    playbook_file   = "playbooks/10-provision-postgres.yaml"
+    inventory_file  = "inventory-postgres-cluster.yaml"
   }
+  inventory_content = templatefile("${path.root}/../../templates/inventory-postgres-cluster.yaml.tftpl", {
+    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+
+    etcd_nodes     = local.etcd_nodes_map
+    postgres_nodes = local.postgres_nodes_map
+    haproxy_nodes  = local.haproxy_nodes_map
+
+    etcd_ips     = [for node in values(local.etcd_nodes_map) : node.ip]
+    postgres_ips = [for node in values(local.postgres_nodes_map) : node.ip]
+
+    postgres_allowed_subnet = var.postgres_infrastructure.postgres_allowed_subnet
+  })
 
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  postgres_credentials = {
-    superuser_password   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
-    replication_password = data.vault_generic_secret.db_vars.data["pg_replication_password"]
+  extra_vars = {
+    "postgres_superuser_password"   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
+    "postgres_replication_password" = data.vault_generic_secret.db_vars.data["pg_replication_password"]
   }
-
-  postgres_nodes = local.postgres_nodes_map
-  etcd_nodes     = local.etcd_nodes_map
-  haproxy_nodes  = local.haproxy_nodes_map
 
   status_trigger = module.ssh_config_manager_postgres.ssh_access_ready_trigger
 }
