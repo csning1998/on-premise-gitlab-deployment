@@ -37,7 +37,7 @@ backend vault_backend
     http-check expect status 200
 
     # SSL Check: since it's self-signed, must use verify none to ignore certificate verification
-    {% for host in groups['vault_primary'] | union(groups['vault_standby']) %}
+    {% for host in groups['vault_leader'] | union(groups['vault_follower']) %}
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ vault_port_api }} check check-ssl verify none inter 2s fall 3 rise 2
     {% endfor %}
 

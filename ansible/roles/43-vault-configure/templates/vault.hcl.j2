@@ -10,13 +10,13 @@ storage "raft" {
   path    = "{{ vault_dir_data }}"
   node_id = "{{ node_id }}" 
 
-{% if inventory_hostname not in groups['vault_primary'] %}
+{% if inventory_hostname not in groups['vault_leader'] %}
   retry_join {
-    leader_api_addr         = "https://{{ hostvars[groups['vault_primary'][0]]['advertise_ip'] }}:{{ vault_port_api }}"
+    leader_api_addr         = "https://{{ hostvars[groups['vault_leader'][0]]['advertise_ip'] }}:{{ vault_port_api }}"
     leader_ca_cert_file     = "{{ vault_dir_tls }}/vault-ca.crt"
     leader_client_cert_file = "{{ vault_dir_tls }}/vault.crt"
     leader_client_key_file  = "{{ vault_dir_tls }}/vault.key"
-    leader_tls_servername   = "{{ hostvars[groups['vault_primary'][0]]['inventory_hostname'] }}"
+    leader_tls_servername   = "{{ hostvars[groups['vault_leader'][0]]['inventory_hostname'] }}"
   }
 {% endif %}
 }

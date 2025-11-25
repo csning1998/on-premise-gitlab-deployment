@@ -7,13 +7,13 @@ all:
     vault_vip: "172.16.139.250"
 
   children:
-    vault_primary:
+    vault_leader:
       hosts:
         ${keys(vault_nodes)[0]}:
           advertise_ip: ${vault_nodes[keys(vault_nodes)[0]].ip}
           node_id: "vault-node-00"
 
-    vault_standby:
+    vault_follower:
       hosts:
 %{ for idx, key in slice(keys(vault_nodes), 1, length(keys(vault_nodes))) ~}
         ${key}:
