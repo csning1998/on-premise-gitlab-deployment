@@ -21,11 +21,11 @@ vault_infrastructure = {
       name_bridge  = "vault-nat-br"
 
       ips = {
-        address = "172.16.90.1"
+        address = "172.16.91.1"
         prefix  = 24
         dhcp = {
-          start = "172.16.90.2"
-          end   = "172.16.90.254"
+          start = "172.16.91.2"
+          end   = "172.16.91.254"
         }
       }
     }

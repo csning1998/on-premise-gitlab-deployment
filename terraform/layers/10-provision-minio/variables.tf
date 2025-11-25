@@ -17,6 +17,26 @@ variable "minio_cluster_config" {
     })
     base_image_path = optional(string, "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2")
   })
+
+  validation {
+    condition     = length(var.minio_cluster_config.nodes.minio) == 1 || (length(var.minio_cluster_config.nodes.minio) >= 4 && length(var.minio_cluster_config.nodes.minio) <= 8 && length(var.minio_cluster_config.nodes.minio) % 4 == 0)
+    error_message = "MinIO cluster size must be exactly 1 node, or between 4 and 8 nodes (inclusive) and be a multiple of 4."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.minio_cluster_config.nodes.minio : length(node.data_disks) > 0])
+    error_message = "Each MinIO node must have at least one data disk configured."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.minio_cluster_config.nodes.minio : node.vcpu >= 2 && node.ram >= 2048])
+    error_message = "MinIO nodes require at least 2 vCPUs and 2048MB RAM to ensure stable I/O performance."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.minio_cluster_config.nodes.minio : can(cidrnetmask("${node.ip}/32"))])
+    error_message = "All provided MinIO node IP addresses must be valid IPv4 addresses."
+  }
 }
 
 # Registry Server Infrastructure Network Configuration
@@ -53,4 +73,9 @@ variable "minio_infrastructure" {
     minio_allowed_subnet = optional(string, "172.16.138.0/24")
     storage_pool_name    = optional(string, "iac-minio")
   })
+
+  validation {
+    condition     = can(cidrnetmask(var.minio_infrastructure.minio_allowed_subnet))
+    error_message = "MinIO allowed subnet must be a valid CIDR block."
+  }
 }

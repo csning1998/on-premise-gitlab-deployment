@@ -49,28 +49,31 @@ module "ssh_config_manager_vault" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/17-bootstrapper-ansible-hc-vault"
+  source = "../../modules/16-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_vault.ssh_config_file_path
-    extra_vars = {
-      vault_allowed_subnet = var.vault_infrastructure.vault_allowed_subnet
-    }
+    playbook_file   = "playbooks/10-provision-vault.yaml"
+    inventory_file  = "inventory-vault-cluster.yaml"
   }
+
+  inventory_content = templatefile("${path.root}/../../templates/inventory-vault-cluster.yaml.tftpl", {
+    ansible_ssh_user     = data.vault_generic_secret.iac_vars.data["vm_username"]
+    vault_nodes          = local.vault_nodes_map
+    haproxy_node         = local.haproxy_node
+    vault_allowed_subnet = var.vault_infrastructure.vault_allowed_subnet
+  })
 
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  infra_credentials = {
-    auth_pass  = data.vault_generic_secret.db_vars.data["vault_keepalived_auth_pass"]
-    stats_pass = data.vault_generic_secret.db_vars.data["vault_haproxy_stats_pass"]
+  extra_vars = {
+    "vault_keepalived_auth_pass" = data.vault_generic_secret.db_vars.data["vault_keepalived_auth_pass"]
+    "vault_haproxy_stats_pass"   = data.vault_generic_secret.db_vars.data["vault_haproxy_stats_pass"]
   }
 
-
-  vault_nodes    = local.vault_nodes_map
-  haproxy_node   = local.haproxy_node
   status_trigger = module.ssh_config_manager_vault.ssh_access_ready_trigger
 }

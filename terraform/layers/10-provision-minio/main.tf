@@ -49,25 +49,29 @@ module "ssh_config_manager_minio" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/16-bootstrapper-ansible-minio"
+  source = "../../modules/16-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_minio.ssh_config_file_path
-    extra_vars = {
-      minio_allowed_subnet = var.minio_infrastructure.minio_allowed_subnet
-    }
+    playbook_file   = "playbooks/10-provision-minio.yaml"
+    inventory_file  = "inventory-minio-cluster.yaml"
   }
+
+  inventory_content = templatefile("${path.root}/../../templates/inventory-minio-cluster.yaml.tftpl", {
+    ansible_ssh_user     = data.vault_generic_secret.iac_vars.data["vm_username"]
+    minio_nodes          = local.minio_nodes_map
+    minio_allowed_subnet = var.minio_infrastructure.minio_allowed_subnet
+  })
 
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  minio_credentials = {
-    root_password = data.vault_generic_secret.db_vars.data["minio_root_password"]
+  extra_vars = {
+    "minio_root_password" = data.vault_generic_secret.db_vars.data["minio_root_password"]
   }
 
-  minio_nodes    = local.minio_nodes_map
   status_trigger = module.ssh_config_manager_minio.ssh_access_ready_trigger
 }

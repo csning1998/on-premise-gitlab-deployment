@@ -18,9 +18,33 @@ variable "vault_cluster_config" {
     })
     base_image_path = optional(string, "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2")
   })
+
   validation {
     condition     = length(var.vault_cluster_config.nodes.vault) % 2 != 0
-    error_message = "The number of master nodes must be an odd number (1, 3, 5, etc.) to ensure a stable Sentinel quorum."
+    error_message = "The number of Vault nodes must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
+  }
+
+  validation {
+    condition     = length(var.vault_cluster_config.nodes.haproxy) > 0
+    error_message = "At least one HAProxy node is required for Vault."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.vault_cluster_config.nodes.vault : node.vcpu >= 2 && node.ram >= 2048])
+    error_message = "Vault nodes require at least 2 vCPUs and 2048MB RAM."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.vault_cluster_config.nodes.haproxy : node.vcpu >= 1 && node.ram >= 1024])
+    error_message = "HAProxy nodes require at least 1 vCPU and 1024MB RAM."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      [for node in var.vault_cluster_config.nodes.vault : can(cidrnetmask("${node.ip}/32"))],
+      [for node in var.vault_cluster_config.nodes.haproxy : can(cidrnetmask("${node.ip}/32"))]
+    ]))
+    error_message = "All provided Vault and HAProxy IP addresses must be valid IPv4 addresses."
   }
 }
 

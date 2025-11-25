@@ -13,9 +13,20 @@ variable "harbor_cluster_config" {
     })
     base_image_path = optional(string, "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2")
   })
+
   validation {
     condition     = length(var.harbor_cluster_config.nodes.harbor) % 2 != 0
     error_message = "The number of MicroK8s nodes for the Harbor cluster must be an odd number (1, 3, 5, etc.) to ensure a stable dqlite quorum."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.harbor_cluster_config.nodes.harbor : node.vcpu >= 2 && node.ram >= 4096])
+    error_message = "Harbor (MicroK8s) nodes require at least 2 vCPUs and 4096MB RAM to prevent OOM kills."
+  }
+
+  validation {
+    condition     = alltrue([for node in var.harbor_cluster_config.nodes.harbor : can(cidrnetmask("${node.ip}/32"))])
+    error_message = "All provided Harbor node IP addresses must be valid IPv4 addresses."
   }
 }
 

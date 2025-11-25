@@ -49,26 +49,30 @@ module "ssh_config_manager_redis" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/15-bootstrapper-ansible-redis"
+  source = "../../modules/16-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_redis.ssh_config_file_path
-    extra_vars = {
-      redis_allowed_subnet = var.redis_infrastructure.redis_allowed_subnet
-    }
+    playbook_file   = "playbooks/10-provision-redis.yaml"
+    inventory_file  = "inventory-redis-cluster.yaml"
   }
+
+  inventory_content = templatefile("${path.root}/../../templates/inventory-redis-cluster.yaml.tftpl", {
+    ansible_ssh_user     = data.vault_generic_secret.iac_vars.data["vm_username"]
+    redis_nodes          = local.redis_nodes_map
+    redis_allowed_subnet = var.redis_infrastructure.redis_allowed_subnet
+  })
 
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  redis_credentials = {
-    requirepass = data.vault_generic_secret.db_vars.data["redis_requirepass"]
-    masterauth  = data.vault_generic_secret.db_vars.data["redis_masterauth"]
+  extra_vars = {
+    "redis_requirepass" = data.vault_generic_secret.db_vars.data["redis_requirepass"]
+    "redis_masterauth"  = data.vault_generic_secret.db_vars.data["redis_masterauth"]
   }
 
-  redis_nodes    = local.redis_nodes_map
   status_trigger = module.ssh_config_manager_redis.ssh_access_ready_trigger
 }

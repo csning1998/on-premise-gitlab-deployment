@@ -1,7 +1,7 @@
 module "provisioner_kvm" {
   source = "../../modules/11-provisioner-kvm"
 
-  # --- Map Layer's specific variables to the Module's generic inputs ---
+  # Map Layer's specific variables to the Module's generic inputs
 
   # VM Configuration
   vm_config = {
@@ -49,20 +49,29 @@ module "ssh_config_manager_harbor" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/13-bootstrapper-ansible-harbor"
+  source = "../../modules/16-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_harbor.ssh_config_file_path
+    playbook_file   = "playbooks/10-provision-harbor.yaml"
+    inventory_file  = "inventory-harbor-cluster.yaml"
   }
+
+  inventory_content = templatefile("${path.root}/../../templates/inventory-harbor-cluster.yaml.tftpl", {
+    harbor_nodes = [
+      for node in module.provisioner_kvm.all_nodes_map : node
+      if startswith(node.key, "harbor-node")
+    ],
+    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+  })
 
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  inventory = {
-    nodes          = module.provisioner_kvm.all_nodes_map
-    status_trigger = module.ssh_config_manager_harbor.ssh_access_ready_trigger
-  }
+  extra_vars = {}
+
+  status_trigger = module.ssh_config_manager_harbor.ssh_access_ready_trigger
 }
