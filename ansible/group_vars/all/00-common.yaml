@@ -19,3 +19,4 @@ common:
       - gh
       - htop
       - net-tools
+      - lsb-release

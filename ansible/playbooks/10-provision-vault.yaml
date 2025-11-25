@@ -4,3 +4,22 @@
   become: true
   roles:
     - 41-vault-loadbalancer
+
+- name: "Play 2: Configure Vault Nodes (Setup & Config)"
+  hosts: vault_primary, vault_standby
+  become: true
+  roles:
+    - 42-vault-setup
+    - 43-vault-configure
+
+- name: "Play 3: Initialize Vault Cluster (Primary Only)"
+  hosts: vault_primary
+  become: true
+  roles:
+    - 44-vault-initialize
+
+- name: "Play 4: Unseal All Vault Nodes"
+  hosts: vault_primary, vault_standby
+  become: true
+  roles:
+    - 45-vault-unseal

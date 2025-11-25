@@ -1,0 +1,34 @@
+
+cluster_name = "vault-ha-cluster"
+ui           = true
+disable_mlock = true
+
+api_addr     = "https://{{ advertise_ip }}:8200"
+cluster_addr = "https://{{ advertise_ip }}:8201"
+
+storage "raft" {
+  path    = "/opt/vault/data"
+  node_id = "{{ node_id }}"
+
+{% if inventory_hostname not in groups['vault_primary'] %}
+  retry_join {
+    leader_api_addr         = "https://{{ hostvars[groups['vault_primary'][0]]['advertise_ip'] }}:8200"
+    leader_ca_cert_file     = "/etc/vault.d/tls/vault-ca.crt"
+    leader_client_cert_file = "/etc/vault.d/tls/vault.crt"
+    leader_client_key_file  = "/etc/vault.d/tls/vault.key"
+    leader_tls_servername   = "{{ hostvars[groups['vault_primary'][0]]['inventory_hostname'] }}"
+  }
+{% endif %}
+}
+
+listener "tcp" {
+  address       = "0.0.0.0:8200"
+  tls_disable   = false
+
+  # Server Cert
+  tls_cert_file = "/etc/vault.d/tls/vault.crt"
+  tls_key_file  = "/etc/vault.d/tls/vault.key"
+
+  # Client Verification
+  tls_client_ca_file = "/etc/vault.d/tls/vault-ca.crt"
+}

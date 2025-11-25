@@ -1,0 +1,25 @@
+- name: "Block E: Initialize Vault Cluster (Primary Only)"
+  become: true
+  run_once: true
+  block:
+    - name: "E1. Wait for Vault"
+      ansible.builtin.wait_for:
+        port: 8200
+        delay: 10
+
+    - name: "E2. Initialize Vault"
+      ansible.builtin.command: vault operator init -key-shares=1 -key-threshold=1 -format=json
+      environment:
+        VAULT_ADDR: "https://127.0.0.1:8200"
+        VAULT_SKIP_VERIFY: "true"
+      register: init_result
+      ignore_errors: true
+
+    - name: "E3. Save Keys to Local"
+      ansible.builtin.copy:
+        content: "{{ init_result.stdout }}"
+        dest: "/tmp/vault_init_output.json"
+        mode: "0600"
+      delegate_to: localhost
+      become: false
+      when: init_result.rc == 0
