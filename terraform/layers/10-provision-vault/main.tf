@@ -64,8 +64,9 @@ module "bootstrapper_ansible_cluster" {
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  keepalived_credentials = {
-    auth_pass = data.vault_generic_secret.db_vars.data["vault_keepalived_auth_pass"]
+  infra_credentials = {
+    auth_pass  = data.vault_generic_secret.db_vars.data["vault_keepalived_auth_pass"]
+    stats_pass = data.vault_generic_secret.db_vars.data["vault_haproxy_stats_pass"]
   }
 
 

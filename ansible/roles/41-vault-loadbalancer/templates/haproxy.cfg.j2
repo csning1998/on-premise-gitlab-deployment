@@ -48,4 +48,7 @@ listen stats
     stats enable
     stats uri /
     stats refresh 5s
+
+    # [Security Fix] Force Basic Authentication with Admin User
+    stats auth {{ vault_haproxy_stats_user }}:{{ vault_haproxy_stats_pass }}
     stats admin if TRUE

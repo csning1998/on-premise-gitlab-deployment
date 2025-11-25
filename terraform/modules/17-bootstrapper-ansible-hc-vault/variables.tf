@@ -28,10 +28,11 @@ variable "vm_credentials" {
   })
 }
 
-variable "keepalived_credentials" {
+variable "infra_credentials" {
   description = "Credentials for Ansible to access the target Databases."
   type = object({
-    auth_pass = string
+    auth_pass  = string
+    stats_pass = string
   })
   sensitive = true
 }
