@@ -1,0 +1,18 @@
+---
+- name: "Block D: Configure and Start"
+  become: true
+  block:
+    - name: "D1. Configure Vault using Raft"
+      ansible.builtin.template:
+        src: vault.hcl.j2
+        dest: /etc/vault.d/vault.hcl
+        owner: vault
+        group: vault
+        mode: "0644"
+      notify: Restart Vault Service
+
+    - name: "D2. Start and Enable Vault Service"
+      ansible.builtin.systemd:
+        name: vault
+        state: started
+        enabled: true

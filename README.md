@@ -83,12 +83,8 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     #### Checking status of libvirt service...
     --> libvirt service is already running.
 
-    1) 01-base-docker
-    2) 02-base-kubeadm
-    3) 03-base-microk8s
-    4) 04-base-postgres
-    5) 05-base-redis
-    6) Back to Main Menu
+    1) 01-base-docker     3) 03-base-microk8s   5) 05-base-redis      7) 07-base-vault
+    2) 02-base-kubeadm    4) 04-base-postgres   6) 06-base-minio      8) Back to Main Menu
     >>> Please select an action:
     ```
 
@@ -99,10 +95,10 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     # Entering Terraform layer management menu...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
-
-    1) 10-provision-harbor          2) 10-provision-postgres        3) 10-provision-redis
-    4) 10-provision-kubeadm         5) 50-provision-kubeadm-addons  6) Back to Main Menu
-    >>> Please select an action:
+    1) 10-provision-harbor          4) 10-provision-postgres        7) 50-provision-kubeadm-addons
+    2) 10-provision-kubeadm         5) 10-provision-redis           8) Back to Main Menu
+    3) 10-provision-minio           6) 10-provision-vault
+    >>> Select a Terraform layer to REBUILD:
     ```
 
 3. If you select `13) [DEV] Rebuild Layer 10 via Ansible Command`
@@ -112,11 +108,10 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     # Executing [DEV] Rebuild via direct Ansible command...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
-
-    1) 10-provision-kubeadm.yaml   2) 10-provision-harbor.yaml
-    3) 10-provision-postgres.yaml  4) 10-provision-redis.yaml
-    5) Back to Main Menu
-    >>> Please select an action:
+    1) inventory-harbor-cluster.yaml    4) inventory-postgres-cluster.yaml  7) Back to Main Menu
+    2) inventory-kubeadm-cluster.yaml   5) inventory-redis-cluster.yaml
+    3) inventory-minio-cluster.yaml     6) inventory-vault-cluster.yaml
+    >>> Select a Cluster Inventory to run its Playbook:
     ```
 
 **A description of how to use this script follows below.**
@@ -200,12 +195,7 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
         aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
         ```
 
-    **Attention:** When switching between a Podman container and a native environment, you might encounter inconsistencies in Terraform's state within Virsh. If this happens, you can delete the `terraform/terraform.tfstate` file and run the following commands to fix it.
-
-    ```shell
-    sudo virsh pool-destroy iac-kubeadm
-    sudo virsh pool-undefine iac-kubeadm
-    ```
+    6. **Attention: When switching between the Podman container and the native environment, ALL the Libvirt resources created by Terraform WILL BE DELETED to avoid conflicts.**
 
 ### C. Miscellaneous
 
@@ -349,7 +339,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     - If you prefer to run it in a container (side-car mode):
 
         ```shell
-        sudo podman compose up -d iac-vault-server
+        podman compose up -d iac-vault-server
         ```
 
     After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If you need to reinitialize Vault, you must manually clear all files within the `vault/data/` directory.
@@ -386,7 +376,19 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             pg_superuser_password="a-more-secure-pwd-for-superuser" \
             pg_replication_password="a-more-secure-pwd-for-replication" \
             redis_requirepass="a-more-secure-pwd-for-requirepass" \
-            redis_masterauth="a-more-secure-pwd-for-masterauth"
+            redis_masterauth="a-more-secure-pwd-for-masterauth" \
+            minio_root_password="a-more-secure-pwd-for-rootpassword"
+        ```
+
+    - **For Infrastructure Variables in this Project**
+
+        ```shell
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/infrastructure \
+            vault_keepalived_auth_pass="a-more-secure-pwd-for-keepalivedauthpass" \
+            vault_haproxy_stats_pass="a-more-secure-pwd-for-haproxystatspass"
         ```
 
     - **Note 1:**
@@ -415,7 +417,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     for f in terraform/layers/*/terraform.tfvars.example; do cp -n "$f" "${f%.example}"; done
     ```
 
-    Then, you can modify the `terraform.tfvars` file based on your requirements.
+    Then, you can modify the `terraform.tfvars` file based on your requirements. HA and non-HA are both supported.
 
 2. For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
@@ -427,11 +429,11 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     Deploying other Linux distro would be supported if I have time. I'm still a full-time university student.
 
-3. **To deploy a complete HA Kubernetes cluster from scratch**:
+3. **[Example] To deploy a complete HA Kubernetes cluster from scratch**:
 
-    - **First Step**: Enter the main menu `11) Rebuild Packer Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
+    - **First Step**: Enter the main menu `11) Build Packer Base Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
-    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Manage Terraform Layer`, then select `10-provision-kubeadm` to deploy the entire Kubernetes cluster.
+    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Provision Terraform Layer 10`, then select `10-provision-kubeadm` to deploy the entire Kubernetes cluster.
 
         Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
@@ -439,11 +441,11 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     The `11`, `12`, and `13` menus can be used for separate testing
 
-    - To test Packer image building independently, use `11) Rebuild Packer Image`.
+    - To test Packer image building independently, use `11) Build Packer Base Image`.
 
-    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Manage Terraform Layer`.
+    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Provision Terraform Layer 10`.
 
-    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Run Ansible Playbook`.
+    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Rebuild Layer 10 via Ansible Command`.
 
 5. **Resource Cleanup**:
 
@@ -451,7 +453,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
 
-    - **`10) Reset Packer and Terraform`**:
+    - **`10) Purge All Packer and Terraform Resources`**:
 
         This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
 
@@ -496,9 +498,9 @@ sequenceDiagram
     Entrypoint-->>-User: Display 'Rebuild All workflow completed'
 ```
 
-### B. Toolchain Roles and Responsibilities
+### B. Toolchain Roles and Responsibilities (Outdated)
 
-**This is somewhat outdated, but since the architecture may still undergo significant adjustments, it will not be updated here for now.**
+**This section is outdated. The architecture is now nearly converged, this section will be updated once the PoC of GitLab Infrastructure is ready.**
 
 > The setup process is based on the commands provided by Bibin Wilson (2025), which I implemented using an Ansible Playbook. Thanks to the author, Bibin Wilson, for the contribution on his article
 >

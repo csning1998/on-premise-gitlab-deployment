@@ -1,0 +1,5 @@
+---
+vault_init_key_shares: 1
+vault_init_key_threshold: 1
+
+vault_wait_delay_seconds: 10

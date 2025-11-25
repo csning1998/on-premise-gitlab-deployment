@@ -1,0 +1,34 @@
+
+cluster_name  = "{{ vault_cluster_name }}"
+ui            = {{ vault_ui_enabled| lower }}      # Set to lower to prevent Parse Error
+disable_mlock = {{ vault_disable_mlock | lower }}  # Set to lower to prevent Parse Error
+
+api_addr     = "https://{{ advertise_ip }}:{{ vault_port_api }}"
+cluster_addr = "https://{{ advertise_ip }}:{{ vault_port_cluster }}"
+
+storage "raft" {
+  path    = "{{ vault_dir_data }}"
+  node_id = "{{ node_id }}" 
+
+{% if inventory_hostname not in groups['vault_leader'] %}
+  retry_join {
+    leader_api_addr         = "https://{{ hostvars[groups['vault_leader'][0]]['advertise_ip'] }}:{{ vault_port_api }}"
+    leader_ca_cert_file     = "{{ vault_dir_tls }}/vault-ca.crt"
+    leader_client_cert_file = "{{ vault_dir_tls }}/vault.crt"
+    leader_client_key_file  = "{{ vault_dir_tls }}/vault.key"
+    leader_tls_servername   = "{{ hostvars[groups['vault_leader'][0]]['inventory_hostname'] }}"
+  }
+{% endif %}
+}
+
+listener "tcp" {
+  address       = "0.0.0.0:{{ vault_port_api }}"
+  tls_disable   = false
+
+  # Server Cert
+  tls_cert_file = "{{ vault_dir_tls }}/vault.crt"
+  tls_key_file  = "{{ vault_dir_tls }}/vault.key"
+
+  # Client Verification
+  tls_client_ca_file = "{{ vault_dir_tls }}/vault-ca.crt"
+}

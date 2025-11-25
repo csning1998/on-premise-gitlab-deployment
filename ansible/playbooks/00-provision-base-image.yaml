@@ -41,6 +41,12 @@
   roles:
     - 06-base-minio
 
+- name: "Play: Provision Vault (Singular) Base Image"
+  hosts: "07-base-vault"
+  become: true
+  roles:
+    - 07-base-vault
+
 - name: "Play: Final Permission Check and Clean up"
   hosts: "all"
   become: true

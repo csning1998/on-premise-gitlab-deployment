@@ -1,0 +1,142 @@
+- name: "Block A: System & Service Configuration"
+  become: true
+  block:
+    - name: "A1. Create Vault system group & user"
+      ansible.builtin.group:
+        name: "{{ vault_owner }}"
+        system: true
+        state: present
+    - ansible.builtin.user:
+        name: "{{ vault_owner }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        home: /etc/vault.d
+
+    - name: "A2. Create Vault Config & TLS Directories"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ vault_owner }}"
+        group: "{{ vault_group }}"
+        mode: "0750"
+      loop:
+        - "{{ vault_dir_config }}"
+        - "{{ vault_dir_tls }}"
+        - "{{ vault_dir_data }}"
+
+    - name: "A3. Create Vault Systemd Service"
+      ansible.builtin.template:
+        src: vault.service.j2
+        dest: "/etc/systemd/system/vault.service"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload Systemd
+
+- name: "Block B: Centralized TLS Management"
+  block:
+    - name: "B1. Prepare Local Certs Directory (Controller)"
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../fetched/certs"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+      become: false
+
+    # CA Generation
+    - name: "B2. Generate CA Key & Cert (Controller)"
+      block:
+        - community.crypto.openssl_privatekey:
+            path: "{{ playbook_dir }}/../fetched/certs/vault-ca.key"
+
+        - community.crypto.openssl_csr:
+            path: "{{ playbook_dir }}/../fetched/certs/vault-ca.csr"
+            privatekey_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.key"
+            common_name: "Vault Root CA"
+            basic_constraints: ["CA:TRUE"]
+            basic_constraints_critical: true
+            key_usage: [keyCertSign, cRLSign]
+            key_usage_critical: true
+
+        - community.crypto.x509_certificate:
+            path: "{{ playbook_dir }}/../fetched/certs/vault-ca.crt"
+            privatekey_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.key"
+            csr_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.csr"
+            provider: selfsigned
+
+        - shell: >-
+            openssl x509 -in {{ playbook_dir }}/../fetched/certs/vault-ca.crt -out {{ playbook_dir }}/../fetched/certs/vault-ca.crt.clean &&
+            mv {{ playbook_dir }}/../fetched/certs/vault-ca.crt.clean {{ playbook_dir }}/../fetched/certs/vault-ca.crt
+      delegate_to: localhost
+      run_once: true
+      become: false
+
+    - name: "B3. Distribute CA"
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../fetched/certs/vault-ca.crt"
+        dest: "/etc/vault.d/tls/vault-ca.crt"
+        owner: "{{ vault_owner }}"
+        group: "{{ vault_group }}"
+        mode: "0644"
+      notify: Update CA Trust
+
+    - name: "B4. Update System CA Trust"
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../fetched/certs/vault-ca.crt"
+        dest: "/usr/local/share/ca-certificates/vault-ca.crt"
+      notify: Update CA Trust
+
+    # Node Cert Generation
+    - name: "B5. Generate Node Key & CSR"
+      block:
+        - community.crypto.openssl_privatekey:
+            path: "{{ vault_dir_tls }}/vault.key"
+            owner: "{{ vault_owner }}"
+            group: "{{ vault_group }}"
+            mode: "0600"
+
+        - community.crypto.openssl_csr:
+            path: "{{ vault_dir_tls }}/vault.csr"
+            privatekey_path: "{{ vault_dir_tls }}/vault.key"
+            common_name: "{{ inventory_hostname }}"
+            subject_alt_name:
+              - "DNS:{{ inventory_hostname }}"
+              - "DNS:localhost"
+              - "IP:127.0.0.1"
+              - "IP:{{ advertise_ip }}"
+            key_usage: [digitalSignature, keyEncipherment]
+            extended_key_usage: [serverAuth, clientAuth]
+            force: true
+
+    - name: "B6. Sign Node Cert (Controller)"
+      block:
+        - ansible.builtin.fetch:
+            src: "{{ vault_dir_tls }}/vault.csr"
+            dest: "{{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.csr"
+            flat: true
+
+        - community.crypto.x509_certificate:
+            path: "{{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt"
+            csr_path: "{{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.csr"
+            provider: ownca
+            ownca_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.crt"
+            ownca_privatekey_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.key"
+          delegate_to: localhost
+          become: false
+
+        - shell: >-
+            openssl x509 \
+              -in {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt \
+              -out {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt.clean && \
+            mv {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt.clean {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt
+          delegate_to: localhost
+          become: false
+
+    - name: "B7. Distribute Node Cert"
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt"
+        dest: "{{ vault_dir_tls }}/vault.crt"
+        owner: "{{ vault_owner }}"
+        group: "{{ vault_group }}"
+        mode: "0644"

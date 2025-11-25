@@ -1,0 +1,22 @@
+---
+# Load Balancer
+vault_haproxy_frontend_port: 443
+vault_haproxy_stats_port: 8404
+vault_haproxy_stats_user: "admin"
+
+# System Identity
+vault_owner: vault
+vault_group: vault
+
+# Standard Directory Structure
+vault_dir_config: "/etc/vault.d"
+vault_dir_tls: "/etc/vault.d/tls"
+vault_dir_data: "/opt/vault/data"
+
+# Network Defaults
+vault_port_api: 8200
+vault_port_cluster: 8201
+
+# PKI Defaults
+vault_ca_subject_common_name: "Vault Root CA"
+vault_cluster_name: "vault-ha-cluster"

@@ -21,6 +21,18 @@ vault_secret_extractor() {
       vault_path="secret/on-premise-gitlab-deployment/databases"
       keys_needed=("redis_requirepass" "redis_masterauth")
       ;;
+		
+		"10-provision-minio.yaml")
+      echo "#### MinIO playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/databases"
+      keys_needed=("minio_root_password")
+      ;;
+
+    "10-provision-vault.yaml")
+      echo "#### Vault playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/infrastructure"
+      keys_needed=("vault_keepalived_auth_pass" "vault_haproxy_stats_pass")
+      ;;
 
     *)
       echo "${extra_vars_string}"

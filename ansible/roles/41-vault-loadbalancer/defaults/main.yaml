@@ -1,0 +1,4 @@
+---
+vault_haproxy_timeout_connect: 5000
+vault_haproxy_timeout_client: 50000
+vault_haproxy_timeout_server: 50000

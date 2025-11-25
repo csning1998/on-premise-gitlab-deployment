@@ -1,0 +1,4 @@
+---
+# Optional
+vault_ui_enabled: true
+vault_disable_mlock: true # Set to true to avoid memory locking issues

@@ -1,0 +1,56 @@
+---
+- name: "Block F: Unseal Vault Node Strategy"
+  become: true
+  block:
+    - name: "F1. Check Current Vault Status"
+      ansible.builtin.command: vault status -format=json
+      environment:
+        VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
+        VAULT_SKIP_VERIFY: "true"
+      register: vault_status_check
+      changed_when: false
+      failed_when: false
+
+    - name: "F2. [Standby] Wait for Vault to become Initialized (Raft Join)"
+      ansible.builtin.command: vault status -format=json
+      environment:
+        VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
+        VAULT_SKIP_VERIFY: "true"
+      register: vault_init_check
+      until:
+        - vault_init_check.rc == 2
+        - (vault_init_check.stdout | from_json).initialized == true
+      retries: "{{ vault_unseal_retries }}"
+      delay: "{{ vault_unseal_delay_seconds }}"
+      changed_when: false
+      failed_when: false
+      when:
+        - inventory_hostname in groups['vault_follower']
+        - vault_status_check.rc == 2
+        - (vault_status_check.stdout | from_json).initialized == false
+
+    - name: "F3. Read Unseal Key from Local Controller"
+      ansible.builtin.set_fact:
+        vault_keys: "{{ lookup('file', playbook_dir + '/../fetched/vault_init_output.json') | from_json }}"
+      delegate_to: localhost
+      become: false
+      when:
+        - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
+          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed == true)
+
+    - name: "F4. Execute Unseal"
+      ansible.builtin.command: "vault operator unseal {{ vault_keys.unseal_keys_b64[0] }}"
+      environment:
+        VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
+        VAULT_SKIP_VERIFY: "true"
+      register: unseal_result
+      changed_when: "'Sealed: false' in unseal_result.stdout"
+      when:
+        - vault_keys is defined
+        - (vault_status_check.stdout | default('{}') | from_json).sealed | default(false) or
+          (vault_init_check.stdout | default('{}') | from_json).sealed | default(false)
+
+    - name: "F5. Verify Unseal Status"
+      ansible.builtin.debug:
+        msg: "Vault node {{ inventory_hostname }} is successfully Unsealed."
+      when: unseal_result is changed

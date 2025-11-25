@@ -1,0 +1,55 @@
+---
+- name: "Block A: Install Dependencies"
+  become: true
+  block:
+    - name: "Step A1. Update apt cache"
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: "Step A2. Ensure unzip is installed"
+      ansible.builtin.apt:
+        name: unzip
+        state: present
+
+- name: "Block B: Install Vault Binary"
+  become: true
+  block:
+    - name: "Step B1. Download and Unarchive Vault (v{{ vault.target_version }})"
+      ansible.builtin.unarchive:
+        src: "https://releases.hashicorp.com/vault/{{ vault.target_version }}/vault_{{ vault.target_version }}_{{ vault.target_os }}_{{ vault.target_arch }}.zip"
+        dest: "/usr/local/bin"
+        remote_src: true
+        mode: "0755"
+        owner: root
+        group: root
+        creates: "/usr/local/bin/vault"
+
+    - name: "Step B2. Verify Vault installation"
+      ansible.builtin.command: vault --version
+      register: vault_version_output
+      changed_when: false
+
+    - name: "Step B3. Print Vault version"
+      ansible.builtin.debug:
+        msg: "Vault installed: {{ vault_version_output.stdout }}"
+
+- name: "Block C: Disable Swap"
+  become: true
+  block:
+    - name: "Step 3. Check if swap is active"
+      ansible.builtin.command: swapon --show
+      register: swapon_check
+      changed_when: false
+      failed_when: false
+
+    - name: "Step 4. Disable swap if it is active"
+      ansible.builtin.command: swapoff -a
+      when: swapon_check.stdout != ""
+      changed_when: true
+
+    - name: "Step 5. Comment out swap entries in /etc/fstab"
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+.*)$'
+        replace: '# \1'

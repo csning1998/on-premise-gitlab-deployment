@@ -1,0 +1,27 @@
+---
+all:
+  vars:
+    ansible_user: "${ansible_ssh_user}"
+    vault_cluster_ips: ${jsonencode([for node in vault_nodes : node.ip])}
+    vault_bootstrap_ip: "${vault_nodes[keys(vault_nodes)[0]].ip}"
+    vault_vip: "172.16.139.250"
+
+  children:
+    vault_leader:
+      hosts:
+        ${keys(vault_nodes)[0]}:
+          advertise_ip: ${vault_nodes[keys(vault_nodes)[0]].ip}
+          node_id: "vault-node-00"
+
+    vault_follower:
+      hosts:
+%{ for idx, key in slice(keys(vault_nodes), 1, length(keys(vault_nodes))) ~}
+        ${key}:
+          advertise_ip: ${vault_nodes[key].ip}
+          node_id: "vault-node-${format("%02d", idx + 1)}"
+%{ endfor ~}
+
+    vault_haproxy:
+      hosts:
+        ${keys(haproxy_node)[0]}:
+          advertise_ip: ${haproxy_node[keys(haproxy_node)[0]].ip}

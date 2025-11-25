@@ -1,0 +1,8 @@
+---
+- name: "Play: Operation - Unseal All Vault Nodes"
+  hosts: vault_leader, vault_follower
+  become: true
+  gather_facts: true
+
+  roles:
+    - 45-vault-unseal

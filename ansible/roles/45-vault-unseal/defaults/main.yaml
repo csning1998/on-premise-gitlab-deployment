@@ -1,0 +1,3 @@
+---
+vault_unseal_retries: 24
+vault_unseal_delay_seconds: 5

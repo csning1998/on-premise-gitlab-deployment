@@ -1,0 +1,50 @@
+---
+- name: "Block A: Configure HAProxy and Keepalived for Vault"
+  become: true
+  block:
+    - name: "A1. Install HAProxy"
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+        update_cache: true
+
+    - name: "A2. Configure HAProxy (TCP Mode)"
+      ansible.builtin.template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart haproxy
+
+    - name: "A3. Install Keepalived (for VIP management)"
+      ansible.builtin.apt:
+        name: keepalived
+        state: present
+
+    - name: "A4. Allow binding non-local IP"
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_nonlocal_bind
+        value: "1"
+        sysctl_set: true
+        state: present
+        reload: true
+
+    - name: "A5. Configure Keepalived"
+      ansible.builtin.template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart keepalived
+
+    - name: "A6. Enable and Start Services"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+      loop:
+        - haproxy
+        - keepalived

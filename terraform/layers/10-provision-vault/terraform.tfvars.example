@@ -1,0 +1,46 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+
+vault_cluster_config = {
+  cluster_name = "10-vault-cluster"
+  nodes = {
+    vault = [
+      { ip = "172.16.139.200", vcpu = 2, ram = 2048 },
+      { ip = "172.16.139.201", vcpu = 2, ram = 2048 },
+      { ip = "172.16.139.202", vcpu = 2, ram = 2048 },
+    ],
+    haproxy = [
+      { ip = "172.16.139.210", vcpu = 1, ram = 1024 }
+    ]
+  }
+}
+
+vault_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-vault-nat-net"
+      name_bridge  = "vault-nat-br"
+
+      ips = {
+        address = "172.16.90.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.90.2"
+          end   = "172.16.90.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-vault-hostonly-net"
+      name_bridge  = "vault-host-br"
+
+      ips = {
+        address = "172.16.139.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  vault_allowed_subnet = "172.16.139.0/24"
+  storage_pool_name    = "iac-vault"
+}
