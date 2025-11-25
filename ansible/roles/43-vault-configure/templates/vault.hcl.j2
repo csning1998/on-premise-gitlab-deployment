@@ -12,7 +12,7 @@ storage "raft" {
 
 {% if inventory_hostname not in groups['vault_primary'] %}
   retry_join {
-    leader_api_addr         = "https://{{ hostvars[groups['vault_primary'][0]]['advertise_ip'] }}:{{ default(vault_haproxy_frontend_port, vault_port_api) }}"
+    leader_api_addr         = "https://{{ hostvars[groups['vault_primary'][0]]['advertise_ip'] }}:{{ vault_port_api }}"
     leader_ca_cert_file     = "{{ vault_dir_tls }}/vault-ca.crt"
     leader_client_cert_file = "{{ vault_dir_tls }}/vault.crt"
     leader_client_key_file  = "{{ vault_dir_tls }}/vault.key"
