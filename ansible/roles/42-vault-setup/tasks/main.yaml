@@ -65,8 +65,8 @@
             csr_path: "{{ playbook_dir }}/../fetched/certs/vault-ca.csr"
             provider: selfsigned
 
-        - shell: |
-            openssl x509 -in {{ playbook_dir }}/../fetched/certs/vault-ca.crt -out {{ playbook_dir }}/../fetched/certs/vault-ca.crt.clean
+        - shell: >-
+            openssl x509 -in {{ playbook_dir }}/../fetched/certs/vault-ca.crt -out {{ playbook_dir }}/../fetched/certs/vault-ca.crt.clean &&
             mv {{ playbook_dir }}/../fetched/certs/vault-ca.crt.clean {{ playbook_dir }}/../fetched/certs/vault-ca.crt
       delegate_to: localhost
       run_once: true
@@ -125,10 +125,10 @@
           delegate_to: localhost
           become: false
 
-        - shell: |
+        - shell: >-
             openssl x509 \
               -in {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt \
-              -out {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt.clean
+              -out {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt.clean && \
             mv {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt.clean {{ playbook_dir }}/../fetched/certs/{{ inventory_hostname }}.crt
           delegate_to: localhost
           become: false
