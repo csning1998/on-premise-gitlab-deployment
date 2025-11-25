@@ -58,10 +58,11 @@ variable "kubeadm_cluster_config" {
     error_message = "Pod subnet must be a valid CIDR block."
   }
 
-  validation {
-    condition     = can(cidrnetmask(var.kubeadm_cluster_config.registry_host))
-    error_message = "Registry host must be a valid IPv4 address."
-  }
+  # TODO: Add validation for registry_host after Harbor is implemented.
+  # validation {
+  #   condition     = can(cidrnetmask(split(":", var.kubeadm_cluster_config.registry_host)[0]))
+  #   error_message = "Registry host must be a valid IPv4 address with optional port."
+  # }
 }
 
 # Kubeadm Cluster Infrastructure Network Configuration
