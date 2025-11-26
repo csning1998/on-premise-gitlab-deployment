@@ -10,36 +10,16 @@ vault_secret_extractor() {
 
   # 1. Determine the key and vault path to fetch by playbook
   case "${playbook_file}" in
-		"10-provision-harbor.yaml")
-      echo "#### Harbor playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("redis_requirepass")
-      ;;
-
-    "10-provision-postgres.yaml")
-      echo "#### Postgres playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret")
-      ;;
-
-    "10-provision-redis.yaml")
-      echo "#### Redis playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("redis_requirepass" "redis_masterauth")
-      ;;
-		
-		"10-provision-minio.yaml")
-      echo "#### MinIO playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("minio_root_password" "minio_vrrp_secret")
-      ;;
-
-    "10-provision-vault.yaml")
+		"10-provision-vault.yaml")
       echo "#### Vault playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/infrastructure"
       keys_needed=("vault_keepalived_auth_pass" "vault_haproxy_stats_pass")
       ;;
-
+    "20-provision-data-services.yaml")
+      echo "#### Data Services playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/databases"
+      keys_needed+=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret" "redis_requirepass" "redis_masterauth" "minio_root_password" "minio_vrrp_secret")
+      ;;
     *)
       echo "${extra_vars_string}"
       return 0

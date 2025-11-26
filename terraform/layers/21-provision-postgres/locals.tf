@@ -5,7 +5,7 @@ locals {
     "postgres-node-${format("%02d", idx)}" => config
   }
 
-  etcd_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.etcd :
+  postgres_etcd_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.etcd :
     "postgres-etcd-node-${format("%02d", idx)}" => config
   }
 
@@ -15,7 +15,7 @@ locals {
 
   all_nodes_map = merge(
     local.postgres_nodes_map,
-    local.etcd_nodes_map,
+    local.postgres_etcd_nodes_map,
     local.haproxy_nodes_map
   )
 
