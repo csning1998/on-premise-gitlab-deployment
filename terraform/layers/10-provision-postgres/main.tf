@@ -78,8 +78,9 @@ module "bootstrapper_ansible_cluster" {
   }
 
   extra_vars = {
-    "postgres_superuser_password"   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
-    "postgres_replication_password" = data.vault_generic_secret.db_vars.data["pg_replication_password"]
+    "pg_superuser_password"   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
+    "pg_replication_password" = data.vault_generic_secret.db_vars.data["pg_replication_password"]
+    "pg_vrrp_secret"          = data.vault_generic_secret.db_vars.data["pg_vrrp_secret"]
   }
 
   status_trigger = module.ssh_config_manager_postgres.ssh_access_ready_trigger
