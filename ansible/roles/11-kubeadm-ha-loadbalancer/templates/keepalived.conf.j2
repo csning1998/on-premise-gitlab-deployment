@@ -6,7 +6,7 @@ global_defs {
 
 vrrp_instance VI_1 {
     state {{ 'MASTER' if inventory_hostname == groups['master'][0] else 'BACKUP' }}
-    interface {{ k8s_ha_interface }}
+    interface {{ kubeadm_ha_interface }}
     
     virtual_router_id {{ keepalived_vrrp_id }}
     advert_int {{ keepalived_advert_int }}
