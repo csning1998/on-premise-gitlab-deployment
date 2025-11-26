@@ -13,7 +13,7 @@ vault_secret_extractor() {
     "10-provision-postgres.yaml")
       echo "#### Postgres playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("pg_superuser_password" "pg_replication_password")
+      keys_needed=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret")
       ;;
 
     "10-provision-redis.yaml")

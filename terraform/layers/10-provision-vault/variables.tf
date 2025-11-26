@@ -17,6 +17,7 @@ variable "vault_cluster_config" {
       }))
     })
     base_image_path = optional(string, "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2")
+    ha_virtual_ip   = optional(string, "172.16.139.250")
   })
 
   validation {

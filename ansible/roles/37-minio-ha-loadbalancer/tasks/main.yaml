@@ -8,7 +8,7 @@
       when:
         - item != 'lo'
         - ansible_facts[item]['ipv4'] is defined
-        - not (ansible_facts[item]['ipv4']['address'] | startswith(minio_nat_subnet_prefix))
+        - not (ansible_facts[item]['ipv4']['address'].startswith(minio_nat_subnet_prefix))
 
     - name: "Step 2. Print discovered interface"
       ansible.builtin.debug:

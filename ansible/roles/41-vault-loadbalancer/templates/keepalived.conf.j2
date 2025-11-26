@@ -16,6 +16,6 @@ vrrp_instance VI_1 {
     }
 
     virtual_ipaddress {
-        {{ vault_vip | default('172.16.139.250') }}/24
+        {{ vault_ha_virtual_ip }}
     }
 }

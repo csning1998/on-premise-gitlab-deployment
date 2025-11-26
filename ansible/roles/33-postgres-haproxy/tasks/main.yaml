@@ -1,27 +1,64 @@
 ---
-- name: "Section A: Install and Configure HAProxy"
+- name: "Block A: Dynamically discover the Host-only network interface"
   block:
-    - name: "Step A1. Install HAProxy package"
+    - name: "Step 1. Identify Host-only interface from facts"
+      ansible.builtin.set_fact:
+        postgres_ha_interface: "{{ item }}"
+      loop: "{{ ansible_facts.interfaces }}"
+      when:
+        - item != 'lo'
+        - ansible_facts[item]['ipv4'] is defined
+        - not (ansible_facts[item]['ipv4']['address'].startswith(postgres_nat_subnet_prefix))
+
+    - name: "Step 2. Print discovered interface"
+      ansible.builtin.debug:
+        msg: "Discovered HA Interface: {{ postgres_ha_interface }} (Address: {{ ansible_facts[postgres_ha_interface]['ipv4']['address'] }})"
+      when: postgres_ha_interface is defined
+
+    - name: "Step 3. Fail if Host-only interface could not be determined"
+      ansible.builtin.fail:
+        msg: "Could not dynamically determine the Host-Only network interface."
+      when: postgres_ha_interface is not defined or postgres_ha_interface | length == 0
+
+- name: "Block B: Install and Configure HA Services"
+  block:
+    - name: "Step 1. Enable non-local binding (Required for VIP)"
+      ansible.posix.sysctl:
+        name: "net.ipv4.ip_nonlocal_bind"
+        value: "1"
+        state: present
+        reload: true
+
+    - name: "Step 2. Install HAProxy and Keepalived"
       ansible.builtin.apt:
         name:
           - haproxy
-          - postgresql-client
+          - keepalived
         state: present
         update_cache: true
 
-    - name: "Step A2. Create HAProxy configuration"
+    - name: "Step 3. Configure Keepalived"
+      ansible.builtin.template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        mode: "0644"
+      notify: Restart Keepalived
+
+    - name: "Step 4. Configure HAProxy"
       ansible.builtin.template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
-        owner: root
-        group: root
         mode: "0644"
       notify: Restart HAProxy
 
-- name: "Section B: Start and Enable HAProxy Service"
+- name: "Block C: Start Services"
   block:
-    - name: "Step B1. Enable and start the HAProxy service"
+    - name: "Step 1. Enable and start services"
       ansible.builtin.systemd:
-        name: haproxy
+        name: "{{ item }}"
         state: started
         enabled: true
+        daemon_reload: true
+      loop:
+        - keepalived
+        - haproxy

@@ -21,6 +21,7 @@ variable "minio_cluster_config" {
       }))
     })
     base_image_path = optional(string, "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2")
+    ha_virtual_ip   = optional(string, "172.16.138.250")
   })
 
   validation {
