@@ -67,7 +67,9 @@ module "bootstrapper_ansible_cluster" {
     etcd_ips     = [for node in values(local.etcd_nodes_map) : node.ip]
     postgres_ips = [for node in values(local.postgres_nodes_map) : node.ip]
 
-    postgres_allowed_subnet = var.postgres_infrastructure.postgres_allowed_subnet
+    postgres_ha_virtual_ip     = var.postgres_cluster_config.ha_virtual_ip
+    postgres_allowed_subnet    = var.postgres_infrastructure.postgres_allowed_subnet
+    postgres_nat_subnet_prefix = local.postgres_nat_network_subnet_prefix
   })
 
   vm_credentials = {
