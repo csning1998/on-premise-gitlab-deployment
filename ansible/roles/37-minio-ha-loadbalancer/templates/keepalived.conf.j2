@@ -15,7 +15,7 @@ vrrp_instance VI_MINIO {
 
     authentication {
         auth_type PASS
-        auth_pass minio_vrrp_secret
+        auth_pass {{ minio_vrrp_secret }}
     }
 
     virtual_ipaddress {

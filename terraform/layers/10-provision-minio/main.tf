@@ -74,6 +74,7 @@ module "bootstrapper_ansible_cluster" {
 
   extra_vars = {
     "minio_root_password" = data.vault_generic_secret.db_vars.data["minio_root_password"]
+    "minio_vrrp_secret"   = data.vault_generic_secret.db_vars.data["minio_vrrp_secret"]
   }
 
   status_trigger = module.ssh_config_manager_minio.ssh_access_ready_trigger
