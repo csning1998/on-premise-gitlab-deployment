@@ -31,6 +31,9 @@ minio_cluster_config = {
         ]
       }
     ]
+    haproxy = [
+      { ip = "172.16.138.210", vcpu = 1, ram = 1024 }
+    ]
   }
 }
 

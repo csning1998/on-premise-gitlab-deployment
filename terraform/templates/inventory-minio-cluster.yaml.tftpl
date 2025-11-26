@@ -3,8 +3,18 @@ all:
   vars:
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
     ansible_user: "${ansible_ssh_user}"
-  hosts:
+
+  children:
+    minio_nodes:
+      hosts:
 %{ for key in keys(minio_nodes) ~}
-    ${key}:
-      advertise_ip: ${minio_nodes[key].ip}
+        ${key}:
+          advertise_ip: ${minio_nodes[key].ip}
+%{ endfor ~}
+
+    haproxy_nodes:
+      hosts:
+%{ for key in keys(haproxy_nodes) ~}
+        ${key}:
+          advertise_ip: ${haproxy_nodes[key].ip}
 %{ endfor ~}

@@ -59,9 +59,12 @@ module "bootstrapper_ansible_cluster" {
   }
 
   inventory_content = templatefile("${path.root}/../../templates/inventory-minio-cluster.yaml.tftpl", {
-    ansible_ssh_user     = data.vault_generic_secret.iac_vars.data["vm_username"]
-    minio_nodes          = local.minio_nodes_map
+    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+    minio_nodes      = local.minio_nodes_map
+    haproxy_nodes    = local.haproxy_nodes_map
+
     minio_allowed_subnet = var.minio_infrastructure.minio_allowed_subnet
+
   })
 
   vm_credentials = {
@@ -71,6 +74,7 @@ module "bootstrapper_ansible_cluster" {
 
   extra_vars = {
     "minio_root_password" = data.vault_generic_secret.db_vars.data["minio_root_password"]
+    "minio_vrrp_secret"   = data.vault_generic_secret.db_vars.data["minio_vrrp_secret"]
   }
 
   status_trigger = module.ssh_config_manager_minio.ssh_access_ready_trigger

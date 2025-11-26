@@ -1,23 +1,24 @@
-- name: "Block A: Dynamically discover the Host-only network interface (Ansible Native)"
+---
+- name: "Block A: Dynamically discover the Host-only network interface"
   block:
     - name: "Step 1. Identify Host-only interface from facts"
       ansible.builtin.set_fact:
-        k8s_ha_interface: "{{ item }}"
+        minio_ha_interface: "{{ item }}"
       loop: "{{ ansible_facts.interfaces }}"
       when:
         - item != 'lo'
         - ansible_facts[item]['ipv4'] is defined
-        - not (ansible_facts[item]['ipv4']['address'] | startswith(k8s_nat_subnet_prefix))
+        - not (ansible_facts[item]['ipv4']['address'] | startswith(minio_nat_subnet_prefix))
 
     - name: "Step 2. Print discovered interface"
       ansible.builtin.debug:
-        msg: "Discovered HA Interface: {{ k8s_ha_interface }} (Address: {{ ansible_facts[k8s_ha_interface]['ipv4']['address'] }})"
-      when: k8s_ha_interface is defined
+        msg: "Discovered HA Interface: {{ minio_ha_interface }} (Address: {{ ansible_facts[minio_ha_interface]['ipv4']['address'] }})"
+      when: minio_ha_interface is defined
 
     - name: "Step 3. Fail if Host-only interface could not be determined"
       ansible.builtin.fail:
         msg: "Could not dynamically determine the Host-Only network interface using prefix exclusion."
-      when: k8s_ha_interface is not defined or k8s_ha_interface | length == 0
+      when: minio_ha_interface is not defined or minio_ha_interface | length == 0
 
 - name: "Block B: Install and Configure HA Services"
   block:
@@ -71,7 +72,7 @@
       notify: Restart rsyslog
       changed_when: false
 
-    - name: "4. Ensure services are started and enabled"
+    - name: "Step 4. Ensure services are started and enabled"
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started

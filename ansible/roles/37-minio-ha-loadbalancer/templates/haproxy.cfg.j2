@@ -1,0 +1,47 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    maxconn {{ haproxy_maxconn }}
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    timeout connect {{ haproxy_timeout_connect }}
+    timeout client {{ haproxy_timeout_client }}
+    timeout server {{ haproxy_timeout_server }}
+    retries 3
+
+# MinIO API S3 
+frontend minio_api_frontend
+    bind {{ minio_ha_virtual_ip }}:{{ haproxy_frontend_port_api }}
+    default_backend minio_api_backend
+
+backend minio_api_backend
+    balance roundrobin
+    option httpchk
+    http-check send meth GET uri /minio/health/live ver HTTP/1.1 hdr Host localhost
+    http-check expect status 200
+    
+{% for host in groups['minio_nodes'] %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ haproxy_backend_port_api }} check inter 2000 rise 2 fall 3
+{% endfor %}
+
+# MinIO Console Web UI
+frontend minio_console_frontend
+    bind {{ minio_ha_virtual_ip }}:{{ haproxy_frontend_port_console }}
+    default_backend minio_console_backend
+
+backend minio_console_backend
+    balance roundrobin
+    option httpchk
+    http-check send meth GET uri /minio/health/live ver HTTP/1.1 hdr Host localhost
+    http-check expect status 200
+    cookie MINIO_CONSOLE_SERVER insert indirect nocache
+
+{% for host in groups['minio_nodes'] %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ haproxy_backend_port_console }} check cookie {{ host }} inter 2000 rise 2 fall 3
+{% endfor %}

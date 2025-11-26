@@ -1,0 +1,21 @@
+---
+# HAProxy Tuning
+haproxy_maxconn: 4096
+haproxy_frontend_port_api: 9000 # MinIO API
+haproxy_frontend_port_console: 9001 # MinIO Console
+haproxy_backend_port_api: 9000
+haproxy_backend_port_console: 9001
+haproxy_timeout_connect: 5000
+haproxy_timeout_client: 50000
+haproxy_timeout_server: 50000
+
+# Keepalived Tuning
+keepalived_router_id: "minio_lb"
+keepalived_vrrp_id: 61
+keepalived_advert_int: 1
+
+# VIP Configuration
+minio_ha_virtual_ip: "172.16.138.250"
+
+# Network Discovery
+minio_nat_subnet_prefix: "172.16.90"

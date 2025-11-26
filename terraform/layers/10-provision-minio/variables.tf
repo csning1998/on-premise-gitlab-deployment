@@ -14,6 +14,11 @@ variable "minio_cluster_config" {
           capacity    = number
         }))
       }))
+      haproxy = list(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
     })
     base_image_path = optional(string, "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2")
   })
@@ -36,6 +41,11 @@ variable "minio_cluster_config" {
   validation {
     condition     = alltrue([for node in var.minio_cluster_config.nodes.minio : can(cidrnetmask("${node.ip}/32"))])
     error_message = "All provided MinIO node IP addresses must be valid IPv4 addresses."
+  }
+
+  validation {
+    condition     = length(var.minio_cluster_config.nodes.haproxy) > 0
+    error_message = "At least one HAProxy node is required for MinIO."
   }
 }
 
