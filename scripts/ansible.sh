@@ -123,7 +123,7 @@ ansible_playbook_executor() {
   echo "#### Playbook execution finished."
 }
 
-# Function: Display a sub-menu to select and run a Layer 10 playbook.
+# Function: Display a sub-menu to select and run a Playbook based on Inventory.
 ansible_menu_handler() {
   local inventory_options=()
   
@@ -136,7 +136,7 @@ ansible_menu_handler() {
   done
   inventory_options+=("Back to Main Menu")
 
-	PS3=">>> Select a Cluster Inventory to run its Playbook: "
+  PS3=">>> Select a Cluster Inventory to run its Playbook: "
   select inventory in "${inventory_options[@]}"; do
     
     if [ "$inventory" == "Back to Main Menu" ]; then
@@ -145,16 +145,40 @@ ansible_menu_handler() {
     
     elif [ -n "$inventory" ]; then
       
+      # Extract the target key from inventory filename (e.g., inventory-postgres-cluster.yaml -> postgres)
       local tmp=${inventory#inventory-}
       local target_key=${tmp%-cluster.yaml}
-      
-      local playbook="10-provision-${target_key}.yaml"
+      local playbook=""
+
+      case "$target_key" in
+        "vault")
+          playbook="10-provision-vault.yaml"
+          ;;
+        "postgres"|"redis"|"minio")
+          playbook="20-provision-data-services.yaml"
+          ;;
+        "harbor")
+          playbook="30-provision-microk8s.yaml"
+          ;;
+        "kubeadm")
+          playbook="50-provision-kubeadm.yaml"
+          ;;
+        *)
+          echo "WARN: Unknown inventory key '${target_key}'. Trying default pattern..."
+          playbook="10-provision-${target_key}.yaml"
+          ;;
+      esac
       
       echo "==========================="
       echo "Selected Inventory: ${inventory}"
       echo "Derived Playbook:   ${playbook}"
       echo "==========================="
       
+      if [ ! -f "${ANSIBLE_DIR}/playbooks/${playbook}" ]; then
+        echo "FATAL: Mapped playbook '${playbook}' does not exist."
+        continue
+      fi
+
       ansible_playbook_executor "$playbook" "$inventory"
       break
 
