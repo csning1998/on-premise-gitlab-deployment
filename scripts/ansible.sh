@@ -20,6 +20,11 @@ vault_secret_extractor() {
       vault_path="secret/on-premise-gitlab-deployment/databases"
       keys_needed+=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret" "redis_requirepass" "redis_masterauth" "minio_root_password" "minio_vrrp_secret")
       ;;
+		"30-provision-microk8s.yaml")
+      echo "#### MicroK8s playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/databases"
+      keys_needed=("redis_requirepass")
+      ;;
     *)
       echo "${extra_vars_string}"
       return 0
