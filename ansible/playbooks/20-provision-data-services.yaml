@@ -20,7 +20,7 @@
 
 # Redis Sentinel
 - name: "Play 4: Configure Redis High Availability Cluster"
-  hosts: all
+  hosts: redis_master, redis_replicas
   become: true
   roles:
     - 25-redis-sentinel

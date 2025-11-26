@@ -54,7 +54,7 @@ module "bootstrapper_ansible_cluster" {
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_redis.ssh_config_file_path
-    playbook_file   = "playbooks/10-provision-redis.yaml"
+    playbook_file   = "playbooks/20-provision-data-services.yaml"
     inventory_file  = "inventory-redis-cluster.yaml"
   }
 
