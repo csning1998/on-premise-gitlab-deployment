@@ -4,7 +4,9 @@ all:
     ansible_user: "${ansible_ssh_user}"
     vault_cluster_ips: ${jsonencode([for node in vault_nodes : node.ip])}
     vault_bootstrap_ip: "${vault_nodes[keys(vault_nodes)[0]].ip}"
-    vault_vip: "172.16.139.250"
+    vault_ha_virtual_ip: "${vault_ha_virtual_ip}"
+    vault_allowed_subnet: "${vault_allowed_subnet}"
+    vault_nat_subnet_prefix: "${vault_nat_subnet_prefix}"
 
   children:
     vault_leader:
