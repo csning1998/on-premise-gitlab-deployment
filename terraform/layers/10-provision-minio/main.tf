@@ -63,8 +63,9 @@ module "bootstrapper_ansible_cluster" {
     minio_nodes      = local.minio_nodes_map
     haproxy_nodes    = local.haproxy_nodes_map
 
-    minio_allowed_subnet = var.minio_infrastructure.minio_allowed_subnet
-
+    minio_allowed_subnet    = var.minio_infrastructure.minio_allowed_subnet
+    minio_ha_virtual_ip     = var.minio_cluster_config.ha_virtual_ip
+    minio_nat_subnet_prefix = local.minio_nat_network_subnet_prefix
   })
 
   vm_credentials = {

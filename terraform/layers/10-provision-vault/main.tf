@@ -59,10 +59,12 @@ module "bootstrapper_ansible_cluster" {
   }
 
   inventory_content = templatefile("${path.root}/../../templates/inventory-vault-cluster.yaml.tftpl", {
-    ansible_ssh_user     = data.vault_generic_secret.iac_vars.data["vm_username"]
-    vault_nodes          = local.vault_nodes_map
-    haproxy_node         = local.haproxy_node
-    vault_allowed_subnet = var.vault_infrastructure.vault_allowed_subnet
+    ansible_ssh_user        = data.vault_generic_secret.iac_vars.data["vm_username"]
+    haproxy_node            = local.haproxy_node
+    vault_nodes             = local.vault_nodes_map
+    vault_nat_subnet_prefix = local.vault_nat_network_subnet_prefix
+    vault_ha_virtual_ip     = var.vault_cluster_config.ha_virtual_ip
+    vault_allowed_subnet    = var.vault_infrastructure.vault_allowed_subnet
   })
 
   vm_credentials = {

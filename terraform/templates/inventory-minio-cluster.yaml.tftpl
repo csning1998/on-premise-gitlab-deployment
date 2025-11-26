@@ -2,6 +2,9 @@
 all:
   vars:
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
+    minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
+    minio_allowed_subnet: "${minio_allowed_subnet}"
+    minio_nat_subnet_prefix: "${minio_nat_subnet_prefix}"
     ansible_user: "${ansible_ssh_user}"
 
   children:

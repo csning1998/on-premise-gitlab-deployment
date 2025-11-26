@@ -4,7 +4,9 @@ all:
     ansible_user: "${ansible_ssh_user}"
     etcd_cluster_ips: ${jsonencode(etcd_ips)}
     postgres_cluster_ips: ${jsonencode(postgres_ips)}
+    postgres_ha_virtual_ip: "${postgres_ha_virtual_ip}"
     postgres_allowed_subnet: "${postgres_allowed_subnet}"
+    postgres_nat_subnet_prefix: "${postgres_nat_subnet_prefix}"
     patroni_api_port: 8008
     haproxy_rw_port: 5000
     haproxy_ro_port: 5001

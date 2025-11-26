@@ -18,7 +18,7 @@ variable "kubeadm_cluster_config" {
       }))
     })
     base_image_path = optional(string, "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2")
-    ha_virtual_ip   = string
+    ha_virtual_ip   = optional(string, "172.16.134.250")
     registry_host   = string
     pod_subnet      = optional(string, "10.244.0.0/16")
   })

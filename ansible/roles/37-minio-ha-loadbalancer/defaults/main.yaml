@@ -13,9 +13,3 @@ haproxy_timeout_server: 50000
 keepalived_router_id: "minio_lb"
 keepalived_vrrp_id: 61
 keepalived_advert_int: 1
-
-# VIP Configuration
-minio_ha_virtual_ip: "172.16.138.250"
-
-# Network Discovery
-minio_nat_subnet_prefix: "172.16.90"

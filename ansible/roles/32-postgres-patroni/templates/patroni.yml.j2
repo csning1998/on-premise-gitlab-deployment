@@ -44,10 +44,10 @@ postgresql:
   authentication:
     replication:
       username: repuser
-      password: "{{ postgres_replication_password }}"
+      password: "{{ pg_replication_password }}"
     superuser:
       username: postgres
-      password: "{{ postgres_superuser_password }}"
+      password: "{{ pg_superuser_password }}"
   
   parameters:
     max_connections: 100

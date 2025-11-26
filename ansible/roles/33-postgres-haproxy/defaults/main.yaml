@@ -7,3 +7,8 @@ haproxy_ro_port: 5001
 # Backend Health Check Port (Patroni API)
 patroni_api_port: 8008
 postgres_port: 5432
+
+# Keepalived Tuning
+keepalived_router_id: "postgres_lb"
+keepalived_vrrp_id: 71
+keepalived_advert_int: 1
