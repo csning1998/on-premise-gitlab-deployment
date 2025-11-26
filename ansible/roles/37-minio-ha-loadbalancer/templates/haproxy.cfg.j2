@@ -22,7 +22,8 @@ frontend minio_api_frontend
 
 backend minio_api_backend
     balance roundrobin
-    option httpchk GET /minio/health/live
+    option httpchk
+    http-check send meth GET uri /minio/health/live ver HTTP/1.1 hdr Host localhost
     http-check expect status 200
     
 {% for host in groups['minio_nodes'] %}
@@ -36,7 +37,8 @@ frontend minio_console_frontend
 
 backend minio_console_backend
     balance roundrobin
-    option httpchk GET /minio/health/live
+    option httpchk
+    http-check send meth GET uri /minio/health/live ver HTTP/1.1 hdr Host localhost
     http-check expect status 200
     cookie MINIO_CONSOLE_SERVER insert indirect nocache
 
