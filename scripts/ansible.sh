@@ -25,7 +25,7 @@ vault_secret_extractor() {
 		"10-provision-minio.yaml")
       echo "#### MinIO playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("minio_root_password")
+      keys_needed=("minio_root_password" "minio_vrrp_secret")
       ;;
 
     "10-provision-vault.yaml")
