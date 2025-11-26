@@ -19,4 +19,4 @@ kubeadm_extra_sans:
   - "kubernetes.default.svc.cluster.local"
 
 # Local path to save the fetched kubeconfig
-kubeadm_fetched_kubeconfig_path: "{{ playbook_dir }}/../fetched/kubeconfig"
+kubeadm_fetched_kubeconfig_path: "{{ playbook_dir }}/../fetched/kubeconfig-gitlab"
