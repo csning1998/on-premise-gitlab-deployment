@@ -8,7 +8,7 @@ ETCD_LISTEN_CLIENT_URLS="http://{{ advertise_ip }}:{{ etcd_client_port }},http:/
 ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ advertise_ip }}:{{ etcd_peer_port }}"
 ETCD_ADVERTISE_CLIENT_URLS="http://{{ advertise_ip }}:{{ etcd_client_port }}"
 
-ETCD_INITIAL_CLUSTER={% for host in groups['etcd_nodes'] -%}
+ETCD_INITIAL_CLUSTER={% for host in groups['postgres_etcd_nodes'] -%}
   {{- hostvars[host]['inventory_hostname'] }}=http://{{ hostvars[host]['advertise_ip'] }}:{{ etcd_peer_port }}
   {%- if not loop.last %},{% endif -%}
 {%- endfor %}

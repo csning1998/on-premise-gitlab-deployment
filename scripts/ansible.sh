@@ -10,36 +10,21 @@ vault_secret_extractor() {
 
   # 1. Determine the key and vault path to fetch by playbook
   case "${playbook_file}" in
-		"10-provision-harbor.yaml")
-      echo "#### Harbor playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("redis_requirepass")
-      ;;
-
-    "10-provision-postgres.yaml")
-      echo "#### Postgres playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret")
-      ;;
-
-    "10-provision-redis.yaml")
-      echo "#### Redis playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("redis_requirepass" "redis_masterauth")
-      ;;
-		
-		"10-provision-minio.yaml")
-      echo "#### MinIO playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("minio_root_password" "minio_vrrp_secret")
-      ;;
-
-    "10-provision-vault.yaml")
+		"10-provision-vault.yaml")
       echo "#### Vault playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/infrastructure"
       keys_needed=("vault_keepalived_auth_pass" "vault_haproxy_stats_pass")
       ;;
-
+    "20-provision-data-services.yaml")
+      echo "#### Data Services playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/databases"
+      keys_needed+=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret" "redis_requirepass" "redis_masterauth" "minio_root_password" "minio_vrrp_secret")
+      ;;
+		"30-provision-microk8s.yaml")
+      echo "#### MicroK8s playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/databases"
+      keys_needed=("redis_requirepass")
+      ;;
     *)
       echo "${extra_vars_string}"
       return 0
@@ -73,7 +58,7 @@ vault_secret_extractor() {
 
 # [Dev] This function is for faster reset and re-execute the Ansible Playbook
 ansible_playbook_executor() {
-  local playbook_file="$1"  # (e.g., "10-provision-kubeadm.yaml").
+  local playbook_file="$1"  # (e.g., "50-provision-kubeadm.yaml").
   local inventory_file="$2" # (e.g., "inventory-kubeadm-cluster.yaml").
 
   if [ -z "$playbook_file" ] || [ -z "$inventory_file" ]; then
@@ -138,7 +123,7 @@ ansible_playbook_executor() {
   echo "#### Playbook execution finished."
 }
 
-# Function: Display a sub-menu to select and run a Layer 10 playbook.
+# Function: Display a sub-menu to select and run a Playbook based on Inventory.
 ansible_menu_handler() {
   local inventory_options=()
   
@@ -151,7 +136,7 @@ ansible_menu_handler() {
   done
   inventory_options+=("Back to Main Menu")
 
-	PS3=">>> Select a Cluster Inventory to run its Playbook: "
+  PS3=">>> Select a Cluster Inventory to run its Playbook: "
   select inventory in "${inventory_options[@]}"; do
     
     if [ "$inventory" == "Back to Main Menu" ]; then
@@ -160,16 +145,40 @@ ansible_menu_handler() {
     
     elif [ -n "$inventory" ]; then
       
+      # Extract the target key from inventory filename (e.g., inventory-postgres-cluster.yaml -> postgres)
       local tmp=${inventory#inventory-}
       local target_key=${tmp%-cluster.yaml}
-      
-      local playbook="10-provision-${target_key}.yaml"
+      local playbook=""
+
+      case "$target_key" in
+        "vault")
+          playbook="10-provision-vault.yaml"
+          ;;
+        "postgres"|"redis"|"minio")
+          playbook="20-provision-data-services.yaml"
+          ;;
+        "harbor")
+          playbook="30-provision-microk8s.yaml"
+          ;;
+        "kubeadm")
+          playbook="50-provision-kubeadm.yaml"
+          ;;
+        *)
+          echo "WARN: Unknown inventory key '${target_key}'. Trying default pattern..."
+          playbook="10-provision-${target_key}.yaml"
+          ;;
+      esac
       
       echo "==========================="
       echo "Selected Inventory: ${inventory}"
       echo "Derived Playbook:   ${playbook}"
       echo "==========================="
       
+      if [ ! -f "${ANSIBLE_DIR}/playbooks/${playbook}" ]; then
+        echo "FATAL: Mapped playbook '${playbook}' does not exist."
+        continue
+      fi
+
       ansible_playbook_executor "$playbook" "$inventory"
       break
 

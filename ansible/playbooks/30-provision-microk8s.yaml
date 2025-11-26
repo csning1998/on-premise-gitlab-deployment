@@ -3,28 +3,28 @@
   hosts: "{{ (groups['nodes'] | default([])) }}"
   become: true
   roles:
-    - 21-microk8s-cleanup
+    - 31-microk8s-nodes
 
 - name: "Play 2: Configure High Availability MicroK8s Cluster"
   hosts: "{{ (groups['nodes'] | default([])) | difference((groups['nodes'] | default([]))[:1]) }}"
   become: true
   roles:
-    - 22-microk8s-configure-ha
+    - 32-microk8s-ha
 
 - name: "Play 3: Configure MicroK8s Addons"
   hosts: "{{ groups['nodes'][0] | default([]) }}"
   become: true
   roles:
-    - 23-microk8s-configure-addons
+    - 33-microk8s-addons
 
 - name: "Play 4: Setup Kubeconfig for all nodes"
   hosts: nodes
   become: true
   roles:
-    - 24-microk8s-setup-kubeconfig
+    - 34-microk8s-kubeconfig
 
 - name: "Play 5: Setup HAProxy for Redis"
   hosts: nodes
   become: true
   roles:
-    - 29-harbor-redis-proxy
+    - 35-harbor-redis-proxy

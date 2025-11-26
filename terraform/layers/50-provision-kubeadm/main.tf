@@ -54,7 +54,7 @@ module "bootstrapper_ansible_cluster" {
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_kubeadm.ssh_config_file_path
-    playbook_file   = "playbooks/10-provision-kubeadm.yaml"
+    playbook_file   = "playbooks/50-provision-kubeadm.yaml"
     inventory_file  = "inventory-kubeadm-cluster.yaml"
   }
 

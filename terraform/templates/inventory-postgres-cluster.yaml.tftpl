@@ -12,9 +12,9 @@ all:
     haproxy_ro_port: 5001
 
   children:
-    etcd_nodes:
+    postgres_etcd_nodes:
       hosts:
-%{ for key, node in etcd_nodes ~}
+%{ for key, node in postgres_etcd_nodes ~}
         ${key}:
           advertise_ip: ${node.ip}
 %{ endfor ~}
@@ -26,7 +26,7 @@ all:
           advertise_ip: ${node.ip}
 %{ endfor ~}
 
-    haproxy_nodes:
+    postgres_haproxy_nodes:
       hosts:
 %{ for key, node in haproxy_nodes ~}
         ${key}:

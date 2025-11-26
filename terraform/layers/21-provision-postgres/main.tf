@@ -54,17 +54,17 @@ module "bootstrapper_ansible_cluster" {
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_postgres.ssh_config_file_path
-    playbook_file   = "playbooks/10-provision-postgres.yaml"
+    playbook_file   = "playbooks/20-provision-data-services.yaml"
     inventory_file  = "inventory-postgres-cluster.yaml"
   }
   inventory_content = templatefile("${path.root}/../../templates/inventory-postgres-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
 
-    etcd_nodes     = local.etcd_nodes_map
-    postgres_nodes = local.postgres_nodes_map
-    haproxy_nodes  = local.haproxy_nodes_map
+    postgres_etcd_nodes = local.postgres_etcd_nodes_map
+    postgres_nodes      = local.postgres_nodes_map
+    haproxy_nodes       = local.haproxy_nodes_map
 
-    etcd_ips     = [for node in values(local.etcd_nodes_map) : node.ip]
+    etcd_ips     = [for node in values(local.postgres_etcd_nodes_map) : node.ip]
     postgres_ips = [for node in values(local.postgres_nodes_map) : node.ip]
 
     postgres_ha_virtual_ip     = var.postgres_cluster_config.ha_virtual_ip

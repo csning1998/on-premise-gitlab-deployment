@@ -12,7 +12,7 @@ restapi:
 # DCS Configuration (etcd)
 etcd3:
   hosts:
-{% for host in groups['etcd_nodes'] %}
+{% for host in groups['postgres_etcd_nodes'] %}
     - {{ hostvars[host]['advertise_ip'] }}:2379
 {% endfor %}
   ttl: 30

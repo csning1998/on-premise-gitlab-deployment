@@ -11,7 +11,7 @@ vrrp_instance VI_MINIO {
     virtual_router_id {{ keepalived_vrrp_id }}
     advert_int {{ keepalived_advert_int }}
 
-    priority {{ 100 - groups['haproxy_nodes'].index(inventory_hostname) }}
+    priority {{ 100 - groups['minio_haproxy_nodes'].index(inventory_hostname) }}
 
     authentication {
         auth_type PASS

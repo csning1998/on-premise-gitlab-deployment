@@ -3,6 +3,6 @@
 data "terraform_remote_state" "redis_provision" {
   backend = "local"
   config = {
-    path = "${path.module}/../10-provision-redis/terraform.tfstate"
+    path = "${path.module}/../25-provision-redis/terraform.tfstate"
   }
 }
