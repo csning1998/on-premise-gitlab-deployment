@@ -28,12 +28,12 @@ terraform_artifact_cleaner() {
       continue
     fi
 
-    echo ">>> STEP: Cleaning Terraform artifacts for layer [${layer_name}]..."
-    rm -rf "${layer_dir}/.terraform.lock.hcl" \
-      "${layer_dir}/terraform.tfstate" \
-      "${layer_dir}/terraform.tfstate.backup"
+    # echo ">>> STEP: Cleaning Terraform artifacts for layer [${layer_name}]..."
+    # rm -rf "${layer_dir}/.terraform.lock.hcl" \
+    #   "${layer_dir}/terraform.tfstate" \
+    #   "${layer_dir}/terraform.tfstate.backup"
 
-    echo "#### Terraform artifact cleanup for [${layer_name}] completed."
+    # echo "#### Terraform artifact cleanup for [${layer_name}] completed."
     echo "--------------------------------------------------"
   done
 }

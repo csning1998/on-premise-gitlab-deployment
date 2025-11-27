@@ -3,29 +3,29 @@
   hosts: vault_haproxy
   become: true
   roles:
-    - 41-vault-loadbalancer
+    - 11-vault-loadbalancer
 
 - name: "Play 2: Configure Vault Nodes (Setup & Config)"
   hosts: vault_leader, vault_follower
   become: true
   roles:
-    - 42-vault-setup
-    - 43-vault-configure
+    - 12-vault-setup
+    - 13-vault-configure
 
 - name: "Play 3: Initialize Vault Cluster (Primary Only)"
   hosts: vault_leader
   become: true
   roles:
-    - 44-vault-initialize
+    - 14-vault-initialize
 
 - name: "Play 4a: Unseal Primary Node"
   hosts: vault_leader
   become: true
   roles:
-    - 45-vault-unseal
+    - 15-vault-unseal
 
 - name: "Play 4b: Unseal Standby Nodes"
   hosts: vault_follower
   become: true
   roles:
-    - 45-vault-unseal
+    - 15-vault-unseal

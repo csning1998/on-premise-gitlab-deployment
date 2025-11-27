@@ -1,6 +1,0 @@
----
-- name: "Play 1: Configure Redis High Availability Cluster"
-  hosts: all
-  become: true
-  roles:
-    - 35-redis-sentinel

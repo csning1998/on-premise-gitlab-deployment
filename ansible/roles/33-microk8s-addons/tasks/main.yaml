@@ -1,0 +1,17 @@
+---
+- name: "Section: Configure and enable MicroK8s addons"
+  become: true
+  block:
+    - name: "Step 1. Enable core addons for MicroK8s"
+      ansible.builtin.command:
+        cmd: "microk8s enable {{ item }}"
+      loop: "{{ microk8s_addons }}"
+      register: enable_result
+      changed_when: "'is already enabled' not in enable_result.stdout"
+
+    - name: "Step 2. Enable MetalLB with defined VIP range"
+      ansible.builtin.command:
+        cmd: "microk8s enable metallb:{{ metallb_ip_range }}"
+      register: metallb_result
+      changed_when: "'MetalLB is already enabled' not in metallb_result.stdout"
+      when: metallb_ip_range is defined

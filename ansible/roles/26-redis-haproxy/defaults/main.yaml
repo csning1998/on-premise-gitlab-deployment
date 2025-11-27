@@ -1,0 +1,12 @@
+---
+# HAProxy Tuning
+haproxy_maxconn: 4096
+haproxy_stats_port: 6379
+haproxy_timeout_connect: 5000
+haproxy_timeout_client: 50000
+haproxy_timeout_server: 50000
+
+# Keepalived Tuning
+keepalived_router_id: "redis_lb"
+keepalived_vrrp_id: 71
+keepalived_advert_int: 1

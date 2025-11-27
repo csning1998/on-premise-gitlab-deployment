@@ -1,0 +1,56 @@
+---
+# Global settings for the Patroni cluster
+scope: postgres-ha-cluster
+namespace: /service/postgres/
+name: {{ inventory_hostname }}
+
+# REST API
+restapi:
+  listen: "{{ advertise_ip }}:{{ patroni_restapi_port }}"
+  connect_address: "{{ advertise_ip }}:{{ patroni_restapi_port }}"
+
+# DCS Configuration (etcd)
+etcd3:
+  hosts:
+{% for host in groups['postgres_etcd_nodes'] %}
+    - {{ hostvars[host]['advertise_ip'] }}:2379
+{% endfor %}
+  ttl: 30
+
+bootstrap:
+  dcs:
+    ttl: 20
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+    - auth-host: md5
+    - auth-local: md5
+  pg_hba:
+    - host all all {{ postgres_allowed_subnet }} md5
+    - host replication repuser {{ postgres_allowed_subnet }} md5
+    - host all all 127.0.0.1/32 md5
+
+postgresql:
+  listen: "{{ advertise_ip }}:{{ postgres_port }}"
+  connect_address: "{{ advertise_ip }}:{{ postgres_port }}"
+  data_dir: /var/lib/postgresql/{{ postgres_version }}/data
+  pgpass: /tmp/pgpass{{ postgres_port }}
+  
+  authentication:
+    replication:
+      username: repuser
+      password: "{{ pg_replication_password }}"
+    superuser:
+      username: postgres
+      password: "{{ pg_superuser_password }}"
+  
+  parameters:
+    max_connections: 100
+    max_wal_senders: 10
+    wal_level: replica
+    hot_standby: "on"

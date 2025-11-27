@@ -78,8 +78,8 @@ options+=("Switch Environment Strategy")
 options+=("Purge All Libvirt Resources")
 options+=("Purge All Packer and Terraform Resources")
 options+=("Build Packer Base Image")
-options+=("Provision Terraform Layer 10")
-options+=("[DEV] Rebuild Layer 10 via Ansible Command")
+options+=("Provision Terraform Layer")
+options+=("[DEV] Rebuild Layer via Ansible Command")
 options+=("Verify SSH")
 options+=("Quit")
 # options+=("Rebuild Terraform Layer 10: KVM Provision Only")
@@ -153,13 +153,13 @@ select opt in "${options[@]}"; do
       packer_menu_handler
       break
       ;;
-    "Provision Terraform Layer 10")
+    "Provision Terraform Layer")
       echo "# Entering Terraform layer management menu..."
       libvirt_service_manager
       terraform_layer_selector
       break
       ;;
-    "[DEV] Rebuild Layer 10 via Ansible Command")
+    "[DEV] Rebuild Layer via Ansible Command")
       echo "# Executing [DEV] Rebuild via direct Ansible command..."
       if ! ssh_key_verifier; then break; fi
       libvirt_service_manager
