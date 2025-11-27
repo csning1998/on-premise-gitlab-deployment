@@ -7,6 +7,6 @@ haproxy_timeout_client: 50000
 haproxy_timeout_server: 50000
 
 # Keepalived Tuning
-keepalived_router_id: "redis_lb"
+keepalived_router_id: "{{ service_identifier }}-redis_lb"
 keepalived_vrrp_id: 71
 keepalived_advert_int: 1

@@ -26,7 +26,7 @@ backend minio_api_backend
     http-check send meth GET uri /minio/health/live ver HTTP/1.1 hdr Host localhost
     http-check expect status 200
     
-{% for host in groups['minio_nodes'] %}
+{% for host in groups['minio_db_nodes'] %}
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ haproxy_backend_port_api }} check inter 2000 rise 2 fall 3
 {% endfor %}
 
@@ -42,6 +42,6 @@ backend minio_console_backend
     http-check expect status 200
     cookie MINIO_CONSOLE_SERVER insert indirect nocache
 
-{% for host in groups['minio_nodes'] %}
+{% for host in groups['minio_db_nodes'] %}
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ haproxy_backend_port_console }} check cookie {{ host }} inter 2000 rise 2 fall 3
 {% endfor %}
