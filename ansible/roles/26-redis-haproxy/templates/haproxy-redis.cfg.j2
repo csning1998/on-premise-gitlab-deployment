@@ -30,6 +30,6 @@ listen redis_local_proxy
     tcp-check expect string role:master
 
     # Point to Redis cluster nodes injected from Terraform
-    {% for ip in redis_cluster_ips %}
+{% for ip in redis_cluster_ips %}
     server redis-{{ loop.index }} {{ ip }}:6379 check inter 3s fall 3 rise 2
-    {% endfor %}
+{% endfor %}
