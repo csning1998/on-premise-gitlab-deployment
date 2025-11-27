@@ -2,6 +2,9 @@
 all:
   vars:
     ansible_ssh_user: "${ansible_ssh_user}"
+    metallb_ip_range: "${harbor_ingress_vip}-${harbor_ingress_vip}"
+    redis_cluster_ips: ${jsonencode(redis_cluster_ips)}
+    ha_virtual_ip: "${harbor_ingress_vip}"
 
   children:
     nodes:

@@ -5,4 +5,4 @@
   gather_facts: true
 
   roles:
-    - 45-vault-unseal
+    - 15-vault-unseal

@@ -15,7 +15,7 @@ all:
           advertise_ip: ${minio_nodes[key].ip}
 %{ endfor ~}
 
-    haproxy_nodes:
+    minio_haproxy_nodes:
       hosts:
 %{ for key in keys(haproxy_nodes) ~}
         ${key}:
