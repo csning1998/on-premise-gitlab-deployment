@@ -22,7 +22,7 @@ postgres_cluster_config = {
 postgres_infrastructure = {
   network = {
     nat = {
-      name_network = "iac-pg-gitlab-nat-net"
+      name_network = "iac-posrgres-gitlab-nat"
       name_bridge  = "pg-gitlab-natbr"
 
       ips = {
@@ -36,7 +36,7 @@ postgres_infrastructure = {
     }
 
     hostonly = {
-      name_network = "iac-pg-gitlab-hostonly-net"
+      name_network = "iac-posrgres-gitlab-hostonly"
       name_bridge  = "pg-gitlab-hosbr"
 
       ips = {
@@ -47,5 +47,5 @@ postgres_infrastructure = {
     }
   }
   postgres_allowed_subnet = "172.16.140.0/24"
-  storage_pool_name       = "iac-pg-gitlab"
+  storage_pool_name       = "iac-posrgres-gitlab"
 }
