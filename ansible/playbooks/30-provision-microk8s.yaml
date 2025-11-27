@@ -22,9 +22,3 @@
   become: true
   roles:
     - 34-microk8s-kubeconfig
-
-- name: "Play 5: Setup HAProxy for Redis"
-  hosts: nodes
-  become: true
-  roles:
-    - 35-harbor-redis-proxy

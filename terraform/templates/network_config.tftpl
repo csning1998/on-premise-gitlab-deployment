@@ -21,3 +21,7 @@ network:
       dhcp4: false
       addresses:
         - "${hostonly_ip_cidr}"
+      routes:
+        - to: 172.16.0.0/16
+          via: "${hostonly_gateway}"
+          metric: 100

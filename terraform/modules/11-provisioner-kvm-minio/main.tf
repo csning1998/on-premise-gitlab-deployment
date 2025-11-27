@@ -141,6 +141,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     hostonly_mac     = local.nodes_config[each.key].hostonly_mac
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
     nat_gateway      = var.libvirt_infrastructure.network.nat.ips.address
+    hostonly_gateway = var.libvirt_infrastructure.network.hostonly.ips.address
   })
 }
 
