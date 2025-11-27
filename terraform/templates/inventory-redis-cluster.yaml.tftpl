@@ -20,3 +20,10 @@ all:
         ${key}:
           advertise_ip: ${redis_nodes[key].ip}
 %{ endfor ~}
+
+    redis_haproxy_nodes:
+      hosts:
+%{ for key, node in haproxy_nodes ~}
+        ${key}:
+          advertise_ip: ${node.ip}
+%{ endfor ~}

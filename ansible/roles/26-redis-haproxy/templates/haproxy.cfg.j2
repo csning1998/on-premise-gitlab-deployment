@@ -16,8 +16,8 @@ defaults
     timeout client 50000ms
     timeout server 50000ms
 
-listen redis_local_proxy
-    bind 127.0.0.1:6379
+listen redis_cluster
+    bind *:{{ haproxy_stats_port }}
     mode tcp
     balance first
     option tcp-check

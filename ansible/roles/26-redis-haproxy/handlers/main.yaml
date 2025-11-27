@@ -1,5 +1,15 @@
 ---
-- name: Restart HAProxy
+- name: Restart haproxy
   ansible.builtin.systemd:
     name: haproxy
+    state: restarted
+
+- name: Restart keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    state: restarted
+
+- name: Restart rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
     state: restarted

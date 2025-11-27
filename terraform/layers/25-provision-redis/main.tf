@@ -77,6 +77,7 @@ module "bootstrapper_ansible_cluster" {
   extra_vars = {
     "redis_requirepass" = data.vault_generic_secret.db_vars.data["redis_requirepass"]
     "redis_masterauth"  = data.vault_generic_secret.db_vars.data["redis_masterauth"]
+    "redis_vrrp_secret" = data.vault_generic_secret.db_vars.data["redis_vrrp_secret"]
   }
 
   status_trigger = module.ssh_config_manager_redis.ssh_access_ready_trigger
