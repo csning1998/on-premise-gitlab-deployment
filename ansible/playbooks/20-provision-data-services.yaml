@@ -42,4 +42,4 @@
   hosts: minio_haproxy_nodes
   become: true
   roles:
-    - 28-minio-ha-loadbalancer
+    - 28-minio-haproxy
