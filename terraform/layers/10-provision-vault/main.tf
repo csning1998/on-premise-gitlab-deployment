@@ -1,5 +1,5 @@
 module "provisioner_kvm" {
-  source = "../../modules/11-provisioner-kvm"
+  source = "../../modules/81-provisioner-kvm"
 
   # --- Map Layer's specific variables to the Module's generic inputs ---
 
@@ -37,7 +37,7 @@ module "provisioner_kvm" {
 }
 
 module "ssh_config_manager_vault" {
-  source = "../../modules/81-ssh-config-manager"
+  source = "../../modules/82-ssh-config-manager"
 
   config_name = var.vault_cluster_config.cluster_name
   nodes       = module.provisioner_kvm.all_nodes_map
@@ -49,7 +49,7 @@ module "ssh_config_manager_vault" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/16-bootstrapper-ansible-generic"
+  source = "../../modules/83-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path

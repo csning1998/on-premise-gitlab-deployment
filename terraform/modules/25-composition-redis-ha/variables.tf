@@ -1,4 +1,4 @@
-# Registry Server Topology & Configuration
+# Redis Cluster Topology & Configuration
 
 variable "redis_cluster_config" {
   description = "Define the registry server including virtual hardware resources."
@@ -16,8 +16,10 @@ variable "redis_cluster_config" {
         ram  = number
       }))
     })
-    ha_virtual_ip   = optional(string, "172.16.137.250")
     base_image_path = optional(string, "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2")
+    ha_virtual_ip   = string
+    inventory_file  = string # The name of the generated Ansible inventory file.
+    service_name    = string # The service identifier (e.g., 'harbor', 'gitlab') used for naming resources.
   })
 
   validation {
@@ -36,7 +38,7 @@ variable "redis_cluster_config" {
   }
 }
 
-# Registry Server Infrastructure Network Configuration
+# Redis Cluster Infrastructure Network Configuration
 
 variable "redis_infrastructure" {
   description = "All Libvirt-level infrastructure configurations for the Redis Service."
@@ -67,7 +69,7 @@ variable "redis_infrastructure" {
         })
       })
     })
-    redis_allowed_subnet = optional(string, "172.16.137.0/24")
-    storage_pool_name    = optional(string, "iac-redis")
+    redis_allowed_subnet = string
+    storage_pool_name    = string
   })
 }

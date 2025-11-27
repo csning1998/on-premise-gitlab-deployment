@@ -1,0 +1,51 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+postgres_cluster_config = {
+  cluster_name = "20-provision-postgres-harbor"
+  nodes = {
+    postgres = [
+      { ip = "172.16.137.200", vcpu = 4, ram = 4096 },
+      { ip = "172.16.137.201", vcpu = 4, ram = 4096 },
+      { ip = "172.16.137.202", vcpu = 4, ram = 4096 },
+    ],
+    etcd = [
+      { ip = "172.16.137.210", vcpu = 2, ram = 2048 },
+      { ip = "172.16.137.211", vcpu = 2, ram = 2048 },
+      { ip = "172.16.137.212", vcpu = 2, ram = 2048 }
+    ],
+    haproxy = [
+      { ip = "172.16.137.220", vcpu = 2, ram = 2048 }
+    ]
+  }
+  postgres_ha_virtual_ip = "172.16.137.250"
+}
+
+postgres_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-postgres-harbor-nat"
+      name_bridge  = "pg-harbor-natbr"
+
+      ips = {
+        address = "172.16.89.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.89.2"
+          end   = "172.16.89.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-postgres-harbor-hostonly"
+      name_bridge  = "pg-harbor-hosbr"
+
+      ips = {
+        address = "172.16.137.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  postgres_allowed_subnet = "172.16.137.0/24"
+  storage_pool_name       = "iac-postgres-harbor"
+}

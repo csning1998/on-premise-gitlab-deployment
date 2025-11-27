@@ -34,7 +34,7 @@ listen postgres_readwrite
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     balance first
-{% for host in groups['postgres_nodes'] %}
+{% for host in groups['postgres_db_nodes'] %}
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ postgres_port }} check port {{ patroni_api_port }}
 {% endfor %}
 
@@ -46,6 +46,6 @@ listen postgres_readonly
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     balance roundrobin
-{% for host in groups['postgres_nodes'] %}
+{% for host in groups['postgres_db_nodes'] %}
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ postgres_port }} check port {{ patroni_api_port }}
 {% endfor %}

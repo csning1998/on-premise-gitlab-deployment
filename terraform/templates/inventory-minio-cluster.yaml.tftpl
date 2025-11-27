@@ -1,14 +1,17 @@
 ---
 all:
   vars:
+    ansible_user: "${ansible_ssh_user}"
+    service_identifier: "${service_name}"
+    minio_cluster_name: "${service_name}-minio-cluster"
+
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
     minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
     minio_allowed_subnet: "${minio_allowed_subnet}"
     minio_nat_subnet_prefix: "${minio_nat_subnet_prefix}"
-    ansible_user: "${ansible_ssh_user}"
 
   children:
-    minio_nodes:
+    minio_db_nodes:
       hosts:
 %{ for key in keys(minio_nodes) ~}
         ${key}:

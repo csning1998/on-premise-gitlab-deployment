@@ -1,0 +1,47 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+
+redis_cluster_config = {
+  cluster_name = "20-provision-redis-harbor"
+  nodes = {
+    redis = [
+      { ip = "172.16.138.200", vcpu = 4, ram = 4096 },
+      { ip = "172.16.138.201", vcpu = 4, ram = 4096 },
+      { ip = "172.16.138.202", vcpu = 4, ram = 4096 },
+    ]
+    haproxy = [
+      { ip = "172.16.138.210", vcpu = 2, ram = 2048 }
+    ]
+  }
+  ha_virtual_ip = "172.16.138.250"
+}
+
+redis_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-redis-harbor-nat-net"
+      name_bridge  = "redis-nat-br"
+
+      ips = {
+        address = "172.16.90.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.90.2"
+          end   = "172.16.90.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-redis-harbor-hostonly-net"
+      name_bridge  = "redis-host-br"
+
+      ips = {
+        address = "172.16.138.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  redis_allowed_subnet = "172.16.138.0/24"
+  storage_pool_name    = "iac-redis-harbor"
+}

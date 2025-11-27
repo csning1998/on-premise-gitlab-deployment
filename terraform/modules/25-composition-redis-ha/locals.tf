@@ -2,11 +2,14 @@
 locals {
 
   redis_nodes_map = { for idx, config in var.redis_cluster_config.nodes.redis :
-    "redis-node-${format("%02d", idx)}" => config
+    "${var.redis_cluster_config.service_name}-redis-node-db-${format("%02d", idx)}" => config
   }
+  # e.g. gitlab-redis-node-db-00, harbor-redis-node-db-00
+
   redis_haproxy_nodes_map = { for idx, config in var.redis_cluster_config.nodes.haproxy :
-    "redis-haproxy-node-${format("%02d", idx)}" => config
+    "${var.redis_cluster_config.service_name}-redis-haproxy-node-${format("%02d", idx)}" => config
   }
+  # e.g. gitlab-redis-haproxy-node-00, harbor-redis-haproxy-node-00
 
   all_nodes_map = merge(
     local.redis_nodes_map,

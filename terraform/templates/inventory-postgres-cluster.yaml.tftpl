@@ -2,6 +2,9 @@
 all:
   vars:
     ansible_user: "${ansible_ssh_user}"
+    service_identifier: "${service_name}"
+    postgres_cluster_name: "${service_name}-postgres-cluster"
+
     etcd_cluster_ips: ${jsonencode(etcd_ips)}
     postgres_cluster_ips: ${jsonencode(postgres_ips)}
     postgres_ha_virtual_ip: "${postgres_ha_virtual_ip}"
@@ -16,7 +19,7 @@ all:
           advertise_ip: ${node.ip}
 %{ endfor ~}
 
-    postgres_nodes:
+    postgres_db_nodes:
       hosts:
 %{ for key, node in postgres_nodes ~}
         ${key}:

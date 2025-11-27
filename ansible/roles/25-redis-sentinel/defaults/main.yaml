@@ -1,6 +1,6 @@
 ---
 # Sentinel Configuration
-sentinel_master_name: "mymaster"
+sentinel_master_name: "{{ service_identifier }}-sentinel_master"
 
 # Sentinel Tuning
 sentinel_down_after_milliseconds: 5000

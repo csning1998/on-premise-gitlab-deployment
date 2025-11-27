@@ -1,0 +1,51 @@
+# Defines the hardware and IP addresses for each virtual machine in the cluster.
+postgres_cluster_config = {
+  cluster_name = "20-provision-postgres-gitlab"
+  nodes = {
+    postgres = [
+      { ip = "172.16.140.200", vcpu = 4, ram = 4096 },
+      { ip = "172.16.140.201", vcpu = 4, ram = 4096 },
+      { ip = "172.16.140.202", vcpu = 4, ram = 4096 },
+    ],
+    etcd = [
+      { ip = "172.16.140.210", vcpu = 2, ram = 2048 },
+      { ip = "172.16.140.211", vcpu = 2, ram = 2048 },
+      { ip = "172.16.140.212", vcpu = 2, ram = 2048 }
+    ],
+    haproxy = [
+      { ip = "172.16.140.220", vcpu = 2, ram = 2048 }
+    ]
+  }
+  postgres_ha_virtual_ip = "172.16.140.250"
+}
+
+postgres_infrastructure = {
+  network = {
+    nat = {
+      name_network = "iac-postgres-gitlab-nat"
+      name_bridge  = "pg-gitlab-natbr"
+
+      ips = {
+        address = "172.16.92.1"
+        prefix  = 24
+        dhcp = {
+          start = "172.16.92.2"
+          end   = "172.16.92.254"
+        }
+      }
+    }
+
+    hostonly = {
+      name_network = "iac-postgres-gitlab-hostonly"
+      name_bridge  = "pg-gitlab-hosbr"
+
+      ips = {
+        address = "172.16.140.1"
+        prefix  = 24
+        dhcp    = null
+      }
+    }
+  }
+  postgres_allowed_subnet = "172.16.140.0/24"
+  storage_pool_name       = "iac-postgres-gitlab"
+}

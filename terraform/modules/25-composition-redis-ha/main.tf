@@ -1,5 +1,5 @@
 module "provisioner_kvm" {
-  source = "../../modules/11-provisioner-kvm"
+  source = "../81-provisioner-kvm"
 
   # --- Map Layer's specific variables to the Module's generic inputs ---
 
@@ -37,7 +37,7 @@ module "provisioner_kvm" {
 }
 
 module "ssh_config_manager_redis" {
-  source = "../../modules/81-ssh-config-manager"
+  source = "../82-ssh-config-manager"
 
   config_name = var.redis_cluster_config.cluster_name
   nodes       = module.provisioner_kvm.all_nodes_map
@@ -49,17 +49,18 @@ module "ssh_config_manager_redis" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/16-bootstrapper-ansible-generic"
+  source = "../83-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_redis.ssh_config_file_path
     playbook_file   = "playbooks/20-provision-data-services.yaml"
-    inventory_file  = "inventory-redis-cluster.yaml"
+    inventory_file  = var.redis_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-redis-cluster.yaml.tftpl", {
+  inventory_content = templatefile("${path.module}/../../templates/inventory-redis-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+    service_name     = var.redis_cluster_config.service_name
 
     redis_nodes   = local.redis_nodes_map
     haproxy_nodes = local.redis_haproxy_nodes_map

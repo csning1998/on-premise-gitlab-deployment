@@ -4,32 +4,41 @@
 
 # Resources Mapping
 declare -A DOMAIN_MAP=(
-  ["10-provision-kubeadm"]="kubeadm-"
-  ["10-provision-harbor"]="harbor-"
-  ["10-provision-postgres"]="postgres- haproxy- etcd-"
-  ["10-provision-redis"]="redis-"
-	["10-provision-minio"]="minio-"
 	["10-provision-vault"]="vault-"
+  ["20-provision-postgres-gitlab"]="gitlab-postgres-"
+  ["20-provision-postgres-harbor"]="harbor-postgres-"
+  ["20-provision-redis-gitlab"]="gitlab-redis-"
+  ["20-provision-redis-harbor"]="harbor-redis-"
+  ["20-provision-minio-gitlab"]="gitlab-minio-"
+  ["20-provision-minio-harbor"]="harbor-minio-"
+  ["30-provision-microk8s"]="harbor-"
+  ["50-provision-kubeadm"]="gitlab-"
 )
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-  ["10-provision-kubeadm"]="iac-kubeadm"
-  ["10-provision-harbor"]="iac-harbor"
-  ["10-provision-postgres"]="iac-postgres"
-  ["10-provision-redis"]="iac-redis"
-	["10-provision-minio"]="iac-minio"
-	["10-provision-vault"]="iac-vault"
+  ["10-provision-vault"]="iac-vault"
+  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
+  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
+  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
+  ["20-provision-redis-harbor"]="iac-redis-harbor"
+  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
+  ["20-provision-minio-harbor"]="iac-minio-harbor"
+  ["30-provision-microk8s"]="iac-harbor"
+  ["50-provision-kubeadm"]="iac-kubeadm"
 )
 
 # Network prefixes.
 declare -A NET_MAP=(
-  ["10-provision-kubeadm"]="iac-kubeadm"
-  ["10-provision-harbor"]="iac-harbor"
-  ["10-provision-postgres"]="iac-postgres"
-  ["10-provision-redis"]="iac-redis"
-	["10-provision-minio"]="iac-minio"
-	["10-provision-vault"]="iac-vault"
+  ["10-provision-vault"]="iac-vault"
+  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
+  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
+  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
+  ["20-provision-redis-harbor"]="iac-redis-harbor"
+  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
+  ["20-provision-minio-harbor"]="iac-minio-harbor"
+  ["30-provision-microk8s"]="iac-microk8s"
+  ["50-provision-kubeadm"]="iac-kubeadm"
 )
 
 # Function: Ensure libvirt service is running before executing a command.
@@ -134,7 +143,7 @@ libvirt_resource_purger() {
   # --- 5. Purge Networks ---
   echo ">>> STEP: Purging Networks..."
   for prefix in ${unique_net_prefixes}; do
-    for suffix in "hostonly-net" "nat-net"; do
+    for suffix in "nat" "nat-net" "hostonly" "hostonly-net"; do
       local net_name="${prefix}-${suffix}"
       if sudo virsh net-info "$net_name" >/dev/null 2>&1; then
         echo "#### Destroying and undefining network: $net_name"

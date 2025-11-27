@@ -7,7 +7,7 @@
     - 21-postgres-etcd
 
 - name: "Play 2: Configure Patroni and PostgreSQL Cluster"
-  hosts: postgres_nodes
+  hosts: postgres_db_nodes
   become: true
   roles:
     - 22-postgres-patroni
@@ -20,7 +20,7 @@
 
 # Redis Sentinel, HAProxy
 - name: "Play 4: Configure Redis High Availability Cluster"
-  hosts: redis_master, redis_replicas
+  hosts: redis_db_master, redis_db_replicas
   become: true
   roles:
     - 25-redis-sentinel
@@ -33,7 +33,7 @@
 
 # MinIO, HAProxy
 - name: "Play 6: Configure MinIO High Availability Cluster"
-  hosts: minio_nodes
+  hosts: minio_db_nodes
   become: true
   roles:
     - 27-minio-distributed

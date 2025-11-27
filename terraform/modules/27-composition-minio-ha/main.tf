@@ -1,5 +1,5 @@
 module "provisioner_kvm" {
-  source = "../../modules/11-provisioner-kvm-minio"
+  source = "../81-provisioner-kvm-minio"
 
   # --- Map Layer's specific variables to the Module's generic inputs ---
 
@@ -37,7 +37,7 @@ module "provisioner_kvm" {
 }
 
 module "ssh_config_manager_minio" {
-  source = "../../modules/81-ssh-config-manager"
+  source = "../82-ssh-config-manager"
 
   config_name = var.minio_cluster_config.cluster_name
   nodes       = module.provisioner_kvm.all_nodes_map
@@ -49,22 +49,24 @@ module "ssh_config_manager_minio" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/16-bootstrapper-ansible-generic"
+  source = "../83-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_minio.ssh_config_file_path
     playbook_file   = "playbooks/20-provision-data-services.yaml"
-    inventory_file  = "inventory-minio-cluster.yaml"
+    inventory_file  = var.minio_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-minio-cluster.yaml.tftpl", {
+  inventory_content = templatefile("${path.module}/../../templates/inventory-minio-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
-    minio_nodes      = local.minio_nodes_map
-    haproxy_nodes    = local.haproxy_nodes_map
+    service_name     = var.minio_cluster_config.service_name
 
-    minio_allowed_subnet    = var.minio_infrastructure.minio_allowed_subnet
+    minio_nodes   = local.minio_nodes_map
+    haproxy_nodes = local.haproxy_nodes_map
+
     minio_ha_virtual_ip     = var.minio_cluster_config.ha_virtual_ip
+    minio_allowed_subnet    = var.minio_infrastructure.minio_allowed_subnet
     minio_nat_subnet_prefix = local.minio_nat_network_subnet_prefix
   })
 

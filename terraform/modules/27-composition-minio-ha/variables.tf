@@ -21,7 +21,9 @@ variable "minio_cluster_config" {
       }))
     })
     base_image_path = optional(string, "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2")
-    ha_virtual_ip   = optional(string, "172.16.138.250")
+    ha_virtual_ip   = string
+    inventory_file  = string # The name of the generated Ansible inventory file.
+    service_name    = string # The service identifier (e.g., 'harbor', 'gitlab') used for naming resources.
   })
 
   validation {
@@ -81,8 +83,8 @@ variable "minio_infrastructure" {
         })
       })
     })
-    minio_allowed_subnet = optional(string, "172.16.138.0/24")
-    storage_pool_name    = optional(string, "iac-minio")
+    minio_allowed_subnet = string
+    storage_pool_name    = string
   })
 
   validation {

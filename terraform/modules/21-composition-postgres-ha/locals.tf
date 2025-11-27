@@ -2,23 +2,24 @@
 locals {
 
   postgres_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.postgres :
-    "postgres-node-${format("%02d", idx)}" => config
+    "${var.postgres_cluster_config.service_name}-postgres-db-node-${format("%02d", idx)}" => config
   }
-
+  # e.g. gitlab-postgres-db-node-00, harbor-postgres-db-node-00
   postgres_etcd_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.etcd :
-    "postgres-etcd-node-${format("%02d", idx)}" => config
+    "${var.postgres_cluster_config.service_name}-postgres-etcd-node-${format("%02d", idx)}" => config
   }
+  # e.g. gitlab-postgres-etcd-node-00, harbor-postgres-etcd-node-00
 
   haproxy_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.haproxy :
-    "postgres-haproxy-node-${format("%02d", idx)}" => config
+    "${var.postgres_cluster_config.service_name}-postgres-haproxy-node-${format("%02d", idx)}" => config
   }
+  # e.g. gitlab-postgres-haproxy-node-00, harbor-postgres-haproxy-node-00
 
   all_nodes_map = merge(
     local.postgres_nodes_map,
     local.postgres_etcd_nodes_map,
     local.haproxy_nodes_map
   )
-
 
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
