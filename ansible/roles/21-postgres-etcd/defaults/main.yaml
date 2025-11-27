@@ -1,6 +1,7 @@
 ---
 # Etcd Cluster Settings
-etcd_initial_cluster_token: "etcd-cluster-postgres"
+
+etcd_initial_cluster_token: "etcd-cluster-{{ service_identifier }}"
 etcd_initial_cluster_state: "new" # Change to 'existing' when adding nodes
 etcd_client_port: 2379
 etcd_peer_port: 2380
