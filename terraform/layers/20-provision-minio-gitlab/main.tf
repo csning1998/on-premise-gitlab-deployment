@@ -1,5 +1,5 @@
 
-module "minio_harbor" {
+module "minio_gitlab" {
   source = "../../modules/27-composition-minio-ha"
 
   minio_cluster_config = var.minio_cluster_config

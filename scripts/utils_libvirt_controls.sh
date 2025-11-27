@@ -18,8 +18,8 @@ declare -A DOMAIN_MAP=(
 # Storage Pool names.
 declare -A POOL_MAP=(
   ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-posrgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-posrgres-harbor"
+  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
+  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
   ["20-provision-redis-gitlab"]="iac-redis-gitlab"
   ["20-provision-redis-harbor"]="iac-redis-harbor"
   ["20-provision-minio-gitlab"]="iac-minio-gitlab"
@@ -31,8 +31,8 @@ declare -A POOL_MAP=(
 # Network prefixes.
 declare -A NET_MAP=(
   ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-posrgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-posrgres-harbor"
+  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
+  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
   ["20-provision-redis-gitlab"]="iac-redis-gitlab"
   ["20-provision-redis-harbor"]="iac-redis-harbor"
   ["20-provision-minio-gitlab"]="iac-minio-gitlab"

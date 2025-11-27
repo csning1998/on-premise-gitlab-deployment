@@ -59,5 +59,4 @@ minio_infrastructure = {
     }
   }
   minio_allowed_subnet = "172.16.142.0/24"
-  storage_pool_name    = "iac-minio-gitlab"
-}
+  storage_pool_name    = "iac-gitlab-minio"}

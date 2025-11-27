@@ -58,7 +58,7 @@ module "bootstrapper_ansible_cluster" {
     inventory_file  = var.minio_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-minio-cluster.yaml.tftpl", {
+  inventory_content = templatefile("${path.module}/../../templates/inventory-minio-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.minio_cluster_config.service_name
 

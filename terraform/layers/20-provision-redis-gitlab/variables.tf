@@ -54,7 +54,7 @@ variable "redis_infrastructure" {
         })
       })
     })
-    redis_allowed_subnet = optional(string, "172.16.137.0/24")
-    storage_pool_name    = optional(string, "iac-redis")
+    redis_allowed_subnet = optional(string, "172.16.141.0/24")
+    storage_pool_name    = optional(string, "iac-redis-gitlab")
   })
 }
