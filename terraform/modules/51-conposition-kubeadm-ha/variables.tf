@@ -17,10 +17,12 @@ variable "kubeadm_cluster_config" {
         ram  = number
       }))
     })
-    base_image_path = optional(string, "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2")
-    ha_virtual_ip   = optional(string, "172.16.134.250")
+    base_image_path = string
+    ha_virtual_ip   = string
+    inventory_file  = string
+    service_name    = string
     registry_host   = string
-    pod_subnet      = optional(string, "10.244.0.0/16")
+    pod_subnet      = string
   })
 
   validation {
@@ -67,7 +69,7 @@ variable "kubeadm_cluster_config" {
 
 # Kubeadm Cluster Infrastructure Network Configuration
 
-variable "kubeadm_infrastructure" {
+variable "libvirt_infrastructure" {
   description = "All Libvirt-level infrastructure configurations for the Kubeadm Cluster."
   type = object({
     network = object({
@@ -97,6 +99,7 @@ variable "kubeadm_infrastructure" {
         })
       })
     })
-    storage_pool_name = optional(string, "iac-kubeadm")
+    allowed_subnet    = string
+    storage_pool_name = string
   })
 }
