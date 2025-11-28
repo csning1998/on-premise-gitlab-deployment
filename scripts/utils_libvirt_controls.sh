@@ -7,7 +7,7 @@ declare -A DOMAIN_MAP=(
 	["10-provision-vault"]="vault-"
 
   ["20-provision-postgres-gitlab"]="gitlab-postgres-"
-  ["20-provision-redis-gitlab"]="gitlab-redis-"
+	["20-gitlab-redis"]="gitlab-redis-"
   ["20-provision-minio-gitlab"]="gitlab-minio-"
   ["50-provision-kubeadm-gitlab"]="gitlab-kubeadm-"
 
@@ -19,28 +19,12 @@ declare -A DOMAIN_MAP=(
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-  ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
-  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
-  ["20-provision-redis-harbor"]="iac-redis-harbor"
-  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
-  ["20-provision-minio-harbor"]="iac-minio-harbor"
-  ["30-provision-microk8s-harbor"]="iac-microk8s-harbor"
-  ["50-provision-kubeadm-gitlab"]="iac-kubeadm-gitlab"
+	["20-gitlab-redis"]="iac-gitlab-redis"
 )
 
 # Network prefixes.
 declare -A NET_MAP=(
-  ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
-  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
-  ["20-provision-redis-harbor"]="iac-redis-harbor"
-  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
-  ["20-provision-minio-harbor"]="iac-minio-harbor"
-  ["30-provision-microk8s-harbor"]="iac-microk8s-harbor"
-  ["50-provision-kubeadm-gitlab"]="iac-kubeadm-gitlab"
+	["20-gitlab-redis"]="iac-gitlab-redis"
 )
 
 # Function: Ensure libvirt service is running before executing a command.

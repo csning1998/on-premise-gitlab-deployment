@@ -2,18 +2,18 @@
 output "gitlab_redis_ip_list" {
   description = "List of Redis node IPs for GitLab"
   value = [
-    for node in var.redis_cluster_config.nodes.redis : node.ip
+    for node in var.gitlab_redis_compute.nodes : node.ip
   ]
 }
 
 output "gitlab_redis_haproxy_ip_list" {
   description = "List of Redis HAProxy node IPs for GitLab"
   value = [
-    for node in var.redis_cluster_config.nodes.haproxy : node.ip
+    for node in var.gitlab_redis_compute.ha_config.haproxy_nodes : node.ip
   ]
 }
 
 output "gitlab_redis_virtual_ip" {
   description = "Redis virtual IP for GitLab"
-  value       = var.redis_cluster_config.ha_virtual_ip
+  value       = var.gitlab_redis_compute.ha_config.virtual_ip
 }
