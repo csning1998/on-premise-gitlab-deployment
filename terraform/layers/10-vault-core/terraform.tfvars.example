@@ -1,46 +1,42 @@
-# Defines the hardware and IP addresses for each virtual machine in the cluster.
 
-vault_cluster_config = {
-  cluster_name = "10-vault-cluster"
-  nodes = {
-    vault = [
-      { ip = "172.16.139.200", vcpu = 2, ram = 2048 },
-      { ip = "172.16.139.201", vcpu = 2, ram = 2048 },
-      { ip = "172.16.139.202", vcpu = 2, ram = 2048 },
-    ],
-    haproxy = [
-      { ip = "172.16.139.210", vcpu = 1, ram = 1024 }
-    ]
+vault_compute = {
+  cluster_identity = {
+    service_name = "vault"
+    component    = "core"
+    cluster_name = "10-vault-core"
   }
+
+  nodes = {
+    "vault-node-00" = { ip = "172.16.139.200", vcpu = 2, ram = 2048 },
+    "vault-node-01" = { ip = "172.16.139.201", vcpu = 2, ram = 2048 },
+    "vault-node-02" = { ip = "172.16.139.202", vcpu = 2, ram = 2048 },
+  }
+
+  ha_config = {
+    virtual_ip = "172.16.139.250"
+    haproxy_nodes = {
+      "vault-haproxy-node-00" = { ip = "172.16.139.210", vcpu = 1, ram = 1024 }
+    }
+  }
+
+  base_image_path = "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2"
+  inventory_file  = "inventory-vault-cluster.yaml"
 }
 
-vault_infrastructure = {
+vault_infra = {
   network = {
     nat = {
-      name_network = "iac-vault-nat-net"
-      name_bridge  = "vault-nat-br"
-
-      ips = {
-        address = "172.16.91.1"
-        prefix  = 24
-        dhcp = {
-          start = "172.16.91.2"
-          end   = "172.16.91.254"
-        }
+      gateway = "172.16.91.1"
+      cidrv4  = "172.16.91.0/24"
+      dhcp = {
+        start = "172.16.91.2"
+        end   = "172.16.91.254"
       }
     }
-
     hostonly = {
-      name_network = "iac-vault-hostonly-net"
-      name_bridge  = "vault-host-br"
-
-      ips = {
-        address = "172.16.139.1"
-        prefix  = 24
-        dhcp    = null
-      }
+      gateway = "172.16.139.1"
+      cidrv4  = "172.16.139.0/24"
     }
   }
-  vault_allowed_subnet = "172.16.139.0/24"
-  storage_pool_name    = "iac-vault"
+  allowed_subnet = "172.16.139.0/24"
 }

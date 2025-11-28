@@ -1,47 +1,43 @@
-# Defines the hardware and IP addresses for each virtual machine in the cluster.
 
-redis_cluster_config = {
-  cluster_name = "20-provision-redis-gitlab"
-  nodes = {
-    redis = [
-      { ip = "172.16.141.200", vcpu = 4, ram = 4096 },
-      { ip = "172.16.141.201", vcpu = 4, ram = 4096 },
-      { ip = "172.16.141.202", vcpu = 4, ram = 4096 },
-    ]
-    haproxy = [
-      { ip = "172.16.141.210", vcpu = 2, ram = 2048 }
-    ]
+gitlab_redis_compute = {
+
+  cluster_identity = {
+    service_name = "gitlab"
+    component    = "redis"
+    cluster_name = "20-gitlab-redis"
   }
-  ha_virtual_ip = "172.16.141.250"
+
+  nodes = {
+    "gitlab-redis-node-db-00" = { ip = "172.16.141.200", vcpu = 4, ram = 4096 }
+    "gitlab-redis-node-db-01" = { ip = "172.16.141.201", vcpu = 4, ram = 4096 }
+    "gitlab-redis-node-db-02" = { ip = "172.16.141.202", vcpu = 4, ram = 4096 }
+  }
+
+  ha_config = {
+    virtual_ip = "172.16.141.250"
+    haproxy_nodes = {
+      "gitlab-redis-haproxy-node-00" = { ip = "172.16.141.210", vcpu = 2, ram = 2048 }
+    }
+  }
+
+  base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
+  inventory_file  = "inventory-redis-gitlab.yaml"
 }
 
-redis_infrastructure = {
+gitlab_redis_infra = {
   network = {
     nat = {
-      name_network = "iac-redis-gitlab-nat"
-      name_bridge  = "redis-gitlab-na"
-
-      ips = {
-        address = "172.16.93.1"
-        prefix  = 24
-        dhcp = {
-          start = "172.16.93.2"
-          end   = "172.16.93.254"
-        }
+      gateway = "172.16.93.1"
+      cidrv4  = "172.16.93.0/24"
+      dhcp = {
+        start = "172.16.93.2"
+        end   = "172.16.93.254"
       }
     }
-
     hostonly = {
-      name_network = "iac-redis-gitlab-hostonly"
-      name_bridge  = "redis-gitlab-ho"
-
-      ips = {
-        address = "172.16.141.1"
-        prefix  = 24
-        dhcp    = null
-      }
+      gateway = "172.16.141.1"
+      cidrv4  = "172.16.141.0/24"
     }
   }
-  redis_allowed_subnet = "172.16.141.0/24"
-  storage_pool_name    = "iac-redis-gitlab"
+  allowed_subnet = "172.16.141.0/24"
 }
