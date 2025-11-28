@@ -135,11 +135,13 @@ select opt in "${options[@]}"; do
       strategy_switch_handler
       ;;
     "Purge All Libvirt Resources")
+      if ! manual_confirmation_prompter "Libvirt resources (VMs, Networks, Storage Pools)"; then break; fi
       libvirt_service_manager
       libvirt_resource_purger "all"
       break
       ;;
     "Purge All Packer and Terraform Resources")
+      if ! manual_confirmation_prompter "Packer images and Terraform states"; then break; fi
       echo "# Executing Reset All workflow..."
       packer_artifact_cleaner "all"
       terraform_artifact_cleaner "all"
