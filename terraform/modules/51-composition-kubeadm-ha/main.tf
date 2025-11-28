@@ -1,5 +1,5 @@
 module "provisioner_kvm" {
-  source = "../../modules/81-provisioner-kvm"
+  source = "../81-provisioner-kvm"
 
   # Map Layer's specific variables to the Module's generic inputs
 
@@ -20,24 +20,24 @@ module "provisioner_kvm" {
   libvirt_infrastructure = {
     network = {
       nat = {
-        name_network = var.kubeadm_infrastructure.network.nat.name_network
-        name_bridge  = var.kubeadm_infrastructure.network.nat.name_bridge
+        name_network = var.libvirt_infrastructure.network.nat.name_network
+        name_bridge  = var.libvirt_infrastructure.network.nat.name_bridge
         mode         = "nat"
-        ips          = var.kubeadm_infrastructure.network.nat.ips
+        ips          = var.libvirt_infrastructure.network.nat.ips
       }
       hostonly = {
-        name_network = var.kubeadm_infrastructure.network.hostonly.name_network
-        name_bridge  = var.kubeadm_infrastructure.network.hostonly.name_bridge
+        name_network = var.libvirt_infrastructure.network.hostonly.name_network
+        name_bridge  = var.libvirt_infrastructure.network.hostonly.name_bridge
         mode         = "route"
-        ips          = var.kubeadm_infrastructure.network.hostonly.ips
+        ips          = var.libvirt_infrastructure.network.hostonly.ips
       }
     }
-    storage_pool_name = var.kubeadm_infrastructure.storage_pool_name
+    storage_pool_name = var.libvirt_infrastructure.storage_pool_name
   }
 }
 
 module "ssh_config_manager_kubeadm" {
-  source = "../../modules/82-ssh-config-manager"
+  source = "../82-ssh-config-manager"
 
   config_name = var.kubeadm_cluster_config.cluster_name
   nodes       = module.provisioner_kvm.all_nodes_map
@@ -49,26 +49,27 @@ module "ssh_config_manager_kubeadm" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/83-bootstrapper-ansible-generic"
+  source = "../83-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_config_manager_kubeadm.ssh_config_file_path
     playbook_file   = "playbooks/50-provision-kubeadm.yaml"
-    inventory_file  = "inventory-kubeadm-cluster.yaml"
+    inventory_file  = var.kubeadm_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-kubeadm-cluster.yaml.tftpl", {
-    master_nodes     = [for node in module.provisioner_kvm.all_nodes_map : node if startswith(node.key, "kubeadm-master")]
-    worker_nodes     = [for node in module.provisioner_kvm.all_nodes_map : node if startswith(node.key, "kubeadm-worker")]
+  inventory_content = templatefile("${path.module}/../../templates/inventory-kubeadm-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
-    registry_host    = var.kubeadm_cluster_config.registry_host
-    extra_vars = {
-      kubeadm_master_ips    = local.kubeadm_master_ips
-      kubeadm_ha_virtual_ip = var.kubeadm_cluster_config.ha_virtual_ip
-      kubeadm_pod_subnet    = var.kubeadm_cluster_config.pod_subnet
-      k8s_nat_subnet_prefix = local.k8s_cluster_nat_network_subnet_prefix
-    }
+    service_name     = var.kubeadm_cluster_config.service_name
+
+    kubeadm_master_nodes  = local.masters_node_map
+    kubeadm_worker_nodes  = local.workers_node_map
+    kubeadm_registry_host = var.kubeadm_cluster_config.registry_host
+
+    kubeadm_master_ips        = local.kubeadm_master_ips
+    kubeadm_ha_virtual_ip     = var.kubeadm_cluster_config.ha_virtual_ip
+    kubeadm_pod_subnet        = var.kubeadm_cluster_config.pod_subnet
+    kubeadm_nat_subnet_prefix = local.k8s_cluster_nat_network_subnet_prefix
   })
 
   vm_credentials = {
@@ -79,8 +80,8 @@ module "bootstrapper_ansible_cluster" {
   extra_vars = {}
 
   pre_run_commands = [
-    "rm -f ${local.ansible_root_path}/fetched/kubeconfig",
-    "mkdir -p ${local.ansible_root_path}/fetched"
+    "rm -f ${local.ansible_root_path}/fetched/${var.kubeadm_cluster_config.service_name}/kubeconfig",
+    "mkdir -p ${local.ansible_root_path}/fetched/${var.kubeadm_cluster_config.service_name}"
   ]
 
   status_trigger = module.ssh_config_manager_kubeadm.ssh_access_ready_trigger
@@ -92,7 +93,7 @@ data "external" "fetched_kubeconfig" {
 
   program = ["/bin/bash", "-c", <<-EOT
     set -e
-    KUBECONFIG_PATH="${local.ansible_root_path}/fetched/kubeconfig"
+    KUBECONFIG_PATH="${local.ansible_root_path}/fetched/${var.kubeadm_cluster_config.service_name}/kubeconfig"
     if [ ! -f "$KUBECONFIG_PATH" ]; then
       echo '{}'
       exit 0
