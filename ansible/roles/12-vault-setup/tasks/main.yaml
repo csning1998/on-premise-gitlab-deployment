@@ -65,9 +65,25 @@
             csr_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.csr"
             provider: selfsigned
 
-        - shell: >-
-            openssl x509 -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.clean &&
-            mv {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.clean {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt
+        - name: "B2.1 Prepare Clean CA (Temp)"
+          ansible.builtin.command: >-
+            openssl x509 -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt
+            -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp
+          changed_when: false
+
+        - name: "B2.2 Update CA Certificate (Idempotent)"
+          ansible.builtin.copy:
+            src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp"
+            dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
+            remote_src: true
+            mode: "0644"
+
+        - name: "B2.3 Remove Temp CA File"
+          ansible.builtin.file:
+            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp"
+            state: absent
+          changed_when: false
+
       delegate_to: localhost
       run_once: true
       become: false
@@ -130,6 +146,31 @@
               -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt \
               -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.clean && \
             mv {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.clean {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt
+          delegate_to: localhost
+          become: false
+
+        - name: "B6.1 Prepare Clean Node Cert (Temp)"
+          ansible.builtin.command: >-
+            openssl x509 -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt
+            -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp
+          changed_when: false
+          delegate_to: localhost
+          become: false
+
+        - name: "B6.2 Update Node Certificate (Idempotent)"
+          ansible.builtin.copy:
+            src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp"
+            dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt"
+            remote_src: true
+            mode: "0644"
+          delegate_to: localhost
+          become: false
+
+        - name: "B6.3 Remove Temp Node Cert File"
+          ansible.builtin.file:
+            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp"
+            state: absent
+          changed_when: false
           delegate_to: localhost
           become: false
 
