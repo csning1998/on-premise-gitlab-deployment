@@ -6,7 +6,7 @@
 declare -A DOMAIN_MAP=(
 	["10-provision-vault"]="vault-"
 
-  ["20-provision-postgres-gitlab"]="gitlab-postgres-"
+	["20-gitlab-postgres"]="gitlab-postgres-"
 	["20-gitlab-redis"]="gitlab-redis-"
 	["20-gitlab-minio"]="gitlab-minio-"
   ["50-provision-kubeadm-gitlab"]="gitlab-kubeadm-"
@@ -19,12 +19,14 @@ declare -A DOMAIN_MAP=(
 
 # Storage Pool names.
 declare -A POOL_MAP=(
+	["20-gitlab-postgres"]="iac-gitlab-postgres"
 	["20-gitlab-redis"]="iac-gitlab-redis"
 	["20-gitlab-minio"]="iac-gitlab-minio"
 )
 
 # Network prefixes.
 declare -A NET_MAP=(
+	["20-gitlab-postgres"]="iac-gitlab-postgres"
 	["20-gitlab-redis"]="iac-gitlab-redis"
 	["20-gitlab-minio"]="iac-gitlab-minio"
 )

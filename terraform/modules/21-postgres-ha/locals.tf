@@ -1,27 +1,31 @@
 
 locals {
 
-  postgres_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.postgres :
-    "${var.postgres_cluster_config.service_name}-postgres-db-node-${format("%02d", idx)}" => config
-  }
-  # e.g. gitlab-postgres-db-node-00, harbor-postgres-db-node-00
-  postgres_etcd_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.etcd :
-    "${var.postgres_cluster_config.service_name}-postgres-etcd-node-${format("%02d", idx)}" => config
-  }
-  # e.g. gitlab-postgres-etcd-node-00, harbor-postgres-etcd-node-00
+  # Identity variables
+  svc  = var.topology_config.cluster_identity.service_name
+  comp = var.topology_config.cluster_identity.component
 
-  haproxy_nodes_map = { for idx, config in var.postgres_cluster_config.nodes.haproxy :
-    "${var.postgres_cluster_config.service_name}-postgres-haproxy-node-${format("%02d", idx)}" => config
-  }
-  # e.g. gitlab-postgres-haproxy-node-00, harbor-postgres-haproxy-node-00
+  # Auto derive infrastructure names
+  storage_pool_name = "iac-${local.svc}-${local.comp}"
+  nat_net_name      = "iac-${local.svc}-${local.comp}-nat"
+  hostonly_net_name = "iac-${local.svc}-${local.comp}-hostonly"
 
+  # Bridge names (limit length < 15 chars)
+  svc_abbr             = substr(local.svc, 0, 3)
+  comp_abbr            = substr(local.comp, 0, 3)
+  nat_bridge_name      = "${local.svc_abbr}-${local.comp_abbr}-natbr"
+  hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
+
+  # Convert standard structure to Module 81 vm_config
   all_nodes_map = merge(
-    local.postgres_nodes_map,
-    local.postgres_etcd_nodes_map,
-    local.haproxy_nodes_map
+    var.topology_config.nodes,
+    var.topology_config.etcd_nodes,
+    var.topology_config.ha_config.haproxy_nodes
   )
 
+  # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
-  postgres_nat_network_subnet_prefix = join(".", slice(split(".", var.postgres_infrastructure.network.nat.ips.address), 0, 3))
+  # Gateway IP prefix extraction
+  nat_network_subnet_prefix = join(".", slice(split(".", var.infra_config.network.nat.gateway), 0, 3))
 }
