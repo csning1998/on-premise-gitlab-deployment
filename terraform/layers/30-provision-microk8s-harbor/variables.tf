@@ -49,7 +49,7 @@ variable "harbor_infrastructure" {
         })
       })
     })
-    libvirt_allowed_subnet = optional(string, "172.16.138.0/24")
-    storage_pool_name      = optional(string, "iac-microk8s-harbor")
+    allowed_subnet    = optional(string, "172.16.135.0/24")
+    storage_pool_name = optional(string, "iac-microk8s-harbor")
   })
 }

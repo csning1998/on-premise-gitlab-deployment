@@ -64,7 +64,7 @@ variable "libvirt_infrastructure" {
         })
       })
     })
-    libvirt_allowed_subnet = string
-    storage_pool_name      = string
+    allowed_subnet    = string
+    storage_pool_name = string
   })
 }

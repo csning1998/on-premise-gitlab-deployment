@@ -58,14 +58,14 @@ module "bootstrapper_ansible_cluster" {
     inventory_file  = var.microk8s_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-microk8s-cluster.yaml.tftpl", {
+  inventory_content = templatefile("${path.module}/../../templates/inventory-microk8s-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.microk8s_cluster_config.service_name
 
     microk8s_nodes = local.all_nodes_map
 
     microk8s_ingress_vip       = var.microk8s_cluster_config.ha_virtual_ip
-    microk8s_allowed_subnet    = var.libvirt_infrastructure.libvirt_allowed_subnet
+    microk8s_allowed_subnet    = var.libvirt_infrastructure.allowed_subnet
     microk8s_nat_subnet_prefix = local.microk8s_nat_network_subnet_prefix
   })
 
@@ -73,6 +73,13 @@ module "bootstrapper_ansible_cluster" {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
+
+  extra_vars = {}
+
+  pre_run_commands = [
+    "rm -f ${local.ansible_root_path}/fetched/${var.microk8s_cluster_config.service_name}/kubeconfig",
+    "mkdir -p ${local.ansible_root_path}/fetched/${var.microk8s_cluster_config.service_name}"
+  ]
 
   status_trigger = module.ssh_config_manager_microk8s.ssh_access_ready_trigger
 }
