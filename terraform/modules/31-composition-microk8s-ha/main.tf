@@ -1,12 +1,12 @@
 module "provisioner_kvm" {
-  source = "../../modules/81-provisioner-kvm"
+  source = "../81-provisioner-kvm"
 
   # Map Layer's specific variables to the Module's generic inputs
 
   # VM Configuration
   vm_config = {
     all_nodes_map   = local.all_nodes_map
-    base_image_path = var.harbor_cluster_config.base_image_path
+    base_image_path = var.microk8s_cluster_config.base_image_path
   }
 
   # VM Credentials from Vault
@@ -20,26 +20,26 @@ module "provisioner_kvm" {
   libvirt_infrastructure = {
     network = {
       nat = {
-        name_network = var.harbor_infrastructure.network.nat.name_network
-        name_bridge  = var.harbor_infrastructure.network.nat.name_bridge
+        name_network = var.libvirt_infrastructure.network.nat.name_network
+        name_bridge  = var.libvirt_infrastructure.network.nat.name_bridge
         mode         = "nat"
-        ips          = var.harbor_infrastructure.network.nat.ips
+        ips          = var.libvirt_infrastructure.network.nat.ips
       }
       hostonly = {
-        name_network = var.harbor_infrastructure.network.hostonly.name_network
-        name_bridge  = var.harbor_infrastructure.network.hostonly.name_bridge
+        name_network = var.libvirt_infrastructure.network.hostonly.name_network
+        name_bridge  = var.libvirt_infrastructure.network.hostonly.name_bridge
         mode         = "route"
-        ips          = var.harbor_infrastructure.network.hostonly.ips
+        ips          = var.libvirt_infrastructure.network.hostonly.ips
       }
     }
-    storage_pool_name = var.harbor_infrastructure.storage_pool_name
+    storage_pool_name = var.libvirt_infrastructure.storage_pool_name
   }
 }
 
-module "ssh_config_manager_harbor" {
-  source = "../../modules/82-ssh-config-manager"
+module "ssh_config_manager_microk8s" {
+  source = "../82-ssh-config-manager"
 
-  config_name = var.harbor_cluster_config.cluster_name
+  config_name = var.microk8s_cluster_config.cluster_name
   nodes       = module.provisioner_kvm.all_nodes_map
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
@@ -49,23 +49,24 @@ module "ssh_config_manager_harbor" {
 }
 
 module "bootstrapper_ansible_cluster" {
-  source = "../../modules/83-bootstrapper-ansible-generic"
+  source = "../83-bootstrapper-ansible-generic"
 
   ansible_config = {
     root_path       = local.ansible_root_path
-    ssh_config_path = module.ssh_config_manager_harbor.ssh_config_file_path
+    ssh_config_path = module.ssh_config_manager_microk8s.ssh_config_file_path
     playbook_file   = "playbooks/30-provision-microk8s.yaml"
-    inventory_file  = "inventory-harbor-cluster.yaml"
+    inventory_file  = var.microk8s_cluster_config.inventory_file
   }
 
-  inventory_content = templatefile("${path.root}/../../templates/inventory-harbor-cluster.yaml.tftpl", {
-    harbor_nodes = [
-      for node in module.provisioner_kvm.all_nodes_map : node
-      if startswith(node.key, "harbor-node")
-    ],
-    ansible_ssh_user   = data.vault_generic_secret.iac_vars.data["vm_username"]
-    harbor_ingress_vip = var.harbor_cluster_config.ha_virtual_ip
-    redis_cluster_ips  = data.terraform_remote_state.redis_provision.outputs.redis_ip_list
+  inventory_content = templatefile("${path.root}/../../templates/inventory-microk8s-cluster.yaml.tftpl", {
+    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+    service_name     = var.microk8s_cluster_config.service_name
+
+    microk8s_nodes = local.all_nodes_map
+
+    microk8s_ingress_vip       = var.microk8s_cluster_config.ha_virtual_ip
+    microk8s_allowed_subnet    = var.libvirt_infrastructure.libvirt_allowed_subnet
+    microk8s_nat_subnet_prefix = local.microk8s_nat_network_subnet_prefix
   })
 
   vm_credentials = {
@@ -73,11 +74,7 @@ module "bootstrapper_ansible_cluster" {
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  extra_vars = {
-    "redis_requirepass" = data.vault_generic_secret.db_vars.data["redis_requirepass"]
-  }
-
-  status_trigger = module.ssh_config_manager_harbor.ssh_access_ready_trigger
+  status_trigger = module.ssh_config_manager_microk8s.ssh_access_ready_trigger
 }
 
 data "external" "fetched_kubeconfig" {
@@ -85,7 +82,7 @@ data "external" "fetched_kubeconfig" {
 
   program = ["/bin/bash", "-c", <<-EOT
     set -e
-    KUBECONFIG_PATH="${local.ansible_root_path}/fetched/kubeconfig-harbor"
+    KUBECONFIG_PATH="${local.ansible_root_path}/fetched/${var.microk8s_cluster_config.service_name}/kubeconfig"
     if [ ! -f "$KUBECONFIG_PATH" ]; then
       echo '{}'
       exit 0
