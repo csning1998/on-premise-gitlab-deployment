@@ -135,11 +135,13 @@ select opt in "${options[@]}"; do
       strategy_switch_handler
       ;;
     "Purge All Libvirt Resources")
+      if ! manual_confirmation_prompter "Libvirt resources (VMs, Networks, Storage Pools)"; then break; fi
       libvirt_service_manager
       libvirt_resource_purger "all"
       break
       ;;
     "Purge All Packer and Terraform Resources")
+      if ! manual_confirmation_prompter "Packer images and Terraform states"; then break; fi
       echo "# Executing Reset All workflow..."
       packer_artifact_cleaner "all"
       terraform_artifact_cleaner "all"
@@ -179,27 +181,6 @@ select opt in "${options[@]}"; do
       echo "# Exiting script."
       break
       ;;
-    # "Rebuild Terraform Layer 10: KVM Provision Only")
-    #   echo "# Executing Rebuild Terraform workflow for KVM Provisioner only..."
-    #   if ! ssh_key_verifier; then break; fi
-    #   libvirt_resource_purger
-    #   libvirt_service_manager
-    #   destroy_terraform_layer "10-provision-kubeadm"
-    #   terraform_artifact_cleaner "10-provision-kubeadm"
-    #   terraform_layer_executor "10-provision-kubeadm" "module.provisioner_kvm"
-    #   execution_time_reporter
-    #   echo "# Rebuild Terraform KVM Provisioner workflow completed."
-    #   break
-    #   ;;
-    # "Rebuild Terraform Layer 10: Ansible Bootstrapper Only")
-    #   echo "# Executing Rebuild Terraform workflow for Ansible Bootstrapper only..."
-    #   if ! ssh_key_verifier; then break; fi
-    #   libvirt_service_manager
-    #   bootstrap_kubernetes_cluster
-    #   execution_time_reporter
-    #   echo "# Rebuild Terraform Ansible Bootstrapper workflow completed."
-    #   break
-    #   ;;
     *) echo "# Invalid option $REPLY";;
   esac
 done

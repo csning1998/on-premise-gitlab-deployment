@@ -137,3 +137,22 @@ execution_time_reporter() {
   echo ">>> Execution time: ${MINUTES}m ${SECONDS}s"
   echo "--------------------------------------------------"
 }
+
+# Function: Prompts for strict manual confirmation before destructive actions
+manual_confirmation_prompter() {
+  local target_desc="${1:-resources}"
+
+  echo
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  echo "WARNING: You are about to DESTROY ALL ${target_desc}."
+  echo "This action is IRREVERSIBLE and will wipe the selected environment data."
+  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+  
+	read -r -p "Type 'Y' or 'y' to confirm execution: " confirmation
+  
+	if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
+    echo ">>> Operation aborted by user."
+    return 1
+  fi
+  return 0
+}

@@ -83,8 +83,9 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     #### Checking status of libvirt service...
     --> libvirt service is already running.
 
-    1) 01-base-docker     3) 03-base-microk8s   5) 05-base-redis      7) 07-base-vault
-    2) 02-base-kubeadm    4) 04-base-postgres   6) 06-base-minio      8) Back to Main Menu
+    1) Build ALL Packer Images  3) 02-base-kubeadm     5) 04-base-postgres    7) 06-base-minio       9) Back to Main Menu
+    2) 01-base-docker           4) 03-base-microk8s    6) 05-base-redis       8) 07-base-vault
+
     >>> Please select an action:
     ```
 
@@ -108,9 +109,9 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     # Executing [DEV] Rebuild via direct Ansible command...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
-    1) inventory-harbor-cluster.yaml    4) inventory-postgres-cluster.yaml  7) Back to Main Menu
-    2) inventory-kubeadm-cluster.yaml   5) inventory-redis-cluster.yaml
-    3) inventory-minio-cluster.yaml     6) inventory-vault-cluster.yaml
+    1) inventory-kubeadm-gitlab.yaml   4) inventory-minio-harbor.yaml     7) inventory-redis-gitlab.yaml
+    2) inventory-microk8s-harbor.yaml  5) inventory-postgres-gitlab.yaml  8) inventory-vault-cluster.yaml
+    3) inventory-minio-gitlab.yaml     6) inventory-postgres-harbor.yaml  9) Back to Main Menu
     >>> Select a Cluster Inventory to run its Playbook:
     ```
 
@@ -408,9 +409,9 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **Note 2:**
 
-        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `node_config` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
+        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `ansible_runner.vm_credentials` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
 
-5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use option `7` in `entry.sh` to unseal the Vault database; Alternatively, you may use container as described in B.1-2.
+5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use option `7` in `entry.sh` to unseal the Vault database; Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
 
 #### **Step B.2. Create Variable File for Terraform:**
 
