@@ -1,6 +1,6 @@
 data "terraform_remote_state" "cluster_provision" {
   backend = "local"
   config = {
-    path = "../10-provision-kubeadm/terraform.tfstate"
+    path = "../50-provision-kubeadm-gitlab/terraform.tfstate"
   }
 }

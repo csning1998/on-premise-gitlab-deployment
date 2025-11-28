@@ -1,23 +1,28 @@
 ---
 all:
   vars:
-    kubeadm_master_ips: ${jsonencode(extra_vars.kubeadm_master_ips)}  # List of Master nodes for process 81 and 12 in ansible/roles/ 
-    kubeadm_ha_virtual_ip: "${extra_vars.kubeadm_ha_virtual_ip}"  # The virtual IP address for the Kubernetes API server load balancer. 
-    kubeadm_pod_subnet: "${extra_vars.kubeadm_pod_subnet}"  # The CIDR block for the Kubernetes pod network.
-    k8s_nat_subnet_prefix: "${extra_vars.k8s_nat_subnet_prefix}"  # The first three octets of the NAT subnet.
-    ansible_ssh_user: "${ansible_ssh_user}"  # Username for SSH access to the VMs
-    registry_host: "${registry_host}"
+    ansible_user: "${ansible_ssh_user}"
+    service_identifier: "${service_name}"
+
+    kubeadm_master_nodes: ${jsonencode(kubeadm_master_nodes)}
+    kubeadm_worker_nodes: ${jsonencode(kubeadm_worker_nodes)}
+
+    kubeadm_master_ips: ${jsonencode(kubeadm_master_ips)}
+    kubeadm_ha_virtual_ip: "${kubeadm_ha_virtual_ip}"
+    kubeadm_pod_subnet: "${kubeadm_pod_subnet}"
+    kubeadm_nat_subnet_prefix: "${kubeadm_nat_subnet_prefix}"
+    kubeadm_registry_host: "${kubeadm_registry_host}"
 
   children:
     master:
       hosts:
-%{ for node in master_nodes ~}
-        ${node.key}:
-          kubeadm_advertise_ip: ${node.ip}
+%{ for key in keys(kubeadm_master_nodes) ~}
+        ${key}:
+          kubeadm_advertise_ip: ${kubeadm_master_nodes[key].ip}
 %{ endfor ~}
     workers:
       hosts:
-%{ for node in worker_nodes ~}
-        ${node.key}:
-          kubeadm_advertise_ip: ${node.ip}
+%{ for key in keys(kubeadm_worker_nodes) ~}
+        ${key}:
+          kubeadm_advertise_ip: ${kubeadm_worker_nodes[key].ip}
 %{ endfor ~}
