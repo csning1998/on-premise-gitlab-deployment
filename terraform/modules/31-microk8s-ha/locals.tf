@@ -1,12 +1,28 @@
 
 locals {
+  # Identity variables
+  svc  = var.topology_config.cluster_identity.service_name
+  comp = var.topology_config.cluster_identity.component
 
-  all_nodes_map = { for idx, config in var.microk8s_cluster_config.nodes.microk8s :
-    "${var.microk8s_cluster_config.service_name}-microk8s-node-${format("%02d", idx)}" => config
-  }
-  # e.g. harbor-microk8s-node-00, gitlab-microk8s-node-00
+  # Auto derive infrastructure names
+  storage_pool_name = "iac-${local.svc}-${local.comp}"
 
+  # Network Names
+  nat_net_name      = "iac-${local.svc}-${local.comp}-nat"
+  hostonly_net_name = "iac-${local.svc}-${local.comp}-hostonly"
+
+  # Bridge Names (limit length < 15 chars)
+  svc_abbr             = substr(local.svc, 0, 3)
+  comp_abbr            = substr(local.comp, 0, 3)
+  nat_bridge_name      = "${local.svc_abbr}-${local.comp_abbr}-natbr"
+  hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
+
+  # Convert standard structure to Module 81 vm_config
+  all_nodes_map = var.topology_config.nodes
+
+  # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
-  microk8s_nat_network_subnet_prefix = join(".", slice(split(".", var.libvirt_infrastructure.network.nat.ips.address), 0, 3))
+  # Gateway IP prefix extraction
+  nat_network_subnet_prefix = join(".", slice(split(".", var.infra_config.network.nat.gateway), 0, 3))
 }

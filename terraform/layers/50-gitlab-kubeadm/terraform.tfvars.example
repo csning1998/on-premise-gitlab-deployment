@@ -1,51 +1,49 @@
-# Defines the hardware and IP addresses for each virtual machine in the cluster.
-kubeadm_cluster_config = {
-  cluster_name = "10-kubeadm-cluster"
-  nodes = {
-    masters = [
-      { ip = "172.16.134.200", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.201", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.202", vcpu = 4, ram = 4096 },
-    ]
-    workers = [
-      { ip = "172.16.134.210", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.211", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.212", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.213", vcpu = 4, ram = 4096 },
-      # { ip = "172.16.134.214", vcpu = 4, ram = 4096 },
 
-    ]
+gitlab_kubeadm_compute = {
+  cluster_identity = {
+    service_name = "gitlab"
+    component    = "kubeadm"
+    cluster_name = "50-gitlab-kubeadm"
   }
-  ha_virtual_ip = "172.16.134.250"
-  registry_host = "172.16.135.200:5000"
+
+  masters = {
+    "gitlab-kubeadm-master-00" = { ip = "172.16.134.200", vcpu = 4, ram = 4096 }
+    "gitlab-kubeadm-master-01" = { ip = "172.16.134.201", vcpu = 4, ram = 4096 }
+    "gitlab-kubeadm-master-02" = { ip = "172.16.134.202", vcpu = 4, ram = 4096 }
+  }
+
+  workers = {
+    "gitlab-kubeadm-worker-00" = { ip = "172.16.134.210", vcpu = 4, ram = 4096 }
+    "gitlab-kubeadm-worker-01" = { ip = "172.16.134.211", vcpu = 4, ram = 4096 }
+    "gitlab-kubeadm-worker-02" = { ip = "172.16.134.212", vcpu = 4, ram = 4096 }
+  }
+
+  ha_config = {
+    virtual_ip    = "172.16.134.250"
+    haproxy_nodes = {} # Use external Keepalived by Defaults
+  }
+
+  pod_subnet    = "10.244.0.0/16"
+  registry_host = "172.16.135.200:5000" # Harbor Registry Endpoint
+
+  base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
+  inventory_file  = "inventory-kubeadm-gitlab.yaml"
 }
 
-kubeadm_infrastructure = {
+gitlab_kubeadm_infra = {
   network = {
     nat = {
-      name_network = "iac-kubeadm-nat-net"
-      name_bridge  = "kubeadm-nat-br"
-
-      ips = {
-        address = "172.16.86.1"
-        prefix  = 24
-        dhcp = {
-          start = "172.16.86.2"
-          end   = "172.16.86.254"
-        }
+      gateway = "172.16.86.1"
+      cidrv4  = "172.16.86.0/24"
+      dhcp = {
+        start = "172.16.86.2"
+        end   = "172.16.86.254"
       }
     }
-
     hostonly = {
-      name_network = "iac-kubeadm-hostonly-net"
-      name_bridge  = "kubeadm-host-br"
-
-      ips = {
-        address = "172.16.134.1"
-        prefix  = 24
-        dhcp    = null # dhcp is not used in hostonly network.
-      }
+      gateway = "172.16.134.1"
+      cidrv4  = "172.16.134.0/24"
     }
   }
-  storage_pool_name = "iac-kubeadm"
+  allowed_subnet = "172.16.134.0/24"
 }

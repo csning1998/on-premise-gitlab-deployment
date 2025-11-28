@@ -1,55 +1,50 @@
-# MicroK8s Cluster Topology & Configuration
 
-variable "harbor_cluster_config" {
-  description = "Define the registry server including virtual hardware resources."
+variable "harbor_microk8s_compute" {
+  description = "Compute topology for Harbor MicroK8s service"
   type = object({
-    cluster_name = string
-    nodes = object({
-      microk8s = list(object({
+    cluster_identity = object({
+      service_name = string
+      component    = string
+      cluster_name = string
+    })
+
+    nodes = map(object({
+      ip   = string
+      vcpu = number
+      ram  = number
+    }))
+
+    ha_config = object({
+      virtual_ip = string
+      # If not using MetalLB or built-in HA, then the HAProxy node is not mandatory
+      haproxy_nodes = optional(map(object({
         ip   = string
         vcpu = number
         ram  = number
-      }))
+      })), {})
     })
-    base_image_path = optional(string, "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2")
-    ha_virtual_ip   = optional(string, "172.16.135.250")
-    inventory_file  = optional(string, "inventory-microk8s-harbor.yaml")
-    service_name    = optional(string, "harbor")
+    base_image_path = string
+    inventory_file  = string
   })
 }
 
-# MicroK8s Cluster Infrastructure Network Configuration
-
-variable "harbor_infrastructure" {
-  description = "All Libvirt-level infrastructure configurations for the MicroK8s Cluster."
+variable "harbor_microk8s_infra" {
+  description = "Infrastructure config for Harbor MicroK8s service"
   type = object({
     network = object({
       nat = object({
-        name_network = string
-        name_bridge  = string
-        ips = object({
-          address = string
-          prefix  = number
-          dhcp = optional(object({
-            start = string
-            end   = string
-          }))
-        })
+        gateway = string
+        cidrv4  = string
+        dhcp = optional(object({
+          start = string
+          end   = string
+        }))
       })
       hostonly = object({
-        name_network = string
-        name_bridge  = string
-        ips = object({
-          address = string
-          prefix  = number
-          dhcp = optional(object({
-            start = string
-            end   = string
-          }))
-        })
+        gateway = string
+        cidrv4  = string
       })
     })
-    allowed_subnet    = optional(string, "172.16.135.0/24")
-    storage_pool_name = optional(string, "iac-microk8s-harbor")
+    allowed_subnet = string
   })
 }

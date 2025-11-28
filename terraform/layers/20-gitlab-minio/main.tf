@@ -1,7 +1,7 @@
 
 module "minio_gitlab" {
-  source = "../../modules/27-composition-minio-ha"
+  source = "../../modules/27-minio-ha"
 
-  minio_cluster_config = var.minio_cluster_config
-  minio_infrastructure = var.minio_infrastructure
+  topology_config = var.gitlab_minio_compute
+  infra_config    = var.gitlab_minio_infra
 }

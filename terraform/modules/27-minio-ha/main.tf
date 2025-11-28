@@ -1,12 +1,10 @@
 module "provisioner_kvm" {
-  source = "../81-provisioner-kvm-minio"
-
-  # --- Map Layer's specific variables to the Module's generic inputs ---
+  source = "../81-kvm-vm-minio"
 
   # VM Configuration
   vm_config = {
     all_nodes_map   = local.all_nodes_map
-    base_image_path = var.minio_cluster_config.base_image_path
+    base_image_path = var.topology_config.base_image_path
   }
 
   # VM Credentials from Vault
@@ -20,27 +18,36 @@ module "provisioner_kvm" {
   libvirt_infrastructure = {
     network = {
       nat = {
-        name_network = var.minio_infrastructure.network.nat.name_network
-        name_bridge  = var.minio_infrastructure.network.nat.name_bridge
+        name_network = local.nat_net_name
+        name_bridge  = local.nat_bridge_name
         mode         = "nat"
-        ips          = var.minio_infrastructure.network.nat.ips
+        ips = {
+          address = var.infra_config.network.nat.gateway
+          prefix  = tonumber(split("/", var.infra_config.network.nat.cidrv4)[1])
+          dhcp    = var.infra_config.network.nat.dhcp
+        }
       }
       hostonly = {
-        name_network = var.minio_infrastructure.network.hostonly.name_network
-        name_bridge  = var.minio_infrastructure.network.hostonly.name_bridge
+        name_network = local.hostonly_net_name
+        name_bridge  = local.hostonly_bridge_name
         mode         = "route"
-        ips          = var.minio_infrastructure.network.hostonly.ips
+        ips = {
+          address = var.infra_config.network.hostonly.gateway
+          prefix  = tonumber(split("/", var.infra_config.network.hostonly.cidrv4)[1])
+          dhcp    = null
+        }
       }
     }
-    storage_pool_name = var.minio_infrastructure.storage_pool_name
+    storage_pool_name = local.storage_pool_name
   }
 }
 
-module "ssh_config_manager_minio" {
-  source = "../82-ssh-config-manager"
+module "ssh_manager" {
+  source = "../82-ssh-manager"
 
-  config_name = var.minio_cluster_config.cluster_name
-  nodes       = module.provisioner_kvm.all_nodes_map
+  config_name = var.topology_config.cluster_identity.cluster_name
+  nodes       = [for k, v in local.all_nodes_map : { key = k, ip = v.ip }]
+
   vm_credentials = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
@@ -48,26 +55,26 @@ module "ssh_config_manager_minio" {
   status_trigger = module.provisioner_kvm.vm_status_trigger
 }
 
-module "bootstrapper_ansible_cluster" {
-  source = "../83-bootstrapper-ansible-generic"
+module "ansible_runner" {
+  source = "../83-ansible-runner"
 
   ansible_config = {
     root_path       = local.ansible_root_path
-    ssh_config_path = module.ssh_config_manager_minio.ssh_config_file_path
+    ssh_config_path = module.ssh_manager.ssh_config_file_path
     playbook_file   = "playbooks/20-provision-data-services.yaml"
-    inventory_file  = var.minio_cluster_config.inventory_file
+    inventory_file  = var.topology_config.inventory_file
   }
 
   inventory_content = templatefile("${path.module}/../../templates/inventory-minio-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
-    service_name     = var.minio_cluster_config.service_name
+    service_name     = var.topology_config.cluster_identity.service_name
 
-    minio_nodes   = local.minio_nodes_map
-    haproxy_nodes = local.haproxy_nodes_map
+    minio_nodes   = var.topology_config.nodes
+    haproxy_nodes = var.topology_config.ha_config.haproxy_nodes
 
-    minio_ha_virtual_ip     = var.minio_cluster_config.ha_virtual_ip
-    minio_allowed_subnet    = var.minio_infrastructure.minio_allowed_subnet
-    minio_nat_subnet_prefix = local.minio_nat_network_subnet_prefix
+    minio_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    minio_allowed_subnet    = var.infra_config.allowed_subnet
+    minio_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 
   vm_credentials = {
@@ -80,5 +87,5 @@ module "bootstrapper_ansible_cluster" {
     "minio_vrrp_secret"   = data.vault_generic_secret.db_vars.data["minio_vrrp_secret"]
   }
 
-  status_trigger = module.ssh_config_manager_minio.ssh_access_ready_trigger
+  status_trigger = module.ssh_manager.ssh_access_ready_trigger
 }

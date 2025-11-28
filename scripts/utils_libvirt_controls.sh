@@ -4,43 +4,45 @@
 
 # Resources Mapping
 declare -A DOMAIN_MAP=(
-	["10-provision-vault"]="vault-"
+	["10-vault-core"]="vault-"
 
-  ["20-provision-postgres-gitlab"]="gitlab-postgres-"
-  ["20-provision-redis-gitlab"]="gitlab-redis-"
-  ["20-provision-minio-gitlab"]="gitlab-minio-"
-  ["50-provision-kubeadm-gitlab"]="gitlab-kubeadm-"
+	["20-gitlab-postgres"]="gitlab-postgres-"
+	["20-gitlab-redis"]="gitlab-redis-"
+	["20-gitlab-minio"]="gitlab-minio-"
+	["50-gitlab-kubeadm"]="gitlab-kubeadm-"
 
-  ["20-provision-postgres-harbor"]="harbor-postgres-"
-  ["20-provision-redis-harbor"]="harbor-redis-"
-  ["20-provision-minio-harbor"]="harbor-minio-"
-  ["30-provision-microk8s-harbor"]="harbor-microk8s-"
+	["20-harbor-postgres"]="harbor-postgres-"
+	["20-harbor-redis"]="harbor-redis-"
+	["20-harbor-minio"]="harbor-minio-"
+	["30-harbor-microk8s"]="harbor-microk8s-"
 )
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-  ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
-  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
-  ["20-provision-redis-harbor"]="iac-redis-harbor"
-  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
-  ["20-provision-minio-harbor"]="iac-minio-harbor"
-  ["30-provision-microk8s-harbor"]="iac-microk8s-harbor"
-  ["50-provision-kubeadm-gitlab"]="iac-kubeadm-gitlab"
+	["10-vault-core"]="iac-vault-core"
+	["20-gitlab-postgres"]="iac-gitlab-postgres"
+	["20-gitlab-redis"]="iac-gitlab-redis"
+	["20-gitlab-minio"]="iac-gitlab-minio"
+	["50-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+
+	["20-harbor-postgres"]="iac-harbor-postgres"
+	["20-harbor-redis"]="iac-harbor-redis"
+	["20-harbor-minio"]="iac-harbor-minio"
+	["30-harbor-microk8s"]="iac-harbor-microk8s"
 )
 
 # Network prefixes.
 declare -A NET_MAP=(
-  ["10-provision-vault"]="iac-vault"
-  ["20-provision-postgres-gitlab"]="iac-postgres-gitlab"
-  ["20-provision-postgres-harbor"]="iac-postgres-harbor"
-  ["20-provision-redis-gitlab"]="iac-redis-gitlab"
-  ["20-provision-redis-harbor"]="iac-redis-harbor"
-  ["20-provision-minio-gitlab"]="iac-minio-gitlab"
-  ["20-provision-minio-harbor"]="iac-minio-harbor"
-  ["30-provision-microk8s-harbor"]="iac-microk8s-harbor"
-  ["50-provision-kubeadm-gitlab"]="iac-kubeadm-gitlab"
+	["10-vault-core"]="iac-vault-core"
+	["20-gitlab-postgres"]="iac-gitlab-postgres"
+	["20-gitlab-redis"]="iac-gitlab-redis"
+	["20-gitlab-minio"]="iac-gitlab-minio"
+	["50-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+
+	["20-harbor-postgres"]="iac-harbor-postgres"
+	["20-harbor-redis"]="iac-harbor-redis"
+	["20-harbor-minio"]="iac-harbor-minio"
+	["30-harbor-microk8s"]="iac-harbor-microk8s"
 )
 
 # Function: Ensure libvirt service is running before executing a command.

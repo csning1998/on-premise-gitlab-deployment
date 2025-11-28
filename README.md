@@ -64,8 +64,8 @@ Vault Server Status: Running (Unsealed)
 1) [ONCE-ONLY] Set up CA Certs for TLS              9) Purge All Libvirt Resources
 2) [ONCE-ONLY] Initialize Vault                    10) Purge All Packer and Terraform Resources
 3) [ONCE-ONLY] Generate SSH Key                    11) Build Packer Base Image
-4) [ONCE-ONLY] Setup KVM / QEMU for Native         12) Provision Terraform Layer 10
-5) [ONCE-ONLY] Setup Core IaC Tools for Native     13) [DEV] Rebuild Layer 10 via Ansible Command
+4) [ONCE-ONLY] Setup KVM / QEMU for Native         12) Provision Terraform Layer
+5) [ONCE-ONLY] Setup Core IaC Tools for Native     13) [DEV] Rebuild Layer via Ansible Command
 6) [ONCE-ONLY] Verify IaC Environment for Native   14) Verify SSH
 7) Unseal Vault                                    15) Quit
 8) Switch Environment Strategy
@@ -88,20 +88,20 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     >>> Please select an action:
     ```
 
-2. If you select `12) Provision Terraform Layer 10`
+2. If you select `12) Provision Terraform Layer`
 
     ```text
     >>> Please select an action: 12
     # Entering Terraform layer management menu...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
-    1) 10-provision-harbor          4) 10-provision-postgres        7) 50-provision-kubeadm-addons
-    2) 10-provision-kubeadm         5) 10-provision-redis           8) Back to Main Menu
-    3) 10-provision-minio           6) 10-provision-vault
+    1) 10-vault-core          4) 20-gitlab-redis       7) 20-harbor-redis      10) 50-gitlab-kubeadm
+    2) 20-gitlab-minio        5) 20-harbor-minio       8) 30-harbor-microk8s   11) 60-gitlab-platform
+    3) 20-gitlab-postgres     6) 20-harbor-postgres    9) 40-provision-harbor  12) Back to Main Menu
     >>> Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `13) [DEV] Rebuild Layer 10 via Ansible Command`
+3. If you select `13) [DEV] Rebuild Layer via Ansible Command`
 
     ```text
     >>> Please select an action: 13
@@ -375,9 +375,12 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             secret/on-premise-gitlab-deployment/databases \
             pg_superuser_password="a-more-secure-pwd-for-superuser" \
             pg_replication_password="a-more-secure-pwd-for-replication" \
+            pg_vrrp_secret="a-more-secure-pwd-for-vrrpsecret" \
             redis_requirepass="a-more-secure-pwd-for-requirepass" \
             redis_masterauth="a-more-secure-pwd-for-masterauth" \
-            minio_root_password="a-more-secure-pwd-for-rootpassword"
+            redis_vrrp_secret="a-more-secure-pwd-for-vrrpsecret" \
+            minio_root_password="a-more-secure-pwd-for-rootpassword" \
+            minio_vrrp_secret="a-more-secure-pwd-for-vrrpsecret"
         ```
 
     - **For Infrastructure Variables in this Project**
@@ -419,7 +422,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     Then, you can modify the `terraform.tfvars` file based on your requirements. HA and non-HA are both supported.
 
-2. For users setting up an (HA) Cluster, the number of elements in `kubeadm_cluster_config.nodes.masters` and `kubeadm_cluster_config.nodes.workers` determines the number of nodes generated. Ensure the quantity of nodes in `kubeadm_cluster_config.nodes.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `kubeadm_cluster_config.nodes.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
+2. For users setting up an HA Cluster (GitLab as example), the number of elements in `gitlab_kubeadm_compute.masters` and `gitlab_kubeadm_compute.workers` determines the number of nodes generated. Ensure the quantity of nodes in `gitlab_kubeadm_compute.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `gitlab_kubeadm_compute.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
     - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
     - The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
@@ -429,11 +432,11 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     Deploying other Linux distro would be supported if I have time. I'm still a full-time university student.
 
-3. **[Example] To deploy a complete HA Kubernetes cluster from scratch**:
+3. **[Example] To deploy a complete GitLab HA Cluster from scratch**:
 
     - **First Step**: Enter the main menu `11) Build Packer Base Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
-    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Provision Terraform Layer 10`, then select `10-provision-kubeadm` to deploy the entire Kubernetes cluster.
+    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Provision Terraform Layer`, then select `50-gitlab-kubeadm` to deploy the entire GitLab cluster (Now only kubeadm is implemented).
 
         Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
@@ -443,9 +446,9 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - To test Packer image building independently, use `11) Build Packer Base Image`.
 
-    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Provision Terraform Layer 10`.
+    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Provision Terraform Layer`.
 
-    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Rebuild Layer 10 via Ansible Command`.
+    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Rebuild Layer via Ansible Command`.
 
 5. **Resource Cleanup**:
 

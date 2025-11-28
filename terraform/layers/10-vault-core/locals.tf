@@ -1,19 +1,31 @@
 
 locals {
+  # Identity variables
+  svc  = var.vault_compute.cluster_identity.service_name
+  comp = var.vault_compute.cluster_identity.component
 
-  vault_nodes_map = { for idx, config in var.vault_cluster_config.nodes.vault :
-    "vault-node-${format("%02d", idx)}" => config
-  }
+  # Auto derive infrastructure names
+  storage_pool_name = "iac-${local.svc}-${local.comp}"
+  # Network Names
+  nat_net_name      = "iac-${local.svc}-${local.comp}-nat"
+  hostonly_net_name = "iac-${local.svc}-${local.comp}-hostonly"
 
-  haproxy_node = { for idx, config in var.vault_cluster_config.nodes.haproxy :
-    "vault-haproxy-node-${format("%02d", idx)}" => config
-  }
+  svc_abbr  = substr(local.svc, 0, 4)  # "vault" (5 chars) -> "vaul"
+  comp_abbr = substr(local.comp, 0, 3) # "core" (4 chars) -> "cor"
+
+  # Bridge Names (limit length < 15 chars)
+  nat_bridge_name      = "${local.svc_abbr}-${local.comp_abbr}-natbr"
+  hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
+
+  # Convert standard structure to Module 81 vm_config
   all_nodes_map = merge(
-    local.vault_nodes_map,
-    local.haproxy_node
+    var.vault_compute.nodes,
+    var.vault_compute.ha_config.haproxy_nodes
   )
 
+  # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
-  vault_nat_network_subnet_prefix = join(".", slice(split(".", var.vault_infrastructure.network.nat.ips.address), 0, 3))
+  # Gateway IP prefix extraction
+  nat_network_subnet_prefix = join(".", slice(split(".", var.vault_infra.network.nat.gateway), 0, 3))
 }

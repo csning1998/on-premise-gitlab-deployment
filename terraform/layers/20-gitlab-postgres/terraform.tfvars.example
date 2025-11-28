@@ -1,51 +1,50 @@
-# Defines the hardware and IP addresses for each virtual machine in the cluster.
-postgres_cluster_config = {
-  cluster_name = "20-provision-postgres-gitlab"
-  nodes = {
-    postgres = [
-      { ip = "172.16.140.200", vcpu = 4, ram = 4096 },
-      { ip = "172.16.140.201", vcpu = 4, ram = 4096 },
-      { ip = "172.16.140.202", vcpu = 4, ram = 4096 },
-    ],
-    etcd = [
-      { ip = "172.16.140.210", vcpu = 2, ram = 2048 },
-      { ip = "172.16.140.211", vcpu = 2, ram = 2048 },
-      { ip = "172.16.140.212", vcpu = 2, ram = 2048 }
-    ],
-    haproxy = [
-      { ip = "172.16.140.220", vcpu = 2, ram = 2048 }
-    ]
+gitlab_postgres_compute = {
+  cluster_identity = {
+    service_name = "gitlab"
+    component    = "postgres"
+    cluster_name = "20-gitlab-postgres"
   }
-  postgres_ha_virtual_ip = "172.16.140.250"
+
+  # Postgres Data Nodes
+  nodes = {
+    "gitlab-postgres-db-node-00" = { ip = "172.16.140.200", vcpu = 4, ram = 4096 }
+    "gitlab-postgres-db-node-01" = { ip = "172.16.140.201", vcpu = 4, ram = 4096 }
+    "gitlab-postgres-db-node-02" = { ip = "172.16.140.202", vcpu = 4, ram = 4096 }
+  }
+
+  # Etcd Nodes (Odd number required)
+  etcd_nodes = {
+    "gitlab-postgres-etcd-node-00" = { ip = "172.16.140.210", vcpu = 2, ram = 2048 }
+    "gitlab-postgres-etcd-node-01" = { ip = "172.16.140.211", vcpu = 2, ram = 2048 }
+    "gitlab-postgres-etcd-node-02" = { ip = "172.16.140.212", vcpu = 2, ram = 2048 }
+  }
+
+  # HAProxy Node
+  ha_config = {
+    virtual_ip = "172.16.140.250"
+    haproxy_nodes = {
+      "gitlab-postgres-haproxy-node-00" = { ip = "172.16.140.220", vcpu = 2, ram = 2048 }
+    }
+  }
+
+  base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
+  inventory_file  = "inventory-postgres-gitlab.yaml"
 }
 
-postgres_infrastructure = {
+gitlab_postgres_infra = {
   network = {
     nat = {
-      name_network = "iac-postgres-gitlab-nat"
-      name_bridge  = "pg-gitlab-natbr"
-
-      ips = {
-        address = "172.16.92.1"
-        prefix  = 24
-        dhcp = {
-          start = "172.16.92.2"
-          end   = "172.16.92.254"
-        }
+      gateway = "172.16.92.1"
+      cidrv4  = "172.16.92.0/24"
+      dhcp = {
+        start = "172.16.92.2"
+        end   = "172.16.92.254"
       }
     }
-
     hostonly = {
-      name_network = "iac-postgres-gitlab-hostonly"
-      name_bridge  = "pg-gitlab-hosbr"
-
-      ips = {
-        address = "172.16.140.1"
-        prefix  = 24
-        dhcp    = null
-      }
+      gateway = "172.16.140.1"
+      cidrv4  = "172.16.140.0/24"
     }
   }
-  postgres_allowed_subnet = "172.16.140.0/24"
-  storage_pool_name       = "iac-postgres-gitlab"
+  allowed_subnet = "172.16.140.0/24"
 }
