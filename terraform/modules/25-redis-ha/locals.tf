@@ -1,10 +1,10 @@
 
 locals {
-  # 1. identity variables
+  # Identity variables
   svc  = var.topology_config.cluster_identity.service_name
   comp = var.topology_config.cluster_identity.component
 
-  # 2. Auto derive infrastructure names
+  # Auto derive infrastructure names
   storage_pool_name = "iac-${local.svc}-${local.comp}"
 
   # Network Names
