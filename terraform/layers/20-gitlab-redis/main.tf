@@ -1,7 +1,7 @@
 
 module "redis_gitlab" {
-  source = "../../modules/25-composition-redis-ha"
+  source = "../../modules/25-redis-ha"
 
-  redis_cluster_config = var.redis_cluster_config
-  redis_infrastructure = var.redis_infrastructure
+  topology_config = var.gitlab_redis_compute
+  infra_config    = var.gitlab_redis_infra
 }

@@ -22,7 +22,7 @@
     - name: "E3. Save Keys to Local"
       ansible.builtin.copy:
         content: "{{ init_result.stdout }}"
-        dest: "{{ playbook_dir }}/../fetched/vault_init_output.json"
+        dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/vault_init_output.json"
         mode: "0600"
       delegate_to: localhost
       become: false

@@ -13,6 +13,10 @@ variable "vm_config" {
       ip   = string
       vcpu = number
       ram  = number
+      data_disks = optional(list(object({
+        name_suffix = string
+        capacity    = number
+      })), [])
     }))
     base_image_path = string
   })

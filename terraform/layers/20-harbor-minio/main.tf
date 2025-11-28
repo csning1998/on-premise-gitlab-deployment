@@ -1,7 +1,7 @@
 
 module "minio_harbor" {
-  source = "../../modules/27-composition-minio-ha"
+  source = "../../modules/27-minio-ha"
 
-  minio_cluster_config = var.minio_cluster_config
-  minio_infrastructure = var.minio_infrastructure
+  topology_config = var.harbor_minio_compute
+  infra_config    = var.harbor_minio_infra
 }

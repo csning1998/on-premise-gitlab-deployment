@@ -31,7 +31,7 @@
 
     - name: "F3. Read Unseal Key from Local Controller"
       ansible.builtin.set_fact:
-        vault_keys: "{{ lookup('file', playbook_dir + '/../fetched/vault_init_output.json') | from_json }}"
+        vault_keys: "{{ lookup('file', playbook_dir + '/../fetched/' + service_identifier + '/vault_init_output.json') | from_json }}"
       delegate_to: localhost
       become: false
       when:

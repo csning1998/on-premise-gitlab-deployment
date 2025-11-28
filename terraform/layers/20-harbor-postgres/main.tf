@@ -1,7 +1,7 @@
 
 module "postgres_harbor" {
-  source = "../../modules/21-composition-postgres-ha"
+  source = "../../modules/21-postgres-ha"
 
-  postgres_cluster_config = var.postgres_cluster_config
-  postgres_infrastructure = var.postgres_infrastructure
+  topology_config = var.harbor_postgres_compute
+  infra_config    = var.harbor_postgres_infra
 }

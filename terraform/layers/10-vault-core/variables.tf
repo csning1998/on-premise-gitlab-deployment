@@ -1,86 +1,97 @@
-# HashiCorp Vault Topology & Configuration
-
-variable "vault_cluster_config" {
-  description = "Define the Vault server including virtual hardware resources."
+variable "vault_compute" {
+  description = "Compute topology for Vault Core service"
   type = object({
-    cluster_name = string
-    nodes = object({
-      vault = list(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-      }))
-      haproxy = list(object({
+
+    cluster_identity = object({
+      service_name = string
+      component    = string
+      cluster_name = string
+    })
+
+    # Vault Server Nodes (Map)
+    nodes = map(object({
+      ip   = string
+      vcpu = number
+      ram  = number
+    }))
+    ha_config = object({
+      virtual_ip = string
+
+      # Vault uses HAProxy as entry point
+      haproxy_nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
     })
-    base_image_path = optional(string, "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2")
-    ha_virtual_ip   = optional(string, "172.16.139.250")
+    base_image_path = string
+    inventory_file  = string
   })
 
+  # Vault Raft Quorum
   validation {
-    condition     = length(var.vault_cluster_config.nodes.vault) % 2 != 0
-    error_message = "The number of Vault nodes must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
+    condition     = length(var.vault_compute.nodes) % 2 != 0
+    error_message = "Vault node count must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
   }
 
+  # Vault HA architecture requires at least one HAProxy node
   validation {
-    condition     = length(var.vault_cluster_config.nodes.haproxy) > 0
-    error_message = "At least one HAProxy node is required for Vault."
+    condition     = length(var.vault_compute.ha_config.haproxy_nodes) > 0
+    error_message = "Vault HA architecture requires at least one HAProxy node."
   }
 
+  # VIP format check
   validation {
-    condition     = alltrue([for node in var.vault_cluster_config.nodes.vault : node.vcpu >= 2 && node.ram >= 2048])
+    condition     = can(cidrnetmask("${var.vault_compute.ha_config.virtual_ip}/32"))
+    error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
+  }
+
+  # Vault node hardware specification (vCPU >= 2, RAM >= 2048)
+  validation {
+    condition = alltrue([
+      for k, node in var.vault_compute.nodes :
+      node.vcpu >= 2 && node.ram >= 2048
+    ])
     error_message = "Vault nodes require at least 2 vCPUs and 2048MB RAM."
   }
 
+  # HAProxy node hardware specification (vCPU >= 1, RAM >= 1024)
   validation {
-    condition     = alltrue([for node in var.vault_cluster_config.nodes.haproxy : node.vcpu >= 1 && node.ram >= 1024])
+    condition = alltrue([
+      for k, node in var.vault_compute.ha_config.haproxy_nodes :
+      node.vcpu >= 1 && node.ram >= 1024
+    ])
     error_message = "HAProxy nodes require at least 1 vCPU and 1024MB RAM."
-  }
-
-  validation {
-    condition = alltrue(flatten([
-      [for node in var.vault_cluster_config.nodes.vault : can(cidrnetmask("${node.ip}/32"))],
-      [for node in var.vault_cluster_config.nodes.haproxy : can(cidrnetmask("${node.ip}/32"))]
-    ]))
-    error_message = "All provided Vault and HAProxy IP addresses must be valid IPv4 addresses."
   }
 }
 
-# Vault Infrastructure Network Configuration
-
-variable "vault_infrastructure" {
-  description = "All Libvirt-level infrastructure configurations for the Vault Service."
+variable "vault_infra" {
+  description = "Infrastructure config for Vault Core service"
   type = object({
     network = object({
       nat = object({
-        name_network = string
-        name_bridge  = string
-        ips = object({
-          address = string
-          prefix  = number
-          dhcp = optional(object({
-            start = string
-            end   = string
-          }))
-        })
+        gateway = string
+        cidrv4  = string
+        dhcp = optional(object({
+          start = string
+          end   = string
+        }))
       })
       hostonly = object({
-        name_network = string
-        name_bridge  = string
-        ips = object({
-          address = string
-          prefix  = number
-          dhcp = optional(object({
-            start = string
-            end   = string
-          }))
-        })
+        gateway = string
+        cidrv4  = string
       })
     })
-    vault_allowed_subnet = optional(string, "172.16.139.0/24")
-    storage_pool_name    = optional(string, "iac-vault")
+    allowed_subnet = string
   })
+
+  # Network CIDR validation
+  validation {
+    condition = alltrue([
+      can(cidrnetmask(var.vault_infra.network.nat.cidrv4)),
+      can(cidrnetmask(var.vault_infra.network.hostonly.cidrv4)),
+      can(cidrnetmask(var.vault_infra.allowed_subnet))
+    ])
+    error_message = "All network CIDRs must be valid."
+  }
 }

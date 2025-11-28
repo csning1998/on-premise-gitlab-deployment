@@ -1,22 +1,36 @@
 
 locals {
+  # Identity variables
+  svc  = var.topology_config.cluster_identity.service_name
+  comp = var.topology_config.cluster_identity.component
 
-  minio_nodes_map = { for idx, config in var.minio_cluster_config.nodes.minio :
-    "${var.minio_cluster_config.service_name}-minio-db-node-${format("%02d", idx)}" => config
+  # Auto derive infrastructure names
+  storage_pool_name = "iac-${local.svc}-${local.comp}"
+  nat_net_name      = "iac-${local.svc}-${local.comp}-nat"
+  hostonly_net_name = "iac-${local.svc}-${local.comp}-hostonly"
+
+  # Bridge names (limit length < 15 chars)
+  svc_abbr             = substr(local.svc, 0, 3)
+  comp_abbr            = substr(local.comp, 0, 3)
+  nat_bridge_name      = "${local.svc_abbr}-${local.comp_abbr}-natbr"
+  hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
+
+  # MinIO nodes
+  minio_nodes = var.topology_config.nodes
+
+  # HAProxy nodes
+  haproxy_nodes_adapted = {
+    for k, v in var.topology_config.ha_config.haproxy_nodes : k => merge(v, {
+      data_disks = []
+    })
   }
-  # e.g. gitlab-minio-db-node-00, harbor-minio-db-node-00
 
-  haproxy_nodes_map = { for idx, config in var.minio_cluster_config.nodes.haproxy :
-    "${var.minio_cluster_config.service_name}-minio-haproxy-node-${format("%02d", idx)}" => config
-  }
-  # e.g. gitlab-minio-haproxy-node-00, harbor-minio-haproxy-node-00
+  # Convert standard structure to Module 81 vm_config
+  all_nodes_map = merge(local.minio_nodes, local.haproxy_nodes_adapted)
 
-  all_nodes_map = merge(
-    local.minio_nodes_map,
-    local.haproxy_nodes_map,
-  )
-
+  # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
-  minio_nat_network_subnet_prefix = join(".", slice(split(".", var.minio_infrastructure.network.nat.ips.address), 0, 3))
+  # Gateway IP prefix extraction
+  nat_network_subnet_prefix = join(".", slice(split(".", var.infra_config.network.nat.gateway), 0, 3))
 }
