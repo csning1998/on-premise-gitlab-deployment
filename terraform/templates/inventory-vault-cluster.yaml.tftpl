@@ -2,9 +2,13 @@
 all:
   vars:
     ansible_user: "${ansible_ssh_user}"
+    service_identifier: "${service_name}"
+    vault_cluster_name: "${service_name}-vault-cluster"
+
     vault_cluster_ips: ${jsonencode([for node in vault_nodes : node.ip])}
     vault_bootstrap_ip: "${vault_nodes[keys(vault_nodes)[0]].ip}"
     vault_ha_virtual_ip: "${vault_ha_virtual_ip}"
+
     vault_allowed_subnet: "${vault_allowed_subnet}"
     vault_nat_subnet_prefix: "${vault_nat_subnet_prefix}"
 
