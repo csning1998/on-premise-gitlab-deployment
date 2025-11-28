@@ -29,5 +29,5 @@
     - name: "Step B1. Fetch kubeconfig to controller"
       ansible.builtin.fetch:
         src: "/home/{{ ansible_ssh_user }}/.kube/config"
-        dest: "{{ playbook_dir }}/../fetched/kubeconfig-harbor"
+        dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/kubeconfig"
         flat: true
