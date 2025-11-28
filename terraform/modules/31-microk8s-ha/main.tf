@@ -71,6 +71,7 @@ module "ansible_runner" {
 
     microk8s_nodes = local.all_nodes_map
 
+    # Network information
     microk8s_ingress_vip       = var.topology_config.ha_config.virtual_ip
     microk8s_allowed_subnet    = var.infra_config.allowed_subnet
     microk8s_nat_subnet_prefix = local.nat_network_subnet_prefix

@@ -1,7 +1,7 @@
 
 module "kubeadm_gitlab" {
-  source = "../../modules/51-composition-kubeadm-ha"
+  source = "../../modules/51-kubeadm-ha"
 
-  kubeadm_cluster_config = var.gitlab_cluster_config
-  libvirt_infrastructure = var.gitlab_infrastructure
+  topology_config = var.gitlab_kubeadm_compute
+  infra_config    = var.gitlab_kubeadm_infra
 }
