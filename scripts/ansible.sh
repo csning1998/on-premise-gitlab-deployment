@@ -129,7 +129,8 @@ ansible_menu_handler() {
   
   local inventory_dir="${ANSIBLE_DIR}" 
 
-  for f in "${inventory_dir}/inventory-"*"-cluster.yaml"; do
+  # [Fix] Updated glob pattern to match new naming convention (e.g., inventory-redis-gitlab.yaml)
+  for f in "${inventory_dir}/inventory-"*.yaml; do
     if [ -e "$f" ]; then
       inventory_options+=("$(basename "$f")")
     fi
@@ -145,37 +146,42 @@ ansible_menu_handler() {
     
     elif [ -n "$inventory" ]; then
       
-      # Extract the target key from inventory filename (e.g., inventory-postgres-cluster.yaml -> postgres)
-      local tmp=${inventory#inventory-}
-      local target_key=${tmp%-cluster.yaml}
+      # Logic to parse 'inventory-<component>-<service>.yaml' by removing prefix and suffix
+      local filename_base=${inventory#inventory-}  # e.g. "redis-gitlab.yaml"
+      filename_base=${filename_base%.yaml}         # e.g. "redis-gitlab"
+
+      # Extract the component (first word before the hyphen)
+      local target_component=${filename_base%%-*}
       local playbook=""
 
-      case "$target_key" in
+      case "$target_component" in
         "vault")
           playbook="10-provision-vault.yaml"
           ;;
         "postgres"|"redis"|"minio")
           playbook="20-provision-data-services.yaml"
           ;;
-        "harbor")
+        "microk8s")
           playbook="30-provision-microk8s.yaml"
           ;;
         "kubeadm")
           playbook="50-provision-kubeadm.yaml"
           ;;
         *)
-          echo "WARN: Unknown inventory key '${target_key}'. Trying default pattern..."
-          playbook="10-provision-${target_key}.yaml"
+          echo "WARN: Unknown component '${target_component}' derived from '${inventory}'."
+          echo "      Mapping defaulted to '10-provision-${target_component}.yaml' (May fail)."
+          playbook="10-provision-${target_component}.yaml"
           ;;
       esac
       
       echo "==========================="
       echo "Selected Inventory: ${inventory}"
-      echo "Derived Playbook:   ${playbook}"
+      echo "Derived Component:  ${target_component}"
+      echo "Mapped Playbook:    ${playbook}"
       echo "==========================="
       
       if [ ! -f "${ANSIBLE_DIR}/playbooks/${playbook}" ]; then
-        echo "FATAL: Mapped playbook '${playbook}' does not exist."
+        echo "FATAL: Mapped playbook '${playbook}' does not exist at ${ANSIBLE_DIR}/playbooks/${playbook}"
         continue
       fi
 
