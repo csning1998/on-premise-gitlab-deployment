@@ -5,6 +5,13 @@ resource "kubernetes_namespace" "harbor" {
   }
 }
 
+module "ingress_controller" {
+  source = "../../modules/32-microk8s-ingress"
+
+  ingress_vip        = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip
+  ingress_class_name = "nginx"
+}
+
 module "harbor_db_init" {
   source = "../../modules/41-harbor-postgres-init"
 
@@ -30,7 +37,7 @@ module "harbor_db_init" {
 
 resource "helm_release" "harbor" {
 
-  depends_on = [module.harbor_db_init]
+  depends_on = [module.harbor_db_init, module.ingress_controller]
 
   name       = "harbor"
   repository = "https://helm.goharbor.io"
@@ -49,7 +56,7 @@ resource "helm_release" "harbor" {
           hosts = {
             core = var.harbor_hostname
           }
-          className = "public" # MicroK8s default Ingress Class, if Nginx Controller installed, change to "nginx"
+          className = "nginx"
         }
       }
 
