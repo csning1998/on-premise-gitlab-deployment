@@ -4,7 +4,7 @@
 ## ```shell
 ## ansible-playbook -i ansible/inventory-microk8s-harbor.yaml \
 ##     --private-key ~/.ssh/id_ed25519_on-premise-gitlab-deployment \
-##     --extra-vars "ansible_ssh_user=csning1998" \
+##     --extra-vars "ansible_ssh_user=<your-ssh-user>" \
 ##     ansible/playbooks/92-reset-microk8s.yaml
 ## ```
 ##
