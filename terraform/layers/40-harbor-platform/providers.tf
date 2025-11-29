@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/tls"
       version = "4.1.0"
     }
+    harbor = {
+      source  = "goharbor/harbor"
+      version = "3.11.3"
+    }
   }
 }
 
@@ -46,4 +50,11 @@ provider "helm" {
     client_certificate     = base64decode(local.user_info["client-certificate-data"])
     client_key             = base64decode(local.user_info["client-key-data"])
   }
+}
+
+provider "harbor" {
+  url      = "https://${var.harbor_hostname}"
+  username = "admin"
+  password = data.vault_generic_secret.harbor_vars.data["harbor_admin_password"]
+  insecure = true # Even though self-signed certificate is used.
 }
