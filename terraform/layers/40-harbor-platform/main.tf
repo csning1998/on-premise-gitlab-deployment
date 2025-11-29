@@ -5,7 +5,33 @@ resource "kubernetes_namespace" "harbor" {
   }
 }
 
+module "harbor_db_init" {
+  source = "../../modules/41-harbor-postgres-init"
+
+  pg_host = data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip
+  pg_port = data.terraform_remote_state.postgres.outputs.harbor_postgres_haproxy_rw_port
+
+  pg_superuser          = "postgres"
+  pg_superuser_password = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
+
+  databases = {
+    "registry" = {
+      owner = "harbor"
+    }
+  }
+
+  users = {
+    "harbor" = {
+      password = data.vault_generic_secret.harbor_vars.data["harbor_pg_db_password"]
+      roles    = []
+    }
+  }
+}
+
 resource "helm_release" "harbor" {
+
+  depends_on = [module.harbor_db_init]
+
   name       = "harbor"
   repository = "https://helm.goharbor.io"
   chart      = "harbor"
@@ -34,9 +60,9 @@ resource "helm_release" "harbor" {
         type = "external"
         external = {
           host               = data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip
-          port               = "5000"     # Point to HAProxy Read-Write Port
-          username           = "postgres" # Or use Vault superuser, usually suggest create a dedicated user
-          password           = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
+          port               = tostring(data.terraform_remote_state.postgres.outputs.harbor_postgres_haproxy_rw_port)
+          username           = "harbor"
+          password           = data.vault_generic_secret.harbor_vars.data["harbor_pg_db_password"]
           coreDatabase       = "registry"
           jobServiceDatabase = "registry" # Simplified configuration, share DB (Production environment suggest separate)
         }
