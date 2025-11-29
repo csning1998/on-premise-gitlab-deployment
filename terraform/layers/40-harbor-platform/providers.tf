@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.3.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "4.1.0"
+    }
   }
 }
 

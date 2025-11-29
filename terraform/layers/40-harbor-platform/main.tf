@@ -12,6 +12,16 @@ module "ingress_controller" {
   ingress_class_name = "nginx"
 }
 
+module "harbor_tls" {
+  source = "../../modules/42-harbor-tls"
+
+  cert_common_name = var.harbor_hostname
+  namespace        = kubernetes_namespace.harbor.metadata[0].name
+  secret_name      = "harbor-ingress-tls"
+
+  depends_on = [kubernetes_namespace.harbor]
+}
+
 module "harbor_db_init" {
   source = "../../modules/41-harbor-postgres-init"
 
@@ -37,7 +47,11 @@ module "harbor_db_init" {
 
 resource "helm_release" "harbor" {
 
-  depends_on = [module.harbor_db_init, module.ingress_controller]
+  depends_on = [
+    module.harbor_db_init,
+    module.ingress_controller,
+    module.harbor_tls
+  ]
 
   name       = "harbor"
   repository = "https://helm.goharbor.io"
@@ -51,7 +65,10 @@ resource "helm_release" "harbor" {
     yamlencode({
       expose = {
         type = "ingress"
-        tls  = { enabled = false } # Should be TLS
+        tls = {
+          enabled    = true
+          secretName = module.harbor_tls.secret_name
+        }
         ingress = {
           hosts = {
             core = var.harbor_hostname

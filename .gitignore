@@ -31,8 +31,15 @@ unseal.key
 vault/data/*
 !vault/data/README.md
 vault/keys/
-vault/tls/
+**/tls
 
+# Ignore All TLS files
+**/*.tls
+**/*.pem
+**/*.srl
+**/*.key
+**/*.crt
+**/*.der
 
 ## Golang
 /iac-tool
