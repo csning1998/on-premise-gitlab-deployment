@@ -24,9 +24,33 @@
       # Ignore errors if the service doesn't exist (it might be postgresql@.service)
       ignore_errors: true
 
-- name: "Section C: Configure Patroni Service"
+- name: "Section C: Configure TLS Certificates"
+  become: true
   block:
-    - name: "Step C1. Create Patroni config file"
+    - name: "Step C1. Create cert directory"
+      ansible.builtin.file:
+        path: /etc/postgresql/certs
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0750"
+
+    - name: "Step C2. Write PostgreSQL TLS Certificates"
+      ansible.builtin.copy:
+        dest: "/etc/postgresql/certs/{{ item.name }}"
+        content: "{{ item.content | b64decode }}"
+        owner: postgres
+        group: postgres
+        mode: "0600"
+      loop:
+        - { name: "ca.crt", content: "{{ pg_tls_ca_cert }}" }
+        - { name: "server.crt", content: "{{ pg_tls_server_cert }}" }
+        - { name: "server.key", content: "{{ pg_tls_server_key }}" }
+      notify: Restart Patroni
+
+- name: "Section D: Configure Patroni Service"
+  block:
+    - name: "Step D1. Create Patroni config file"
       ansible.builtin.template:
         src: patroni.yml.j2
         dest: /etc/patroni.yml
@@ -35,7 +59,7 @@
         mode: "0600"
       notify: Restart Patroni
 
-    - name: "Step C2. Create Patroni systemd service file"
+    - name: "Step D2. Create Patroni systemd service file"
       ansible.builtin.template:
         src: patroni.service.j2
         dest: /etc/systemd/system/patroni.service
@@ -44,9 +68,9 @@
         mode: "0644"
       notify: Restart Patroni
 
-- name: "Section D: Start and Enable Patroni Service"
+- name: "Section E: Start and Enable Patroni Service"
   block:
-    - name: "Step D1. Reload systemd and start Patroni"
+    - name: "Step E1. Reload systemd and start Patroni"
       ansible.builtin.systemd:
         name: patroni
         state: started

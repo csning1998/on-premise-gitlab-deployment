@@ -33,3 +33,18 @@ output "harbor_postgres_haproxy_ro_port" {
   description = "Postgres HAProxy Read-Only Port for Harbor"
   value       = var.harbor_postgres_compute.ha_config.ro_proxy
 }
+
+output "harbor_postgres_client_cert_pem" {
+  value     = module.postgres_tls.client_cert_pem
+  sensitive = true
+}
+
+output "harbor_postgres_client_key_pem" {
+  value     = module.postgres_tls.client_key_pem
+  sensitive = true
+}
+
+output "harbor_postgres_ca_cert_pem" {
+  value     = module.postgres_tls.ca_cert_pem
+  sensitive = true
+}
