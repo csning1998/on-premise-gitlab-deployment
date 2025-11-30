@@ -32,7 +32,9 @@ bootstrap:
     - auth-local: md5
   pg_hba:
     # HAProxy does not need mTLS
-    - host all all {{ postgres_nat_subnet_prefix }}.220/32 md5
+{% for host in groups['postgres_haproxy_nodes'] | default([]) %}
+    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 md5
+{% endfor %}
 
     # Patroni does not need mTLS
     - host all all {{ advertise_ip }}/32 md5
@@ -43,7 +45,7 @@ bootstrap:
     - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 md5
 {% endfor %}
 
-    # For other sources (Microk8s) to enforce mTLS
+    # For other sources (Microk8s, Kubeadm, etc.) to enforce mTLS
     - hostssl all all {{ postgres_allowed_subnet }} md5 clientcert=verify-ca
     
     # Local loopback
