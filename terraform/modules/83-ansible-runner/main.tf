@@ -18,6 +18,7 @@ resource "null_resource" "run_playbook" {
     vm_status         = jsonencode(var.status_trigger)
     inventory_content = var.inventory_content
     playbook          = var.ansible_config.playbook_file
+    extra_vars        = jsonencode(var.extra_vars)
   }
 
   depends_on = [local_file.inventory]

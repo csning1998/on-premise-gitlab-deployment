@@ -31,8 +31,24 @@ bootstrap:
     - auth-host: md5
     - auth-local: md5
   pg_hba:
-    - host all all {{ postgres_allowed_subnet }} md5
-    - host replication repuser {{ postgres_allowed_subnet }} md5
+    # HAProxy does not need mTLS
+{% for host in groups['postgres_haproxy_nodes'] | default([]) %}
+    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 md5
+{% endfor %}
+
+    # Patroni does not need mTLS
+    - host all all {{ advertise_ip }}/32 md5
+
+    # Allow other nodes in the cluster to replicate (no mTLS)
+{% for host in groups['postgres_db_nodes'] %}
+    - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 md5
+    - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 md5
+{% endfor %}
+
+    # For other sources (Microk8s, Kubeadm, etc.) to enforce mTLS
+    - hostssl all all {{ postgres_allowed_subnet }} md5 clientcert=verify-ca
+    
+    # Local loopback
     - host all all 127.0.0.1/32 md5
 
 postgresql:
@@ -40,7 +56,7 @@ postgresql:
   connect_address: "{{ advertise_ip }}:{{ postgres_port }}"
   data_dir: /var/lib/postgresql/{{ postgres_version }}/data
   pgpass: /tmp/pgpass{{ postgres_port }}
-  
+
   authentication:
     replication:
       username: repuser
@@ -48,8 +64,12 @@ postgresql:
     superuser:
       username: postgres
       password: "{{ pg_superuser_password }}"
-  
+
   parameters:
+    ssl: "on"
+    ssl_ca_file: "/etc/postgresql/certs/ca.crt"
+    ssl_cert_file: "/etc/postgresql/certs/server.crt"
+    ssl_key_file: "/etc/postgresql/certs/server.key"
     max_connections: 100
     max_wal_senders: 10
     wal_level: replica

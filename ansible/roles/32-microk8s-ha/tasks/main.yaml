@@ -31,12 +31,28 @@
     - name: "Step 6. Wait for MicroK8s to be ready on the current node"
       ansible.builtin.command:
         cmd: "microk8s status --wait-ready"
+      register: wait_ready_result
       changed_when: false
+      until: wait_ready_result.rc == 0
+      retries: 20
+      delay: 5
 
-    - name: "Step 7. Execute the join command on the current node"
+    - name: "Step 7. Check if node is already joined (Idempotency Check)"
+      ansible.builtin.shell: microk8s status
+      register: microk8s_status_check
+      changed_when: false
+      until: microk8s_status_check.rc == 0
+      retries: 10
+      delay: 3
+
+    - name: "Step 8. Execute the join command on the current node"
       ansible.builtin.command:
         cmd: "{{ join_command }}"
       register: join_command_output
+      when:
+        - microk8s_status_check.rc == 0
+        - hostvars[primary_node]['advertise_ip'] not in microk8s_status_check.stdout
       failed_when:
         - "'already known to dqlite' not in join_command_output.stderr"
+        - "'already known to dqlite' not in join_command_output.stdout"
         - join_command_output.rc > 0

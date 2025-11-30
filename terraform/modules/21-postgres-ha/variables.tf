@@ -23,6 +23,9 @@ variable "topology_config" {
 
     ha_config = object({
       virtual_ip = string
+      stats_port = number
+      rw_proxy   = number
+      ro_proxy   = number
 
       # HAProxy Nodes (Map)
       haproxy_nodes = map(object({
@@ -101,4 +104,13 @@ variable "infra_config" {
     ])
     error_message = "All network CIDRs must be valid."
   }
+}
+
+variable "harbor_postgres_tls" {
+  description = "TLS config for Harbor Postgres service"
+  type = object({
+    ca_cert_pem     = string
+    server_cert_pem = string
+    server_key_pem  = string
+  })
 }

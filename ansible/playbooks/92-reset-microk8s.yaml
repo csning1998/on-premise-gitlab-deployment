@@ -1,0 +1,15 @@
+---
+## On the project root, execute the following command:
+##
+## ```shell
+## ansible-playbook -i ansible/inventory-microk8s-harbor.yaml \
+##     --private-key ~/.ssh/id_ed25519_on-premise-gitlab-deployment \
+##     --extra-vars "ansible_ssh_user=<your-ssh-user>" \
+##     ansible/playbooks/92-reset-microk8s.yaml
+## ```
+##
+- name: "Play: Reset MicroK8s Cluster"
+  hosts: nodes
+  become: true
+  roles:
+    - 92-reset-microk8s

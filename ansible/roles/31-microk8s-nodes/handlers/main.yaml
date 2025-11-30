@@ -1,0 +1,10 @@
+---
+- name: Restart MicroK8s
+  become: true
+  ansible.builtin.command: snap restart microk8s
+  listen: "Restart MicroK8s"
+
+- name: Refresh MicroK8s Server Certs
+  become: true
+  ansible.builtin.command: microk8s refresh-certs --cert server.crt
+  listen: "Refresh MicroK8s Server Certs"

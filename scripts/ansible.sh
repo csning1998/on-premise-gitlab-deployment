@@ -25,6 +25,11 @@ vault_secret_extractor() {
       vault_path="secret/on-premise-gitlab-deployment/databases"
       keys_needed=("redis_requirepass")
       ;;
+    "40-provision-harbor.yaml")
+      echo "#### Harbor playbook detected. Preparing credentials..." >&2
+      vault_path="secret/on-premise-gitlab-deployment/harbor"
+      keys_needed=("harbor_admin_password" "harbor_pg_db_password")
+      ;;
     *)
       echo "${extra_vars_string}"
       return 0

@@ -7,9 +7,9 @@ harbor_microk8s_compute = {
   }
 
   nodes = {
-    "harbor-microk8s-node-00" = { ip = "172.16.135.200", vcpu = 2, ram = 4096 }
-    "harbor-microk8s-node-01" = { ip = "172.16.135.201", vcpu = 2, ram = 4096 }
-    "harbor-microk8s-node-02" = { ip = "172.16.135.202", vcpu = 2, ram = 4096 }
+    "harbor-microk8s-node-00" = { ip = "172.16.135.200", vcpu = 4, ram = 6144 }
+    "harbor-microk8s-node-01" = { ip = "172.16.135.201", vcpu = 4, ram = 6144 }
+    "harbor-microk8s-node-02" = { ip = "172.16.135.202", vcpu = 4, ram = 6144 }
   }
 
   ha_config = {

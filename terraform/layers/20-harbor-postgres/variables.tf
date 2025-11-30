@@ -7,18 +7,28 @@ variable "harbor_postgres_compute" {
       component    = string
       cluster_name = string
     })
+
+    # Postgres Data Nodes (Map)
     nodes = map(object({
       ip   = string
       vcpu = number
       ram  = number
     }))
+
+    # Etcd Nodes (Map)
     etcd_nodes = map(object({
       ip   = string
       vcpu = number
       ram  = number
     }))
+
     ha_config = object({
       virtual_ip = string
+      stats_port = number
+      rw_proxy   = number
+      ro_proxy   = number
+
+      # HAProxy Nodes (Map)
       haproxy_nodes = map(object({
         ip   = string
         vcpu = number

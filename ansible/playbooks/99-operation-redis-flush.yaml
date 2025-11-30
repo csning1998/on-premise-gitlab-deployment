@@ -1,0 +1,24 @@
+---
+## On the project root, execute the following command:
+##
+## ```shell
+## REDIS_PASS=$(vault kv get -address="https://127.0.0.1:8200" \
+##     -ca-cert="${PWD}/vault/tls/ca.pem" \
+##     -field=redis_requirepass \
+##     secret/on-premise-gitlab-deployment/databases)
+## ansible-playbook -i ansible/inventory-redis-harbor.yaml \
+##     --private-key /path/to/private/key  \
+##     --extra-vars 'redis_requirepass=${REDIS_PASS}' \
+##     ansible/playbooks/99-operation-redis-flush.yaml
+## ```
+##
+- name: "Play: Flush Redis Data"
+  hosts: redis_db_master
+  become: true
+  tasks:
+    - name: "Flush All Redis Data"
+      no_log: true
+      ansible.builtin.command:
+        cmd: "redis-cli -h 127.0.0.1 -p 6379 -a '{{ redis_requirepass }}' FLUSHALL"
+      register: redis_flush
+      changed_when: "'OK' in redis_flush.stdout"

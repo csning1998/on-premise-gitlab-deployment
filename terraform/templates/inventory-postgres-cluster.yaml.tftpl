@@ -11,6 +11,10 @@ all:
     postgres_allowed_subnet: "${postgres_allowed_subnet}"
     postgres_nat_subnet_prefix: "${postgres_nat_subnet_prefix}"
 
+    haproxy_stats_port: "${haproxy_stats_port}"
+    haproxy_rw_port: "${haproxy_rw_port}"
+    haproxy_ro_port: "${haproxy_ro_port}"
+
   children:
     postgres_etcd_nodes:
       hosts:

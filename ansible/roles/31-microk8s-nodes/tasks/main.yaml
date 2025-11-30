@@ -1,7 +1,84 @@
 ---
-- name: "Section: Start MicroK8s service on all provisioned nodes"
+- name: "Block A: Fix MicroK8s Network & Certificates (Host-only)"
+  become: true
   block:
-    - name: "Step 1: Wait for Kubernetes API to be available"
+    - name: "Step A1. Detect Host-only IP"
+      ansible.builtin.set_fact:
+        hostonly_ip: "{{ advertise_ip }}"
+
+    - name: "Step A2. Configure Kubelet node-ip arg"
+      ansible.builtin.lineinfile:
+        path: /var/snap/microk8s/current/args/kubelet
+        line: "--node-ip={{ hostonly_ip }}"
+        regexp: "^--node-ip="
+        create: yes
+      notify: Restart MicroK8s
+
+    - name: "Step A3. Configure API Server advertise-address arg"
+      ansible.builtin.lineinfile:
+        path: /var/snap/microk8s/current/args/kube-apiserver
+        regexp: "^--advertise-address="
+        line: "--advertise-address={{ hostonly_ip }}"
+        create: yes
+      notify: Restart MicroK8s
+
+    - name: "Step A4. Add Host-only IP to CSR template"
+      ansible.builtin.lineinfile:
+        path: /var/snap/microk8s/current/certs/csr.conf.template
+        insertafter: "^IP.2 ="
+        line: "IP.100 = {{ hostonly_ip }}"
+        regexp: "^IP.100 ="
+      notify: Refresh MicroK8s Server Certs
+
+    - name: "Step A5. Check if Kubelet Certificate matches Host-only IP"
+      ansible.builtin.shell: |
+        openssl x509 -in /var/snap/microk8s/current/certs/kubelet.crt -text -noout | grep "IP Address:{{ hostonly_ip }}"
+      register: kubelet_cert_check
+      failed_when: false
+      changed_when: false
+
+    - name: "Step A6. Generate OpenSSL config for Kubelet (Force IP SAN)"
+      ansible.builtin.template:
+        src: microk8s-kubelet.conf.j2
+        dest: "/var/snap/microk8s/current/certs/kubelet.conf"
+        mode: "0644"
+      when: kubelet_cert_check.rc != 0
+
+    - name: "Step A7. Ensure Kubelet Private Key exists"
+      ansible.builtin.command: >-
+        openssl genrsa -out /var/snap/microk8s/current/certs/kubelet.key 2048
+      args:
+        creates: /var/snap/microk8s/current/certs/kubelet.key
+      when: kubelet_cert_check.rc != 0
+
+    - name: "Step A8. Generate Kubelet CSR"
+      ansible.builtin.command: >-
+        openssl req -new -key /var/snap/microk8s/current/certs/kubelet.key
+        -out /var/snap/microk8s/current/certs/kubelet.csr
+        -config /var/snap/microk8s/current/certs/kubelet.conf
+      when: kubelet_cert_check.rc != 0
+
+    - name: "Step A9. Sign Kubelet Certificate with Cluster CA"
+      ansible.builtin.command: >-
+        openssl x509 -req -in /var/snap/microk8s/current/certs/kubelet.csr
+        -CA /var/snap/microk8s/current/certs/ca.crt
+        -CAkey /var/snap/microk8s/current/certs/ca.key
+        -CAcreateserial
+        -out /var/snap/microk8s/current/certs/kubelet.crt
+        -days 3650 -extensions v3_req
+        -extfile /var/snap/microk8s/current/certs/kubelet.conf
+      when: kubelet_cert_check.rc != 0
+      notify: Restart MicroK8s
+
+- name: "Block B: Start MicroK8s service on all provisioned nodes"
+  block:
+    - name: "Step B0: Ensure MicroK8s service is started"
+      ansible.builtin.command:
+        cmd: "microk8s start"
+      register: microk8s_start
+      changed_when: "'Started' in microk8s_start.stdout"
+
+    - name: "Step B1: Wait for Kubernetes API to be available"
       ansible.builtin.command:
         cmd: "kubectl get nodes"
       register: kubectl_check
@@ -10,17 +87,17 @@
       delay: 6
       changed_when: false
 
-    - name: "Step 2: Get list of all node names known to Kubernetes"
+    - name: "Step B2: Get list of all node names known to Kubernetes"
       ansible.builtin.command:
         cmd: "kubectl get nodes -o jsonpath='{.items[*].metadata.name}'"
       register: kube_nodes_result
       changed_when: false
 
-    - name: "Step 3: Identify stale nodes (nodes in k8s but not in inventory)"
+    - name: "Step B3: Identify stale nodes (nodes in k8s but not in inventory)"
       ansible.builtin.set_fact:
         stale_nodes: "{{ kube_nodes_result.stdout.split(' ') | difference(groups['nodes']) }}"
 
-    - name: "Step 4: Remove stale nodes from the cluster"
+    - name: "Step B4: Remove stale nodes from the cluster"
       ansible.builtin.command:
         cmd: "kubectl delete node {{ item }}"
       loop: "{{ stale_nodes }}"
