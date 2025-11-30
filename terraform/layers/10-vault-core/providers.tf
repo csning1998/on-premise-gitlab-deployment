@@ -22,6 +22,6 @@ provider "vault" {
 provider "vault" {
   alias = "target_cluster"
 
-  address      = "https://${var.vault_compute.ha_config.virtual_ip}:8200"
+  address      = "https://${var.vault_compute.ha_config.virtual_ip}:443"
   ca_cert_file = "${path.root}/tls/vault-ca.crt"
 }

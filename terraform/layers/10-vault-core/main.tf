@@ -33,5 +33,5 @@ module "vault_pki_config" {
     vault = vault.target_cluster
   }
 
-  vault_addr = "https://${var.vault_compute.ha_config.virtual_ip}:8200"
+  vault_addr = "https://${var.vault_compute.ha_config.virtual_ip}:443"
 }
