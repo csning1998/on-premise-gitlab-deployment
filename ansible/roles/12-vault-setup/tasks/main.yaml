@@ -34,150 +34,51 @@
         mode: "0644"
       notify: Reload Systemd
 
-- name: "Block B: Centralized TLS Management"
+- name: "Block B: Deploy Vault TLS Certificates (Managed by Terraform)"
+  become: true
   block:
-    - name: "B1. Prepare Local Certs Directory (Controller)"
+    - name: "Step B1. Ensure Vault TLS directory exists with secure permissions"
       ansible.builtin.file:
-        path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs"
+        path: "{{ vault_dir_tls }}"
         state: directory
-        mode: "0700"
-      delegate_to: localhost
-      become: false
+        owner: vault
+        group: vault
+        mode: "0750"
 
-    # CA Generation
-    - name: "B2. Generate CA Key & Cert (Controller)"
-      block:
-        - community.crypto.openssl_privatekey:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.key"
-
-        - community.crypto.openssl_csr:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.csr"
-            privatekey_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.key"
-            common_name: "Vault Root CA"
-            basic_constraints: ["CA:TRUE"]
-            basic_constraints_critical: true
-            key_usage: [keyCertSign, cRLSign]
-            key_usage_critical: true
-
-        - community.crypto.x509_certificate:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
-            privatekey_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.key"
-            csr_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.csr"
-            provider: selfsigned
-
-        - name: "B2.1 Prepare Clean CA (Temp)"
-          ansible.builtin.command: >-
-            openssl x509 -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt
-            -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp
-          changed_when: false
-
-        - name: "B2.2 Update CA Certificate (Idempotent)"
-          ansible.builtin.copy:
-            src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp"
-            dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
-            remote_src: true
-            mode: "0644"
-
-        - name: "B2.3 Remove Temp CA File"
-          ansible.builtin.file:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt.tmp"
-            state: absent
-          changed_when: false
-
-      delegate_to: localhost
-      run_once: true
-      become: false
-
-    - name: "B3. Distribute CA"
+    - name: "Step B2. Deploy Vault Server Certificate"
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
-        dest: "/etc/vault.d/tls/vault-ca.crt"
-        owner: "{{ vault_owner }}"
-        group: "{{ vault_group }}"
-        mode: "0644"
-      notify: Update CA Trust
-
-    - name: "B4. Update System CA Trust"
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
-        dest: "/usr/local/share/ca-certificates/vault-ca.crt"
-      notify: Update CA Trust
-
-    # Node Cert Generation
-    - name: "B5. Generate Node Key & CSR"
-      block:
-        - community.crypto.openssl_privatekey:
-            path: "{{ vault_dir_tls }}/vault.key"
-            owner: "{{ vault_owner }}"
-            group: "{{ vault_group }}"
-            mode: "0600"
-
-        - community.crypto.openssl_csr:
-            path: "{{ vault_dir_tls }}/vault.csr"
-            privatekey_path: "{{ vault_dir_tls }}/vault.key"
-            common_name: "{{ inventory_hostname }}"
-            subject_alt_name:
-              - "DNS:{{ inventory_hostname }}"
-              - "DNS:localhost"
-              - "IP:127.0.0.1"
-              - "IP:{{ advertise_ip }}"
-            key_usage: [digitalSignature, keyEncipherment]
-            extended_key_usage: [serverAuth, clientAuth]
-            force: true
-
-    - name: "B6. Sign Node Cert (Controller)"
-      block:
-        - ansible.builtin.fetch:
-            src: "{{ vault_dir_tls }}/vault.csr"
-            dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.csr"
-            flat: true
-
-        - community.crypto.x509_certificate:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt"
-            csr_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.csr"
-            provider: ownca
-            ownca_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.crt"
-            ownca_privatekey_path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/vault-ca.key"
-          delegate_to: localhost
-          become: false
-
-        - shell: >-
-            openssl x509 \
-              -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt \
-              -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.clean && \
-            mv {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.clean {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt
-          delegate_to: localhost
-          become: false
-
-        - name: "B6.1 Prepare Clean Node Cert (Temp)"
-          ansible.builtin.command: >-
-            openssl x509 -in {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt
-            -out {{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp
-          changed_when: false
-          delegate_to: localhost
-          become: false
-
-        - name: "B6.2 Update Node Certificate (Idempotent)"
-          ansible.builtin.copy:
-            src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp"
-            dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt"
-            remote_src: true
-            mode: "0644"
-          delegate_to: localhost
-          become: false
-
-        - name: "B6.3 Remove Temp Node Cert File"
-          ansible.builtin.file:
-            path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt.tmp"
-            state: absent
-          changed_when: false
-          delegate_to: localhost
-          become: false
-
-    - name: "B7. Distribute Node Cert"
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/certs/{{ inventory_hostname }}.crt"
+        src: "{{ vault_local_tls_source_dir }}/vault.crt"
         dest: "{{ vault_dir_tls }}/vault.crt"
-        owner: "{{ vault_owner }}"
-        group: "{{ vault_group }}"
+        owner: vault
+        group: vault
+        mode: "0640"
+      notify: Restart Vault
+
+    - name: "Step B3. Deploy Vault Server Private Key"
+      ansible.builtin.copy:
+        src: "{{ vault_local_tls_source_dir }}/vault.key"
+        dest: "{{ vault_dir_tls }}/vault.key"
+        owner: vault
+        group: vault
+        mode: "0600"
+      notify: Restart Vault
+
+    - name: "Step B4. Deploy Vault CA Certificate"
+      ansible.builtin.copy:
+        src: "{{ vault_local_tls_source_dir }}/vault-ca.crt"
+        dest: "{{ vault_dir_tls }}/vault-ca.crt"
+        owner: vault
+        group: vault
         mode: "0644"
+      notify: Restart Vault
+
+    - name: "Step B5. Trust Vault Root CA on OS level (for local client tools)"
+      ansible.builtin.copy:
+        src: "{{ vault_local_tls_source_dir }}/vault-ca.crt"
+        dest: /usr/local/share/ca-certificates/vault-ca.crt
+        mode: "0644"
+      register: trust_ca
+
+    - name: "Step B6. Update OS CA trust store"
+      ansible.builtin.command: update-ca-certificates
+      when: trust_ca.changed

@@ -19,6 +19,9 @@ variable "gitlab_postgres_compute" {
     }))
     ha_config = object({
       virtual_ip = string
+      stats_port = number
+      rw_proxy   = number
+      ro_proxy   = number
       haproxy_nodes = map(object({
         ip   = string
         vcpu = number

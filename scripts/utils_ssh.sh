@@ -254,44 +254,67 @@ known_hosts_bootstrapper() {
   fi
 
   local known_hosts_file="$HOME/.ssh/known_hosts_${config_name}"
-
+  
   echo ">>> Preparing SSH known_hosts: ${known_hosts_file}"
   mkdir -p "$HOME/.ssh"
   rm -f "${known_hosts_file}"
   
   echo "#### Scanning host keys for all nodes..."
-  # Iterate through all remaining arguments, which are guaranteed to be hosts.
-  for host in "$@"; do
+
+  local tmp_dir
+  tmp_dir=$(mktemp -d) || { echo "Failed to create temp dir"; return 1; }
+
+  local pids=()
+
+  scan_single_host() {
+    local target_host="$1"
+    local output_file="$2"
+    
     if ${perform_poll}; then
-      # --- Terraform Path: Poll for SSH service to become available ---
-      echo "#### Waiting for SSH on ${host} to be ready..."
-      local success=false
-      for ((attempt=1; attempt<=100; attempt++)); do
+      echo ".... Waiting for SSH on ${target_host} ..."
+      for ((attempt=1; attempt<=150; attempt++)); do
         local keys_found
-        keys_found=$(ssh-keyscan -t ed25519 -T 2 -H "${host}" 2>/dev/null || true)
+        keys_found=$(ssh-keyscan -t ed25519 -T 2 -H "${target_host}" 2>/dev/null || true)
         if [[ -n "${keys_found}" ]] && [[ "${keys_found}" == *"ssh-ed25519"* ]]; then
-          echo "${keys_found}" >> "${known_hosts_file}"
-          echo "      - Scanned ED25519 key for ${host} and added to ${known_hosts_file}"
-					# For debug use only.
-					# echo "      > Entry: ${keys_found}"
-          success=true
-          break
+          echo "${keys_found}" > "${output_file}"
+          echo "    [OK] ${target_host} is ready."
+          return 0
         fi
         sleep 1
       done
-      if ! ${success}; then
-        echo "#### Error: Timed out waiting for SSH on ${host}." >&2
-        return 1
-      fi
+      echo "    [FAIL] Timed out waiting for ${target_host}" >&2
+      return 1
     else
-      # --- Manual Ansible Path: Scan directly without polling ---
-      echo "#### Scanning host key for running host: ${host}..."
-      if ! ssh-keyscan -T 5 -H "${host}" >> "${known_hosts_file}" 2>/dev/null; then
-        echo "#### WARNING: Failed to scan host key for ${host}." >&2
+      if ssh-keyscan -T 5 -H "${target_host}" > "${output_file}" 2>/dev/null; then
+					echo "    [OK] Scanned ${target_host}"
+					return 0
+      else
+					echo "    [WARN] Failed to scan ${target_host}" >&2
+					return 1
       fi
     fi
+  }
+
+  for host in "$@"; do
+    ( scan_single_host "${host}" "${tmp_dir}/${host}.txt" ) &
+    pids+=($!)
   done
-  
+
+  local failed_count=0
+  for pid in "${pids[@]}"; do
+    if ! wait "$pid"; then
+      ((failed_count++))
+    fi
+  done
+
+  cat "${tmp_dir}"/*.txt >> "${known_hosts_file}" 2>/dev/null
+  rm -rf "${tmp_dir}"
+
+  if [ $failed_count -gt 0 ]; then
+    echo "#### Error: ${failed_count} hosts failed to initialize SSH."
+    return 1
+  fi
+
   echo "#### Host key scanning complete."
   echo "--------------------------------------------------"
 }
@@ -303,15 +326,3 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
   "$@"
 fi
-
-# Function: Report execution time
-execution_time_reporter() {
-  local END_TIME DURATION MINUTES SECONDS
-  END_TIME=$(date +%s)
-  DURATION=$((END_TIME - START_TIME))
-  MINUTES=$((DURATION / 60))
-  SECONDS=$((DURATION % 60))
-  echo "--------------------------------------------------"
-  echo ">>> Execution time: ${MINUTES}m ${SECONDS}s"
-  echo "--------------------------------------------------"
-}

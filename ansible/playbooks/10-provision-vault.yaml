@@ -29,3 +29,9 @@
   become: true
   roles:
     - 15-vault-unseal
+
+- name: "Play 4c: Verify Vault Cluster Availability"
+  hosts: vault_haproxy
+  gather_facts: false
+  roles:
+    - 15-vault-unseal
