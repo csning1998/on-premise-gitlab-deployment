@@ -12,6 +12,8 @@ module "vault_tls" {
   source     = "../../modules/12-vault-tls"
   output_dir = local.layer_tls_dir
 
+  tls_mode = var.tls_mode
+
   vault_cluster = {
     nodes = {
       for k, v in var.vault_compute.nodes : k => {

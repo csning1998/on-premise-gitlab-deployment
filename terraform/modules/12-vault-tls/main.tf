@@ -1,12 +1,15 @@
 
-# Bootstrap Root CA
+# Strategy for Auto Bootstrapping (by default); 
+# Manual Injection is recommand in Production Mode, refer to ./data.tf
 resource "tls_private_key" "vault_ca" {
+  count     = var.tls_mode == "generated" ? 1 : 0
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "tls_self_signed_cert" "vault_ca" {
-  private_key_pem = tls_private_key.vault_ca.private_key_pem
+  count           = var.tls_mode == "generated" ? 1 : 0
+  private_key_pem = tls_private_key.vault_ca[0].private_key_pem
 
   subject {
     common_name  = "on-premise-gitlab-deployment-root-ca-selfsigned"
@@ -22,20 +25,38 @@ resource "tls_self_signed_cert" "vault_ca" {
   ]
 }
 
-# On-premise CA Cert for Terraform Provider & Ansible
+# Output to Files only in Generated Mode
+## 1. On-premise CA Cert for Terraform Provider & Ansible  (# )
 resource "local_file" "vault_ca" {
-  content  = tls_self_signed_cert.vault_ca.cert_pem
+  count    = var.tls_mode == "generated" ? 1 : 0
+  content  = tls_self_signed_cert.vault_ca[0].cert_pem
   filename = "${var.output_dir}/vault-ca.crt"
 }
 
-# Vault Server Certificate for HA Nodes & VIP
+## 2. Vault Server Certificate for HA Nodes & VIP
 resource "tls_private_key" "vault_server" {
+  count     = var.tls_mode == "generated" ? 1 : 0
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
+## 3. Vault Server Cert & Key
+resource "local_file" "vault_server_crt" {
+  count    = var.tls_mode == "generated" ? 1 : 0
+  content  = tls_locally_signed_cert.vault_server[0].cert_pem
+  filename = "${var.output_dir}/vault.crt"
+}
+
+resource "local_file" "vault_server_key" {
+  count           = var.tls_mode == "generated" ? 1 : 0
+  content         = tls_private_key.vault_server[0].private_key_pem
+  filename        = "${var.output_dir}/vault.key"
+  file_permission = "0600"
+}
+
 resource "tls_cert_request" "vault_server" {
-  private_key_pem = tls_private_key.vault_server.private_key_pem
+  count           = var.tls_mode == "generated" ? 1 : 0
+  private_key_pem = tls_private_key.vault_server[0].private_key_pem
 
   subject {
     common_name  = "vault.iac.local"
@@ -61,9 +82,10 @@ resource "tls_cert_request" "vault_server" {
 }
 
 resource "tls_locally_signed_cert" "vault_server" {
-  cert_request_pem   = tls_cert_request.vault_server.cert_request_pem
-  ca_private_key_pem = tls_private_key.vault_ca.private_key_pem
-  ca_cert_pem        = tls_self_signed_cert.vault_ca.cert_pem
+  count              = var.tls_mode == "generated" ? 1 : 0
+  cert_request_pem   = tls_cert_request.vault_server[0].cert_request_pem
+  ca_private_key_pem = tls_private_key.vault_ca[0].private_key_pem
+  ca_cert_pem        = tls_self_signed_cert.vault_ca[0].cert_pem
 
   validity_period_hours = 8760 # 1 Year
 
@@ -73,16 +95,4 @@ resource "tls_locally_signed_cert" "vault_server" {
     "server_auth",
     "client_auth",
   ]
-}
-
-# Vault Server Cert & Key
-resource "local_file" "vault_server_crt" {
-  content  = tls_locally_signed_cert.vault_server.cert_pem
-  filename = "${var.output_dir}/vault.crt"
-}
-
-resource "local_file" "vault_server_key" {
-  content         = tls_private_key.vault_server.private_key_pem
-  filename        = "${var.output_dir}/vault.key"
-  file_permission = "0600"
 }

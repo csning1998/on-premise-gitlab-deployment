@@ -1,4 +1,9 @@
 
+variable "tls_mode" {
+  description = "TLS generation mode: 'generated' (Terraform creates keys via tls provider) or 'manual' (Terraform assumes files exist and does nothing)."
+  type        = string
+}
+
 variable "vault_compute" {
   description = "Compute topology for Vault Core service"
   type = object({
