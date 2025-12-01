@@ -54,3 +54,19 @@
       ansible.builtin.debug:
         msg: "Vault node {{ inventory_hostname }} is successfully Unsealed."
       when: unseal_result is changed
+
+- name: "Block G: Verify Vault Cluster Availability"
+  become: true
+  block:
+    - name: "Wait for Vault VIP to be Active (200 OK)"
+      ansible.builtin.uri:
+        url: "https://{{ vault_ha_virtual_ip }}:443/v1/sys/health"
+        validate_certs: false
+        status_code: 200
+      when: inventory_hostname in groups['vault_haproxy']
+      register: health_check
+      until: health_check.status == 200
+      retries: 60
+      delay: 2
+      delegate_to: localhost
+      become: false

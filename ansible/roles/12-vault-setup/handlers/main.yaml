@@ -6,3 +6,8 @@
 - name: Update CA Trust
   ansible.builtin.command:
     cmd: update-ca-certificates
+
+- name: Restart Vault
+  ansible.builtin.systemd:
+    name: vault
+    state: restarted
