@@ -63,3 +63,9 @@ resource "vault_pki_secret_backend_role" "postgres" {
   allow_any_name    = false
   enforce_hostnames = true
 }
+
+# Enable Global AppRole Auth Method
+resource "vault_auth_backend" "approle" {
+  type = "approle"
+  path = "approle"
+}

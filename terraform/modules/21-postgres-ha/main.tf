@@ -100,6 +100,10 @@ module "ansible_runner" {
     "pg_tls_ca_cert"     = base64encode(var.harbor_postgres_tls.ca_cert_pem)
     "pg_tls_server_cert" = base64encode(var.harbor_postgres_tls.server_cert_pem)
     "pg_tls_server_key"  = base64encode(var.harbor_postgres_tls.server_key_pem)
+
+    # Vault Agent AppRole Credentials
+    "vault_agent_role_id"   = vault_approle_auth_backend_role.postgres.role_id
+    "vault_agent_secret_id" = vault_approle_auth_backend_role_secret_id.postgres.secret_id
   }
 
   status_trigger = module.ssh_manager.ssh_access_ready_trigger

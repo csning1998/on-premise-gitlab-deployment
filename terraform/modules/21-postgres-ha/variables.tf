@@ -107,7 +107,7 @@ variable "infra_config" {
 }
 
 variable "harbor_postgres_tls" {
-  description = "TLS config for Harbor Postgres service"
+  description = "TLS config for Postgres service"
   type = object({
     ca_cert_pem     = string
     server_cert_pem = string
