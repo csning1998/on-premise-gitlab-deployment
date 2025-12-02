@@ -10,6 +10,8 @@ module "postgres_harbor" {
     server_cert_pem = module.postgres_tls.server_cert_pem
     server_key_pem  = module.postgres_tls.server_key_pem
   }
+
+  vault_ca_cert_b64 = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
 }
 
 module "postgres_tls" {
