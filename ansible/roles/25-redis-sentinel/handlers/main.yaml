@@ -8,3 +8,9 @@
   ansible.builtin.systemd:
     name: redis-sentinel
     state: restarted
+
+- name: Restart Vault Agent
+  listen: "Restart Vault Agent"
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted

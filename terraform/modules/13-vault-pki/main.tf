@@ -69,3 +69,35 @@ resource "vault_auth_backend" "approle" {
   type = "approle"
   path = "approle"
 }
+
+resource "vault_pki_secret_backend_role" "redis" {
+  backend = vault_mount.pki_prod.path
+  name    = "redis-role"
+
+  allowed_domains  = ["redis.iac.local", "redis", "localhost", "iac.local"]
+  allow_subdomains = true
+  allow_ip_sans    = true
+
+  key_usage   = ["DigitalSignature", "KeyEncipherment", "KeyAgreement"]
+  client_flag = true
+  server_flag = true
+
+  max_ttl = 2592000 # 30 Days
+  ttl     = 86400   # 24 Hours
+}
+
+resource "vault_pki_secret_backend_role" "minio" {
+  backend = vault_mount.pki_prod.path
+  name    = "minio-role"
+
+  allowed_domains  = ["minio.iac.local", "minio", "localhost", "iac.local"]
+  allow_subdomains = true
+  allow_ip_sans    = true
+
+  key_usage   = ["DigitalSignature", "KeyEncipherment", "KeyAgreement"]
+  client_flag = true
+  server_flag = true
+
+  max_ttl = 2592000 # 30 Days
+  ttl     = 86400   # 24 Hours
+}
