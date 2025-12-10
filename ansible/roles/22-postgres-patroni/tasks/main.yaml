@@ -27,7 +27,41 @@
 - name: "Section C: Configure TLS Certificates"
   become: true
   block:
-    - name: "Step C1. Create cert directory"
+    - name: "Step C0. Ensure Vault Binary is installed"
+      ansible.builtin.include_role:
+        name: 07-base-vault
+      vars:
+        vault_install_only: true
+
+    - name: "Step C1. Create Vault Agent Config Directory"
+      ansible.builtin.file:
+        path: "/etc/vault.d/approle"
+        state: directory
+        owner: vault
+        group: vault
+        mode: "0750"
+
+    - name: "Step C2. Write AppRole Credentials"
+      ansible.builtin.copy:
+        content: "{{ item.content }}"
+        dest: "/etc/vault.d/approle/{{ item.file }}"
+        owner: vault
+        group: vault
+        mode: "0600"
+      loop:
+        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
+        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
+      no_log: true
+
+    - name: "Step C3. Deploy Vault CA Certificate (Trust Anchor)"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: "/etc/vault.d/vault-ca.crt"
+        owner: vault
+        group: vault
+        mode: "0644"
+
+    - name: "Step C4. Ensure Postgres Cert Directory Exists"
       ansible.builtin.file:
         path: /etc/postgresql/certs
         state: directory
@@ -35,18 +69,36 @@
         group: postgres
         mode: "0750"
 
-    - name: "Step C2. Write PostgreSQL TLS Certificates"
-      ansible.builtin.copy:
-        dest: "/etc/postgresql/certs/{{ item.name }}"
-        content: "{{ item.content | b64decode }}"
-        owner: postgres
-        group: postgres
-        mode: "0600"
-      loop:
-        - { name: "ca.crt", content: "{{ pg_tls_ca_cert }}" }
-        - { name: "server.crt", content: "{{ pg_tls_server_cert }}" }
-        - { name: "server.key", content: "{{ pg_tls_server_key }}" }
-      notify: Restart Patroni
+    - name: "Step C5. Configure Vault Agent (vault-agent.hcl)"
+      ansible.builtin.template:
+        src: vault-agent.hcl.j2
+        dest: /etc/vault.d/vault-agent.hcl
+        owner: vault
+        group: vault
+        mode: "0640"
+      notify: Restart Vault Agent
+
+    - name: "Step C6. Configure Vault Agent Service"
+      ansible.builtin.template:
+        src: vault-agent.service.j2
+        dest: /etc/systemd/system/vault-agent.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Vault Agent
+
+    - name: "Step C7. Enable and Start Vault Agent"
+      ansible.builtin.systemd:
+        name: vault-agent
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: "Step C8. Wait for Certificates to be generated"
+      ansible.builtin.wait_for:
+        path: /etc/postgresql/certs/server.crt
+        timeout: 120
+        msg: "Timeout waiting for Vault Agent to generate certificates."
 
 - name: "Section D: Configure Patroni Service"
   block:

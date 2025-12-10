@@ -54,8 +54,8 @@ run_command() {
     echo "INFO: Executing command in container '${container_name}'..."
     (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" exec \
       -e "VAULT_ADDR=${VAULT_ADDR}" \
-      -e "VAULT_CACERT=${VAULT_CACERT_PODMAN}" \
-      -e "VAULT_TOKEN=${VAULT_TOKEN}" \
+      -e "VAULT_CACERT=${DEV_VAULT_CACERT_PODMAN}" \
+      -e "VAULT_TOKEN=${DEV_VAULT_TOKEN}" \
       "${service_name}" bash -c "cd \"${container_work_dir}\" && ${cmd_string}")
   else
     # Native Mode: Execute the command directly on the host. 

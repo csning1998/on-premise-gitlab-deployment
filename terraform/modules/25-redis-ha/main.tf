@@ -85,9 +85,12 @@ module "ansible_runner" {
   }
 
   extra_vars = {
-    "redis_requirepass" = data.vault_generic_secret.db_vars.data["redis_requirepass"]
-    "redis_masterauth"  = data.vault_generic_secret.db_vars.data["redis_masterauth"]
-    "redis_vrrp_secret" = data.vault_generic_secret.db_vars.data["redis_vrrp_secret"]
+    "redis_requirepass"     = data.vault_generic_secret.db_vars.data["redis_requirepass"]
+    "redis_masterauth"      = data.vault_generic_secret.db_vars.data["redis_masterauth"]
+    "redis_vrrp_secret"     = data.vault_generic_secret.db_vars.data["redis_vrrp_secret"]
+    "vault_agent_role_id"   = vault_approle_auth_backend_role.redis.role_id
+    "vault_agent_secret_id" = vault_approle_auth_backend_role_secret_id.redis.secret_id
+    "vault_ca_cert_b64"     = var.vault_ca_cert_b64
   }
 
   status_trigger = module.ssh_manager.ssh_access_ready_trigger

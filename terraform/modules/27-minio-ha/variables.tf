@@ -100,3 +100,13 @@ variable "infra_config" {
     error_message = "All network CIDRs must be valid."
   }
 }
+
+variable "vault_ca_cert_b64" {
+  description = "Base64 encoded CA certificate for Vault Agent"
+  type        = string
+}
+
+variable "vault_role_name" {
+  description = "The AppRole name to create in Vault (e.g. gitlab-postgres, harbor-postgres)"
+  type        = string
+}

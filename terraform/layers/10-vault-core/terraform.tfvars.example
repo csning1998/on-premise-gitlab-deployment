@@ -14,18 +14,18 @@ vault_compute = {
 
   nodes = {
     # Single Mode
-    "vault-node-00" = { ip = "172.16.139.200", vcpu = 2, ram = 2048 },
+    "vault-node-00" = { ip = "172.16.136.200", vcpu = 2, ram = 2048 },
     # High Available Mode
-    "vault-node-01" = { ip = "172.16.139.201", vcpu = 2, ram = 2048 },
-    "vault-node-02" = { ip = "172.16.139.202", vcpu = 2, ram = 2048 },
-    # "vault-node-03" = { ip = "172.16.139.203", vcpu = 2, ram = 2048 },
+    "vault-node-01" = { ip = "172.16.136.201", vcpu = 2, ram = 2048 },
+    "vault-node-02" = { ip = "172.16.136.202", vcpu = 2, ram = 2048 },
+    # "vault-node-03" = { ip = "172.16.136.203", vcpu = 2, ram = 2048 },
     # ...
   }
 
   ha_config = {
-    virtual_ip = "172.16.139.250"
+    virtual_ip = "172.16.136.250"
     haproxy_nodes = {
-      "vault-haproxy-node-00" = { ip = "172.16.139.210", vcpu = 1, ram = 1024 }
+      "vault-haproxy-node-00" = { ip = "172.16.136.210", vcpu = 1, ram = 1024 }
     }
   }
 
@@ -36,17 +36,17 @@ vault_compute = {
 vault_infra = {
   network = {
     nat = {
-      gateway = "172.16.91.1"
-      cidrv4  = "172.16.91.0/24"
+      gateway = "172.16.88.1"
+      cidrv4  = "172.16.88.0/24"
       dhcp = {
-        start = "172.16.91.2"
-        end   = "172.16.91.254"
+        start = "172.16.88.2"
+        end   = "172.16.88.254"
       }
     }
     hostonly = {
-      gateway = "172.16.139.1"
-      cidrv4  = "172.16.139.0/24"
+      gateway = "172.16.136.1"
+      cidrv4  = "172.16.136.0/24"
     }
   }
-  allowed_subnet = "172.16.139.0/24"
+  allowed_subnet = "172.16.136.0/24"
 }

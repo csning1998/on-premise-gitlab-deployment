@@ -95,27 +95,30 @@ terraform_layer_selector() {
       terraform_artifact_cleaner "${layer}"
       
       if [[ "$layer" == "10-vault-core" ]]; then
-          echo ">>> [Vault Core] Detected complex layer. Initiating 2-Stage Bootstrap..."
-          local tls_dir="${TERRAFORM_DIR}/layers/10-vault-core/tls"
-          local token_file="${ANSIBLE_DIR}/fetched/vault/vault_init_output.json"
+				echo ">>> [Vault Core] Detected complex layer. Initiating 2-Stage Bootstrap..."
+				local tls_dir="${TERRAFORM_DIR}/layers/10-vault-core/tls"
+				local token_file="${ANSIBLE_DIR}/fetched/vault/vault_init_output.json"
 
-          mkdir -p "$tls_dir" && touch "$tls_dir/vault-ca.crt"  # 1. Dummy CA
-          rm -rf "${ANSIBLE_DIR}/fetched/vault"                 # 2. Dummy Token
+				mkdir -p "$tls_dir" && touch "$tls_dir/vault-ca.crt"  # 1. Dummy CA
+				rm -rf "${ANSIBLE_DIR}/fetched/vault"                 # 2. Dummy Token
 
-					# 3. Since refrash is set to false (below), the state files should be removed manually.
-					rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate
-					rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate.backup
+				# 3. Since refrash is set to false (below), the state files should be removed manually.
+				rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate
+				rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate.backup
 
-					# 4. Create the token file with a placeholder value.
-          mkdir -p "$(dirname "$token_file")"
-          echo '{"root_token": "placeholder-for-bootstrap"}' > "$token_file"
+				# 4. Create the token file with a placeholder value.
+				mkdir -p "$(dirname "$token_file")"
+				echo '{"root_token": "placeholder-for-bootstrap"}' > "$token_file"
 
-          echo ">>> [Vault Core] Stage 1: Infrastructure Bootstrap (VM + TLS)..."
-					terraform_layer_executor "${layer}" "-target=module.vault_tls -target=module.vault_compute"          
-					
-					echo ">>> [Vault Core] Stage 2: Service Configuration (PKI)..."
-          # Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.
-					terraform_layer_executor "${layer}" "-target=module.vault_pki_config -refresh=false"
+				echo ">>> [Vault Core] Stage 1: Infrastructure Bootstrap (VM + TLS)..."
+				terraform_layer_executor "${layer}" "-target=module.vault_tls -target=module.vault_compute"          
+				
+				echo ">>> [Vault Core] Stage 2: Service Configuration (PKI)..."
+				# Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.
+				terraform_layer_executor "${layer}" "-target=module.vault_pki_config -refresh=false"
+				
+				cd "${TERRAFORM_DIR}/layers/10-vault-core" && terraform refresh -var-file=terraform.tfvars
+				cd "${SCRIPT_DIR}" || exit
       else
           terraform_layer_executor "${layer}"
       fi

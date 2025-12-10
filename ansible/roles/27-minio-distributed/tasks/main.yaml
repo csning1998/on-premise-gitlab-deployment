@@ -51,11 +51,155 @@
         mode: "0600"
       notify: Restart MinIO
 
-- name: "Section C: Start Service"
+- name: "Section C: Certificate"
   block:
-    - name: "Step C1. Enable and start MinIO service"
+    - name: "Step C1. Ensure Vault Binary is installed"
+      ansible.builtin.include_role:
+        name: 07-base-vault
+      vars:
+        vault_install_only: true
+
+    - name: "Step C2. Create Vault Agent Config Directory"
+      ansible.builtin.file:
+        path: "/etc/vault.d/approle"
+        state: directory
+        owner: vault
+        group: vault
+        mode: "0750"
+
+    - name: "Step C3. Write AppRole Credentials"
+      ansible.builtin.copy:
+        content: "{{ item.content }}"
+        dest: "/etc/vault.d/approle/{{ item.file }}"
+        owner: vault
+        group: vault
+        mode: "0600"
+      loop:
+        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
+        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
+      no_log: true
+
+    - name: "Step C4. Deploy Vault CA Certificate"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: "/etc/vault.d/vault-ca.crt"
+        owner: vault
+        group: vault
+        mode: "0644"
+
+    - name: "Step C5. Ensure MinIO Cert Directory Exists"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ minio_user | default('minio-user') }}"
+        group: "{{ minio_group | default('minio-group') }}"
+        mode: "0755"
+      loop:
+        - /etc/minio/certs
+        - /etc/minio/certs/CAs
+
+    - name: "Step C6. Configure Vault Agent (vault-agent.hcl)"
+      ansible.builtin.template:
+        src: vault-agent.hcl.j2
+        dest: /etc/vault.d/vault-agent.hcl
+        owner: vault
+        group: vault
+        mode: "0640"
+      notify: Restart Vault Agent
+
+    - name: "Step C7. Configure Vault Agent Service"
+      ansible.builtin.template:
+        src: vault-agent.service.j2
+        dest: /etc/systemd/system/vault-agent.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Vault Agent
+
+    - name: "Step C8. Enable and Start Vault Agent"
       ansible.builtin.systemd:
-        name: minio
+        name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
+
+    - name: "Step C9. Wait for Certificates"
+      ansible.builtin.wait_for:
+        path: /etc/minio/certs/public.crt
+        timeout: 30
+
+- name: "Section D: Start Service"
+  ansible.builtin.systemd:
+    name: minio
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: "Section E: Configure MinIO Client Trust"
+  block:
+    - name: "Task E0. Copy Vault CA to system-wide trust store"
+      ansible.builtin.copy:
+        src: "/etc/minio/certs/CAs/root_ca.crt"
+        dest: "/usr/local/share/ca-certificates/vault-root-ca.crt"
+        remote_src: true
+        mode: "0644"
+      notify: Update CA Trust
+
+    - name: "Task E1. Force update CA certificates"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+
+    - name: "Task E2. Ensure Root .mc directory exists"
+      ansible.builtin.file:
+        path: "/root/.mc/certs/CAs"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: "Task E3. Trust CA for Root mc"
+      ansible.builtin.copy:
+        src: "/etc/minio/certs/CAs/root_ca.crt"
+        dest: "/root/.mc/certs/CAs/root_ca.crt"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "Task E4. Ensure Ansible User .mc directory exists"
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/.mc/certs/CAs"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0700"
+      when: ansible_user != 'root'
+
+    - name: "Task E5. Trust CA for Ansible User mc"
+      ansible.builtin.copy:
+        src: "/etc/minio/certs/CAs/root_ca.crt"
+        dest: "/home/{{ ansible_user }}/.mc/certs/CAs/root_ca.crt"
+        remote_src: true
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+      when: ansible_user != 'root'
+
+    - name: "Task E6. Verify MinIO API is reachable via VIP"
+      ansible.builtin.uri:
+        url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/live"
+        validate_certs: true
+        ca_path: "/root/.mc/certs/CAs/root_ca.crt"
+      register: result
+      until: result.status == 200
+      retries: 20
+      delay: 5
+
+    - name: "Task E7. Configure local alias 'myminio' for Root"
+      ansible.builtin.command:
+        cmd: >-
+          mc alias set myminio
+          https://{{ minio_ha_virtual_ip }}:9000
+          {{ minio_root_user }}
+          {{ minio_root_password }}
+      changed_when: false

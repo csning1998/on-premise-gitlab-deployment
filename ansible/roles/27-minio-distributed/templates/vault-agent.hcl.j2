@@ -1,0 +1,61 @@
+
+pid_file = "/var/run/vault-agent.pid"
+
+vault {
+  address = "{{ vault_addr | default('https://172.16.136.250:443') }}"
+  ca_cert = "/etc/vault.d/vault-ca.crt"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path = "/etc/vault.d/approle/role_id"
+      secret_id_file_path = "/etc/vault.d/approle/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/tmp/vault-token"
+    }
+  }
+}
+
+# MinIO Server Certificate (Must be named public.crt)
+template {
+  destination = "/etc/minio/certs/public.crt"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/minio-role" "common_name=minio.iac.local" "ip_sans={% endraw %}{{ advertise_ip }},{{ minio_ha_virtual_ip }}{% raw %}" "ttl=24h" -}}
+{{ .Data.certificate }}
+{{ .Data.issuing_ca }}
+{{- end -}}
+{% endraw %}
+EOH
+  command = "chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/public.crt && chmod 0644 /etc/minio/certs/public.crt && (systemctl is-active --quiet minio && systemctl restart minio || true)"
+}
+
+# MinIO Server Key (Must be named private.key)
+template {
+  destination = "/etc/minio/certs/private.key"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/minio-role" "common_name=minio.iac.local" "ip_sans={% endraw %}{{ advertise_ip }},{{ minio_ha_virtual_ip }}{% raw %}" "ttl=24h" -}}
+{{ .Data.private_key }}
+{{- end -}}
+{% endraw %}
+EOH
+  command = "chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/private.key && chmod 0600 /etc/minio/certs/private.key"
+}
+
+# CA Certificate (Optional but recommended for MinIO client trust)
+template {
+  destination = "/etc/minio/certs/CAs/root_ca.crt"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/minio-role" "common_name=minio.iac.local" "ttl=24h" -}}
+{{ .Data.issuing_ca }}
+{{- end -}}
+{% endraw %}
+EOH
+  command = "chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/CAs/root_ca.crt && chmod 0644 /etc/minio/certs/CAs/root_ca.crt"
+}

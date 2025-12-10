@@ -1,5 +1,0 @@
----
-vault:
-  target_os: "linux"
-  target_arch: "amd64"
-  target_version: "1.21.1"

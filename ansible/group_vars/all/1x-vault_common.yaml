@@ -1,4 +1,8 @@
 ---
+vault_target_os: "linux"
+vault_target_arch: "amd64"
+vault_target_version: "1.21.1"
+
 # Load Balancer
 vault_haproxy_frontend_port: 443
 vault_haproxy_stats_port: 8404
