@@ -3,7 +3,7 @@
   hosts: "{{ 'master' if (groups['master'] | length) > 1 else 'none' }}"
   become: true
   roles:
-    - 51-kubeadm-ha-loadbalancer
+    - 51-kubeadm-ha-haproxy
 
 - name: "Play 2: Initialize the primary master node"
   hosts: "{{ groups['master'][0] | default([]) }}"
