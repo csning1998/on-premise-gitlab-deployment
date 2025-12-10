@@ -36,7 +36,7 @@
 
     - name: "Step B4. Create Vault system group"
       ansible.builtin.group:
-        name: "{{ vault_owner | default('vault') }}"
+        name: "{{ vault_group | default('vault') }}"
         system: true
         state: present
 
