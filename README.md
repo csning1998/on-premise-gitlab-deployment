@@ -59,26 +59,27 @@ The content in Section 1 and Section 2 serves as prerequisite setup before forma
 ======= IaC-Driven Virtualization Management =======
 
 Environment: NATIVE
-Vault Server Status: Running (Unsealed)
+Development Vault (Local): Running (Unsealed)
+Production Vault (Layer10): Running (Unsealed)
 
-1) [ONCE-ONLY] Set up CA Certs for TLS              9) Purge All Libvirt Resources
-2) [ONCE-ONLY] Initialize Vault                    10) Purge All Packer and Terraform Resources
-3) [ONCE-ONLY] Generate SSH Key                    11) Build Packer Base Image
-4) [ONCE-ONLY] Setup KVM / QEMU for Native         12) Provision Terraform Layer
-5) [ONCE-ONLY] Setup Core IaC Tools for Native     13) [DEV] Rebuild Layer via Ansible Command
-6) [ONCE-ONLY] Verify IaC Environment for Native   14) Verify SSH
-7) Unseal Vault                                    15) Quit
-8) Switch Environment Strategy
+1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
+2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
+3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
+4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
+5) Generate SSH Key                               13) Switch Environment Strategy
+6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
+7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
+8) Verify IaC Environment                         16) Quit
 
 >>> Please select an action:
 ```
 
-Among options `11`, `12`, and `13`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
+Among options `9`, `10`, and `11`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
 
-1. If you select `11) Build Packer Base Image`
+1. If you select `9) Build Packer Base Image`
 
     ```text
-    >>> Please select an action: 11
+    >>> Please select an action: 9
     # Entering Packer build selection menu...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
@@ -89,10 +90,10 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     >>> Please select an action:
     ```
 
-2. If you select `12) Provision Terraform Layer`
+2. If you select `10) Provision Terraform Layer`
 
     ```text
-    >>> Please select an action: 12
+    >>> Please select an action: 10
     # Entering Terraform layer management menu...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
@@ -102,10 +103,10 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
     >>> Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `13) [DEV] Rebuild Layer via Ansible Command`
+3. If you select `11) Rebuild Layer via Ansible`
 
     ```text
-    >>> Please select an action: 13
+    >>> Please select an action: 11
     # Executing [DEV] Rebuild via direct Ansible command...
     #### Checking status of libvirt service...
     --> libvirt service is already running.
@@ -121,13 +122,13 @@ Among options `11`, `12`, and `13`, there are submenus. These menus are dynamica
 
 ### A. Required. KVM / QEMU
 
-The user's CPU must support virtualization technology to enable QEMU-KVM functionality. You can choose whether to install it through option `4` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment on your own.
+The user's CPU must support virtualization technology to enable QEMU-KVM functionality. You can choose whether to install it through option `6` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment on your own.
 
 ### B. Option 1. Install IaC tools on Native
 
 1. **Install HashiCorp Toolkit - Terraform and Packer**
 
-    Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `5` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
+    Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `7` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
 
     > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
     > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_ > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
@@ -136,7 +137,7 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
 
     ```text
     ...
-    >>> Please select an action: 4
+    >>> Please select an action: 7
     >>> STEP: Verifying full native IaC environment...
     >>> Verifying Libvirt/KVM environment...
     #### QEMU/KVM: Installed
@@ -228,9 +229,9 @@ To ensure the project runs smoothly, please follow the procedures below to compl
 
 0. **Environment variable file:** The script `entry.sh` will automatically create a `.env` environment variable that is used by for script files, which can be ignored.
 
-1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys will be used for node access authentication and configuration management. You can generate these by running `./entry.sh` and entering `3` to access the _"Generate SSH Key"_ option. You can enter your desired key name or simply use the default value `id_ed25519_on-premise-gitlab-deployment`. The generated public and private key pair will be stored in the `~/.ssh` directory
+1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys will be used for node access authentication and configuration management. You can generate these by running `./entry.sh` and entering `5` to access the _"Generate SSH Key"_ option. You can enter your desired key name or simply use the default value `id_ed25519_on-premise-gitlab-deployment`. The generated public and private key pair will be stored in the `~/.ssh` directory
 
-2. **Switch Environment:** You can switch between "Container" or "Native" environment by using `./entry.sh` and entering `8`. Currently this project primarily uses Podman, and I _personally_ recommend decoupling the Podman and Docker runtime environments to prevent execution issues caused by SELinux-related permissions. For example, SELinux policies do not allow a `container_t` process that is common in Docker to connect to a `virt_var_run_t` Socket, which may cause Terraform Provider or `virsh` to receive "Permission Denied" errors when running in containers, even though everything appears normal from a filesystem permissions perspective.
+2. **Switch Environment:** You can switch between "Container" or "Native" environment by using `./entry.sh` and entering `13`. Currently this project primarily uses Podman, and I _personally_ recommend decoupling the Podman and Docker runtime environments to prevent execution issues caused by SELinux-related permissions. For example, SELinux policies do not allow a `container_t` process that is common in Docker to connect to a `virt_var_run_t` Socket, which may cause Terraform Provider or `virsh` to receive "Permission Denied" errors when running in containers, even though everything appears normal from a filesystem permissions perspective.
 
 ### Step B. Set up Variables
 
@@ -325,11 +326,13 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 #### **Step B.1. Create Confidential Variable File for HashiCorp Vault**
 
-> _**All secrets will be integrated into HashiCorp Vault. This project defaults to using Vault with HTTPS configuration. Please follow the steps below to ensure correct setup.**_
+> _**All secrets will be integrated into HashiCorp Vault with Development mode and Production mode. This project defaults to using Vault with HTTPS configuration, and the certificate is self-signed. Please follow the steps below to ensure correct setup.**_
+
+0. **Development mode is the previous stage of Production Vault, only used to set up Production Vault. Subsequently, the Production Vault is used for managing all sensitive data for the entire project.**
 
 1. First, run the `entry.sh` script and select option `1` to generate the files required for the TLS handshake. When creating the self-signed CA certificate, you can leave the fields blank for now. If you need to regenerate the TLS files, you can simply run option `1` again.
 
-2. Switch to the project's root directory and run the following command to start the Vault server.
+2. Switch to the project's root directory and run the following command to start the Development mode Vault server.
 
     - If you prefer to run it on the host:
 
@@ -351,7 +354,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 4. Next, you only need to manually modify the following variables used in the project.
 
-    - **For Common Variables in this Project**
+    - **For Development mode Vault**
 
         ```shell
         vault kv put \
@@ -367,43 +370,45 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             ssh_private_key_path="~/.ssh/some-ssh-key-name"
         ```
 
-    - **For Databases**
+    - **For Production mode Vault Environment Variables**
 
         ```shell
-        vault kv put \
-            -address="https://127.0.0.1:8200" \
-            -ca-cert="${PWD}/vault/tls/ca.pem" \
-            secret/on-premise-gitlab-deployment/databases \
-            pg_superuser_password="a-more-secure-pwd-for-superuser" \
-            pg_replication_password="a-more-secure-pwd-for-replication" \
-            pg_vrrp_secret="a-more-secure-pwd-for-vrrpsecret" \
-            redis_requirepass="a-more-secure-pwd-for-requirepass" \
-            redis_masterauth="a-more-secure-pwd-for-masterauth" \
-            redis_vrrp_secret="a-more-secure-pwd-for-vrrpsecret" \
-            minio_root_password="a-more-secure-pwd-for-rootpassword" \
-            minio_vrrp_secret="a-more-secure-pwd-for-vrrpsecret"
+        export VAULT_ADDR="https://172.16.136.250:443"
+        export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
+        export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
+        vault secrets enable -path=secret kv-v2
         ```
 
-    - **For Infrastructure Variables in this Project**
+    - **Infrastructure Variables in this Project**: Please replace the password with your own password and ensure the password's security.
 
         ```shell
-        vault kv put \
-            -address="https://127.0.0.1:8200" \
-            -ca-cert="${PWD}/vault/tls/ca.pem" \
-            secret/on-premise-gitlab-deployment/infrastructure \
-            vault_keepalived_auth_pass="a-more-secure-pwd-for-keepalivedauthpass" \
-            vault_haproxy_stats_pass="a-more-secure-pwd-for-haproxystatspass"
-        ```
+        vault kv put secret/on-premise-gitlab-deployment/variables \
+            ssh_username="some-username-for-ssh-for-production-mode" \
+            ssh_password="some-password-for-ssh-for-production-mode" \
+            ssh_password_hash='$some-password-for-ssh-for-production-mode' \
+            ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
+            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment" \
+            vm_username="some-username-for-vm-for-production-mode" \
+            vm_password="some-password-for-vm-for-production-mode"
 
-    - **For Harbor Variables in this Project**
+        vault kv put secret/on-premise-gitlab-deployment/databases \
+            pg_superuser_password="some-password-for-pg-superuser-for-production-mode" \
+            pg_replication_password="some-password-for-pg-replication-for-production-mode" \
+            pg_vrrp_secret="some-password-for-pg-vrrp-for-production-mode" \
+            redis_requirepass="some-password-for-redis-requirepass-for-production-mode" \
+            redis_masterauth="some-password-for-redis-masterauth-for-production-mode" \
+            redis_vrrp_secret="some-password-for-redis-vrrp-secret-for-production-mode" \
+            minio_root_password="some-password-for-minio-root-password-for-production-mode" \
+            minio_vrrp_secret="some-password-for-minio-vrrp-secret-for-production-mode" \
+            minio_root_user="some-username-for-minio-root-user-for-production-mode"
 
-        ```shell
-        vault kv put \
-            -address="https://127.0.0.1:8200" \
-            -ca-cert="${PWD}/vault/tls/ca.pem" \
-            secret/on-premise-gitlab-deployment/harbor \
-            harbor_admin_password="a-more-secure-pwd-for-harbor_admin_password" \
-            harbor_pg_db_password="a-more-secure-pwd-for-harbor_pg_db_password"
+        vault kv put secret/on-premise-gitlab-deployment/infrastructure \
+            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-production-mode" \
+            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-production-mode"
+
+        vault kv put secret/on-premise-gitlab-deployment/harbor \
+            harbor_admin_password="some-password-for-harbor-admin-password-for-production-mode" \
+            harbor_pg_db_password="some-password-for-harbor-pg-db-password-for-production-mode"
         ```
 
     - **Note 1:**
@@ -422,7 +427,12 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `ansible_runner.vm_credentials` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
 
-5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use option `7` in `entry.sh` to unseal the Vault database; Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
+5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use
+
+    - option `3` in `entry.sh` to unseal the Development mode Vault database
+    - option `4` to unseal the Production mode Vault database
+
+    Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
 
 #### **Step B.2. Create Variable File for Terraform:**
 
@@ -446,29 +456,29 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 3. **[Example] To deploy a complete GitLab HA Cluster from scratch**:
 
-    - **First Step**: Enter the main menu `11) Build Packer Base Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
+    - **First Step**: Enter the main menu `9) Build Packer Base Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
-    - **Second Step**: After the previous step is complete, return to the main menu and enter `12) Provision Terraform Layer`, then select `50-gitlab-kubeadm` to deploy the entire GitLab cluster (Now only kubeadm is implemented).
+    - **Second Step**: After the previous step is complete, return to the main menu and enter `10) Provision Terraform Layer`, then select `50-gitlab-kubeadm` to deploy the entire GitLab cluster (Now only kubeadm is implemented).
 
         Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
 4. **Isolated Testing and Development**:
 
-    The `11`, `12`, and `13` menus can be used for separate testing
+    The `9`, `10`, and `11` menus can be used for separate testing
 
-    - To test Packer image building independently, use `11) Build Packer Base Image`.
+    - To test Packer image building independently, use `9) Build Packer Base Image`.
 
-    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `12) Provision Terraform Layer`.
+    - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `10) Provision Terraform Layer`.
 
-    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `13) [DEV] Rebuild Layer via Ansible Command`.
+    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `11) Rebuild Layer via Ansible`.
 
 5. **Resource Cleanup**:
 
-    - **`9) Purge All Libvirt Resources`**:
+    - **`14) Purge All Libvirt Resources`**:
 
         This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
 
-    - **`10) Purge All Packer and Terraform Resources`**:
+    - **`15) Purge All Packer and Terraform Resources`**:
 
         This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
 
@@ -478,87 +488,105 @@ This project employs three tools - Packer, Terraform, and Ansible - using an Inf
 
 ### A. Deployment Workflow
 
-The entire automated deployment process is triggered by option `12` _"Rebuild Kubeadm Cluster (Packer + TF)
-"_ in the `./entry.sh` script, with detailed steps shown in the diagram below:
+1. **The Core Bootstrap Process**: The Development Vault is used to store initial secrets, then the Production Vault is built.
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Entrypoint as entry.sh
-    participant Packer
-    participant Terraform
-    participant Ansible
-    participant Libvirt as Libvirt/QEMU
+    ```mermaid
+    sequenceDiagram
+        autonumber
+        actor User
+        participant Entry as entry.sh
+        participant DevVault as Dev Vault<br>(Local)
+        participant TF as Terraform<br>(Layer 10)
+        participant Libvirt
+        participant Ansible
+        participant ProdVault as Prod Vault<br>(Layer 10)
 
-    User->>+Entrypoint: Execute 'Rebuild All'
+        %% Step 1: Bootstrap
+        Note over User, DevVault: [Bootstrap Phase]
+        User->>Entry: [DEV] Initialize Dev Vault
+        Entry->>DevVault: Init & Unseal
+        Entry->>DevVault: Enable KV Engine (secret/)
+        User->>DevVault: Write Initial Secrets (SSH Keys, Root Pass)
 
-    Entrypoint->>+Packer: 1. Execute 'packer_build_executor'
-    Packer->>+Libvirt: 1a. Build VM from ISO
-    note right of Packer: Provisioner 'ansible' is triggered
-    Packer->>+Ansible: 1b. Execute Playbook<br>(00-provision-base-image.yaml)
-    Ansible-->>-Packer: (Bake k8s components into image)
-    Libvirt-->>-Packer: 1c. Output Golden Image (.qcow2)
-    Packer-->>-Entrypoint: Image creation complete
+        %% Step 2: Infrastructure
+        Note over User, ProdVault: [Layer 10: Infrastructure]
+        User->>Entry: Provision Layer 10
+        Entry->>TF: Apply (Stage 1)
+        TF->>DevVault: Read SSH Keys/Creds
+        TF->>Libvirt: Create Vault VMs (Active/Standby)
+        TF->>Ansible: Trigger Provisioning
+        Ansible->>ProdVault: Install Vault Binary & Config
 
-    Entrypoint->>+Terraform: 2. Execute 'apply_terraform_10-cluster-provision'
-    note right of Terraform: Reads .tf definitions
-    Terraform->>+Libvirt: 2a. Create Network, Pool, Volumes (from .qcow2), Cloud-init ISOs
-    Terraform->>+Libvirt: 2b. Create and Start VMs (Domains)
-    note right of Terraform: Provisioner 'local-exec' is triggered
-    Terraform->>+Ansible: 2c. Execute Playbook<br>(10-provision-kubeadm.yaml)
-    Ansible->>Libvirt: (via SSH) 2d. Configure HA (Keepalived/HAProxy)
-    Ansible->>Libvirt: (via SSH) 2e. Init/Join Kubernetes Cluster
-    Ansible-->>-Terraform: Playbook execution complete
-    Terraform-->>-Entrypoint: 'apply' complete
-    Entrypoint-->>-User: Display 'Rebuild All workflow completed'
-```
+        %% Step 3: Operation
+        Note over User, ProdVault: [Layer 10: Operation]
+        User->>Entry: [PROD] Unseal Production Vault
+        Entry->>Ansible: Run Playbook (90-operation-unseal)
+        Ansible->>ProdVault: Init (if new) & Unseal
+        Ansible-->>Entry: Return Root Token (Saved to Artifacts)
 
-### B. Toolchain Roles and Responsibilities (Outdated)
+        %% Step 4: Configuration
+        Note over User, ProdVault: [Layer 10: Configuration]
+        Entry->>TF: Apply (Stage 2 - Vault Provider)
+        TF->>ProdVault: Enable PKI Engine (Root CA)
+        TF->>ProdVault: Configure Roles (postgres, redis, minio)
+        TF->>ProdVault: Enable AppRole Auth
+    ```
 
-**This section is outdated. The architecture is now nearly converged, this section will be updated once the PoC of GitLab Infrastructure is ready.**
+2. **Data Services & PKI**: Automate the deployment of a secure data service. MinIO as an example, similar for other data services.
+
+    ```mermaid
+    sequenceDiagram
+        autonumber
+        actor User
+        participant TF as Terraform<br>(Layer 20)
+        participant ProdVault as Prod Vault<br>(Layer 10)
+        participant Libvirt
+        participant Ansible
+        participant Agent as Vault Agent<br>(On Guest)
+        participant Service as MinIO Service
+
+        Note over User, Service: [Layer 20: Provisioning MinIO]
+
+        %% Terraform Phase
+        User->>TF: Apply Layer 20 (MinIO)
+        TF->>ProdVault: 1. Create AppRole 'harbor-minio'
+        ProdVault-->>TF: Return RoleID & SecretID
+        TF->>Libvirt: 2. Create MinIO VMs & LBs
+
+        %% Ansible Phase
+        TF->>Ansible: 3. Trigger Playbook (Pass AppRole Creds)
+
+        Ansible->>Agent: 3a. Install Vault Agent
+        Ansible->>Agent: 3b. Write RoleID/SecretID to /etc/vault.d/approle/
+        Ansible->>Agent: 3c. Configure Agent Templates (public.crt, private.key)
+        Ansible->>Agent: 3d. Start Vault Agent Service
+
+        %% Runtime Phase
+        Agent->>ProdVault: 4. Auth (AppRole Login)
+        ProdVault-->>Agent: Return Client Token
+        Agent->>ProdVault: 5. Request Cert (pki/prod/issue/minio-role)
+        ProdVault-->>Agent: Return Signed Cert & Key
+
+        Agent->>Service: 6. Render Certs to /etc/minio/certs/
+        Agent->>Service: 7. Restart/Reload MinIO Service
+
+        Service->>Service: 8. Start with TLS (HTTPS)
+
+        %% Client Config
+        Ansible->>Service: 9. Trust CA & Configure 'mc' Client
+    ```
+
+### B. Toolchain Roles and Responsibilities
 
 > The setup process is based on the commands provided by Bibin Wilson (2025), which I implemented using an Ansible Playbook. Thanks to the author, Bibin Wilson, for the contribution on his article
 >
-> Work Cited: Bibin Wilson, B. (2025). _How To Setup Kubernetes Cluster Using Kubeadm._ devopscube. <https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests>
-
-1. **Packer + Ansible: Provisioning base Kubernetes Golden Image**
-
-    Packer plays the role of an "image factory" in this project, with its core task being to automate the creation of a standardized virtual machine template (Golden Image) pre-configured with all Kubernetes dependencies. The project uses `packer/source.pkr.hcl` as its definition file and it's driven by `packer/02-base-kubeadm.pkrvars.hcl`, with a workflow that includes: automatically downloading the `Ubuntu Server 24.04 ISO` file and completing unattended installation using cloud-init; starting SSH connection and invoking the Ansible Provisioner after installation; executing `ansible/playbooks/00-provision-base-image.yaml` to install necessary components such as `kubelet`, `kubeadm`, `kubectl`, and `CRI-O` (also configure it to use `cgroup` driver); finally shutting down the virtual machine and producing a `*.qcow2` format template for Terraform to use. The goal of this phase is to "bake" all infrequently changing software and configurations into the image to reduce the time required for subsequent deployments.
-
-2. **Terraform: The Infrastructure Orchestrator**
-
-    Terraform is responsible for managing the infrastructure lifecycle and serves as the core orchestration component of the entire architecture. Terraform reads the image template produced by Packer and deploys the actual virtual machine cluster in Libvirt/QEMU. The definition files are the `.tf` files in the `terraform/` directory, with the **workflow as follows:**
-
-    - **Node Deployment (Layer 10)**:
-
-        - Based on `kubeadm_cluster_config` defined in `terraform/terraform.tfvars`, Terraform calculates the number of nodes that need to be created.
-        - Next, Terraform's libvirt provider will quickly clone virtual machines based on the `.qcow2` file. Under the hardware resources listed in Section 0, cloning 6 virtual machines can be completed in approximately 15 seconds.
-
-    - **Cluster Configuration (Layer 50)**:
-        - Once all nodes are ready, Terraform dynamically generates `ansible/inventory.yaml` list file.
-        - Then, Terraform invokes Ansible to execute the `ansible/playbooks/10-provision-kubeadm.yaml` Playbook to complete the initialization of the Kubernetes cluster.
-
-3. **Ansible: The Configuration Manager**
-
-    This is the twice call for Ansible, serving as the configuration manager at different stages. The project's Playbooks are stored in the `ansible/playbooks/ directory`. In terms of role assignment, Ansible is primarily responsible for cluster initialization (invoked by Terraform), executing the following tasks through the `10-provision-kubeadm.yaml` Playbook:
-
-    1. Setup HA Load Balancer on all master nodes if it's not a cluster with single master node.
-    2. Initialize the primary master node
-    3. Generate and fetch join commands from primary master
-    4. Executing `kubeadm join` on
-        1. Other master node if it's HA Cluster
-        2. Worker nodes to join them to the cluster.
-
-4. **HashiCorp Vault (with TLS)**
-
-    HashiCorp Vault is integrated into this project to serve as a centralized and secure backend for managing all sensitive data, such as SSH credentials and user passwords. This approach removes the need to store plaintext secrets in version-controlled files like `*.tfvars` or `*.pkrvars.hcl`, aligning with Infrastructure as Code best practices.
-
-    Both the `native` (host-based) and `container` (Podman-based) IaC execution strategies can connect to the same containerized Vault instance through the host network (`network_mode: "host"`). The Vault server is configured to start automatically on system boot if you use container, ensuring the secrets backend is always available for the IaC workflow without manual intervention.
-
-    - **Packer:** During the image-building phase, Packer authenticates with the Vault server and uses the `vault()` function within its HCL files to dynamically fetch the necessary secrets (e.g., `ssh_username`, `ssh_password_hash`) required for the unattended OS installation.
-
-    - **Terraform:** Similarly, Terraform utilizes the Vault Provider to read infrastructure-related secrets, such as `vm_username` and `ssh_private_key_path`, directly from Vault at runtime. This allows Terraform to provision VMs and configure SSH access without exposing any sensitive credentials in its configuration files.
-
-### C. Infrastructures
+> Work Cited:
+>
+> 1. Bibin Wilson, B. (2025). _How To Setup Kubernetes Cluster Using Kubeadm._ devopscube. <https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests>
+> 2. Aditi Sangave (2025). _How to Setup HashiCorp Vault HA Cluster with Integrated Storage (Raft)._ Velotio Tech Blog. <https://www.velotio.com/engineering-blog/how-to-setup-hashicorp-vault-ha-cluster-with-integrated-storage-raft>
+> 3. Dickson Gathima (2025). _Building a Highly Available PostgreSQL Cluster with Patroni, etcd, and HAProxy._ Medium. <https://medium.com/@dickson.gathima/building-a-highly-available-postgresql-cluster-with-patroni-etcd-and-haproxy-1fd465e2c17f>
+> 4. Deniz TÜRKMEN (2025). _Redis Cluster Provisioning — Fully Automated with Ansible._ Medium. <https://deniz-turkmen.medium.com/redis-cluster-provisioning-fully-automated-with-ansible-dc719bb48f75>
+>
+> **Note:** The operations of the Cluster that completely refer to the official documentation are not included in the above list.
 
 _**(To be continued...)**_

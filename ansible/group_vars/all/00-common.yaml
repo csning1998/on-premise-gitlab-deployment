@@ -2,21 +2,29 @@
 common:
   ubuntu:
     packages:
+      # System & Package Management Utilities
       - apt-transport-https
       - ca-certificates
-      - curl
+      - software-properties-common
+      - lsb-release
       - gpg
       - gnupg-agent
-      - software-properties-common
+      - snapd
+
+      # Downloading & Transfer Utilities
+      - curl
+      - wget
+
+      # Development & Build Tools
       - build-essential
       - python3-pip
-      - wget
-      - git
+
+      # File, Text, & Data Utilities
       - vim
       - jq
-      - snapd
       - tree
-      - gh
+      - unzip
+
+      # Monitoring & Network Tools
       - htop
       - net-tools
-      - lsb-release

@@ -15,9 +15,9 @@
 - name: "Block B: Install Vault Binary"
   become: true
   block:
-    - name: "Step B1. Download and Unarchive Vault (v{{ vault.target_version }})"
+    - name: "Step B1. Download and Unarchive Vault (v{{ vault_target_version }})"
       ansible.builtin.unarchive:
-        src: "https://releases.hashicorp.com/vault/{{ vault.target_version }}/vault_{{ vault.target_version }}_{{ vault.target_os }}_{{ vault.target_arch }}.zip"
+        src: "https://releases.hashicorp.com/vault/{{ vault_target_version }}/vault_{{ vault_target_version }}_{{ vault_target_os }}_{{ vault_target_arch }}.zip"
         dest: "/usr/local/bin"
         remote_src: true
         mode: "0755"
@@ -34,21 +34,36 @@
       ansible.builtin.debug:
         msg: "Vault installed: {{ vault_version_output.stdout }}"
 
+    - name: "Step B4. Create Vault system group"
+      ansible.builtin.group:
+        name: "{{ vault_group | default('vault') }}"
+        system: true
+        state: present
+
+    - name: "Step B5. Create Vault system user"
+      ansible.builtin.user:
+        name: "{{ vault_owner | default('vault') }}"
+        group: "{{ vault_group | default('vault') }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        home: /etc/vault.d
+
 - name: "Block C: Disable Swap"
   become: true
   block:
-    - name: "Step 3. Check if swap is active"
+    - name: "Step C1. Check if swap is active"
       ansible.builtin.command: swapon --show
       register: swapon_check
       changed_when: false
       failed_when: false
 
-    - name: "Step 4. Disable swap if it is active"
+    - name: "Step C2. Disable swap if it is active"
       ansible.builtin.command: swapoff -a
       when: swapon_check.stdout != ""
       changed_when: true
 
-    - name: "Step 5. Comment out swap entries in /etc/fstab"
+    - name: "Step C3. Comment out swap entries in /etc/fstab"
       ansible.builtin.replace:
         path: /etc/fstab
         regexp: '^([^#].*?\sswap\s+.*)$'

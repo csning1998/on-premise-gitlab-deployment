@@ -3,3 +3,13 @@
   ansible.builtin.systemd:
     name: minio
     state: restarted
+
+- name: Restart Vault Agent
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted
+  listen: "Restart Vault Agent"
+
+- name: Update CA Trust
+  ansible.builtin.command:
+    cmd: update-ca-certificates

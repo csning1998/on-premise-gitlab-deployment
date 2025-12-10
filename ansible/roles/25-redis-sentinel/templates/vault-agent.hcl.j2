@@ -1,0 +1,58 @@
+pid_file = "/var/run/vault-agent.pid"
+
+vault {
+  address = "{{ vault_addr | default('https://172.16.136.250:443') }}"
+  ca_cert = "/etc/vault.d/vault-ca.crt"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path = "/etc/vault.d/approle/role_id"
+      secret_id_file_path = "/etc/vault.d/approle/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/tmp/vault-token"
+    }
+  }
+}
+
+template {
+  destination = "/etc/redis/tls/server.crt"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
+{{ .Data.certificate }}
+{{ .Data.issuing_ca }}
+{{- end -}}
+{% endraw %}
+EOH
+  # Restart to activate the certificate.
+  command = "chown redis:redis /etc/redis/tls/server.crt && chmod 0644 /etc/redis/tls/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true) && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)"
+}
+
+template {
+  destination = "/etc/redis/tls/server.key"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
+{{ .Data.private_key }}
+{{- end -}}
+{% endraw %}
+EOH
+  command = "chown redis:redis /etc/redis/tls/server.key && chmod 0600 /etc/redis/tls/server.key"
+}
+
+template {
+  destination = "/etc/redis/tls/ca.crt"
+  contents = <<EOH
+{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ttl=24h" -}}
+{{ .Data.issuing_ca }}
+{{- end -}}
+{% endraw %}
+EOH
+  command = "chown redis:redis /etc/redis/tls/ca.crt && chmod 0644 /etc/redis/tls/ca.crt"
+}

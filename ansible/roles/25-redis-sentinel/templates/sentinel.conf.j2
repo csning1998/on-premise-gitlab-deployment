@@ -1,17 +1,25 @@
-port 26379
+port 0
+tls-port 26379
+
 daemonize no
 loglevel notice
 logfile /var/log/redis/redis-sentinel.log
 pidfile /var/run/redis/redis-sentinel.pid
 
-# Bind to the node's specific IP and loopback
+# Bind
 bind {{ advertise_ip }} 127.0.0.1
 protected-mode yes
 
 # Systemd Integration
 supervised systemd
 
-# Monitor Configuration: sentinel monitor <master-name> <ip> <port> <quorum>
+# TLS Configuration same as Redis Server
+tls-cert-file /etc/redis/tls/server.crt
+tls-key-file /etc/redis/tls/server.key
+tls-ca-cert-file /etc/redis/tls/ca.crt
+tls-replication yes
+
+# Monitor Configuration
 sentinel monitor {{ sentinel_master_name }} {{ redis_initial_master_ip }} 6379 {{ sentinel_quorum }}
 
 # Authentication

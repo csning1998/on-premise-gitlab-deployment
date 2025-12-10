@@ -10,36 +10,42 @@
   become: true
   roles:
     - 01-base-docker
+    - 07-base-vault
 
 - name: "Play: Provision Kubernetes (Kubeadm) Base Image"
   hosts: "02-base-kubeadm"
   become: true
   roles:
     - 02-base-kubeadm
+    - 07-base-vault
 
 - name: "Play: Provision MicroK8s Base Image"
   hosts: "03-base-microk8s"
   become: true
   roles:
     - 03-base-microk8s
+    - 07-base-vault
 
 - name: "Play: Provision Postgres (Singular) Base Image"
   hosts: "04-base-postgres"
   become: true
   roles:
     - 04-base-postgres
+    - 07-base-vault
 
 - name: "Play: Provision Redis (Singular) Base Image"
   hosts: "05-base-redis"
   become: true
   roles:
     - 05-base-redis
+    - 07-base-vault
 
 - name: "Play: Provision MinIO (Singular) Base Image"
   hosts: "06-base-minio"
   become: true
   roles:
     - 06-base-minio
+    - 07-base-vault
 
 - name: "Play: Provision Vault (Singular) Base Image"
   hosts: "07-base-vault"

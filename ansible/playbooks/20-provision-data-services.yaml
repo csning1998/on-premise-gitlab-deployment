@@ -31,15 +31,15 @@
   roles:
     - 26-redis-haproxy
 
-# MinIO, HAProxy
-- name: "Play 6: Configure MinIO High Availability Cluster"
-  hosts: minio_db_nodes
-  become: true
-  roles:
-    - 27-minio-distributed
-
-- name: "Play 7: Configure HAProxy for Load Balancing"
+# MinIO, HAProxy (The order should be refactored in the PR #40)
+- name: "Play 6: Configure HAProxy for Load Balancing"
   hosts: minio_haproxy_nodes
   become: true
   roles:
     - 28-minio-haproxy
+
+- name: "Play 7: Configure MinIO High Availability Cluster"
+  hosts: minio_db_nodes
+  become: true
+  roles:
+    - 27-minio-distributed

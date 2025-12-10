@@ -1,9 +1,8 @@
 
 # Define Server Pool / data storage (distributed nodes and disks) location
-# e.g. http://172.16.138.20{0...3}:9000/data{1...2}
 MINIO_VOLUMES="
 {%- for ip in minio_cluster_ips -%}
-http://{{ ip }}:9000/data{1...{{ minio_data_drives | length }}}{{ " " }}
+https://{{ ip }}:9000/data{1...{{ minio_data_drives | length }}}{{ " " }}
 {%- endfor -%}
 "
 
@@ -12,7 +11,8 @@ MINIO_ROOT_USER={{ minio_root_user }}
 MINIO_ROOT_PASSWORD={{ minio_root_password }}
 
 # Network binding
-MINIO_OPTS="--address :9000 --console-address :9001"
+MINIO_OPTS="--address :9000 --console-address :9001 --certs-dir /etc/minio/certs"
+MINIO_SERVER_URL="https://{{ minio_ha_virtual_ip }}:9000"
 
 # Add Site Replication etc. here
 # MINIO_REGION="us-east-1"

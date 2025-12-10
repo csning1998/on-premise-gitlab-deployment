@@ -106,10 +106,10 @@ ALL_PACKER_BASES=""
 ALL_TERRAFORM_LAYERS=""
 
 # --- Vault Configuration ---
-VAULT_ADDR="https://127.0.0.1:8200"
-VAULT_CACERT="${PWD}/vault/tls/ca.pem"
-VAULT_CACERT_PODMAN="/app/vault/tls/ca.pem"
-VAULT_TOKEN=""
+DEV_VAULT_ADDR="https://127.0.0.1:8200"
+DEV_VAULT_CACERT="${PWD}/vault/tls/ca.pem"
+DEV_VAULT_CACERT_PODMAN="/app/vault/tls/ca.pem"
+DEV_VAULT_TOKEN=""
 
 # --- User and SSH Configuration ---
 # Path to the SSH private key. This will be updated by the 'Generate SSH Key' utility.

@@ -106,11 +106,12 @@ variable "infra_config" {
   }
 }
 
-variable "harbor_postgres_tls" {
-  description = "TLS config for Harbor Postgres service"
-  type = object({
-    ca_cert_pem     = string
-    server_cert_pem = string
-    server_key_pem  = string
-  })
+variable "vault_ca_cert_b64" {
+  description = "Base64 encoded CA certificate for Vault Agent"
+  type        = string
+}
+
+variable "vault_role_name" {
+  description = "The AppRole name to create in Vault (e.g. gitlab-postgres, harbor-postgres)"
+  type        = string
 }
