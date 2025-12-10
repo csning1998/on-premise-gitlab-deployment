@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.5.0"
     }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "4.1.0"
-    }
     libvirt = {
       source  = "dmacvicar/libvirt"
       version = "0.9.0"
