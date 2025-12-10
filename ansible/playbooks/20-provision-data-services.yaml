@@ -1,22 +1,22 @@
 ---
 # Postgres, Patroni, HAProxy
-- name: "Play 1: Configure etcd Cluster"
-  hosts: postgres_etcd_nodes
-  become: true
-  roles:
-    - 21-postgres-etcd
-
-- name: "Play 2: Configure Patroni and PostgreSQL Cluster"
-  hosts: postgres_db_nodes
-  become: true
-  roles:
-    - 22-postgres-patroni
-
-- name: "Play 3: Configure HAProxy for Load Balancing"
+- name: "Play 1: Configure HAProxy for Load Balancing"
   hosts: postgres_haproxy_nodes
   become: true
   roles:
-    - 23-postgres-haproxy
+    - 21-postgres-haproxy
+
+- name: "Play 2: Configure etcd Cluster"
+  hosts: postgres_etcd_nodes
+  become: true
+  roles:
+    - 22-postgres-etcd
+
+- name: "Play 3: Configure Patroni and PostgreSQL Cluster"
+  hosts: postgres_db_nodes
+  become: true
+  roles:
+    - 23-postgres-patroni
 
 # Redis Sentinel, HAProxy
 - name: "Play 4: Configure Redis High Availability Cluster"
@@ -31,15 +31,15 @@
   roles:
     - 26-redis-haproxy
 
-# MinIO, HAProxy (The order should be refactored in the PR #40)
+# MinIO, HAProxy
 - name: "Play 6: Configure HAProxy for Load Balancing"
   hosts: minio_haproxy_nodes
   become: true
   roles:
-    - 28-minio-haproxy
+    - 27-minio-haproxy
 
 - name: "Play 7: Configure MinIO High Availability Cluster"
   hosts: minio_db_nodes
   become: true
   roles:
-    - 27-minio-distributed
+    - 28-minio-distributed

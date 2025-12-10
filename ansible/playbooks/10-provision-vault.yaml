@@ -3,7 +3,7 @@
   hosts: vault_haproxy
   become: true
   roles:
-    - 11-vault-loadbalancer
+    - 11-vault-haproxy
 
 - name: "Play 2: Configure Vault Nodes (Setup & Config)"
   hosts: vault_leader, vault_follower
