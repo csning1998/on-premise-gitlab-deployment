@@ -5,6 +5,7 @@ resource "kubernetes_namespace" "harbor" {
   }
 }
 
+# Ingress Controller
 module "ingress_controller" {
   source = "../../modules/32-microk8s-ingress"
 
@@ -12,16 +13,7 @@ module "ingress_controller" {
   ingress_class_name = "nginx"
 }
 
-module "harbor_tls" {
-  source = "../../modules/42-harbor-tls"
-
-  cert_common_name = var.harbor_hostname
-  namespace        = kubernetes_namespace.harbor.metadata[0].name
-  secret_name      = "harbor-ingress-tls"
-
-  depends_on = [kubernetes_namespace.harbor]
-}
-
+# Harbor DB Initialization
 module "harbor_db_init" {
   source = "../../modules/41-harbor-postgres-init"
 
@@ -43,9 +35,4 @@ module "harbor_db_init" {
       roles    = []
     }
   }
-}
-
-module "harbor_config" {
-  source     = "../../modules/43-harbor-config"
-  depends_on = [helm_release.harbor] # Should be after Harbor Helm Chart Pod Ready
 }
