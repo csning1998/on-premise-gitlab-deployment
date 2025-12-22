@@ -51,6 +51,9 @@ bootstrap:
     # Local loopback
     - host all all 127.0.0.1/32 md5
 
+    # For Terraform Runner.
+    - hostssl all all 172.16.137.0/24 md5
+
 postgresql:
   listen: "{{ advertise_ip }}:{{ postgres_port }}"
   connect_address: "{{ advertise_ip }}:{{ postgres_port }}"
