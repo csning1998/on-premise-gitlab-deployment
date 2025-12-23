@@ -1,3 +1,4 @@
+
 resource "kubernetes_manifest" "coredns_custom_config" {
   field_manager {
     name            = "terraform-dns-manager"
