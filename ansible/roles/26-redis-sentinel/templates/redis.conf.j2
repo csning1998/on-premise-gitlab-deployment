@@ -1,7 +1,5 @@
 # Network Binding
 bind {{ advertise_ip }} 127.0.0.1
-port 0
-tls-port 6379
 
 protected-mode yes
 daemonize no
@@ -15,12 +13,19 @@ supervised systemd
 # Working Directory
 dir /var/lib/redis
 
-# TLS Configuration
+# TLS Configuration for GitLab.
+{% if redis_enable_tls | bool %}
+port 0
+tls-port 6379
 tls-cert-file /etc/redis/tls/server.crt
 tls-key-file /etc/redis/tls/server.key
 tls-ca-cert-file /etc/redis/tls/ca.crt
 tls-auth-clients no 
 tls-replication yes
+{% else %}
+# TLS disabled for Harbor.
+port 6379
+{% endif %}
 
 # Persistence
 appendonly yes

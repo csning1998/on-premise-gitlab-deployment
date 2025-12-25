@@ -1,5 +1,5 @@
 ---
-- name: "Section: Configure and enable MicroK8s addons"
+- name: "Block 1: Configure and enable MicroK8s addons"
   become: true
   block:
     - name: "Step 1. Enable core addons for MicroK8s"
@@ -15,3 +15,20 @@
       register: metallb_result
       changed_when: "'MetalLB is already enabled' not in metallb_result.stdout"
       when: metallb_ip_range is defined
+
+- name: "Block 2: Purge CoreDNS ConfigMap"
+  become: true
+  block:
+    - name: "Step 1. Wait for CoreDNS ConfigMap to be created by addon"
+      command: "microk8s kubectl get configmap coredns -n kube-system"
+      register: coredns_check
+      until: coredns_check.rc == 0
+      retries: 10
+      delay: 5
+      ignore_errors: true
+
+    - name: "Step 2. Delete default CoreDNS ConfigMap to allow Terraform adoption."
+      command: "microk8s kubectl delete configmap coredns -n kube-system"
+      when: coredns_check.rc == 0
+      ignore_errors: true
+      tags: [hack_coredns]

@@ -1,3 +1,4 @@
+---
 - name: "Block E: Initialize Vault Cluster (Primary Only)"
   become: true
   run_once: true

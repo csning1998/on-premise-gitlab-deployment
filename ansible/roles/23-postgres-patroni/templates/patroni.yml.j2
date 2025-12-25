@@ -43,11 +43,18 @@ bootstrap:
 {% for host in groups['postgres_db_nodes'] %}
     - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 md5
     - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 md5
+    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 md5
 {% endfor %}
 
-    # For other sources (Microk8s, Kubeadm, etc.) to enforce mTLS
-    - hostssl all all {{ postgres_allowed_subnet }} md5 clientcert=verify-ca
-    
+    # Terraform Runner (No mTLS, Password Only)
+    - hostssl all all {{ terraform_runner_subnet | default('172.16.137.0/24') }} md5
+
+    # Rule 1: K8s Node Network (Enforce mTLS) from Terraform
+    - hostssl all all {{ postgres_mtls_node_subnet }} md5 clientcert=verify-ca
+
+    # Rule 2: K8s Pod Network (Enforce mTLS) from Ansible Defaults
+    - hostssl all all {{ postgres_mtls_pod_subnet }} md5 clientcert=verify-ca
+
     # Local loopback
     - host all all 127.0.0.1/32 md5
 

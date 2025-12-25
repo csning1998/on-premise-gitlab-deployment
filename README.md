@@ -62,16 +62,15 @@ Environment: NATIVE
 Development Vault (Local): Running (Unsealed)
 Production Vault (Layer10): Running (Unsealed)
 
-1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
-2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
-3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
-4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
-5) Generate SSH Key                               13) Switch Environment Strategy
-6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
-7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
-8) Verify IaC Environment                         16) Quit
+1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
+2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge All Libvirt Resources
+3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Packer and Terraform Resources
+4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Quit
+5) Generate SSH Key                               11) Rebuild Layer via Ansible
+6) Setup KVM / QEMU for Native                    12) Verify SSH
 
 >>> Please select an action:
+
 ```
 
 Among options `9`, `10`, and `11`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
@@ -98,12 +97,14 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
     #### Checking status of libvirt service...
     --> libvirt service is already running.
     1) 10-vault-core          4) 20-gitlab-redis       7) 20-harbor-redis      10) 50-gitlab-kubeadm
-    2) 20-gitlab-minio        5) 20-harbor-minio       8) 30-harbor-microk8s   11) 60-gitlab-platform
-    3) 20-gitlab-postgres     6) 20-harbor-postgres    9) 40-provision-harbor  12) Back to Main Menu
+    2) 20-gitlab-minio        5) 20-harbor-minio       8) 30-harbor-microk8s   11) 50-harbor-provision
+    3) 20-gitlab-postgres     6) 20-harbor-postgres    9) 40-harbor-platform   12) 60-gitlab-platform
+    13) Back to Main Menu
+
     >>> Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `11) Rebuild Layer via Ansible`
+3. If you select `11) Rebuild Layer via Ansible` **_(Currently Malfunctioning...)_**
 
     ```text
     >>> Please select an action: 11
@@ -470,7 +471,9 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - To test or rebuild a specific Terraform module layer independently (such as Harbor or Postgres), use `10) Provision Terraform Layer`.
 
-    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `11) Rebuild Layer via Ansible`.
+        - Rebuilding Harbor in Layer 50's Service Provision stage sometimes shows `module.harbor_config.harbor_garbage_collection.gc` Resource not found error occurred, just remove `terraform.tfstate` and `terraform.tfstate.backup` in `terraform/layers/50-harbor-platform` and reexecute `terraform apply`.
+
+    - **(Temporary malfunctioning)** To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `11) Rebuild Layer via Ansible`.
 
 5. **Resource Cleanup**:
 
@@ -481,6 +484,69 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     - **`15) Purge All Packer and Terraform Resources`**:
 
         This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
+
+#### **Step B.3. Export Certs of Services:**
+
+1. To configure Terraform Runner for MinIO (Layer 20):
+
+    1. The deployment of Layer 10 Vault should be completed first to generate `vault-root-ca.crt`, located at `terraform/layers/10-vault-core/tls/`
+
+    2. Ensure Terraform Runner has Vault CA
+
+        - If you are using RHEL / CentOS, perform the following steps
+
+            ```shell
+            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+            sudo update-ca-trust
+            ```
+
+        - If you are using Ubuntu / Debian, perform the following steps
+
+            ```shell
+            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
+            sudo update-ca-certificates
+            ```
+
+    3. Verify Trust Store
+
+        ```shell
+        curl -I https://minio.iac.local:9000/minio/health/live
+        ```
+
+        If the output is `HTTP/1.1 200 OK`, then the Trust Store is configured correctly.
+
+2. To access `harbor.iac.local` from the host, perform the following steps
+
+    1. Get the IP address of the Harbor node
+
+        ```shell
+        kubectl get svc -n ingress-system -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}'
+        ```
+
+        Add the stdout as `<harbor-node-ip> harbor.iac.local` to `etc/hosts`
+
+    2. Export the Ingress TLS certificate from Kubernetes. Since the CA Chain is configured in the Vault, meaning that it can be directly fetched from the Kubernetes Secret.
+
+        ```shell
+        ssh harbor-microk8s-node-00 "kubectl get secret -n harbor harbor-ingress-tls -o jsonpath='{.data.ca\.crt}' | base64 -d" > vault-root-ca.crt
+        ```
+
+        This is the same as the Layer 10 certificate.
+
+    3. Import the Trust Store. For example, on RHEL, use the following command
+
+        ```shell
+        sudo cp vault-root-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo update-ca-trust extract
+        ```
+
+        and then verify by `curl -vI` as follow
+
+        ```shell
+        curl -vI https://harbor.iac.local
+        ```
+
+        If it shows `SSL certificate verify ok` and `HTTP/2 200`, meaning that the entire PKI Chain has been successfully established from the Vault certificate issuance, through Cert-Manager signing, to Ingress deployment, and finally to host trust.
 
 ## Section 3. System Architecture
 

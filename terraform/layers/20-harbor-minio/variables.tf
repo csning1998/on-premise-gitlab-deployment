@@ -49,3 +49,12 @@ variable "harbor_minio_infra" {
     allowed_subnet = string
   })
 }
+
+variable "harbor_minio_tenants" {
+  description = "Map of buckets to create for Harbor"
+  type = map(object({
+    user_name      = string
+    enable_version = bool
+    policy_rw      = bool
+  }))
+}

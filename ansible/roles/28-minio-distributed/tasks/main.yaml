@@ -135,7 +135,7 @@
     enabled: true
     daemon_reload: true
 
-- name: "Section E: Configure MinIO Client Trust"
+- name: "Section E: Configure MinIO Client Trust & Verification"
   block:
     - name: "Task E0. Copy Vault CA to system-wide trust store"
       ansible.builtin.copy:
@@ -143,11 +143,11 @@
         dest: "/usr/local/share/ca-certificates/vault-root-ca.crt"
         remote_src: true
         mode: "0644"
-      notify: Update CA Trust
 
     - name: "Task E1. Force update CA certificates"
       ansible.builtin.command: update-ca-certificates
-      changed_when: false
+      register: ca_update_result
+      changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
 
     - name: "Task E2. Ensure Root .mc directory exists"
       ansible.builtin.file:
@@ -185,14 +185,22 @@
         mode: "0644"
       when: ansible_user != 'root'
 
-    - name: "Task E6. Verify MinIO API is reachable via VIP"
+    - name: "Task E5.5 Wait for Vault Agent"
+      ansible.builtin.command: systemctl is-active vault-agent
+      register: vault_status
+      until: vault_status.rc == 0
+      retries: 10
+      delay: 2
+      changed_when: false
+
+    - name: "Task E6. Wait for MinIO Cluster Readiness"
       ansible.builtin.uri:
-        url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/live"
+        url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/ready"
         validate_certs: true
-        ca_path: "/root/.mc/certs/CAs/root_ca.crt"
-      register: result
-      until: result.status == 200
-      retries: 20
+        ca_path: "/usr/local/share/ca-certificates/vault-root-ca.crt"
+      register: minio_readiness
+      until: minio_readiness.status == 200
+      retries: 30
       delay: 5
 
     - name: "Task E7. Configure local alias 'myminio' for Root"
@@ -202,4 +210,17 @@
           https://{{ minio_ha_virtual_ip }}:9000
           {{ minio_root_user }}
           {{ minio_root_password }}
+      register: mc_alias_result
+      until: mc_alias_result.rc == 0
+      retries: 10
+      delay: 3
+      changed_when: false
+
+    - name: "Task E8. Verify MinIO Cluster Status (Deep Check)"
+      ansible.builtin.command:
+        cmd: mc admin info myminio
+      register: mc_info
+      until: mc_info.rc == 0
+      retries: 10
+      delay: 5
       changed_when: false

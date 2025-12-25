@@ -4,3 +4,9 @@ variable "harbor_hostname" {
   type        = string
   default     = "harbor.iac.local" # mod in tfvars in future.
 }
+
+variable "microk8s_api_port" {
+  description = "MicroK8s API Port"
+  type        = string
+  default     = "16443"
+}
