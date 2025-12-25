@@ -488,11 +488,13 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 To access `harbor.iac.local` from the host, perform the following steps
 
-1. Add the following line to `etc/hosts`
+1. Get the IP address of the Harbor node
 
-    ```text
-    172.16.135.200 harbor.iac.local
+    ```shell
+    kubectl get svc -n ingress-system -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}'
     ```
+
+    Add the stdout as `<harbor-node-ip> harbor.iac.local` to `etc/hosts`
 
 2. Export the Ingress TLS certificate from Kubernetes. Since the CA Chain is configured in the Vault, meaning that it can be directly fetched from the Kubernetes Secret.
 
