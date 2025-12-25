@@ -16,7 +16,7 @@ resource "helm_release" "cert_manager" {
   ]
 }
 
-# Get K8s Root CA
+# Get Kubernetes Root CA
 data "kubernetes_config_map" "kube_root_ca" {
   metadata {
     name      = "kube-root-ca.crt"
@@ -63,13 +63,13 @@ resource "kubernetes_secret" "vault_reviewer_token" {
 
 /** 4. Set Vault Auth Backend Config (feed Reviewer Token to Vault)
  * Use physical IP to bypass VIP L2 issue
- * Inject K8s CA (automatically read from Secret)
+ * Inject Kubernetes CA (automatically read from Secret)
  * Inject Reviewer Token (let Vault has permission to examine)
  * Close Issuer validation (resolve iss mismatch)
  */
 resource "vault_kubernetes_auth_backend_config" "config" {
   backend                = "kubernetes"
-  kubernetes_host        = "https://${var.k8s_physical_ip}:${var.k8s_api_port}"
+  kubernetes_host        = "https://${local.microk8s_physical_ip}:${var.microk8s_api_port}"
   kubernetes_ca_cert     = kubernetes_secret.vault_reviewer_token.data["ca.crt"]
   token_reviewer_jwt     = kubernetes_secret.vault_reviewer_token.data["token"]
   disable_iss_validation = true

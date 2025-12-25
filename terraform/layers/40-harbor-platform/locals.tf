@@ -13,6 +13,11 @@ locals {
 }
 
 locals {
+  # Kubernetes Physical IP
+  microk8s_physical_ip = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_ip_list[0]
+}
+
+locals {
   kubeconfig_raw = data.terraform_remote_state.microk8s_provision.outputs.kubeconfig_content
   kubeconfig     = yamldecode(local.kubeconfig_raw)
 
