@@ -36,6 +36,12 @@
         creates: "{{ item.creates_path }}"
       loop: "{{ microk8s_base.aliases }}"
 
+    - name: "Step B4. Ensure Python Kubernetes library for Ansible is installed"
+      ansible.builtin.pip:
+        name: kubernetes
+        state: present
+        extra_args: "--break-system-packages"
+
 - name: "Block C: Add SSH user to the 'microk8s' group for basic access"
   become: true
   block:

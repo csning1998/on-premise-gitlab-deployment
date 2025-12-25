@@ -46,6 +46,8 @@
         - "{{ _kubeadm_base_repo_crio_data.gpg_key_temp_path }}"
         - "{{ _kubeadm_base_repo_k8s_data.gpg_key_temp_path }}"
 
-    # - name: "Step 8. Pre-pull container images for control plane"
-    #   ansible.builtin.command: kubeadm config images pull --cri-socket unix:///var/run/crio/crio.sock
-    #   changed_when: true
+    - name: "Step B4. Ensure Python Kubernetes library for Ansible is installed"
+      ansible.builtin.pip:
+        name: kubernetes
+        state: present
+        extra_args: "--break-system-packages"

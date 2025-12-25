@@ -19,17 +19,17 @@
     - 23-postgres-patroni
 
 # Redis Sentinel, HAProxy
-- name: "Play 4: Configure Redis High Availability Cluster"
-  hosts: redis_db_master, redis_db_replicas
-  become: true
-  roles:
-    - 25-redis-sentinel
-
-- name: "Play 5: Configure HAProxy for Load Balancing"
+- name: "Play 4: Configure HAProxy for Load Balancing"
   hosts: redis_haproxy_nodes
   become: true
   roles:
-    - 26-redis-haproxy
+    - 25-redis-haproxy
+
+- name: "Play 5: Configure Redis High Availability Cluster"
+  hosts: redis_db_master, redis_db_replicas
+  become: true
+  roles:
+    - 26-redis-sentinel
 
 # MinIO, HAProxy
 - name: "Play 6: Configure HAProxy for Load Balancing"

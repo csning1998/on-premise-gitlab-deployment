@@ -7,6 +7,14 @@ data "terraform_remote_state" "microk8s_provision" {
   }
 }
 
+# HashiCorp Vault State
+data "terraform_remote_state" "vault_core" {
+  backend = "local"
+  config = {
+    path = "../10-vault-core/terraform.tfstate"
+  }
+}
+
 # Infrastructure VIPs
 data "terraform_remote_state" "redis" {
   backend = "local"

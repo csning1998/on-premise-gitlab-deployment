@@ -4,7 +4,7 @@ all:
     ansible_user: "${ansible_ssh_user}"
     service_identifier: "${service_name}"
     redis_cluster_name: "${service_name}-redis-cluster"
-
+    redis_enable_tls: "${redis_enable_tls}"
     redis_cluster_ips: ${jsonencode([for node in redis_nodes : node.ip])}
     redis_ha_virtual_ip: "${redis_ha_virtual_ip}"
     redis_initial_master_ip: "${redis_nodes[keys(redis_nodes)[0]].ip}"

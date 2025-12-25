@@ -16,3 +16,8 @@ output "ca_cert_file" {
 
   depends_on = [local_file.vault_ca]
 }
+
+output "ca_cert_pem" {
+  description = "The CA certificate PEM content."
+  value       = var.tls_mode == "generated" ? tls_self_signed_cert.vault_ca[0].cert_pem : ""
+}

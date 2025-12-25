@@ -8,7 +8,7 @@ all:
     etcd_cluster_ips: ${jsonencode(etcd_ips)}
     postgres_cluster_ips: ${jsonencode(postgres_ips)}
     postgres_ha_virtual_ip: "${postgres_ha_virtual_ip}"
-    postgres_allowed_subnet: "${postgres_allowed_subnet}"
+    postgres_mtls_node_subnet: "${postgres_mtls_node_subnet}"
     postgres_nat_subnet_prefix: "${postgres_nat_subnet_prefix}"
 
     haproxy_stats_port: "${haproxy_stats_port}"

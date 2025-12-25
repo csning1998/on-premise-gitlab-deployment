@@ -2,8 +2,9 @@
 # PostgreSQL Version
 postgres_version: 18
 
-# Network Access Control
-postgres_allowed_subnet: "172.16.0.0/16"
+# For other sources (Calico default for Microk8s, Kubeadm, etc.) to enforce mTLS
+postgres_mtls_pod_subnet: "10.1.0.0/16"
+# Note that postgres_mtls_node_subnet is injected from Terraform via inventory.
 
 # Ports
 postgres_port: 5432

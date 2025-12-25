@@ -4,7 +4,7 @@ provider "postgresql" {
   port            = var.pg_port
   username        = var.pg_superuser
   password        = var.pg_superuser_password
-  sslmode         = "disable" # Should be modified to 'require'
+  sslmode         = "require"
   connect_timeout = 15
   superuser       = false
 }

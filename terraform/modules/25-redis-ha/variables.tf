@@ -113,3 +113,9 @@ variable "vault_role_name" {
   description = "The AppRole name to create in Vault (e.g. gitlab-postgres, harbor-postgres)"
   type        = string
 }
+
+variable "enable_tls" {
+  description = "Enable TLS/SSL for Redis and Sentinel. Secure by Default."
+  type        = bool
+  default     = true
+}

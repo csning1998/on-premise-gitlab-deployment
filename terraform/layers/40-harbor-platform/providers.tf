@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "2.38.0"
     }
+    kubectl = { # Hack method for ClusterIssuer
+      source  = "gavinbunney/kubectl"
+      version = "1.19.0"
+    }
     helm = {
       source  = "hashicorp/helm"
       version = "3.0.2"
@@ -25,18 +29,20 @@ terraform {
 }
 
 provider "vault" {
-  # Vault Address is read from VAULT_ADDR env var
-}
-
-locals {
-  kubeconfig_raw = data.terraform_remote_state.microk8s_provision.outputs.kubeconfig_content
-  kubeconfig     = yamldecode(local.kubeconfig_raw)
-
-  cluster_info = local.kubeconfig.clusters[0].cluster
-  user_info    = local.kubeconfig.users[0].user
+  address      = "https://${data.terraform_remote_state.vault_core.outputs.vault_ha_virtual_ip}:443"
+  ca_cert_file = abspath("${path.root}/../10-vault-core/tls/vault-ca.crt")
+  token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
 }
 
 provider "kubernetes" {
+  host                   = local.cluster_info.server
+  cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
+  client_certificate     = base64decode(local.user_info["client-certificate-data"])
+  client_key             = base64decode(local.user_info["client-key-data"])
+}
+
+provider "kubectl" {
+  load_config_file       = false
   host                   = local.cluster_info.server
   cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
   client_certificate     = base64decode(local.user_info["client-certificate-data"])

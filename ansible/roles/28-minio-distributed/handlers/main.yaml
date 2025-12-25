@@ -9,7 +9,3 @@
     name: vault-agent
     state: restarted
   listen: "Restart Vault Agent"
-
-- name: Update CA Trust
-  ansible.builtin.command:
-    cmd: update-ca-certificates
