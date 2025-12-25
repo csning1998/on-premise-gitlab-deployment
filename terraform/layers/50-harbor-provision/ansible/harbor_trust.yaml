@@ -1,0 +1,69 @@
+---
+- name: Configure MicroK8s Harbor Trust
+  hosts: harbor_nodes
+  become: true
+  vars:
+    harbor_domain: "harbor.iac.local"
+    certs_dir: "/var/snap/microk8s/current/args/certs.d/{{ harbor_domain }}"
+
+  tasks:
+    - name: Detect Harbor Ingress IP from Kubernetes
+      # Attempt to fetch Ingress Controller LoadBalancer IP first
+      # If failed, attempt to fetch Harbor Ingress object IP
+      shell: |
+        export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+        IP=$(kubectl get svc -n ingress-system -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+        if [ -z "$IP" ]; then
+          IP=$(kubectl get ingress -n harbor harbor-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+        fi
+        echo $IP
+      register: ingress_ip_output
+      changed_when: false
+      failed_when: ingress_ip_output.stdout == ""
+
+    - name: Update /etc/hosts with correct Harbor IP
+      lineinfile:
+        path: /etc/hosts
+        regexp: ".*{{ harbor_domain }}$"
+        line: "{{ ingress_ip_output.stdout }} {{ harbor_domain }}"
+        state: present
+
+    - name: Create MicroK8s certs directory
+      file:
+        path: "{{ certs_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Fetch and Pin Harbor Certificate (Force Refresh)
+      shell: |
+        echo -n | openssl s_client -connect {{ harbor_domain }}:443 -servername {{ harbor_domain }} 2>/dev/null | openssl x509 > {{ certs_dir }}/ca.crt
+      args:
+        creates: "" # Always run to ensure the latest certificate
+      register: fetch_cert
+
+    - name: Create hosts.toml for Containerd
+      copy:
+        dest: "{{ certs_dir }}/hosts.toml"
+        content: |
+          server = "https://{{ harbor_domain }}"
+
+          [host."https://{{ harbor_domain }}"]
+            capabilities = ["pull", "resolve"]
+            ca = "{{ certs_dir }}/ca.crt"
+
+    - name: Restart MicroK8s Containerd (if config or cert changed)
+      command: snap restart microk8s.daemon-containerd
+      # Restart when hosts.toml changes or certificate is refreshed
+      when: fetch_cert.changed
+
+    - name: Verify Connectivity (Allow 200 or 401)
+      shell: |
+        curl --silent --output /dev/null --write-out "%{http_code}" --cacert "{{ certs_dir }}/ca.crt" "https://{{ harbor_domain }}/v2/"
+      register: curl_check
+      failed_when: false
+      changed_when: false
+      until:
+        - curl_check.rc == 0
+        - curl_check.stdout == "200" or curl_check.stdout == "401"
+      retries: 20
+      delay: 5

@@ -34,8 +34,8 @@ resource "helm_release" "harbor" {
         }
         ingress = {
           hosts = {
-            core   = "harbor.iac.local"
-            notary = "notary.harbor.iac.local"
+            core   = var.harbor_hostname
+            notary = "notary.${var.harbor_hostname}"
           }
           className = "nginx"
           annotations = {
@@ -45,24 +45,26 @@ resource "helm_release" "harbor" {
         }
       }
 
-      externalURL = "https://harbor.iac.local"
+      externalURL = "https://${var.harbor_hostname}"
       # Inject CA Bundle Secret, let Harbor trust MinIO and Postgres signed certificates
       caBundleSecretName = "harbor-ca-bundle"
 
       persistence = {
         enabled = true
         imageChartStorage = {
-          type = "s3"
+          type            = "s3"
+          disableredirect = true
           s3 = {
             region    = "us-east-1"
             bucket    = "harbor-registry"
-            accesskey = data.vault_generic_secret.db_vars.data["minio_root_user"]
-            secretkey = data.vault_generic_secret.db_vars.data["minio_root_password"]
+            accesskey = data.vault_generic_secret.s3_credentials.data["access_key"]
+            secretkey = data.vault_generic_secret.s3_credentials.data["secret_key"]
             # MinIO supports TLS (not support mTLS), thus use https and port must correspond.
             regionendpoint = "https://minio.iac.local:9000"
-            encrypt        = false
+            forcepathstyle = true
             secure         = true
             v4auth         = true
+            encrypt        = false
           }
         }
       }
