@@ -352,29 +352,29 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 0. **Development mode is the previous stage of Production Vault, only used to set up Production Vault. Subsequently, the Production Vault is used for managing all sensitive data for the entire project.**
 
-1. First, run the `entry.sh` script and select option `1` to generate the files required for the TLS handshake. When creating the self-signed CA certificate, you can leave the fields blank for now. If you need to regenerate the TLS files, you can simply run option `1` again.
+1. First, run the `entry.sh` script and select option `1` to generate the files required for the TLS handshake. During the creation of the self-signed CA certificate, fields may be left blank. If regeneration of TLS files is necessary, option `1` may be executed again.
 
 2. Switch to the project's root directory and run the following command to start the Development mode Vault server.
 
-    - If you prefer to run it on the host:
+    - If running it on the host is preferred:
 
         ```shell
         vault server -config=vault/vault.hcl
         ```
 
-    - **(Recommended)** If you prefer to run it in a container (side-car mode):
+    - **(Recommended)** If running it in a container (side-car mode) is preferred:
 
         ```shell
         podman compose up -d iac-vault-server
         ```
 
-    After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If you need to reinitialize Vault, you must manually clear all files within the `vault/data/` directory.
+    After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If reinitialization of Vault is necessary, all files within the `vault/data/` directory must be manually cleared.
 
     **Note:** Please open a new terminal window or tab for subsequent operations.
 
-3. Once the previous steps are complete, you can run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
+3. Once the previous steps are complete, run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
 
-4. Next, you only need to manually modify the following variables used in the project. Please replace the password with your own password and ensure the password's security.
+4. Next, only the following variables used in the project require manual modification. Passwords must be replaced with unique values to ensure security.
 
     - **For Development Vault**
 
@@ -503,30 +503,30 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **Note 2:**
 
-        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `ansible_runner.vm_credentials` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
+        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, these can be set to the same value. However, if different names are required for different VMs, the objects and relevant code in HCL can be modified directly. Typically, the `ansible_runner.vm_credentials` variable and related variable passing would be modified, followed by the use of a `for_each` loop for iteration. This increases complexity; therefore, if no other requirements exist, maintaining identical SSH and VM identity variables is recommended.
 
-5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use
+5. When starting the project, the Vault server is launched in a single terminal window (e.g., within an IDE) using `vault server -config=vault/vault.hcl`. The following options are available for use:
 
     - option `3` in `entry.sh` to unseal the Development mode Vault database
     - option `4` to unseal the Production mode Vault database
 
-    Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
+    Alternatively, use the container as described in B.1-2, which is suggested due to simplicity.
 
 #### **Step B.3. Create Variable File for Terraform:**
 
-1. You can RENAME the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
+1. Rename the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
 
     ```shell
     for f in terraform/layers/*/terraform.tfvars.example; do cp -n "$f" "${f%.example}"; done
     ```
 
-    Then, you can modify the `terraform.tfvars` file based on your requirements. HA and non-HA are both supported.
+    Then modify the `terraform.tfvars` file based on the requirements of each cluster. HA and non-HA are both supported.
 
 2. For users setting up an HA Cluster (GitLab as example), the number of elements in `gitlab_kubeadm_compute.masters` and `gitlab_kubeadm_compute.workers` determines the number of nodes generated. Ensure the quantity of nodes in `gitlab_kubeadm_compute.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `gitlab_kubeadm_compute.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
-    - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
+    - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> .
     - The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
-    - After selecting your version, please verify the checksum.
+    - After selecting the version, please verify the checksum.
         - For latest Noble version: <https://releases.ubuntu.com/noble/SHA256SUMS>
         - For "Noble-old-release" version: <https://old-releases.ubuntu.com/releases/noble/SHA256SUMS>
 
@@ -556,7 +556,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **`14) Purge All Libvirt Resources`**:
 
-        This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
+        This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where cleaning up virtualization resources is required without clearing the project state.
 
     - **`15) Purge All Packer and Terraform Resources`**:
 
@@ -600,14 +600,14 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     2. Ensure Terraform Runner has Vault CA
 
-        - If you are using RHEL / CentOS, perform the following steps
+        - For RHEL / CentOS, perform the following steps
 
             ```shell
             sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
             sudo update-ca-trust
             ```
 
-        - If you are using Ubuntu / Debian, perform the following steps
+        - For Ubuntu / Debian, perform the following steps
 
             ```shell
             sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
