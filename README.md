@@ -33,6 +33,7 @@ Before you begin, ensure you have the following:
 -   `sudo` access for Libvirt.
 -   `podman` and `podman compose` installed (for containerized mode).
 -   `whois` package installed (for the `mkpasswd` command).
+-   `jq` package for JSON parsing.
 
 ### C. Note
 
@@ -325,7 +326,28 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         If the command executes successfully and lists the virtual machines (even if the list is empty), it means you have all the necessary permissions.
 
-#### **Step B.1. Create Confidential Variable File for HashiCorp Vault**
+#### **Step B.1. Prepare GitHub Credentials**
+
+**Note:** This project defaults to using Terraform to manage GitHub's Repository, so a Fine-grained Personal Access Token is required. skip or delete `terraform/layers/00-github-meta` if the user who cloned this project does not use Terraform to manage GitHub's Repository.
+
+1. Visit [GitHub Developer Settings](https://github.com/settings/personal-access-tokens) to apply for a Fine-grained Personal Access Token.
+
+2. Select the `Generate new token` button on the upper-right corner of the page, then set the Token name, Expiration, and Repository access.
+
+3. For the Permissions section, select the following permissions:
+
+    - **Metadata:** `Read-only` (Mandatory)
+    - **Administration:** `Read and Write` (for modifying Repo settings and Ruleset)
+    - **Contents:** `Read and Write` (for reading Ref and Git information)
+    - **Repository security advisories:** `Read and Write` (for managing security advisories)
+    - **Dependabot alerts:** `Read and Write` (for managing dependency alerts)
+    - **Secrets:** `Read and Write` (optional for managing Actions Secrets)
+    - **Variables:** `Read and Write` (optional for managing Actions Variables)
+    - **Webhooks:** `Read and Write` (optional for managing Webhooks)
+
+4. Click `Generate token` and copy the generated token. Preserve this for the next step.
+
+#### **Step B.2. Create Confidential Variable File for HashiCorp Vault**
 
 > _**All secrets will be integrated into HashiCorp Vault with Development mode and Production mode. This project defaults to using Vault with HTTPS configuration, and the certificate is self-signed. Please follow the steps below to ensure correct setup.**_
 
@@ -341,7 +363,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
         vault server -config=vault/vault.hcl
         ```
 
-    - If you prefer to run it in a container (side-car mode):
+    - **(Recommended)** If you prefer to run it in a container (side-car mode):
 
         ```shell
         podman compose up -d iac-vault-server
@@ -353,15 +375,28 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 3. Once the previous steps are complete, you can run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
 
-4. Next, you only need to manually modify the following variables used in the project.
+4. Next, you only need to manually modify the following variables used in the project. Please replace the password with your own password and ensure the password's security.
 
-    - **For Development mode Vault**
+    - **For Development Vault**
+
+        - The following variables are used for packer and bootstrapping production HashiCorp Vault in Terraform Layer `10`.
+
+            - `github_pat`: GitHub Personal Access Token obtained from the previous step.
+            - `ssh_username`, `ssh_password`: SSH Username and Password
+            - `vm_username`, `vm_password`: VM Username and Password
+            - `ssh_public_key_path`, `ssh_private_key_path`: SSH Public and Private Key Path located in the host.
+
+        ```shell
+        export VAULT_ADDR="https://127.0.0.1:8200"
+        export VAULT_CACERT="${PWD}/vault/tls/ca.pem"
+        export VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt)
+        vault secrets enable -path=secret kv-v2
+        ```
 
         ```shell
         vault kv put \
-            -address="https://127.0.0.1:8200" \
-            -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/variables \
+            github_pat="your-github-personal-access-token" \
             ssh_username="some-user-name-for-ssh" \
             ssh_password="some-user-password-for-ssh" \
             ssh_password_hash=$(echo -n "$ssh_password" | mkpasswd -m sha-512 -P 0) \
@@ -371,7 +406,26 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             ssh_private_key_path="~/.ssh/some-ssh-key-name"
         ```
 
-    - **For Production mode Vault Environment Variables**
+    - **For Production Vault**
+
+        - The following variables are used for bootstrapping Terraform Layer of Patroni / Sentinel / MinIO (S3) / Harbor / GitLab Clusters.
+
+            - `ssh_username`, `ssh_password`: SSH login credentials.
+            - `vm_username`, `vm_password`: Virtual Machine login credentials.
+            - `ssh_public_key_path`, `ssh_private_key_path`: Local paths on the host machine for the SSH public and private keys.
+            - `pg_superuser_password`: Password for the PostgreSQL superuser (`postgres`). Used for initial database creation (`initdb`), Patroni management operations, and manual database maintenance.
+            - `pg_replication_password`: Password for the Streaming Replication User. When Patroni establishes a standby node, the standby node uses this password to connect to the primary node for Write-Ahead Log (WAL) synchronization.
+            - `pg_vrrp_secret`: VRRP (Virtual Router Redundancy Protocol) authentication key for Keepalived nodes. Ensures only authorized nodes participate in Virtual IP (VIP) election and failover, preventing malicious interference within the local network.
+            - `redis_requirepass`: Redis client authentication password. Required by any client (e.g., GitLab, Harbor) connecting to Redis to access data via the `AUTH` command.
+            - `redis_masterauth`: Authentication password used by Redis replicas to connect to the master node for synchronization. During failover, the new replica uses this password for the handshake with the promoted master. This is typically identical to `redis_requirepass` for simplified management.
+            - `redis_vrrp_secret`: VRRP authentication key for the Redis load balancing layer (HAProxy/Keepalived). Operates on the same principle as `pg_vrrp_secret`.
+            - `minio_root_user`: MinIO root administrator account (formerly Access Key). Used for logging into the MinIO Console or managing buckets and policies via the MinIO Client (`mc`).
+            - `minio_root_password`: MinIO root administrator password (formerly Secret Key).
+            - `minio_vrrp_secret`: VRRP authentication key for the MinIO load balancing layer (HAProxy/Keepalived). Operates on the same principle as `pg_vrrp_secret`.
+            - `vault_haproxy_stats_pass`: Login password for the HAProxy Stats Dashboard. Protects the Web UI (typically on port 8404) that displays backend server health status and traffic statistics.
+            - `vault_keepalived_auth_pass`: VRRP authentication key for the Vault cluster load balancers, used to secure the Vault service VIP.
+            - `harbor_admin_password`: Default password for the Harbor Web Portal `admin` account. Used for the initial login to Harbor to create projects and set up robot accounts after deployment.
+            - `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to the PostgreSQL database. This is an application-level password (typically for DB user `harbor`) with lower privileges than `pg_superuser_password`.
 
         ```shell
         export VAULT_ADDR="https://172.16.136.250:443"
@@ -379,8 +433,6 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
         export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
         vault secrets enable -path=secret kv-v2
         ```
-
-    - **Infrastructure Variables in this Project**: Please replace the password with your own password and ensure the password's security.
 
         ```shell
         vault kv put secret/on-premise-gitlab-deployment/variables \
@@ -412,6 +464,32 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             harbor_pg_db_password="some-password-for-harbor-pg-db-password-for-production-mode"
         ```
 
+    - **Note 0:**
+
+        Use the following command to fetch the confidential information from the vault. For instance, to fetch the superuser password of PostgreSQL, use the following command with the environment variables for production vault and the following command:
+
+        ```shell
+        export VAULT_ADDR="https://172.16.136.250:443"
+        export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
+        export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
+
+        vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
+        ```
+
+        To prevent the secret from being exposed, the following command can be used:
+
+        ```shell
+        export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+        ```
+
+        Single line command is used if keeping the shell environment clean is required:
+
+        ```shell
+        export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+        ```
+
+        Similar logic applies to other secrets or Development Vault.
+
     - **Note 1:**
 
         In which `ssh_username` and `ssh_password` are the account and password used to log into the virtual machine; while `ssh_password_hash` is the hashed password required for virtual machine automatic installation (Cloud-init). This password needs to be generated using the password string from `ssh_password`. For instance, if the password is `HelloWorld@k8s`, then the corresponding password hash should be generated using the following command:
@@ -435,7 +513,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
 
-#### **Step B.2. Create Variable File for Terraform:**
+#### **Step B.3. Create Variable File for Terraform:**
 
 1. You can RENAME the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
 
@@ -485,7 +563,37 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
 
-#### **Step B.3. Export Certs of Services:**
+#### **Step B.4. Provision the GitHub Repository with Terraform:**
+
+1. Inject Token from Vault with Shell Bridge Pattern. Execute this at the project root to ensure `${PWD}` points to the correct Vault certificate path.
+
+    ```shell
+    export GITHUB_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt) vault kv get -field=github_pat secret/on-premise-gitlab-deployment/variables)
+    ```
+
+2. Execute the governance layer. Since the repository already exists, an import is required for the first run.
+
+    ```shell
+    cd terraform/layers/00-github-meta
+    ```
+
+3. Initialize and Import.
+
+    - **Scenario A (Repo exists):** For managing an existing repository (e.g., this project), it **MUST** be imported first.
+    - **Scenario B (New Repo):** For creating a brand new repository from scratch, skip the import step.
+
+    ```shell
+    terraform init
+    terraform import github_repository.this on-premise-gitlab-deployment
+    ```
+
+4. Apply Rulesets. Using `terraform plan` is a good practice to preview the changes before applying.
+
+    ```shell
+    terraform apply -auto-approve
+    ```
+
+#### **Step B.5. Export Certs of Services:**
 
 1. To configure Terraform Runner for MinIO (Layer 20):
 
