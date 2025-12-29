@@ -1,0 +1,6 @@
+
+# Default owner for everything (Optional, but recommended)
+* @csning1998
+
+# Critical Infrastructure Protection
+/terraform/layers/00-github-meta/    @csning1998
