@@ -1,6 +1,11 @@
-
 # Default owner for everything
 * @csning1998
 
-# Critical Infrastructure Protection
+# Protection for Documentation
+/.github/                            @csning1998
+CODE_OF_CONDUCT.md                   @csning1998
+LICENSE                              @csning1998
+README.md                            @csning1998
+
+# Protection for Critical Infrastructure
 /terraform/layers/00-github-meta/    @csning1998
