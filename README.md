@@ -13,7 +13,7 @@ The machine specifications used for development are as follows, for reference:
 -   **RAM:** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
 -   **SSD:** WD PC SN560 SDDPNQE-1T00-1032
 
-You can clone the project using the following command:
+The project can be cloned via the following command:
 
 ```shell
 git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
@@ -26,7 +26,7 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
 ### B. Prerequisites
 
-Before you begin, ensure you have the following:
+Before begin, ensure the following requirements are met:
 
 -   A Linux host (RHEL 10 or Ubuntu 24 recommended).
 -   A CPU with virtualization support enabled (VT-x or AMD-V).
@@ -37,7 +37,7 @@ Before you begin, ensure you have the following:
 
 ### C. Note
 
-This project requires CPU with virtualization support. For users whose CPUs don't support virtualization, you can refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality. Use the following in shell to check if your device support virtualization:
+This project requires CPU with virtualization support. For users whose CPUs don't support virtualization, refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality for establishing `kubeadm` cluster. Use the following in shell to check if developing device supports virtualization:
 
 ```shell
 lscpu | grep Virtualization
@@ -51,7 +51,7 @@ The output may show:
 
 ### D. The Entrypoint: `entry.sh`
 
-The content in Section 1 and Section 2 serves as prerequisite setup before formal execution. Project lifecycle management and configuration are handled through the `entry.sh` script in the root directory. After executing `./entry.sh`, you will see the following content:
+The content in Section 1 and Section 2 serves as prerequisite setup before formal execution. Project lifecycle management and configuration are handled through the `entry.sh` script in the root directory. The following content is shown after executing `./entry.sh`:
 
 ```text
 ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
@@ -76,7 +76,7 @@ Production Vault (Layer10): Running (Unsealed)
 
 Among options `9`, `10`, and `11`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
 
-1. If you select `9) Build Packer Base Image`
+1. The submenu of selecting `9) Build Packer Base Image`
 
     ```text
     >>> Please select an action: 9
@@ -90,7 +90,7 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
     >>> Please select an action:
     ```
 
-2. If you select `10) Provision Terraform Layer`
+2. The submenu of selecting `10) Provision Terraform Layer`
 
     ```text
     >>> Please select an action: 10
@@ -105,7 +105,7 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
     >>> Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `11) Rebuild Layer via Ansible` **_(Currently Malfunctioning...)_**
+3. The submenu of selecting `11) Rebuild Layer via Ansible` **_(Currently Malfunctioning...)_**
 
     ```text
     >>> Please select an action: 11
@@ -124,18 +124,18 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
 
 ### A. Required. KVM / QEMU
 
-The user's CPU must support virtualization technology to enable QEMU-KVM functionality. You can choose whether to install it through option `6` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment on your own.
+The user's CPU must support virtualization technology to enable QEMU-KVM functionality. Choose whether to install it through option `6` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment, which depends on the development device's platform.
 
 ### B. Option 1. Install IaC tools on Native
 
 1. **Install HashiCorp Toolkit - Terraform and Packer**
 
-    Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `7` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
+    Next, install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `7` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the official installation guide:
 
     > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
     > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_ > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
 
-    Expected output should reflect the latest versions. For instance (in zsh):
+    Expected output should reflect the latest versions. For instance (in `zsh`):
 
     ```text
     ...
@@ -151,13 +151,11 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
     #### Red Hat Ansible: Installed
     ```
 
-### B. Option 2. Run IaC tools inside Container: Podman
+2. Please ensure Podman is installed correctly. Refer to the following URL and choose the installation method corresponding to the development device's platform
 
-1. Please ensure Podman is installed correctly. You can refer to the following URL and choose the installation method corresponding to your platform
+3. After completing the Podman installation, switch to the project root directory:
 
-2. After completing the Podman installation, please switch to the project root directory:
-
-    1. Default memlock limit (`ulimit -l`) is usually too low for HashiCorp Vault. Rootless Podman inherits this low limit, causing Vault's mlock system call to fail. You can modify it by running the following command:
+    1. Default memlock limit (`ulimit -l`) is usually too low for HashiCorp Vault. Rootless Podman inherits this low limit, causing Vault's mlock system call to fail. To address such issue, modify it by running the following command:
 
         ```shell
         sudo tee -a /etc/security/limits.conf <<EOT
@@ -174,13 +172,13 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
         podman compose up --build
         ```
 
-    3. After creating the Container, you only need to run the container to perform operations:
+    3. After creating the Container, it only need to run the container to perform operations:
 
         ```shell
         podman compose up -d
         ```
 
-    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
+    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. Execute the following command if the modidication or examine inside the container is necessary:
 
         ```shell
         podman exec -it iac-controller-base bash
@@ -231,9 +229,9 @@ To ensure the project runs smoothly, please follow the procedures below to compl
 
 0. **Environment variable file:** The script `entry.sh` will automatically create a `.env` environment variable that is used by for script files, which can be ignored.
 
-1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys will be used for node access authentication and configuration management. You can generate these by running `./entry.sh` and entering `5` to access the _"Generate SSH Key"_ option. You can enter your desired key name or simply use the default value `id_ed25519_on-premise-gitlab-deployment`. The generated public and private key pair will be stored in the `~/.ssh` directory
+1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys serve as the mechanism for node access authentication and configuration management. These keys are generated by executing `./entry.sh` and selecting option `5` for _"Generate SSH Key"_. A specific key name may be defined, or the default value `id_ed25519_on-premise-gitlab-deployment` may be applied. The resulting public and private key pair is stored in the `~/.ssh` directory.
 
-2. **Switch Environment:** You can switch between "Container" or "Native" environment by using `./entry.sh` and entering `13`. Currently this project primarily uses Podman, and I _personally_ recommend decoupling the Podman and Docker runtime environments to prevent execution issues caused by SELinux-related permissions. For example, SELinux policies do not allow a `container_t` process that is common in Docker to connect to a `virt_var_run_t` Socket, which may cause Terraform Provider or `virsh` to receive "Permission Denied" errors when running in containers, even though everything appears normal from a filesystem permissions perspective.
+2. **Switch Environment:** Environment switching between _"Container"_ and _"Native"_ is available via `./entry.sh` by selecting option `13`. This project primarily utilizes Podman. Decoupling Podman and Docker runtime environments is a documented practice to prevent execution conflicts stemming from SELinux-related permissions. For instance, SELinux policies restrict a `container_t` process (standard in Docker) from connecting to a `virt_var_run_t` Socket. Such restrictions can result in "Permission Denied" errors for the Terraform Provider or `virsh` when executed within containers, despite correct filesystem permissions.
 
 ### Step B. Set up Variables
 
@@ -247,14 +245,15 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     sudo usermod -aG libvirt $(whoami)
     ```
 
-    **Note:** After completing this step, you must fully log out and log back in, or restart your computer, for the new group membership to take effect in your shell session.
+    **Note:** Upon completion of this step, a full logout and login or a system restart is required for the new group membership to take effect within the shell session.
 
 2. Modify the `libvirtd` configuration file to explicitly state that the `libvirt` group should manage the socket.
 
     ```shell
-    # If you use vim
+    # If vim is preferred
     sudo vim /etc/libvirt/libvirtd.conf
-    # If you use nano
+
+    # If nano is preferred
     sudo nano /etc/libvirt/libvirtd.conf
     ```
 
@@ -324,7 +323,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
         virsh list --all
         ```
 
-        If the command executes successfully and lists the virtual machines (even if the list is empty), it means you have all the necessary permissions.
+        Successful execution of the command and the subsequent listing of virtual machines (regardless of whether the list is empty) indicates that all necessary permissions are present.
 
 #### **Step B.1. Prepare GitHub Credentials**
 
