@@ -20,6 +20,51 @@ readonly DEV_ROOT_TOKEN_FILE="${DEV_KEYS_DIR}/root-token.txt"
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
 readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/10-vault-core/tls/vault-ca.crt"
+readonly PROD_VAULT_TOKEN_FILE="${ANSIBLE_DIR}/fetched/vault/vault_init_output.json"
+
+vault_context_handler() {
+  local target="$1"
+
+  unset VAULT_ADDR VAULT_TOKEN VAULT_CACERT
+
+  if [[ "$target" == "prod" ]]; then
+    echo ">>> [Vault Context] Switching to PRODUCTION (Layer 20+)..."
+    
+    export VAULT_ADDR="$PROD_VAULT_ADDR"
+    export VAULT_CACERT="$PROD_CA_CERT"
+
+    # Read the token
+    if [[ -f "$PROD_VAULT_TOKEN_FILE" ]]; then
+      local prod_token
+      prod_token=$(jq -r '.root_token // empty' "$PROD_VAULT_TOKEN_FILE" 2>/dev/null)
+      
+      if [[ -n "$prod_token" ]]; then
+				export VAULT_TOKEN="$prod_token"
+				echo "    - Token loaded from file."
+      else
+				echo "WARN: Token file exists but could not parse root_token."
+      fi
+    else
+      echo "WARN: Prod Vault Token file not found at $PROD_VAULT_TOKEN_FILE"
+      echo "      (Expected if Prod Vault is not yet initialized)"
+    fi
+
+  else
+    echo ">>> [Vault Context] Switching to DEVELOPMENT (Layer <20 / Packer)..."
+    
+    export VAULT_ADDR="$DEV_VAULT_ADDR"
+    export VAULT_TOKEN="${DEV_VAULT_TOKEN}"
+
+    # Choose the CA based on the environment strategy.
+    if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
+        export VAULT_CACERT="${DEV_VAULT_CACERT_PODMAN}"
+    else
+        export VAULT_CACERT="${DEV_VAULT_CACERT}"
+    fi
+  fi
+
+  echo "    - VAULT_ADDR: $VAULT_ADDR"
+}
 
 # Status Reporting
 vault_status_reporter() {
@@ -188,7 +233,8 @@ vault_dev_seal_handler() {
   
   # Export for current session
   if [ -f "$DEV_ROOT_TOKEN_FILE" ]; then
-		export DEV_VAULT_TOKEN=$(cat "$DEV_ROOT_TOKEN_FILE")
+		DEV_VAULT_TOKEN=$(cat "$DEV_ROOT_TOKEN_FILE")
+		export DEV_VAULT_TOKEN
 		export VAULT_ADDR="${DEV_VAULT_ADDR}"
 		export VAULT_CACERT="${DEV_CA}"
 		echo "#### INFO: Exported DEV_VAULT_TOKEN and set VAULT_ADDR to Dev Vault for this session."

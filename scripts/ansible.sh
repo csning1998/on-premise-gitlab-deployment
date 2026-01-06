@@ -85,30 +85,18 @@ ansible_playbook_executor() {
     return 1
   fi
 
-  # # --- STEP 1: Derive the config_name from the inventory filename ---
-  # local config_name
-  # config_name=$(basename "${inventory_file}" | sed 's/^inventory-//;s/\.yaml$//')
+	# Select the environment context based on the playbook file prefix
+	# [Dev] 01-09: Dev Vault (Local)
+	# [Prod] 20-: Prod Vault (Layer10)
+  local layer_prefix
+  layer_prefix=$(echo "$playbook_file" | grep -oE '^[0-9]+' | head -n1)
 
-  # # --- STEP 2: Use ansible-inventory to reliably get all host IPs ---
-  # local all_hosts
-  # all_hosts=$(ansible-inventory -i "${full_inventory_path}" --list | \
-  #             jq -r '._meta.hostvars | to_entries[] | .value.ansible_host // .key')
+  local target_context="dev"
+  if [[ -n "$layer_prefix" && "$layer_prefix" -ge 20 ]]; then
+    target_context="prod"
+  fi
 
-  # if [ -z "${all_hosts}" ]; then
-  #   echo "FATAL: No hosts could be parsed from the inventory file via 'ansible-inventory'." >&2
-  #   return 1
-  # fi
-  
-  # echo "==========================="
-  # echo "Derived Config Name: ${config_name}"
-  # echo "Detected Hosts for SSH scan: $(echo ${all_hosts} | tr '\n' ' ')"
-  # echo "==========================="
-
-  # local hosts_array=()
-  # readarray -t hosts_array <<< "${all_hosts}"
-
-  # # --- STEP 3: Call the function used by Terraform ---
-  # known_hosts_bootstrapper "${config_name}" "skip_poll" "${hosts_array[@]}"
+  vault_context_handler "$target_context"
 
   echo ">>> STEP: Running Ansible Playbook [${playbook_file}] with inventory [${inventory_file}]"
 

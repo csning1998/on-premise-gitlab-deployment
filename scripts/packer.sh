@@ -61,6 +61,8 @@ packer_build_executor() {
 
   echo ">>> STEP: Starting new Packer build for [${base_name}]..."
 
+	vault_context_handler "dev"
+
 	local override_args=""
 
 	if [[ -n "${PKR_VAR_NET_BRIDGE+x}" ]]; then
@@ -90,7 +92,7 @@ packer_build_executor() {
 
 # Function: Display a sub-menu to select and run a Packer build.
 packer_menu_handler() {
-  local packer_build_executor_options=("Build ALL Packer Images" "${ALL_PACKER_BASES[@]}" "Back to Main Menu")
+  local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Build ALL Packer Images" "Back to Main Menu")
 
   echo
   PS3=">>> Select a Packer build to run: "
