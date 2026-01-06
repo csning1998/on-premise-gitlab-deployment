@@ -53,7 +53,7 @@ fi
 vault_status_reporter
 echo
 
-PS3=$'\033[1;34m[INPUT] Please select an action: \033[0m'
+PS3=$'\n\033[1;34m[INPUT] Please select an action: \033[0m'
 options=()
 
 # [Dev Vault - Bootstrap Unit]

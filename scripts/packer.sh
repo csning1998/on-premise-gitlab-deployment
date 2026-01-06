@@ -96,7 +96,7 @@ packer_menu_handler() {
   local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Build ALL Packer Images" "Back to Main Menu")
 
   echo
-  PS3=$'\033[1;34m[INPUT] Select a Packer build to run: \033[0m'
+  PS3=$'\n\033[1;34m[INPUT] Select a Packer build to run: \033[0m'
   select build_base in "${packer_build_executor_options[@]}"; do
     if [[ "$build_base" == "Back to Main Menu" ]]; then
       log_print "INFO" "Returning to main menu..."

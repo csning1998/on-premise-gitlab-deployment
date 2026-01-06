@@ -59,19 +59,22 @@ The content in Section 1 and Section 2 serves as prerequisite setup before forma
 
 ======= IaC-Driven Virtualization Management =======
 
-Environment: NATIVE
-Development Vault (Local): Running (Unsealed)
-Production Vault (Layer10): Running (Unsealed)
+[INFO] Environment: NATIVE
+--------------------------------------------------
+[OK] Development Vault (Local): Running (Unsealed)
+[OK] Production Vault (Layer10): Running (Unsealed)
+------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge All Libvirt Resources
-3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Packer and Terraform Resources
-4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Quit
-5) Generate SSH Key                               11) Rebuild Layer via Ansible
-6) Setup KVM / QEMU for Native                    12) Verify SSH
+1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
+2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
+3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
+4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
+5) Generate SSH Key                               13) Switch Environment Strategy
+6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
+7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
+8) Verify IaC Environment                         16) Quit
 
->>> Please select an action:
-
+[INPUT] Please select an action:
 ```
 
 Among options `9`, `10`, and `11`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
@@ -79,43 +82,43 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
 1. If you select `9) Build Packer Base Image`
 
     ```text
-    >>> Please select an action: 9
-    # Entering Packer build selection menu...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
+    [INPUT] Please select an action: 9
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
 
-    1) Build ALL Packer Images  3) 02-base-kubeadm     5) 04-base-postgres    7) 06-base-minio       9) Back to Main Menu
-    2) 01-base-docker           4) 03-base-microk8s    6) 05-base-redis       8) 07-base-vault
+    1) 01-base-docker           4) 04-base-postgres         7) 07-base-vault
+    2) 02-base-kubeadm          5) 05-base-redis            8) Build ALL Packer Images
+    3) 03-base-microk8s         6) 06-base-minio            9) Back to Main Menu
 
-    >>> Please select an action:
+    [INPUT] Select a Packer build to run:
     ```
 
 2. If you select `10) Provision Terraform Layer`
 
     ```text
-    >>> Please select an action: 10
-    # Entering Terraform layer management menu...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
-    1) 10-vault-core          4) 20-gitlab-redis       7) 20-harbor-redis      10) 50-gitlab-kubeadm
-    2) 20-gitlab-minio        5) 20-harbor-minio       8) 30-harbor-microk8s   11) 50-harbor-provision
-    3) 20-gitlab-postgres     6) 20-harbor-postgres    9) 40-harbor-platform   12) 60-gitlab-platform
-    13) Back to Main Menu
+    [INPUT] Please select an action: 10
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
+    1) 00-github-meta         5) 20-gitlab-redis       9) 30-harbor-microk8s   13) 60-gitlab-platform
+    2) 10-vault-core          6) 20-harbor-minio      10) 40-harbor-platform   14) Back to Main Menu
+    3) 20-gitlab-minio        7) 20-harbor-postgres   11) 50-gitlab-kubeadm
+    4) 20-gitlab-postgres     8) 20-harbor-redis      12) 50-harbor-provision
 
-    >>> Select a Terraform layer to REBUILD:
+    [INPUT] Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `11) Rebuild Layer via Ansible` **_(Currently Malfunctioning...)_**
+3. If you select `11) Rebuild Layer via Ansible`
 
     ```text
-    >>> Please select an action: 11
-    # Executing [DEV] Rebuild via direct Ansible command...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
-    1) inventory-kubeadm-gitlab.yaml   4) inventory-minio-harbor.yaml     7) inventory-redis-gitlab.yaml
-    2) inventory-microk8s-harbor.yaml  5) inventory-postgres-gitlab.yaml  8) inventory-vault-cluster.yaml
-    3) inventory-minio-gitlab.yaml     6) inventory-postgres-harbor.yaml  9) Back to Main Menu
-    >>> Select a Cluster Inventory to run its Playbook:
+    [INPUT] Please select an action: 11
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
+    1) inventory-kubeadm-gitlab.yaml     5) inventory-postgres-gitlab.yaml   9) inventory-vault-cluster.yaml
+    2) inventory-microk8s-harbor.yaml    6) inventory-postgres-harbor.yaml  10) Back to Main Menu
+    3) inventory-minio-gitlab.yaml       7) inventory-redis-gitlab.yaml
+    4) inventory-minio-harbor.yaml       8) inventory-redis-harbor.yaml
+
+    [INPUT] Select a Cluster Inventory to run its Playbook:
     ```
 
 **A description of how to use this script follows below.**
@@ -138,17 +141,26 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
     Expected output should reflect the latest versions. For instance (in zsh):
 
     ```text
+    [INPUT] Please select an action: 7
     ...
-    >>> Please select an action: 7
-    >>> STEP: Verifying full native IaC environment...
-    >>> Verifying Libvirt/KVM environment...
-    #### QEMU/KVM: Installed
-    #### Libvirt Client (virsh): Installed
-    >>> Verifying Core IaC Tools (HashiCorp/Ansible)...
-    #### HashiCorp Packer: Installed
-    #### HashiCorp Terraform: Installed
-    #### HashiCorp Vault: Installed
-    #### Red Hat Ansible: Installed
+    [STEP] Setting up core IaC tools...
+    [TASK] Installing OS-specific base packages for RHEL...
+    ...
+    [TASK] Installing Ansible Core using pip...
+    ...
+    [TASK] Installing Packer...
+    ...
+    [TASK] Installing Terraform...
+    ...
+    [TASK] Installing Vault...
+    ...
+    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
+    [INFO] HashiCorp Packer: Installed
+    [INFO] HashiCorp Terraform: Installed
+    [INFO] HashiCorp Vault: Installed
+    [INFO] Red Hat Ansible: Installed
+    [OK] Core IaC tools setup and verification completed.
+    ------------------------------------------------------------
     ```
 
 ### B. Option 2. Run IaC tools inside Container: Podman

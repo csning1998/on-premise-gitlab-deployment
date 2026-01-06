@@ -130,7 +130,7 @@ ansible_menu_handler() {
   done
   inventory_options+=("Back to Main Menu")
 
-  PS3=$'\033[1;34m[INPUT] Select a Cluster Inventory to run its Playbook: \033[0m'
+  PS3=$'\n\033[1;34m[INPUT] Select a Cluster Inventory to run its Playbook: \033[0m'
   select inventory in "${inventory_options[@]}"; do
     
     if [ "$inventory" == "Back to Main Menu" ]; then

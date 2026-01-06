@@ -83,7 +83,7 @@ terraform_layer_selector() {
 
   # Use log_print for the prompt before 'select' if desired, 
   # but 'select' uses PS3. We can keep PS3 simple or colorized.
-  PS3=$'\033[1;34m[INPUT] Select a Terraform layer to REBUILD: \033[0m'
+  PS3=$'\n\033[1;34m[INPUT] Select a Terraform layer to REBUILD: \033[0m'
   
   select layer in "${layer_options[@]}"; do
     if [[ "$layer" == "Back to Main Menu" ]]; then
