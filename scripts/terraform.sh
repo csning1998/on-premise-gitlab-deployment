@@ -56,21 +56,38 @@ terraform_layer_executor() {
 
   log_print "STEP" "Applying Terraform configuration for layer [${layer_name}]..."
 
-  # 1. Basic Shell
+  # 1. Define Base Commands
   local cmd_init="terraform init -upgrade"
   local cmd_destroy="terraform destroy -auto-approve -var-file=./terraform.tfvars"
   local cmd_apply="terraform apply -auto-approve -var-file=./terraform.tfvars"
 
-  # 2. If Target is specified, add it to Destroy & Apply commands
+  # 2. Handle Target Resource (if specified, append to destroy/apply commands)
   if [ -n "$target_resource" ]; then
     log_print "INFO" "Targeting resource: ${target_resource}"
     cmd_destroy+=" ${target_resource}"
     cmd_apply+=" ${target_resource}"
   fi
 
-  # 3. Combine commands
-  local cmd="${cmd_init} && ${cmd_destroy} && ${cmd_init} && ${cmd_apply}"
+  local cmd=""
 
+  # 3. Construct Execution Chain based on Layer Type
+  # [Special Logic] Github Meta Layer: Import + Apply ONLY (Skip Destroy)
+  if [[ "$layer_name" == "00-github-meta" ]]; then
+    log_print "WARN" "Github Meta Layer detected: SKIPPING DESTROY phase to preserve repository."
+    log_print "TASK" "Checking and Importing existing repository if needed..."
+    
+    # Init -> Check State -> Import if missing
+    local cmd_import="(terraform state list | grep -q 'github_repository.this' || terraform import github_repository.this on-premise-gitlab-deployment)"
+    
+    # Chain: Init -> Import (if needed) -> Apply
+    cmd="${cmd_init} && ${cmd_import} && ${cmd_apply}"
+
+  else
+    # Chain: Init -> Destroy -> Init -> Apply
+    cmd="${cmd_init} && ${cmd_destroy} && ${cmd_init} && ${cmd_apply}"
+  fi
+
+  # 4. Execute the constructed command chain
   run_command "${cmd}" "${layer_dir}"
 
   log_print "OK" "Terraform apply for [${layer_name}] complete."

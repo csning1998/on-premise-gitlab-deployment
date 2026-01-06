@@ -577,6 +577,8 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
+**Note:** This step (B.4) can be performed by `10) Provision Terraform Layer` with `00-github-meta` as the target layer if this repository is cloned for _personal_ use. The following content is provided for imperative manual procedures only.
+
 1. Inject Token from Vault with Shell Bridge Pattern. Execute this at the project root to ensure `${PWD}` points to the correct Vault certificate path.
 
     ```shell
@@ -603,6 +605,16 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     ```shell
     terraform apply -auto-approve
+    ```
+
+    The output would be akin to the following:
+
+    ```shell
+    Apply complete! Resources: x added, y changed, z destroyed.
+    Outputs:
+
+    repository_ssh_url = "git@github.com:username/on-premise-gitlab-deployment.git"
+    ruleset_id = <a-numeric-id>
     ```
 
 #### **Step B.5. Export Certs of Services:**
