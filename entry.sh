@@ -9,7 +9,8 @@ readonly TERRAFORM_DIR="${SCRIPT_DIR}/terraform"
 readonly PACKER_DIR="${SCRIPT_DIR}/packer"
 readonly ANSIBLE_DIR="${SCRIPT_DIR}/ansible"
 
-# Load environment variables
+# Load environment variables and core utilities
+source "${SCRIPTS_LIB_DIR}/utils.sh"
 source "${SCRIPTS_LIB_DIR}/utils_environment.sh"
 
 # MAIN ENVIRONMENT BOOTSTRAP LOGIC
@@ -25,14 +26,15 @@ set +o allexport
 
 # initialize_environment
 for lib in "${SCRIPTS_LIB_DIR}"/*.sh; do
-  if [[ "$lib" != *"/utils_environment.sh" ]]; then
-    source "$lib"
-  fi
+	if [[ "$lib" == *"/utils.sh" ]] || [[ "$lib" == *"/utils_environment.sh" ]]; then
+		continue
+	fi
+	source "$lib"
 done
 
 # Set correct permissions since 
 if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
-  check_and_fix_permissions || { echo "FATAL: Permission fix failed."; exit 1; }
+  check_and_fix_permissions || { log_print "FATAL" "Permission fix failed."; exit 1; }
 fi
 
 # Set Terraform directory based on the selected provider
@@ -43,14 +45,15 @@ read -r -a ALL_TERRAFORM_LAYERS <<< "$ALL_TERRAFORM_LAYERS"
 echo
 echo "======= IaC-Driven Virtualization Management ======="
 echo
-echo "Environment: ${ENVIRONMENT_STRATEGY^^}"
+
+log_print "INFO" "Environment: ${ENVIRONMENT_STRATEGY^^}"
 if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
-  echo "Engine: PODMAN"
+  log_print "INFO" "Engine: PODMAN"
 fi
 vault_status_reporter
 echo
 
-PS3=">>> Please select an action: "
+PS3=$'\n\033[1;34m[INPUT] Please select an action: \033[0m'
 options=()
 
 # [Dev Vault - Bootstrap Unit]
@@ -105,9 +108,9 @@ select opt in "${options[@]}"; do
 
     # --- Infrastructure ---
     "Generate SSH Key")
-      echo "# Generate SSH Key for this project..."
+      log_print "STEP" "Generate SSH Key for this project..."
       ssh_key_generator_handler
-      echo "# SSH Key successfully generated."
+      log_print "OK" "SSH Key successfully generated."
       break
       ;;
     "Setup KVM / QEMU for Native")
@@ -167,9 +170,9 @@ select opt in "${options[@]}"; do
       break
       ;;
     "Quit")
-      echo "# Exiting script."
+      log_print "INFO" "Exiting script."
       break
       ;;
-    *) echo "# Invalid option $REPLY";;
+    *) log_print "ERROR" "Invalid option $REPLY";;
   esac
 done

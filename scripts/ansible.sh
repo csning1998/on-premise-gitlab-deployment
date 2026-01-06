@@ -11,22 +11,22 @@ vault_secret_extractor() {
   # 1. Determine the key and vault path to fetch by playbook
   case "${playbook_file}" in
 		"10-provision-vault.yaml")
-      echo "#### Vault playbook detected. Preparing credentials..." >&2
+      log_print "INFO" "Vault playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/infrastructure"
       keys_needed=("vault_keepalived_auth_pass" "vault_haproxy_stats_pass")
       ;;
     "20-provision-data-services.yaml")
-      echo "#### Data Services playbook detected. Preparing credentials..." >&2
+      log_print "INFO" "Data Services playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/databases"
       keys_needed+=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret" "redis_requirepass" "redis_masterauth" "redis_vrrp_secret" "minio_root_password" "minio_vrrp_secret")
       ;;
 		"30-provision-microk8s.yaml")
-      echo "#### MicroK8s playbook detected. Preparing credentials..." >&2
+      log_print "INFO" "MicroK8s playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/databases"
       keys_needed=("redis_requirepass")
       ;;
     "40-provision-harbor.yaml")
-      echo "#### Harbor playbook detected. Preparing credentials..." >&2
+      log_print "INFO" "Harbor playbook detected. Preparing credentials..." >&2
       vault_path="secret/on-premise-gitlab-deployment/harbor"
       keys_needed=("harbor_admin_password" "harbor_pg_db_password")
       ;;
@@ -38,7 +38,7 @@ vault_secret_extractor() {
 
   # 2. Once-only vault fetching if and only if the vault_path is set
   if ! secrets_json=$(vault kv get -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json "${vault_path}"); then
-    echo "FATAL: Failed to fetch secrets from Vault at path '${vault_path}'. Is Vault unsealed?" >&2
+    log_print "FATAL" "Failed to fetch secrets from Vault at path '${vault_path}'. Is Vault unsealed?"
     return 1
   fi
 
@@ -48,14 +48,14 @@ vault_secret_extractor() {
     value=$(echo "${secrets_json}" | jq -r ".data.data.${key}")
 
     if [[ -z "${value}" || "${value}" == "null" ]]; then
-      echo "FATAL: Could not find required key '${key}' in Vault at '${vault_path}'." >&2
+      log_print "FATAL" "Could not find required key '${key}' in Vault at '${vault_path}'."
       return 1
     fi
 
     extra_vars_string+=" --extra-vars '${key}=${value}'"
   done
 
-  echo "#### Credentials fetched successfully." >&2
+  log_print "OK" "Credentials fetched successfully." >&2
   
   echo "${extra_vars_string}"
   return 0
@@ -67,7 +67,7 @@ ansible_playbook_executor() {
   local inventory_file="$2" # (e.g., "inventory-kubeadm-cluster.yaml").
 
   if [ -z "$playbook_file" ] || [ -z "$inventory_file" ]; then
-    echo "FATAL: Playbook or inventory file not specified for ansible_playbook_executor function." >&2
+    log_print "FATAL" "Playbook or inventory file not specified for ansible_playbook_executor function."
     return 1
   fi
 
@@ -77,40 +77,28 @@ ansible_playbook_executor() {
   local full_inventory_path="${SCRIPT_DIR}/${relative_inventory_path}"
 
   if [ ! -f "${SCRIPT_DIR}/${relative_playbook_path}" ]; then
-    echo "FATAL: Playbook not found at '${relative_playbook_path}'" >&2
+    log_print "FATAL" "Playbook not found at '${relative_playbook_path}'"
     return 1
   fi
   if [ ! -f "${full_inventory_path}" ]; then
-    echo "FATAL: Inventory not found at '${full_inventory_path}'" >&2
+    log_print "FATAL" "Inventory not found at '${full_inventory_path}'"
     return 1
   fi
 
-  # --- STEP 1: Derive the config_name from the inventory filename ---
-  local config_name
-  config_name=$(basename "${inventory_file}" | sed 's/^inventory-//;s/\.yaml$//')
+	# Select the environment context based on the playbook file prefix
+	# [Dev] 01-09: Dev Vault (Local)
+	# [Prod] 20-: Prod Vault (Layer10)
+  local layer_prefix
+  layer_prefix=$(echo "$playbook_file" | grep -oE '^[0-9]+' | head -n1)
 
-  # --- STEP 2: Use ansible-inventory to reliably get all host IPs ---
-  local all_hosts
-  all_hosts=$(ansible-inventory -i "${full_inventory_path}" --list | \
-              jq -r '._meta.hostvars | to_entries[] | .value.ansible_host // .key')
-
-  if [ -z "${all_hosts}" ]; then
-    echo "FATAL: No hosts could be parsed from the inventory file via 'ansible-inventory'." >&2
-    return 1
+  local target_context="dev"
+  if [[ -n "$layer_prefix" && "$layer_prefix" -ge 20 ]]; then
+    target_context="prod"
   fi
-  
-  echo "==========================="
-  echo "Derived Config Name: ${config_name}"
-  echo "Detected Hosts for SSH scan: $(echo ${all_hosts} | tr '\n' ' ')"
-  echo "==========================="
 
-  local hosts_array=()
-  readarray -t hosts_array <<< "${all_hosts}"
+  vault_context_handler "$target_context"
 
-  # --- STEP 3: Call the function used by Terraform ---
-  known_hosts_bootstrapper "${config_name}" "skip_poll" "${hosts_array[@]}"
-
-  echo ">>> STEP: Running Ansible Playbook [${playbook_file}] with inventory [${inventory_file}]"
+  log_print "STEP" "Running Ansible Playbook [${playbook_file}] with inventory [${inventory_file}]"
 
   local extra_vars
   if ! extra_vars=$(vault_secret_extractor "${playbook_file}"); then
@@ -125,7 +113,7 @@ ansible_playbook_executor() {
     -vv"
 
   run_command "${cmd}" "${SCRIPT_DIR}"
-  echo "#### Playbook execution finished."
+  log_print "OK" "Playbook execution finished."
 }
 
 # Function: Display a sub-menu to select and run a Playbook based on Inventory.
@@ -142,11 +130,11 @@ ansible_menu_handler() {
   done
   inventory_options+=("Back to Main Menu")
 
-  PS3=">>> Select a Cluster Inventory to run its Playbook: "
+  PS3=$'\n\033[1;34m[INPUT] Select a Cluster Inventory to run its Playbook: \033[0m'
   select inventory in "${inventory_options[@]}"; do
     
     if [ "$inventory" == "Back to Main Menu" ]; then
-      echo "# Returning to main menu..."
+      log_print "INFO" "Returning to main menu..."
       break
     
     elif [ -n "$inventory" ]; then
@@ -173,20 +161,20 @@ ansible_menu_handler() {
           playbook="50-provision-kubeadm.yaml"
           ;;
         *)
-          echo "WARN: Unknown component '${target_component}' derived from '${inventory}'."
-          echo "      Mapping defaulted to '10-provision-${target_component}.yaml' (May fail)."
+          log_print "WARN" "Unknown component '${target_component}' derived from '${inventory}'."
+          log_print "WARN" "      Mapping defaulted to '10-provision-${target_component}.yaml' (May fail)."
           playbook="10-provision-${target_component}.yaml"
           ;;
       esac
       
-      echo "==========================="
-      echo "Selected Inventory: ${inventory}"
-      echo "Derived Component:  ${target_component}"
-      echo "Mapped Playbook:    ${playbook}"
-      echo "==========================="
+      log_divider
+      log_print "INFO" "Selected Inventory: ${inventory}"
+      log_print "INFO" "Derived Component:  ${target_component}"
+      log_print "INFO" "Mapped Playbook:    ${playbook}"
+      log_divider
       
       if [ ! -f "${ANSIBLE_DIR}/playbooks/${playbook}" ]; then
-        echo "FATAL: Mapped playbook '${playbook}' does not exist at ${ANSIBLE_DIR}/playbooks/${playbook}"
+        log_print "FATAL" "Mapped playbook '${playbook}' does not exist at ${ANSIBLE_DIR}/playbooks/${playbook}"
         continue
       fi
 
@@ -194,7 +182,7 @@ ansible_menu_handler() {
       break
 
     else
-      echo "Invalid option $REPLY"
+      log_print "ERROR" "Invalid option $REPLY"
       continue
     fi
   done
