@@ -3,18 +3,17 @@
 # This script contains general utility and helper functions.
 
 readonly SSH_CONFIG="$HOME/.ssh/config"
-# readonly KNOWN_HOSTS_FILE="$HOME/.ssh/k8s_cluster_known_hosts"
 
 # Function: Check if the required SSH private key exists
 ssh_key_verifier() {
   if [ -z "$SSH_PRIVATE_KEY" ]; then
-      echo "#### Error: SSH_PRIVATE_KEY variable is not set."
+      log_print "ERROR" "SSH_PRIVATE_KEY variable is not set."
       return 1
   fi
 
   if [ ! -f "$SSH_PRIVATE_KEY" ]; then
-    echo "#### Error: SSH private key for automation not found at '$SSH_PRIVATE_KEY'"
-    echo "#### Please use the 'Generate SSH Key' menu option first, or configure the correct key name in 'scripts/config.sh'."
+    log_print "ERROR" "SSH private key for automation not found at '$SSH_PRIVATE_KEY'"
+    log_print "INFO" "Please use the 'Generate SSH Key' menu option first, or configure the correct key name in 'scripts/config.sh'."
     return 1
   fi
   # If the key exists, return success (0)
@@ -26,8 +25,10 @@ ssh_key_generator_handler() {
   local default_key_name="id_ed25519_on-premise-gitlab-deployment"
   local key_name
 
-  echo "#### This utility will generate an SSH key for IaC automation (unattended mode)."
-  read -r -p "#### Enter the desired key name (default: ${default_key_name}): " key_name
+  log_print "INFO" "This utility will generate an SSH key for IaC automation (unattended mode)."
+  
+  log_print "INPUT" "Enter the desired key name (default: ${default_key_name}): "
+  read -r key_name
   
   key_name=${key_name:-$default_key_name}
   
@@ -35,50 +36,54 @@ ssh_key_generator_handler() {
   local public_key_path="${private_key_path}.pub"
 
   if [ -f "$private_key_path" ]; then
-    echo "#### Warning: Key file '${private_key_path}' already exists."
-    read -r -p "#### Overwrite? (y/n): " overwrite_answer
+    log_print "WARN" "Key file '${private_key_path}' already exists."
+    
+    log_print "INPUT" "Overwrite? (y/n): "
+    read -r overwrite_answer
+    
     if [[ ! "$overwrite_answer" =~ ^[Yy]$ ]]; then
-      echo "#### Skipping key generation."
+      log_print "INFO" "Skipping key generation."
       return
     fi
   fi
 
-  echo "#### Generating key at '${private_key_path}'..."
+  log_print "TASK" "Generating key at '${private_key_path}'..."
   ssh-keygen -t ed25519 -f "$private_key_path" -C "$key_name" -N ""
   
-  echo "#### Key generated successfully:"
+  log_print "OK" "Key generated successfully."
   ls -l "$private_key_path" "$public_key_path"
-  echo "--------------------------------------------------"
-  echo ">>> Updating SSH_PRIVATE_KEY in .env file to: ${private_key_path}"
+  log_divider
+  
+  log_print "TASK" "Updating SSH_PRIVATE_KEY in .env file to: ${private_key_path}"
   # Call the helper function to update the .env file
   env_var_mutator "SSH_PRIVATE_KEY" "${private_key_path}"
 
-  echo "#### IMPORTANT: Please update your configuration file"
-  echo "####   e.g., in 'packer/secret.auto.pkrvars.hcl' or terraform/*.tfvars"
-  echo "#### to use the following paths:"
-  echo "In Terraform: ssh_private_key_path = \"${private_key_path}\""
-  echo "In Packer: ssh_public_key_path  = \"${public_key_path}\""
-  echo "--------------------------------------------------"
+  log_print "WARN" "IMPORTANT: Please update your configuration file"
+  log_print "WARN" "  e.g., in 'packer/secret.auto.pkrvars.hcl' or terraform/*.tfvars"
+  log_print "WARN" "to use the following paths:"
+  log_print "INFO" "In Terraform: ssh_private_key_path = \"${private_key_path}\""
+  log_print "INFO" "In Packer: ssh_public_key_path  = \"${public_key_path}\""
+  log_divider
 }
 
 # Function: Verify SSH access to hosts defined in ~/.ssh/on-premise-gitlab-deployment_config
 ssh_connection_verifier() {
-  echo ">>> STEP: Performing strict SSH access verification for all IaC configurations..."
+  log_print "STEP" "Performing strict SSH access verification for all IaC configurations..."
 
   local ssh_config_file
   # Use an array to handle cases where no files are found
   readarray -t ssh_config_files < <(find "$HOME/.ssh" -maxdepth 1 -name "iac-kubeadm-*_config")
 
   if [ ${#ssh_config_files[@]} -eq 0 ]; then
-    echo "#### Error: No IaC SSH config files found matching '$HOME/.ssh/iac-kubeadm-*_config'."
+    log_print "ERROR" "No IaC SSH config files found matching '$HOME/.ssh/iac-kubeadm-*_config'."
     return 1
   fi
 
   local all_checks_passed=true
 
   for ssh_config_file in "${ssh_config_files[@]}"; do
-    echo "--------------------------------------------------"
-    echo "#### Verifying configuration: $(basename "${ssh_config_file}")"
+    log_divider
+    log_print "INFO" "Verifying configuration: $(basename "${ssh_config_file}")"
 
     # Dynamically extract the UserKnownHostsFile from the config itself.
     local raw_path
@@ -88,8 +93,8 @@ ssh_connection_verifier() {
     local known_hosts_file="${raw_path/#\~/$HOME}"
 
     if [ ! -f "${known_hosts_file}" ]; then
-      echo "#### Error: Known hosts file not found at ${known_hosts_file}"
-      echo "#### Please ensure the corresponding Terraform layer has been applied successfully."
+      log_print "ERROR" "Known hosts file not found at ${known_hosts_file}"
+      log_print "INFO" "Please ensure the corresponding Terraform layer has been applied successfully."
       all_checks_passed=false
       continue # Skip to the next config file
     fi
@@ -98,7 +103,7 @@ ssh_connection_verifier() {
     all_hosts=$(awk '/^Host / {print $2}' "${ssh_config_file}")
 
     if [ -z "${all_hosts}" ]; then
-      echo "#### Warning: No hosts found in ${ssh_config_file}"
+      log_print "WARN" "No hosts found in ${ssh_config_file}"
       continue
     fi
 
@@ -106,7 +111,7 @@ ssh_connection_verifier() {
     while IFS= read -r host; do
       if [ -z "$host" ]; then continue; fi
       
-      echo "--> Verifying connection to host: ${host}..."
+      log_print "TASK" "Verifying connection to host: ${host}..."
       # Use ssh with the 'true' command for a quick, non-interactive connection test.
       # The '-n' option is CRITICAL here to prevent ssh from consuming the stdin of the while loop.
       if ssh -n \
@@ -117,30 +122,32 @@ ssh_connection_verifier() {
           -o StrictHostKeyChecking=yes \
           -o UserKnownHostsFile="${known_hosts_file}" \
         "$host" true 2>/dev/null; then
-        echo "    - SUCCESS: Connected to ${host} via public key."
+        log_print "OK" "Connected to ${host} via public key."
       else
-        echo "    - FAILED: Could not connect to ${host} using strict key-based authentication."
+        log_print "ERROR" "Could not connect to ${host} using strict key-based authentication."
         all_checks_passed=false
       fi
     done <<< "${all_hosts}"
   done
 
-  echo "--------------------------------------------------"
+  log_divider
   if [ "${all_checks_passed}" = true ]; then
-    echo ">>> All SSH verifications completed successfully."
+    log_print "OK" "All SSH verifications completed successfully."
   else
-    echo ">>> One or more SSH verification checks failed."
+    log_print "ERROR" "One or more SSH verification checks failed."
   fi
-  echo "--------------------------------------------------"
+  log_divider
 }
 
 # Function: Check if user wants to verify SSH connections
 ssh_verification_handler() {
-  read -r -p "#### Do you want to verify SSH connections? (y/n): " answer
+  log_print "INPUT" "Do you want to verify SSH connections? (y/n): "
+  read -r answer
+  
   if [[ "${answer}" =~ ^[Yy]$ ]]; then
     ssh_connection_verifier
   else
-    echo "#### Skipping SSH verification."
+    log_print "INFO" "Skipping SSH verification."
   fi
 }
 
@@ -149,7 +156,7 @@ ssh_config_bootstrapper() {
   # Default to ~/.ssh/config if not set, though it should be set by the caller.
   local k8s_config_path="$1"
   if [[ -z "${k8s_config_path}" ]]; then
-    echo "Error: No config path provided to ssh_config_bootstrapper." >&2
+    log_print "ERROR" "No config path provided to ssh_config_bootstrapper."
     return 1
   fi
 
@@ -158,68 +165,68 @@ ssh_config_bootstrapper() {
 
   # Ensure the directory exists and config file exists
   mkdir -p "$(dirname "${ssh_config_file}")" || {
-    echo "Error: Failed to create directory $(dirname "${ssh_config_file}")"
+    log_print "ERROR" "Failed to create directory $(dirname "${ssh_config_file}")"
     return 1
   }
 
   touch "${ssh_config_file}" || {
-    echo "Error: Cannot touch ${ssh_config_file}"
+    log_print "ERROR" "Cannot touch ${ssh_config_file}"
     return 1
   }
   chmod 600 "${ssh_config_file}"
 
   # Check if the Include line already exists in the file.
   if grep -Fxq "${include_line}" "${ssh_config_file}"; then
-    echo "OK: '${include_line}' already exists in ${ssh_config_file}."
+    log_print "OK" "'${include_line}' already exists in ${ssh_config_file}."
     return 0
   fi
 
-  echo "Action: Prepending '${include_line}' to ${ssh_config_file}..."
+  log_print "TASK" "Prepending '${include_line}' to ${ssh_config_file}..."
 
   # Create a temporary file to safely build the new config
   local temp_file
   temp_file=$(mktemp) || {
-    echo "Error: Failed to create temporary file."
+    log_print "ERROR" "Failed to create temporary file."
     return 1
   }
 
   # Write the new Include line to the temporary file first.
   echo "${include_line}" > "${temp_file}" || {
-    echo "Error: Failed to write to temporary file."
+    log_print "ERROR" "Failed to write to temporary file."
     rm "${temp_file}"
     return 1
   }
 
   # Append the content of the original config file to the temporary file.
   cat "${ssh_config_file}" >> "${temp_file}" || {
-    echo "Error: Failed to read from ${ssh_config_file}."
+    log_print "ERROR" "Failed to read from ${ssh_config_file}."
     rm "${temp_file}"
     return 1
   }
 
   # Atomically replace the old config with the new one.
   mv "${temp_file}" "${ssh_config_file}" || {
-    echo "Error: Failed to replace ${ssh_config_file} with the updated version."
+    log_print "ERROR" "Failed to replace ${ssh_config_file} with the updated version."
     rm "${temp_file}"
     return 1
   }
 
   # Re-apply strict permissions in case mv changed them
   chmod 600 "${ssh_config_file}"
-  echo "Success: SSH config updated."
+  log_print "OK" "SSH config updated."
 }
 
 # Function: Remove the Include directive from ~/.ssh/config for the k8s cluster
 ssh_config_include_unbootstrapper() {
   local k8s_config_path="$1"
   if [[ -z "${k8s_config_path}" ]]; then
-    echo "Error: No config path provided to ssh_config_include_unbootstrapper." >&2
+    log_print "ERROR" "No config path provided to ssh_config_include_unbootstrapper."
     return 1
   fi
   
   local ssh_config_file="${SSH_CONFIG:-$HOME/.ssh/config}"
   if [[ -z "${SSH_CONFIG}" ]]; then
-    echo "Error: SSH_CONFIG is not defined"
+    log_print "ERROR" "SSH_CONFIG is not defined"
     exit 1
   fi
   
@@ -227,13 +234,13 @@ ssh_config_include_unbootstrapper() {
   if [[ -f "${ssh_config_file}" ]]; then
     sed -i "\|${include_line}|d" "${ssh_config_file}"
   else
-    echo "Warning: ${ssh_config_file} does not exist, skipping removal"
+    log_print "WARN" "${ssh_config_file} does not exist, skipping removal"
   fi
 }
 
 known_hosts_bootstrapper() {
   if [ $# -lt 2 ]; then
-    echo "#### Error: Not enough arguments. Usage: known_hosts_bootstrapper <config_name> [skip_poll] <host1> [<host2>...]" >&2
+    log_print "ERROR" "Not enough arguments. Usage: known_hosts_bootstrapper <config_name> [skip_poll] <host1> [<host2>...]"
     return 1
   fi
 
@@ -249,20 +256,20 @@ known_hosts_bootstrapper() {
 
   # After potential shifts, if no arguments remain, there are no hosts to process.
   if [ $# -eq 0 ]; then
-    echo "#### Error: No hosts provided to known_hosts_bootstrapper." >&2
+    log_print "ERROR" "No hosts provided to known_hosts_bootstrapper."
     return 1
   fi
 
   local known_hosts_file="$HOME/.ssh/known_hosts_${config_name}"
   
-  echo ">>> Preparing SSH known_hosts: ${known_hosts_file}"
+  log_print "STEP" "Preparing SSH known_hosts: ${known_hosts_file}"
   mkdir -p "$HOME/.ssh"
   rm -f "${known_hosts_file}"
   
-  echo "#### Scanning host keys for all nodes..."
+  log_print "TASK" "Scanning host keys for all nodes..."
 
   local tmp_dir
-  tmp_dir=$(mktemp -d) || { echo "Failed to create temp dir"; return 1; }
+  tmp_dir=$(mktemp -d) || { log_print "ERROR" "Failed to create temp dir"; return 1; }
 
   local pids=()
 
@@ -271,25 +278,25 @@ known_hosts_bootstrapper() {
     local output_file="$2"
     
     if ${perform_poll}; then
-      echo ".... Waiting for SSH on ${target_host} ..."
+      log_print "TASK" "Waiting for SSH on ${target_host} ..."
       for ((attempt=1; attempt<=150; attempt++)); do
         local keys_found
         keys_found=$(ssh-keyscan -t ed25519 -T 2 -H "${target_host}" 2>/dev/null || true)
         if [[ -n "${keys_found}" ]] && [[ "${keys_found}" == *"ssh-ed25519"* ]]; then
           echo "${keys_found}" > "${output_file}"
-          echo "    [OK] ${target_host} is ready."
+          log_print "OK" "${target_host} is ready."
           return 0
         fi
         sleep 1
       done
-      echo "    [FAIL] Timed out waiting for ${target_host}" >&2
+      log_print "ERROR" "Timed out waiting for ${target_host}"
       return 1
     else
       if ssh-keyscan -T 5 -H "${target_host}" > "${output_file}" 2>/dev/null; then
-					echo "    [OK] Scanned ${target_host}"
+					log_print "OK" "Scanned ${target_host}"
 					return 0
       else
-					echo "    [WARN] Failed to scan ${target_host}" >&2
+					log_print "WARN" "Failed to scan ${target_host}"
 					return 1
       fi
     fi
@@ -311,17 +318,17 @@ known_hosts_bootstrapper() {
   rm -rf "${tmp_dir}"
 
   if [ $failed_count -gt 0 ]; then
-    echo "#### Error: ${failed_count} hosts failed to initialize SSH."
+    log_print "ERROR" "${failed_count} hosts failed to initialize SSH."
     return 1
   fi
 
-  echo "#### Host key scanning complete."
-  echo "--------------------------------------------------"
+  log_print "OK" "Host key scanning complete."
+  log_divider
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [[ $# -eq 0 ]]; then
-    echo "Error: No function specified"
+    log_print "ERROR" "No function specified"
     exit 1
   fi
   "$@"

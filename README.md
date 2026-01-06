@@ -13,7 +13,7 @@ The machine specifications used for development are as follows, for reference:
 -   **RAM:** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
 -   **SSD:** WD PC SN560 SDDPNQE-1T00-1032
 
-You can clone the project using the following command:
+The project can be cloned via the following command:
 
 ```shell
 git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
@@ -26,7 +26,7 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
 ### B. Prerequisites
 
-Before you begin, ensure you have the following:
+Before beginning, ensure the following requirements are met:
 
 -   A Linux host (RHEL 10 or Ubuntu 24 recommended).
 -   A CPU with virtualization support enabled (VT-x or AMD-V).
@@ -37,7 +37,7 @@ Before you begin, ensure you have the following:
 
 ### C. Note
 
-This project requires CPU with virtualization support. For users whose CPUs don't support virtualization, you can refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality. Use the following in shell to check if your device support virtualization:
+This project requires CPU cwith virtualization support. For users whose CPUs don't support virtualization, refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality for establishing `kubeadm` cluster. Use the following in shell to check if developing device supports virtualization:
 
 ```shell
 lscpu | grep Virtualization
@@ -51,7 +51,7 @@ The output may show:
 
 ### D. The Entrypoint: `entry.sh`
 
-The content in Section 1 and Section 2 serves as prerequisite setup before formal execution. Project lifecycle management and configuration are handled through the `entry.sh` script in the root directory. After executing `./entry.sh`, you will see the following content:
+The content in Section 1 and Section 2 serves as prerequisite setup before formal execution. Project lifecycle management and configuration are handled through the `entry.sh` script in the root directory. The following content is shown after executing `./entry.sh`:
 
 ```text
 ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
@@ -59,63 +59,66 @@ The content in Section 1 and Section 2 serves as prerequisite setup before forma
 
 ======= IaC-Driven Virtualization Management =======
 
-Environment: NATIVE
-Development Vault (Local): Running (Unsealed)
-Production Vault (Layer10): Running (Unsealed)
+[INFO] Environment: NATIVE
+--------------------------------------------------
+[OK] Development Vault (Local): Running (Unsealed)
+[OK] Production Vault (Layer10): Running (Unsealed)
+------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge All Libvirt Resources
-3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Packer and Terraform Resources
-4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Quit
-5) Generate SSH Key                               11) Rebuild Layer via Ansible
-6) Setup KVM / QEMU for Native                    12) Verify SSH
+1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
+2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
+3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
+4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
+5) Generate SSH Key                               13) Switch Environment Strategy
+6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
+7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
+8) Verify IaC Environment                         16) Quit
 
->>> Please select an action:
-
+[INPUT] Please select an action:
 ```
 
 Among options `9`, `10`, and `11`, there are submenus. These menus are dynamically created based on the directories under `packer/output` and `terraform/layers`. In the current complete setup, they are:
 
-1. If you select `9) Build Packer Base Image`
+1. The submenu of selecting `9) Build Packer Base Image`
 
     ```text
-    >>> Please select an action: 9
-    # Entering Packer build selection menu...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
+    [INPUT] Please select an action: 9
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
 
-    1) Build ALL Packer Images  3) 02-base-kubeadm     5) 04-base-postgres    7) 06-base-minio       9) Back to Main Menu
-    2) 01-base-docker           4) 03-base-microk8s    6) 05-base-redis       8) 07-base-vault
+    1) 01-base-docker           4) 04-base-postgres         7) 07-base-vault
+    2) 02-base-kubeadm          5) 05-base-redis            8) Build ALL Packer Images
+    3) 03-base-microk8s         6) 06-base-minio            9) Back to Main Menu
 
-    >>> Please select an action:
+    [INPUT] Select a Packer build to run:
     ```
 
-2. If you select `10) Provision Terraform Layer`
+2. The submenu of selecting `10) Provision Terraform Layer`
 
     ```text
-    >>> Please select an action: 10
-    # Entering Terraform layer management menu...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
-    1) 10-vault-core          4) 20-gitlab-redis       7) 20-harbor-redis      10) 50-gitlab-kubeadm
-    2) 20-gitlab-minio        5) 20-harbor-minio       8) 30-harbor-microk8s   11) 50-harbor-provision
-    3) 20-gitlab-postgres     6) 20-harbor-postgres    9) 40-harbor-platform   12) 60-gitlab-platform
-    13) Back to Main Menu
+    [INPUT] Please select an action: 10
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
+    1) 00-github-meta         5) 20-gitlab-redis       9) 30-harbor-microk8s   13) 60-gitlab-platform
+    2) 10-vault-core          6) 20-harbor-minio      10) 40-harbor-platform   14) Back to Main Menu
+    3) 20-gitlab-minio        7) 20-harbor-postgres   11) 50-gitlab-kubeadm
+    4) 20-gitlab-postgres     8) 20-harbor-redis      12) 50-harbor-provision
 
-    >>> Select a Terraform layer to REBUILD:
+    [INPUT] Select a Terraform layer to REBUILD:
     ```
 
-3. If you select `11) Rebuild Layer via Ansible` **_(Currently Malfunctioning...)_**
+3. The submenu of selecting `11) Rebuild Layer via Ansible`
 
     ```text
-    >>> Please select an action: 11
-    # Executing [DEV] Rebuild via direct Ansible command...
-    #### Checking status of libvirt service...
-    --> libvirt service is already running.
-    1) inventory-kubeadm-gitlab.yaml   4) inventory-minio-harbor.yaml     7) inventory-redis-gitlab.yaml
-    2) inventory-microk8s-harbor.yaml  5) inventory-postgres-gitlab.yaml  8) inventory-vault-cluster.yaml
-    3) inventory-minio-gitlab.yaml     6) inventory-postgres-harbor.yaml  9) Back to Main Menu
-    >>> Select a Cluster Inventory to run its Playbook:
+    [INPUT] Please select an action: 11
+    [INFO] Checking status of libvirt service...
+    [OK] libvirt service is already running.
+    1) inventory-kubeadm-gitlab.yaml     5) inventory-postgres-gitlab.yaml   9) inventory-vault-cluster.yaml
+    2) inventory-microk8s-harbor.yaml    6) inventory-postgres-harbor.yaml  10) Back to Main Menu
+    3) inventory-minio-gitlab.yaml       7) inventory-redis-gitlab.yaml
+    4) inventory-minio-harbor.yaml       8) inventory-redis-harbor.yaml
+
+    [INPUT] Select a Cluster Inventory to run its Playbook:
     ```
 
 **A description of how to use this script follows below.**
@@ -124,40 +127,50 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
 
 ### A. Required. KVM / QEMU
 
-The user's CPU must support virtualization technology to enable QEMU-KVM functionality. You can choose whether to install it through option `6` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment on your own.
+The user's CPU must support virtualization technology to enable QEMU-KVM functionality. Choose whether to install it through option `6` via script (but this has only been tested on Ubuntu 24 and RHEL 10), or refer to relevant resources to set up the KVM and QEMU environment, which depends on the development device's platform.
 
 ### B. Option 1. Install IaC tools on Native
 
 1. **Install HashiCorp Toolkit - Terraform and Packer**
 
-    Next, you can install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `7` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the offical installation guide:
+    Next, install Terraform, Packer, and Ansible by running `entry.sh` in the project root directory and selecting option `7` for _"Setup Core IaC Tools for Native"_. Or alternatively, follow the official installation guide:
 
     > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
     > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_ > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
 
-    Expected output should reflect the latest versions. For instance (in zsh):
+    Expected output should reflect the latest versions. For instance (in `zsh`):
 
     ```text
     ...
-    >>> Please select an action: 7
-    >>> STEP: Verifying full native IaC environment...
-    >>> Verifying Libvirt/KVM environment...
-    #### QEMU/KVM: Installed
-    #### Libvirt Client (virsh): Installed
-    >>> Verifying Core IaC Tools (HashiCorp/Ansible)...
-    #### HashiCorp Packer: Installed
-    #### HashiCorp Terraform: Installed
-    #### HashiCorp Vault: Installed
-    #### Red Hat Ansible: Installed
+    [INPUT] Please select an action: 7
+    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
+    [STEP] Setting up core IaC tools...
+    [TASK] Installing OS-specific base packages for RHEL...
+    ...
+    [TASK] Installing Ansible Core using pip...
+    ...
+    [INFO] Installing HashiCorp Toolkits (Terraform, Packer, Vault)...
+    [TASK] Installing terraform...
+    ...
+    [TASK] Installing packer...
+    ...
+    [TASK] Installing vault...
+    ...
+    [TASK] Installing to /usr/local/bin/vault
+    [INFO] Verifying installed tools...
+    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
+    [INFO] HashiCorp Packer: Installed
+    [INFO] HashiCorp Terraform: Installed
+    [INFO] HashiCorp Vault: Installed
+    [INFO] Red Hat Ansible: Installed
+    [OK] Core IaC tools setup and verification completed.
     ```
 
-### B. Option 2. Run IaC tools inside Container: Podman
+2. Please ensure Podman is installed correctly. Refer to the following URL and choose the installation method corresponding to the development device's platform
 
-1. Please ensure Podman is installed correctly. You can refer to the following URL and choose the installation method corresponding to your platform
+3. After completing the Podman installation, switch to the project root directory:
 
-2. After completing the Podman installation, please switch to the project root directory:
-
-    1. Default memlock limit (`ulimit -l`) is usually too low for HashiCorp Vault. Rootless Podman inherits this low limit, causing Vault's mlock system call to fail. You can modify it by running the following command:
+    1. Default memlock limit (`ulimit -l`) is usually too low for HashiCorp Vault. Rootless Podman inherits this low limit, causing Vault's mlock system call to fail. To address such issue, modify it by running the following command:
 
         ```shell
         sudo tee -a /etc/security/limits.conf <<EOT
@@ -174,13 +187,13 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
         podman compose up --build
         ```
 
-    3. After creating the Container, you only need to run the container to perform operations:
+    3. After creating the Container, it only needs to run the container to perform operations:
 
         ```shell
         podman compose up -d
         ```
 
-    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. If you need to make any modifications and check inside the container, you can execute
+    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. Execute the following command if modification or examination inside the container is necessary:
 
         ```shell
         podman exec -it iac-controller-base bash
@@ -231,9 +244,9 @@ To ensure the project runs smoothly, please follow the procedures below to compl
 
 0. **Environment variable file:** The script `entry.sh` will automatically create a `.env` environment variable that is used by for script files, which can be ignored.
 
-1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys will be used for node access authentication and configuration management. You can generate these by running `./entry.sh` and entering `5` to access the _"Generate SSH Key"_ option. You can enter your desired key name or simply use the default value `id_ed25519_on-premise-gitlab-deployment`. The generated public and private key pair will be stored in the `~/.ssh` directory
+1. **Generate SSH Key:** During the execution of Terraform and Ansible, SSH keys serve as the mechanism for node access authentication and configuration management. These keys are generated by executing `./entry.sh` and selecting option `5` for _"Generate SSH Key"_. A specific key name may be defined, or the default value `id_ed25519_on-premise-gitlab-deployment` may be applied. The resulting public and private key pair is stored in the `~/.ssh` directory.
 
-2. **Switch Environment:** You can switch between "Container" or "Native" environment by using `./entry.sh` and entering `13`. Currently this project primarily uses Podman, and I _personally_ recommend decoupling the Podman and Docker runtime environments to prevent execution issues caused by SELinux-related permissions. For example, SELinux policies do not allow a `container_t` process that is common in Docker to connect to a `virt_var_run_t` Socket, which may cause Terraform Provider or `virsh` to receive "Permission Denied" errors when running in containers, even though everything appears normal from a filesystem permissions perspective.
+2. **Switch Environment:** Environment switching between _"Container"_ and _"Native"_ is available via `./entry.sh` by selecting option `13`. This project primarily utilizes Podman. Decoupling Podman and Docker runtime environments is a documented practice to prevent execution conflicts stemming from SELinux-related permissions. For instance, SELinux policies restrict a `container_t` process (standard in Docker) from connecting to a `virt_var_run_t` Socket. Such restrictions can result in "Permission Denied" errors for the Terraform Provider or `virsh` when executed within containers, despite correct filesystem permissions.
 
 ### Step B. Set up Variables
 
@@ -247,14 +260,15 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     sudo usermod -aG libvirt $(whoami)
     ```
 
-    **Note:** After completing this step, you must fully log out and log back in, or restart your computer, for the new group membership to take effect in your shell session.
+    **Note:** Upon completion of this step, a full logout and login or a system restart is required for the new group membership to take effect within the shell session.
 
 2. Modify the `libvirtd` configuration file to explicitly state that the `libvirt` group should manage the socket.
 
     ```shell
-    # If you use vim
+    # If vim is preferred
     sudo vim /etc/libvirt/libvirtd.conf
-    # If you use nano
+
+    # If nano is preferred
     sudo nano /etc/libvirt/libvirtd.conf
     ```
 
@@ -324,7 +338,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
         virsh list --all
         ```
 
-        If the command executes successfully and lists the virtual machines (even if the list is empty), it means you have all the necessary permissions.
+        Successful execution of the command and the subsequent listing of virtual machines (regardless of whether the list is empty) indicates that all necessary permissions are present.
 
 #### **Step B.1. Prepare GitHub Credentials**
 
@@ -353,29 +367,29 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 0. **Development mode is the previous stage of Production Vault, only used to set up Production Vault. Subsequently, the Production Vault is used for managing all sensitive data for the entire project.**
 
-1. First, run the `entry.sh` script and select option `1` to generate the files required for the TLS handshake. When creating the self-signed CA certificate, you can leave the fields blank for now. If you need to regenerate the TLS files, you can simply run option `1` again.
+1. First, run the `entry.sh` script and select option `1` to generate the files required for the TLS handshake. During the creation of the self-signed CA certificate, fields may be left blank. If regeneration of TLS files is necessary, option `1` may be executed again.
 
 2. Switch to the project's root directory and run the following command to start the Development mode Vault server.
 
-    - If you prefer to run it on the host:
+    - If running it on the host is preferred:
 
         ```shell
         vault server -config=vault/vault.hcl
         ```
 
-    - **(Recommended)** If you prefer to run it in a container (side-car mode):
+    - **(Recommended)** If running it in a container (side-car mode) is preferred:
 
         ```shell
         podman compose up -d iac-vault-server
         ```
 
-    After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If you need to reinitialize Vault, you must manually clear all files within the `vault/data/` directory.
+    After starting the server, Vault will create `vault.db` and Raft-related files in the `vault/data/` directory. If reinitialization of Vault is necessary, all files within the `vault/data/` directory must be manually cleared.
 
     **Note:** Please open a new terminal window or tab for subsequent operations.
 
-3. Once the previous steps are complete, you can run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
+3. Once the previous steps are complete, run `entry.sh` and select option `2` to initialize Vault. This process will also automatically perform the required unseal action for Vault.
 
-4. Next, you only need to manually modify the following variables used in the project. Please replace the password with your own password and ensure the password's security.
+4. Next, only the following variables used in the project require manual modification. Passwords must be replaced with unique values to ensure security.
 
     - **For Development Vault**
 
@@ -504,30 +518,30 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **Note 2:**
 
-        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, they can be set to the same value. However, if you need to set different names for different VMs, you can directly modify the objects and relevant code in HCL. Typically, you would modify the `ansible_runner.vm_credentials` variable and related variable passing, and then use a `for_each` loop for iteration. This increases complexity, so if there are no other requirements, it is recommanded to keep the SSH and VM identity variables the same.
+        The current SSH identity variables are primarily used for Packer in a single-use scenario, while the VM identity variables are used by Terraform when cloning VMs. In principle, these can be set to the same value. However, if different names are required for different VMs, the objects and relevant code in HCL can be modified directly. Typically, the `ansible_runner.vm_credentials` variable and related variable passing would be modified, followed by the use of a `for_each` loop for iteration. This increases complexity; therefore, if no other requirements exist, maintaining identical SSH and VM identity variables is recommended.
 
-5. When starting the project, you only need to launch the Vault server in a single terminal (maybe in your IDE) window using `vault server -config=vault/vault.hcl`. Afterward, you can use
+5. When starting the project, the Vault server is launched in a single terminal window (e.g., within an IDE) using `vault server -config=vault/vault.hcl`. The following options are available for use:
 
     - option `3` in `entry.sh` to unseal the Development mode Vault database
     - option `4` to unseal the Production mode Vault database
 
-    Alternatively, you may use container as described in B.1-2, which is suggested due to simplicity.
+    Alternatively, use the container as described in B.1-2, which is suggested due to simplicity.
 
 #### **Step B.3. Create Variable File for Terraform:**
 
-1. You can RENAME the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
+1. Rename the `terraform/layers/*/terraform.tfvars.example` file to `terraform/layers/*/terraform.tfvars` file using the following command:
 
     ```shell
     for f in terraform/layers/*/terraform.tfvars.example; do cp -n "$f" "${f%.example}"; done
     ```
 
-    Then, you can modify the `terraform.tfvars` file based on your requirements. HA and non-HA are both supported.
+    Then modify the `terraform.tfvars` file based on the requirements of each cluster. HA and non-HA are both supported.
 
 2. For users setting up an HA Cluster (GitLab as example), the number of elements in `gitlab_kubeadm_compute.masters` and `gitlab_kubeadm_compute.workers` determines the number of nodes generated. Ensure the quantity of nodes in `gitlab_kubeadm_compute.masters` is an odd number to prevent the etcd Split-Brain risk in Kubernetes. Meanwhile, `gitlab_kubeadm_compute.workers` can be configured based on the number of IPs. The IPs provided by the user must correspond to the host-only network segment.
 
-    - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> ,
+    - The latest version is available at <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/> .
     - The test version of this project is also available at <https://old-releases.ubuntu.com/releases/noble/> .
-    - After selecting your version, please verify the checksum.
+    - After selecting the version, please verify the checksum.
         - For latest Noble version: <https://releases.ubuntu.com/noble/SHA256SUMS>
         - For "Noble-old-release" version: <https://old-releases.ubuntu.com/releases/noble/SHA256SUMS>
 
@@ -551,19 +565,21 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
         - Rebuilding Harbor in Layer 50's Service Provision stage sometimes shows `module.harbor_config.harbor_garbage_collection.gc` Resource not found error occurred, just remove `terraform.tfstate` and `terraform.tfstate.backup` in `terraform/layers/50-harbor-platform` and reexecute `terraform apply`.
 
-    - **(Temporary malfunctioning)** To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `11) Rebuild Layer via Ansible`.
+    - To repeatedly test Ansible Playbooks on existing machines without recreating virtual machines, use `11) Rebuild Layer via Ansible`.
 
 5. **Resource Cleanup**:
 
     - **`14) Purge All Libvirt Resources`**:
 
-        This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where you only want to clean up virtualization resources without clearing the project state.
+        This option executes `libvirt_resource_purger "all"`, which **only deletes** all virtual machines, virtual networks, and storage pools created by this project, but **will preserve** Packer's output images and Terraform's local state files. This is suitable for scenarios where cleaning up virtualization resources is required without clearing the project state.
 
     - **`15) Purge All Packer and Terraform Resources`**:
 
         This option deletes **all** Packer output images and **all** Terraform Layer local states, causing Packer and Terraform states in this project to be restored to an almost brand new state.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
+
+**Note:** This step (B.4) can be performed by `10) Provision Terraform Layer` with `00-github-meta` as the target layer if this repository is cloned for _personal_ use. The following content is provided for imperative manual procedures only.
 
 1. Inject Token from Vault with Shell Bridge Pattern. Execute this at the project root to ensure `${PWD}` points to the correct Vault certificate path.
 
@@ -593,6 +609,16 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
     terraform apply -auto-approve
     ```
 
+    The output would be akin to the following:
+
+    ```shell
+    Apply complete! Resources: x added, y changed, z destroyed.
+    Outputs:
+
+    repository_ssh_url = "git@github.com:username/on-premise-gitlab-deployment.git"
+    ruleset_id = <a-numeric-id>
+    ```
+
 #### **Step B.5. Export Certs of Services:**
 
 1. To configure Terraform Runner for MinIO (Layer 20):
@@ -601,14 +627,14 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     2. Ensure Terraform Runner has Vault CA
 
-        - If you are using RHEL / CentOS, perform the following steps
+        - For RHEL / CentOS, perform the following steps
 
             ```shell
             sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
             sudo update-ca-trust
             ```
 
-        - If you are using Ubuntu / Debian, perform the following steps
+        - For Ubuntu / Debian, perform the following steps
 
             ```shell
             sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
@@ -752,9 +778,7 @@ This project employs three tools - Packer, Terraform, and Ansible - using an Inf
 
 ### B. Toolchain Roles and Responsibilities
 
-> The setup process is based on the commands provided by Bibin Wilson (2025), which I implemented using an Ansible Playbook. Thanks to the author, Bibin Wilson, for the contribution on his article
->
-> Work Cited:
+> The clusters are built by referencing the following articles. Work Cited:
 >
 > 1. Bibin Wilson, B. (2025). _How To Setup Kubernetes Cluster Using Kubeadm._ devopscube. <https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests>
 > 2. Aditi Sangave (2025). _How to Setup HashiCorp Vault HA Cluster with Integrated Storage (Raft)._ Velotio Tech Blog. <https://www.velotio.com/engineering-blog/how-to-setup-hashicorp-vault-ha-cluster-with-integrated-storage-raft>

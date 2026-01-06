@@ -2,6 +2,48 @@
 
 ### This script contains general utility and helper functions.
 
+# ANSI Color Codes
+readonly CLR_RESET='\033[0m'
+readonly CLR_BOLD='\033[1m'
+readonly CLR_RED='\033[0;31m'
+readonly CLR_GREEN='\033[0;32m'
+readonly CLR_YELLOW='\033[0;33m'
+readonly CLR_BLUE='\033[0;34m'
+readonly CLR_CYAN='\033[0;36m'
+readonly CLR_PURPLE='\033[0;35m'
+readonly CLR_BOLD_RED='\033[1;31m'
+readonly CLR_BOLD_BLUE='\033[1;34m'
+
+# Function: Unified Logging Interface
+log_print() {
+  local level="${1:-INFO}"
+  local msg="${2:-}"
+
+  case "${level^^}" in
+    "STEP")    echo -e "${CLR_BOLD_BLUE}[STEP] ${msg}${CLR_RESET}" ;;
+    "INFO")    echo -e "${CLR_GREEN}[INFO] ${msg}${CLR_RESET}" ;;
+    "TASK")    echo -e "${CLR_CYAN}[TASK] ${msg}${CLR_RESET}" ;;
+    "WARN")    echo -e "${CLR_YELLOW}[WARN] ${msg}${CLR_RESET}" ;;
+    "ERROR")   echo -e "${CLR_RED}[ERROR] ${msg}${CLR_RESET}" >&2 ;;
+    "FATAL")   echo -e "${CLR_BOLD_RED}[FATAL] ${msg}${CLR_RESET}" >&2 ;;
+    "OK"|"SUCCESS") echo -e "${CLR_GREEN}[OK] ${msg}${CLR_RESET}" ;;
+    "INPUT")   echo -e "${CLR_PURPLE}[INPUT] ${msg}${CLR_RESET}" ;;
+    *)         echo -e "${CLR_RESET}[LOG] ${msg}${CLR_RESET}" ;;
+  esac
+}
+
+# Function: Print a visual divider
+log_divider() {
+  local char="${1:--}"
+  local length="${2:-60}"
+  local color="${3:-${CLR_RESET}}"
+  
+  local line
+  # Generate a line of 'length' spaces, then replace spaces with 'char'
+  printf -v line "%*s" "$length" ""
+  echo -e "${color}${line// /$char}${CLR_RESET}"
+}
+
 # Function: Execute a command string based on the selected strategy.
 run_command() {
   local cmd_string="$1"
@@ -22,28 +64,28 @@ run_command() {
       terraform*) service_name="iac-terraform" ;;
       ansible*)   service_name="iac-ansible" ;;
       *)          
-        service_name="iac-ansible"
-        echo "DEBUG: Defaulting command '${cmd_string}' to '${service_name}' container." 
-        ;;
+			service_name="iac-ansible"
+			log_print "INFO" "Defaulting command '${cmd_string}' to '${service_name}' container."
+			;;
     esac
 
 		local container_name="iac-controller-${service_name#iac-}"
 
     # 1. Check if Podman is installed
     if ! command -v podman >/dev/null 2>&1; then
-      echo "FATAL: Container engine command 'podman' not found. Please install it to proceed." >&2
+			log_print "FATAL" "Container engine command 'podman' not found. Please install it to proceed."
       exit 1
     fi
 
     # 2. Check if the required engine is installed
     if ! command -v "${engine_cmd##* }" >/dev/null 2>&1; then
-      echo "FATAL: Container engine command '${engine_cmd##* }' not found. Please install it to proceed." >&2
+			log_print "FATAL" "Container engine command '${engine_cmd##* }' not found. Please install it to proceed."
       exit 1
     fi
 
     # 3. Ensure the controller service is running.
     if ! ${engine_cmd} ps -q --filter "name=${container_name}" | grep -q .; then
-      echo ">>> Starting container service '${container_name}' using ${compose_file}..."
+			log_print "TASK" "Starting container service '${container_name}' using ${compose_file}..."
       (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" up -d "${service_name}")
     fi
 
@@ -76,7 +118,7 @@ check_and_fix_permissions() {
     "${HOME}/.ssh"
   )
 
-  echo "INFO: Checking directory ownership for user '${current_user}'."
+  log_print "INFO" "Checking directory ownership for user '${current_user}'."
   
   local needs_fix=false
   local return_code=0
@@ -84,7 +126,7 @@ check_and_fix_permissions() {
   # --- 3. Iterate, Check, and Correct Ownership ---
   for dir in "${directories_to_check[@]}"; do
     if [ ! -d "${dir}" ]; then
-      echo "INFO: Skipping non-existent directory: ${dir}"
+      log_print "INFO" "Skipping non-existent directory: ${dir}"
       continue
     fi
 
@@ -94,32 +136,32 @@ check_and_fix_permissions() {
 
     if [ -n "${incorrect_owner_path}" ]; then
       needs_fix=true
-      echo "WARN: Incorrect ownership detected in '${dir}'."
-      echo "      Example path with incorrect owner: ${incorrect_owner_path}"
+      log_print "WARN" "Incorrect ownership detected in '${dir}'."
+      log_print "WARN" "      Example path with incorrect owner: ${incorrect_owner_path}"
       
       # Attempt to fix ownership.
       local fix_cmd="sudo chown -R ${current_user}:${current_user} ${dir}"
-      echo ">>> Executing: ${fix_cmd}"
+      log_print "TASK" "Executing: ${fix_cmd}"
       
       if eval "${fix_cmd}"; then
-        echo "INFO: Successfully corrected ownership for '${dir}'."
+        log_print "OK" "Successfully corrected ownership for '${dir}'."
       else
-        echo "FATAL: Failed to correct ownership for '${dir}'. Please check sudo permissions." >&2
+        log_print "FATAL" "Failed to correct ownership for '${dir}'. Please check sudo permissions."
         return_code=1 # Mark that a failure occurred
       fi
     else
-      echo "INFO: Ownership verified for '${dir}'."
+      log_print "INFO" "Ownership verified for '${dir}'."
     fi
   done
 
   # --- 4. Final Status Report ---
   if ! ${needs_fix}; then
-    echo "INFO: All checked directories have correct ownership."
+    log_print "OK" "All checked directories have correct ownership."
   else
     if [ "${return_code}" -eq 0 ]; then
-      echo "INFO: Permission check and correction process completed successfully."
+      log_print "OK" "Permission check and correction process completed successfully."
     else
-      echo "ERROR: The permission fix process encountered one or more errors." >&2
+      log_print "ERROR" "The permission fix process encountered one or more errors."
     fi
   fi
 
@@ -133,25 +175,26 @@ execution_time_reporter() {
   DURATION=$((END_TIME - START_TIME))
   MINUTES=$((DURATION / 60))
   SECONDS=$((DURATION % 60))
-  echo "--------------------------------------------------"
-  echo ">>> Execution time: ${MINUTES}m ${SECONDS}s"
-  echo "--------------------------------------------------"
+	
+	log_divider
+	log_print "INFO" "Execution time: ${MINUTES}m ${SECONDS}s"
+	log_divider
 }
 
 # Function: Prompts for strict manual confirmation before destructive actions
 manual_confirmation_prompter() {
   local target_desc="${1:-resources}"
 
-  echo
-  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-  echo "WARNING: You are about to DESTROY ALL ${target_desc}."
-  echo "This action is IRREVERSIBLE and will wipe the selected environment data."
-  echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	log_divider "!"
+	log_print "WARN" "WARNING: You are about to DESTROY ALL ${target_desc}."
+	log_print "WARN" "This action is IRREVERSIBLE and will wipe the selected environment data."
+	log_divider "!"
   
-	read -r -p "Type 'Y' or 'y' to confirm execution: " confirmation
+  log_print "INPUT" "Type 'Y' or 'y' to confirm execution: "
+	read -r confirmation
   
 	if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
-    echo ">>> Operation aborted by user."
+		log_print "INFO" "Operation aborted by user."
     return 1
   fi
   return 0

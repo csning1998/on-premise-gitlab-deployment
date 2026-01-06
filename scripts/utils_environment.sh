@@ -2,7 +2,7 @@
 
 # Function: Scans project directories to find all Packer and Terraform layers.
 iac_layer_discoverer() {
-  echo ">>> Discovering Packer Base and Terraform layers..."
+  log_print "STEP" "Discovering Packer Base and Terraform layers..."
   cd "${SCRIPT_DIR}" || return 1
 
   # Discover Packer Layers
@@ -25,7 +25,7 @@ iac_layer_discoverer() {
   fi
   env_var_mutator "ALL_TERRAFORM_LAYERS" "${terraform_layers_str% }"
   
-  echo "#### Layer discovery complete and .env updated."
+  log_print "INFO" "Layer discovery complete and .env updated."
 }
 
 # Function: Check the host operating system
@@ -62,9 +62,9 @@ packer_net_configurator() {
 
   if ip link show virbr0 >/dev/null 2>&1; then
     bridge_val="virbr0"
-    echo "    - Network Mode: Bridge detected (virbr0). Using performance networking."
+    log_print "INFO" "Network Mode: Bridge detected (virbr0). Using performance networking."
   else
-    echo "WARN: 'virbr0' bridge not found. Defaulting to user-mode/SLIRP networking."
+    log_print "WARN" "'virbr0' bridge not found. Defaulting to user-mode/SLIRP networking."
     bridge_val=""
   fi
 
@@ -79,7 +79,7 @@ env_file_bootstrapper() {
     return 0 # File already exists, do nothing.
   fi
 
-  echo ">>> .env file not found. Generating a new one with smart defaults..."
+  log_print "STEP" ".env file not found. Generating a new one with smart defaults..."
 
   # 1. Set defaults
   local default_strategy="native"
@@ -91,7 +91,7 @@ env_file_bootstrapper() {
     default_libvirt_gid=$(getent group libvirt | cut -d: -f3)
   else
     # Fallback or error if libvirt group doesn't exist
-    echo "WARN: 'libvirt' group not found on host. Using default GID 999." >&2
+    log_print "WARN" "'libvirt' group not found on host. Using default GID 999."
     default_libvirt_gid=999
   fi
 
@@ -130,7 +130,7 @@ PKR_VAR_NET_BRIDGE=""
 LIBVIRT_GID=${default_libvirt_gid}
 EOF
 
-  echo "#### .env file created successfully."
+  log_print "OK" ".env file created successfully."
 
   # 4. perform the initial discovery.
   iac_layer_discoverer
@@ -155,28 +155,29 @@ switch_strategy() {
   
   env_var_mutator "$var_name" "$new_value"
   echo
-  echo "Strategy '${var_name}' in .env updated to '${new_value}'."
-cd "${SCRIPT_DIR}" && exec ./entry.sh
+  log_print "INFO" "Strategy '${var_name}' in .env updated to '${new_value}'."
+  cd "${SCRIPT_DIR}" && exec ./entry.sh
 }
 
 strategy_switch_handler() {
   echo
-  echo "INFO: Resetting Terraform state before switching strategy to prevent inconsistencies..."
+  log_print "INFO" "Resetting Terraform state before switching strategy to prevent inconsistencies..."
   (cd "${TERRAFORM_DIR}" && rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup)
   rm -rf "$HOME/.ssh/on-premise-gitlab-deployment_config"
-  echo "#### Terraform state reset."
-  echo "INFO: Purge libvirt resources (VMs, networks, storage pools)"
+  log_print "INFO" "Terraform state reset."
+  
+  log_print "STEP" "Purge libvirt resources (VMs, networks, storage pools)"
   libvirt_resource_purger "all"
   
   # Check if the storage pool exists before attempting to destroy or undefine
   if sudo virsh pool-info iac-kubeadm >/dev/null 2>&1; then
-    echo "#### Destroying and undefining storage pool: iac-kubeadm"
+    log_print "TASK" "Destroying and undefining storage pool: iac-kubeadm"
     sudo virsh pool-destroy iac-kubeadm >/dev/null 2>&1 || true
     sudo virsh pool-undefine iac-kubeadm >/dev/null 2>&1 || true
   else
-    echo "#### Storage pool iac-kubeadm does not exist, skipping destroy and undefine."
+    log_print "INFO" "Storage pool iac-kubeadm does not exist, skipping destroy and undefine."
   fi
-  echo "--------------------------------------------------"
+  log_divider
 
   local new_strategy
   new_strategy=$([[ "$ENVIRONMENT_STRATEGY" == "container" ]] && echo "native" || echo "container")
