@@ -4,20 +4,20 @@
 
 # Function: Clean up Packer output directory and related artifacts
 packer_artifact_cleaner() {
-  echo ">>> STEP: Cleaning Packer artifacts..."
+  log_print "STEP" "Cleaning Packer artifacts..."
 
   local target_layer="$1"
   if [ -z "$target_layer" ]; then
-    echo "FATAL: No Packer layer specified for packer_artifact_cleaner function." >&2
+    log_print "FATAL" "No Packer layer specified for packer_artifact_cleaner function."
     return 1
   fi
 
   local layers_to_clean=()
 
   if [[ "$target_layer" == "all" ]]; then
-    echo "#### Preparing to clean all Packer output directories..."
+    log_print "INFO" "Preparing to clean all Packer output directories..."
     if [ ${#ALL_PACKER_BASES[@]} -eq 0 ]; then
-      echo "Warning: ALL_PACKER_BASES array is not defined. Cannot clean 'all'."
+      log_print "WARN" "ALL_PACKER_BASES array is not defined. Cannot clean 'all'."
     else
       layers_to_clean=("${ALL_PACKER_BASES[@]}")
     fi
@@ -26,20 +26,20 @@ packer_artifact_cleaner() {
   fi
 
   for base_name in "${layers_to_clean[@]}"; do
-    echo "#### Cleaning output for layer: ${base_name}"
+    log_print "TASK" "Cleaning output for layer: ${base_name}"
     rm -rf "${PACKER_DIR}/output/${base_name}"
   done
 
-  # --- Generic Packer Cache Cleanup ---
+  # Generic Packer Cache Cleanup
   if [ -d ~/.cache/packer ]; then
-    echo "#### Cleaning Packer cache on host (preserving ISOs)..."
+    log_print "TASK" "Cleaning Packer cache on host (preserving ISOs)..."
     # Use 'sudo' to ensure we can remove any stale lock files created by
     # previous runs, regardless of ownership or permissions.
     find ~/.cache/packer -mindepth 1 ! -name '*.iso' -print0 | sudo xargs -0 rm -rf
   fi
 
-  echo "#### Packer artifact cleanup completed."
-  echo "--------------------------------------------------"
+  log_print "OK" "Packer artifact cleanup completed."
+  log_divider
 }
 
 # Function: Execute Packer build
@@ -47,7 +47,7 @@ packer_artifact_cleaner() {
 packer_build_executor() {
   local base_name="$1"
   if [ -z "$base_name" ]; then
-    echo "FATAL: No Packer build type specified for packer_build_executor function." >&2
+    log_print "FATAL" "No Packer build type specified for packer_build_executor function."
     return 1
   fi
 
@@ -55,12 +55,13 @@ packer_build_executor() {
   local build_var_file="${PACKER_DIR}/${base_name}.pkrvars.hcl"
 
   if [ ! -f "$build_var_file" ]; then
-    echo "FATAL: Packer var file not found: ${build_var_file}" >&2
+    log_print "FATAL" "Packer var file not found: ${build_var_file}"
     return 1
   fi
 
-  echo ">>> STEP: Starting new Packer build for [${base_name}]..."
+  log_print "STEP" "Starting new Packer build for [${base_name}]..."
 
+	# Ensure we are using the Development Vault context for Packer builds
 	vault_context_handler "dev"
 
 	local override_args=""
@@ -86,8 +87,8 @@ packer_build_executor() {
 
   run_command "${cmd}" "${PACKER_DIR}"
 
-  echo "#### Packer build complete. New base image for [${base_name}] is ready."
-  echo "--------------------------------------------------"
+  log_print "OK" "Packer build complete. New base image for [${base_name}] is ready."
+  log_divider
 }
 
 # Function: Display a sub-menu to select and run a Packer build.
@@ -95,14 +96,14 @@ packer_menu_handler() {
   local packer_build_executor_options=("${ALL_PACKER_BASES[@]}" "Build ALL Packer Images" "Back to Main Menu")
 
   echo
-  PS3=">>> Select a Packer build to run: "
+  PS3=$'\033[1;34m[INPUT] Select a Packer build to run: \033[0m'
   select build_base in "${packer_build_executor_options[@]}"; do
     if [[ "$build_base" == "Back to Main Menu" ]]; then
-      echo "# Returning to main menu..."
+      log_print "INFO" "Returning to main menu..."
       break
 
     elif [[ "$build_base" == "Build ALL Packer Images" ]]; then
-      echo "# Executing Batch Build for ALL Packer Images..."      
+      log_print "STEP" "Executing Batch Build for ALL Packer Images..."      
       if ! ssh_key_verifier; then break; fi
       libvirt_service_manager
       packer_artifact_cleaner "all"
@@ -115,7 +116,7 @@ packer_menu_handler() {
       break 2
 
     elif [[ " ${ALL_PACKER_BASES[*]} " == *"${build_base}"* ]]; then
-      echo "# Executing Rebuild Packer workflow for [${build_base}]..."
+      log_print "STEP" "Executing Rebuild Packer workflow for [${build_base}]..."
       if ! ssh_key_verifier; then break; fi
       libvirt_service_manager
       packer_artifact_cleaner "${build_base}"
@@ -123,7 +124,7 @@ packer_menu_handler() {
       execution_time_reporter
       break 2
     else
-      echo "Invalid option $REPLY"
+      log_print "ERROR" "Invalid option $REPLY"
     fi
   done
 }
