@@ -26,7 +26,7 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
 ### B. Prerequisites
 
-Before begin, ensure the following requirements are met:
+Before beginning, ensure the following requirements are met:
 
 -   A Linux host (RHEL 10 or Ubuntu 24 recommended).
 -   A CPU with virtualization support enabled (VT-x or AMD-V).
@@ -37,7 +37,7 @@ Before begin, ensure the following requirements are met:
 
 ### C. Note
 
-This project requires CPU with virtualization support. For users whose CPUs don't support virtualization, refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality for establishing `kubeadm` cluster. Use the following in shell to check if developing device supports virtualization:
+This project requires CPU cwith virtualization support. For users whose CPUs don't support virtualization, refer to the `legacy-workstation-on-ubuntu` branch. This has been tested on Ubuntu 24 to achieve the same basic functionality for establishing `kubeadm` cluster. Use the following in shell to check if developing device supports virtualization:
 
 ```shell
 lscpu | grep Virtualization
@@ -56,7 +56,6 @@ The content in Section 1 and Section 2 serves as prerequisite setup before forma
 ```text
 ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
 ... (Some preflight check)
-
 
 ======= IaC-Driven Virtualization Management =======
 
@@ -188,13 +187,13 @@ The user's CPU must support virtualization technology to enable QEMU-KVM functio
         podman compose up --build
         ```
 
-    3. After creating the Container, it only need to run the container to perform operations:
+    3. After creating the Container, it only needs to run the container to perform operations:
 
         ```shell
         podman compose up -d
         ```
 
-    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. Execute the following command if the modidication or examine inside the container is necessary:
+    4. Currently, the default setting is `DEBIAN_FRONTEND=noninteractive`. Execute the following command if modification or examination inside the container is necessary:
 
         ```shell
         podman exec -it iac-controller-base bash
