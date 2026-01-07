@@ -458,22 +458,33 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
             vm_username="some-username-for-vm-for-production-mode" \
             vm_password="some-password-for-vm-for-production-mode"
 
-        vault kv put secret/on-premise-gitlab-deployment/databases \
-            pg_superuser_password="some-password-for-pg-superuser-for-production-mode" \
-            pg_replication_password="some-password-for-pg-replication-for-production-mode" \
-            pg_vrrp_secret="some-password-for-pg-vrrp-for-production-mode" \
-            redis_requirepass="some-password-for-redis-requirepass-for-production-mode" \
-            redis_masterauth="some-password-for-redis-masterauth-for-production-mode" \
-            redis_vrrp_secret="some-password-for-redis-vrrp-secret-for-production-mode" \
-            minio_root_password="some-password-for-minio-root-password-for-production-mode" \
-            minio_vrrp_secret="some-password-for-minio-vrrp-secret-for-production-mode" \
-            minio_root_user="some-username-for-minio-root-user-for-production-mode"
-
         vault kv put secret/on-premise-gitlab-deployment/infrastructure \
             vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-production-mode" \
             vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-production-mode"
 
-        vault kv put secret/on-premise-gitlab-deployment/harbor \
+        vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
+            pg_superuser_password="some-password-for-gitlab-pg-superuser-for-production-mode" \
+            pg_replication_password="some-password-for-gitlab-pg-replication-for-production-mode" \
+            pg_vrrp_secret="some-password-for-gitlab-pg-vrrp-for-production-mode" \
+            redis_requirepass="some-password-for-gitlab-redis-requirepass-for-production-mode" \
+            redis_masterauth="some-password-for-gitlab-redis-masterauth-for-production-mode" \
+            redis_vrrp_secret="some-password-for-gitlab-redis-vrrp-secret-for-production-mode" \
+            minio_root_password="some-password-for-gitlab-minio-root-password-for-production-mode" \
+            minio_vrrp_secret="some-password-for-gitlab-minio-vrrp-secret-for-production-mode" \
+            minio_root_user="some-username-for-gitlab-minio-root-user-for-production-mode"
+
+        vault kv put secret/on-premise-gitlab-deployment/harbor/databases \
+            pg_superuser_password="some-password-for-harbor-pg-superuser-for-production-mode" \
+            pg_replication_password="some-password-for-harbor-pg-replication-for-production-mode" \
+            pg_vrrp_secret="some-password-for-harbor-pg-vrrp-for-production-mode" \
+            redis_requirepass="some-password-for-harbor-redis-requirepass-for-production-mode" \
+            redis_masterauth="some-password-for-harbor-redis-masterauth-for-production-mode" \
+            redis_vrrp_secret="some-password-for-harbor-redis-vrrp-secret-for-production-mode" \
+            minio_root_password="some-password-for-harbor-minio-root-password-for-production-mode" \
+            minio_vrrp_secret="some-password-for-harbor-minio-vrrp-secret-for-production-mode" \
+            minio_root_user="some-username-for-harbor-minio-root-user-for-production-mode"
+
+        vault kv put secret/on-premise-gitlab-deployment/harbor/app \
             harbor_admin_password="some-password-for-harbor-admin-password-for-production-mode" \
             harbor_pg_db_password="some-password-for-harbor-pg-db-password-for-production-mode"
         ```
