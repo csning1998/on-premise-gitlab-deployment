@@ -2,6 +2,12 @@
 
 ### This script contains general utility and helper functions.
 
+# Prevent multiple loading
+if [[ -n "${UTILS_SH_LOADED:-}" ]]; then
+  return 0
+fi
+readonly UTILS_SH_LOADED=true
+
 # ANSI Color Codes
 readonly CLR_RESET='\033[0m'
 readonly CLR_BOLD='\033[1m'
