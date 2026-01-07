@@ -4,7 +4,8 @@
 
 # Prevent multiple loading
 if [[ -n "${UTILS_SH_LOADED:-}" ]]; then
-  return 0
+	# Prevent multiple loading in subshell (e.g. CI/CD pipeline, polluted env)
+  (return 0 2>/dev/null) && return 0 || exit 0
 fi
 readonly UTILS_SH_LOADED=true
 
