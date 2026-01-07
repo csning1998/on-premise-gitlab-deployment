@@ -10,11 +10,9 @@ readonly UTILS_SH_LOADED=true
 
 # ANSI Color Codes
 readonly CLR_RESET='\033[0m'
-readonly CLR_BOLD='\033[1m'
 readonly CLR_RED='\033[0;31m'
 readonly CLR_GREEN='\033[0;32m'
 readonly CLR_YELLOW='\033[0;33m'
-readonly CLR_BLUE='\033[0;34m'
 readonly CLR_CYAN='\033[0;36m'
 readonly CLR_PURPLE='\033[0;35m'
 readonly CLR_BOLD_RED='\033[1;31m'
