@@ -68,12 +68,8 @@ vault_context_handler() {
 
 # Status Reporting
 vault_status_reporter() {
-  local red='\033[0;31m'
-  local green='\033[0;32m'
-  local yellow='\033[0;33m'
-  local reset='\033[0m'
 
-  echo "--------------------------------------------------"
+  log_divider
 
   # Check Development Vault on Host
 	if curl -s --connect-timeout 0.5 --cacert "${DEV_CA}" "${DEV_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then

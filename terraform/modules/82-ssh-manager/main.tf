@@ -72,10 +72,10 @@ resource "null_resource" "prepare_ssh_access" {
   provisioner "local-exec" {
     command     = <<-EOT
       set -e
-      echo ">>> Verifying VM liveness and preparing SSH access..."
       . ${path.module}/../../../scripts/utils_ssh.sh
+      log_print "STEP" "Verifying VM liveness and preparing SSH access..."
       known_hosts_bootstrapper "${var.config_name}" ${join(" ", [for node in var.nodes : node.ip])}
-      echo ">>> Liveness check passed. SSH access is ready."
+      log_print "OK" "Liveness check passed. SSH access is ready."
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
