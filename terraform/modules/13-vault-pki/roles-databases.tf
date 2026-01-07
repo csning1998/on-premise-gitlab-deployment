@@ -8,12 +8,14 @@ resource "vault_pki_secret_backend_role" "postgres" {
   name     = "${each.key}-postgres-role"
 
   allowed_domains = [
-    "pg.${each.key}.${local.root_domain}"
+    "pg.${each.key}.${local.root_domain}",
+    "${each.key}.${local.root_domain}"
   ]
 
   allow_subdomains   = true
-  allow_glob_domains = true
   allow_ip_sans      = true
+  allow_bare_domains = true
+  allow_glob_domains = false
 
   key_usage = ["DigitalSignature", "KeyAgreement", "KeyEncipherment"]
 
