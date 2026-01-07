@@ -2,20 +2,20 @@
 # For Vault Agent to apply for certs
 # Role: Postgres
 resource "vault_pki_secret_backend_role" "postgres" {
-  backend = vault_mount.pki_prod.path
-  name    = "postgres-role"
 
-  allowed_domains = local.postgres_domains
+  for_each = local.platforms
+  backend  = vault_mount.pki_prod.path
+  name     = "${each.key}-postgres-role"
+
+  allowed_domains = [
+    "pg.${each.key}.${local.root_domain}"
+  ]
 
   allow_subdomains   = true
   allow_glob_domains = true
   allow_ip_sans      = true
 
-  key_usage = [
-    "DigitalSignature",
-    "KeyAgreement",
-    "KeyEncipherment"
-  ]
+  key_usage = ["DigitalSignature", "KeyAgreement", "KeyEncipherment"]
 
   server_flag = true
   client_flag = true
@@ -29,10 +29,14 @@ resource "vault_pki_secret_backend_role" "postgres" {
 
 # Role: Redis
 resource "vault_pki_secret_backend_role" "redis" {
-  backend = vault_mount.pki_prod.path
-  name    = "redis-role"
 
-  allowed_domains  = local.redis_domains
+  for_each = local.platforms
+  backend  = vault_mount.pki_prod.path
+  name     = "${each.key}-redis-role"
+
+  allowed_domains = [
+    "redis.${each.key}.${local.root_domain}"
+  ]
   allow_subdomains = true
   allow_ip_sans    = true
 
@@ -46,10 +50,16 @@ resource "vault_pki_secret_backend_role" "redis" {
 
 # Role: MinIO
 resource "vault_pki_secret_backend_role" "minio" {
-  backend = vault_mount.pki_prod.path
-  name    = "minio-role"
 
-  allowed_domains  = local.minio_domains
+  for_each = local.platforms
+  backend  = vault_mount.pki_prod.path
+  name     = "${each.key}-minio-role"
+
+  allowed_domains = [
+    "s3.${each.key}.${local.root_domain}",
+    "console.${each.key}.${local.root_domain}"
+  ]
+
   allow_subdomains = true
   allow_ip_sans    = true
 
