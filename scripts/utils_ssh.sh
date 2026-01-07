@@ -2,6 +2,9 @@
 
 # This script contains general utility and helper functions.
 
+# For Terraform local_exec to load the function `log_print` from `utils.sh`
+source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
+
 readonly SSH_CONFIG="$HOME/.ssh/config"
 
 # Function: Check if the required SSH private key exists
