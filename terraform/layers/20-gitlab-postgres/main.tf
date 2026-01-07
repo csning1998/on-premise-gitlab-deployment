@@ -5,6 +5,6 @@ module "postgres_gitlab" {
   topology_config = var.gitlab_postgres_compute
   infra_config    = var.gitlab_postgres_infra
 
+  vault_role_name   = "gitlab-postgres-role"
   vault_ca_cert_b64 = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
-  vault_role_name   = "gitlab-postgres"
 }

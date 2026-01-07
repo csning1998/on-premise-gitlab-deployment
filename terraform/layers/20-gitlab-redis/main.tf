@@ -6,5 +6,7 @@ module "redis_gitlab" {
   infra_config    = var.gitlab_redis_infra
 
   vault_ca_cert_b64 = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
-  vault_role_name   = "gitlab-redis"
+  vault_role_name   = "gitlab-redis-role"
+
+  enable_tls = true
 }
