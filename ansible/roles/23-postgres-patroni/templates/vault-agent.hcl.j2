@@ -50,7 +50,7 @@ EOH
   command = "chown postgres:postgres /etc/postgresql/certs/server.key && chmod 0600 /etc/postgresql/certs/server.key"
 }
 
-# CA Certificate Template (Trust Anchor)
+# CA Certificate (Trust Anchor)
 template {
   destination = "/etc/postgresql/certs/ca.crt"
   contents = <<EOH
