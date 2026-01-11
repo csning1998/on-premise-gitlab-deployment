@@ -51,3 +51,12 @@ variable "gitlab_minio_infra" {
     allowed_subnet = string
   })
 }
+
+variable "gitlab_minio_tenants" {
+  description = "Map of buckets and users to create for GitLab"
+  type = map(object({
+    user_name      = string
+    enable_version = bool
+    policy_rw      = bool
+  }))
+}

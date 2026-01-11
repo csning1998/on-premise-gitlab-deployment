@@ -8,5 +8,5 @@ data "terraform_remote_state" "vault_core" {
 
 # Get MinIO credentials from Vault
 data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/databases"
+  path = "secret/on-premise-gitlab-deployment/harbor/databases"
 }

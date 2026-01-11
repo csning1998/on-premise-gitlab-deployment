@@ -1,10 +1,10 @@
 
 # Define Policy that allows Redis apply for certs
 resource "vault_policy" "redis_pki" {
-  name = "redis-pki-policy"
+  name = "${var.vault_role_name}-pki-policy"
 
   policy = <<EOT
-path "pki/prod/issue/redis-role" {
+path "${var.vault_pki_mount_path}/issue/${var.vault_role_name}" {
   capabilities = ["create", "update"]
 }
 path "auth/token/renew-self" {

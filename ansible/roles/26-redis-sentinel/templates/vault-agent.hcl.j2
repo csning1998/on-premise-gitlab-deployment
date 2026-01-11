@@ -23,36 +23,33 @@ auto_auth {
 }
 
 template {
-  destination = "/etc/redis/tls/server.crt"
+  destination = "/etc/redis/certs/server.crt"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
-{{ .Data.certificate }}
-{{ .Data.issuing_ca }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.certificate }}' }}
+{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{- end -}}' }}
 EOH
-  # Restart to activate the certificate.
-  command = "chown redis:redis /etc/redis/tls/server.crt && chmod 0644 /etc/redis/tls/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true) && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)"
+  command = "chown redis:redis /etc/redis/certs/server.crt && chmod 0644 /etc/redis/certs/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true) && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)"
 }
 
 template {
-  destination = "/etc/redis/tls/server.key"
+  destination = "/etc/redis/certs/server.key"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
-{{ .Data.private_key }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.private_key }}' }}
+{{ '{{- end -}}' }}
 EOH
-  command = "chown redis:redis /etc/redis/tls/server.key && chmod 0600 /etc/redis/tls/server.key"
+  command = "chown redis:redis /etc/redis/certs/server.key && chmod 0600 /etc/redis/certs/server.key"
 }
 
+# CA Certificate (Trust Anchor)
 template {
-  destination = "/etc/redis/tls/ca.crt"
+  destination = "/etc/redis/certs/ca.crt"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/redis-role" "common_name=redis.iac.local" "ttl=24h" -}}
-{{ .Data.issuing_ca }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{- end -}}' }}
 EOH
-  command = "chown redis:redis /etc/redis/tls/ca.crt && chmod 0644 /etc/redis/tls/ca.crt"
+  command = "chown redis:redis /etc/redis/certs/ca.crt && chmod 0644 /etc/redis/certs/ca.crt"
 }

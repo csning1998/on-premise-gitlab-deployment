@@ -42,13 +42,13 @@
 - name: "Section C: Configure Vault Agent"
   when: redis_enable_tls | bool
   block:
-    - name: "Step C1. Ensure Vault Binary is installed"
+    - name: "Step C0. Ensure Vault Binary is installed"
       ansible.builtin.include_role:
         name: 07-base-vault
       vars:
         vault_install_only: true
 
-    - name: "Step C2. Create Vault Agent Config Directory"
+    - name: "Step C1. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "/etc/vault.d/approle"
         state: directory
@@ -56,7 +56,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step C3. Write AppRole Credentials"
+    - name: "Step C2. Write AppRole Credentials"
       ansible.builtin.copy:
         content: "{{ item.content }}"
         dest: "/etc/vault.d/approle/{{ item.file }}"
@@ -68,7 +68,7 @@
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
 
-    - name: "Step C4. Deploy Vault CA Certificate"
+    - name: "Step C3. Deploy Vault CA Certificate"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "/etc/vault.d/vault-ca.crt"
@@ -76,15 +76,15 @@
         group: vault
         mode: "0644"
 
-    - name: "Step C5. Ensure Redis Cert Directory Exists"
+    - name: "Step C4. Ensure Redis Cert Directory Exists"
       ansible.builtin.file:
-        path: /etc/redis/tls
+        path: /etc/redis/certs
         state: directory
         owner: redis
         group: redis
-        mode: "0755"
+        mode: "0750"
 
-    - name: "Step C6. Configure Vault Agent (agent.hcl)"
+    - name: "Step C5. Configure Vault Agent (agent.hcl)"
       ansible.builtin.template:
         src: vault-agent.hcl.j2
         dest: /etc/vault.d/vault-agent.hcl
@@ -93,7 +93,7 @@
         mode: "0640"
       notify: Restart Vault Agent
 
-    - name: "Step C7. Configure Vault Agent Service"
+    - name: "Step C6. Configure Vault Agent Service"
       ansible.builtin.template:
         src: vault-agent.service.j2
         dest: /etc/systemd/system/vault-agent.service
@@ -102,16 +102,16 @@
         mode: "0644"
       notify: Restart Vault Agent
 
-    - name: "Step C8. Enable and Start Vault Agent"
+    - name: "Step C7. Enable and Start Vault Agent"
       ansible.builtin.systemd:
         name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step C9. Wait for Certificates"
+    - name: "Step C8. Wait for Certificates"
       ansible.builtin.wait_for:
-        path: /etc/redis/tls/server.crt
+        path: /etc/redis/certs/server.crt
         timeout: 120
         msg: "Timeout waiting for Vault Agent to generate certificates."
 

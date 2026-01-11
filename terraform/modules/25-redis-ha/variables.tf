@@ -104,6 +104,11 @@ variable "infra_config" {
   }
 }
 
+variable "service_domain" {
+  description = "The FQDN for the Redis service"
+  type        = string
+}
+
 variable "vault_ca_cert_b64" {
   description = "Base64 encoded CA certificate for Vault Agent"
   type        = string
@@ -118,4 +123,10 @@ variable "enable_tls" {
   description = "Enable TLS/SSL for Redis and Sentinel. Secure by Default."
   type        = bool
   default     = true
+}
+
+variable "vault_pki_mount_path" {
+  description = "The mount path for the PKI backend in Vault"
+  type        = string
+  default     = "pki/prod"
 }

@@ -31,73 +31,8 @@ resource "vault_pki_secret_backend_config_urls" "config_urls" {
   crl_distribution_points = ["${var.vault_addr}/v1/${vault_mount.pki_prod.path}/crl"]
 }
 
-# Role: Posrges for Vault Agent to apply for certs
-resource "vault_pki_secret_backend_role" "postgres" {
-  backend = vault_mount.pki_prod.path
-  name    = "postgres-role"
-
-  allowed_domains = [
-    "postgres.iac.local",
-    "harbor-postgres",
-    "iac.local",
-    "local",
-    "localhost"
-  ]
-
-  allow_subdomains   = true
-  allow_glob_domains = true
-  allow_ip_sans      = true
-
-  key_usage = [
-    "DigitalSignature",
-    "KeyAgreement",
-    "KeyEncipherment"
-  ]
-
-  server_flag = true
-  client_flag = true
-
-  max_ttl = 2592000 # 30 Days
-  ttl     = 86400   # 24 Hours
-
-  allow_any_name    = false
-  enforce_hostnames = true
-}
-
 # Enable Global AppRole Auth Method
 resource "vault_auth_backend" "approle" {
   type = "approle"
   path = "approle"
-}
-
-resource "vault_pki_secret_backend_role" "redis" {
-  backend = vault_mount.pki_prod.path
-  name    = "redis-role"
-
-  allowed_domains  = ["redis.iac.local", "redis", "localhost", "iac.local"]
-  allow_subdomains = true
-  allow_ip_sans    = true
-
-  key_usage   = ["DigitalSignature", "KeyEncipherment", "KeyAgreement"]
-  client_flag = true
-  server_flag = true
-
-  max_ttl = 2592000 # 30 Days
-  ttl     = 86400   # 24 Hours
-}
-
-resource "vault_pki_secret_backend_role" "minio" {
-  backend = vault_mount.pki_prod.path
-  name    = "minio-role"
-
-  allowed_domains  = ["minio.iac.local", "minio", "localhost", "iac.local"]
-  allow_subdomains = true
-  allow_ip_sans    = true
-
-  key_usage   = ["DigitalSignature", "KeyEncipherment", "KeyAgreement"]
-  client_flag = true
-  server_flag = true
-
-  max_ttl = 2592000 # 30 Days
-  ttl     = 86400   # 24 Hours
 }

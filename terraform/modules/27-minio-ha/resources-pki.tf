@@ -1,12 +1,13 @@
 
 # Define Policy that allows MinIO apply for certs
 resource "vault_policy" "minio_pki" {
-  name = "minio-pki-policy"
+  name = "${var.vault_role_name}-pki-policy"
 
   policy = <<EOT
-path "pki/prod/issue/minio-role" {
+path "${var.vault_pki_mount_path}/issue/${var.vault_role_name}" {
   capabilities = ["create", "update"]
 }
+
 path "auth/token/renew-self" {
   capabilities = ["update"]
 }

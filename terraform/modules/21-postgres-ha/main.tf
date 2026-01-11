@@ -83,6 +83,8 @@ module "ansible_runner" {
 
     postgres_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
     postgres_mtls_node_subnet  = var.infra_config.allowed_subnet
+    postgres_service_domain    = var.service_domain
+    postgres_pki_role_name     = var.vault_role_name
     postgres_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 

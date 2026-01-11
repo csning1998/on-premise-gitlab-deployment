@@ -1,10 +1,10 @@
 
 # Define Policy that allows Postgres apply for certs
 resource "vault_policy" "postgres_pki" {
-  name = "postgres-pki-policy"
+  name = "${var.vault_role_name}-pki-policy"
 
   policy = <<EOT
-path "pki/prod/issue/postgres-role" {
+path "${var.vault_pki_mount_path}/issue/${var.vault_role_name}" {
   capabilities = ["create", "update"]
 }
 

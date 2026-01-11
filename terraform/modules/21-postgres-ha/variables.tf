@@ -1,3 +1,4 @@
+
 variable "topology_config" {
   description = "Standardized compute topology configuration for Postgres HA Cluster."
   type = object({
@@ -106,13 +107,18 @@ variable "infra_config" {
   }
 }
 
+variable "service_domain" {
+  description = "The FQDN for the Postgres service"
+  type        = string
+}
+
 variable "vault_ca_cert_b64" {
   description = "Base64 encoded CA certificate for Vault Agent"
   type        = string
 }
 
 variable "vault_role_name" {
-  description = "The AppRole name to create in Vault (e.g. gitlab-postgres, harbor-postgres)"
+  description = "The AppRole name to create in Vault (e.g. gitlab-postgres-role, harbor-postgres-role)"
   type        = string
 }
 

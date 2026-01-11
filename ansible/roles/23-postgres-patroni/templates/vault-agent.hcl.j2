@@ -30,35 +30,33 @@ auto_auth {
 template {
   destination = "/etc/postgresql/certs/server.crt"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/postgres-role" "common_name=postgres.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
-{{ .Data.certificate }}
-{{ .Data.issuing_ca }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ postgres_pki_role_name ~ '" "common_name=' ~ postgres_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.certificate }}' }}
+{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{- end -}}' }}
 EOH
   command = "chown postgres:postgres /etc/postgresql/certs/server.crt && (systemctl is-active --quiet patroni && systemctl reload patroni || true)"
 }
+
 # The command above is to ensure that Patroni service exists before reloading, to avoid failure on first startup
 
 template {
   destination = "/etc/postgresql/certs/server.key"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/postgres-role" "common_name=postgres.iac.local" "ip_sans={% endraw %}{{ advertise_ip }}{% raw %}" "ttl=24h" -}}
-{{ .Data.private_key }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ postgres_pki_role_name ~ '" "common_name=' ~ postgres_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.private_key }}' }}
+{{ '{{- end -}}' }}
 EOH
   command = "chown postgres:postgres /etc/postgresql/certs/server.key && chmod 0600 /etc/postgresql/certs/server.key"
 }
 
-# CA Certificate Template (Trust Anchor)
+# CA Certificate (Trust Anchor)
 template {
   destination = "/etc/postgresql/certs/ca.crt"
   contents = <<EOH
-{% raw %}{{- with secret "pki/prod/issue/postgres-role" "common_name=postgres.iac.local" "ttl=24h" -}}
-{{ .Data.issuing_ca }}
-{{- end -}}
-{% endraw %}
+{{ '{{- with secret "pki/prod/issue/' ~ postgres_pki_role_name ~ '" "common_name=' ~ postgres_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{- end -}}' }}
 EOH
-  command = "chown postgres:postgres /etc/postgresql/certs/ca.crt"
+  command = "chown postgres:postgres /etc/postgresql/certs/ca.crt && chmod 0644 /etc/postgresql/certs/ca.crt"
 }
