@@ -101,6 +101,11 @@ variable "infra_config" {
   }
 }
 
+variable "service_domain" {
+  description = "The FQDN for the MinIO service"
+  type        = string
+}
+
 variable "vault_ca_cert_b64" {
   description = "Base64 encoded CA certificate for Vault Agent"
   type        = string
@@ -109,4 +114,10 @@ variable "vault_ca_cert_b64" {
 variable "vault_role_name" {
   description = "The AppRole name to create in Vault (e.g. gitlab-postgres, harbor-postgres)"
   type        = string
+}
+
+variable "vault_pki_mount_path" {
+  description = "The mount path for the PKI backend in Vault"
+  type        = string
+  default     = "pki/prod"
 }

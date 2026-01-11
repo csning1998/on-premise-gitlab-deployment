@@ -66,13 +66,17 @@ module "ansible_runner" {
   }
 
   inventory_content = templatefile("${path.module}/../../templates/inventory-minio-cluster.yaml.tftpl", {
-    ansible_ssh_user        = data.vault_generic_secret.iac_vars.data["vm_username"]
-    minio_root_user         = data.vault_generic_secret.db_vars.data["minio_root_user"]
-    service_name            = var.topology_config.cluster_identity.service_name
-    haproxy_nodes           = var.topology_config.ha_config.haproxy_nodes
-    minio_nodes             = var.topology_config.nodes
+    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+    service_name     = var.topology_config.cluster_identity.service_name
+
+    haproxy_nodes = var.topology_config.ha_config.haproxy_nodes
+    minio_nodes   = var.topology_config.nodes
+
     minio_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
-    minio_allowed_subnet    = var.infra_config.allowed_subnet
+    minio_root_user         = data.vault_generic_secret.db_vars.data["minio_root_user"]
+    minio_tls_node_subnet   = var.infra_config.allowed_subnet
+    minio_service_domain    = var.service_domain
+    minio_pki_role_name     = var.vault_role_name
     minio_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 

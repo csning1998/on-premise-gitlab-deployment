@@ -19,9 +19,9 @@ supervised systemd
 
 {% if redis_enable_tls | bool %}
 # TLS Configuration same as Redis Server
-tls-cert-file /etc/redis/tls/server.crt
-tls-key-file /etc/redis/tls/server.key
-tls-ca-cert-file /etc/redis/tls/ca.crt
+tls-cert-file /etc/redis/certs/server.crt
+tls-key-file /etc/redis/certs/server.key
+tls-ca-cert-file /etc/redis/certs/ca.crt
 tls-replication yes
 {% endif %}
 

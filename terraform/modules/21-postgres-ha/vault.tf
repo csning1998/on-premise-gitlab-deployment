@@ -4,5 +4,5 @@ data "vault_generic_secret" "iac_vars" {
 }
 
 data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/databases"
+  path = "secret/on-premise-gitlab-deployment/${var.topology_config.cluster_identity.service_name}/databases"
 }

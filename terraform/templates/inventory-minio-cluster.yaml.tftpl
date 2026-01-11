@@ -8,7 +8,9 @@ all:
 
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
     minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
-    minio_allowed_subnet: "${minio_allowed_subnet}"
+    minio_tls_node_subnet: "${minio_tls_node_subnet}"
+    minio_service_domain: "${minio_service_domain}"
+    minio_pki_role_name: "${minio_pki_role_name}"
     minio_nat_subnet_prefix: "${minio_nat_subnet_prefix}"
 
   children:

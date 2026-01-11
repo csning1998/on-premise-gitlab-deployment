@@ -17,9 +17,9 @@ dir /var/lib/redis
 {% if redis_enable_tls | bool %}
 port 0
 tls-port 6379
-tls-cert-file /etc/redis/tls/server.crt
-tls-key-file /etc/redis/tls/server.key
-tls-ca-cert-file /etc/redis/tls/ca.crt
+tls-cert-file /etc/redis/certs/server.crt
+tls-key-file /etc/redis/certs/server.key
+tls-ca-cert-file /etc/redis/certs/ca.crt
 tls-auth-clients no 
 tls-replication yes
 {% else %}
@@ -39,7 +39,7 @@ masteruser default
 masterauth {{ redis_masterauth }}
 
 # Replication
-{% if inventory_hostname in (groups['redis_replicas'] | default([])) %}
+{% if inventory_hostname in (groups['redis_db_replicas'] | default([])) %}
 # Note: redis_initial_master_ip must be defined in inventory or group_vars
 replicaof {{ redis_initial_master_ip }} 6379
 {% endif %}

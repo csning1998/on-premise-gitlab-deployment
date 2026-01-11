@@ -10,11 +10,7 @@ resource "vault_pki_secret_backend_role" "harbor_ingress" {
   backend = vault_mount.pki_prod.path
   name    = "harbor-ingress-role"
 
-  allowed_domains = [
-    "harbor.iac.local",
-    "notary.harbor.iac.local",
-    "iac.local"
-  ]
+  allowed_domains = local.harbor_ingress_domains
 
   allow_subdomains   = true
   allow_glob_domains = false

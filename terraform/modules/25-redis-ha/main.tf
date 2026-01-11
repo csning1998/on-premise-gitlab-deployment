@@ -74,9 +74,11 @@ module "ansible_runner" {
     redis_nodes   = var.topology_config.nodes
     haproxy_nodes = var.topology_config.ha_config.haproxy_nodes
 
-    redis_enable_tls        = var.enable_tls
     redis_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
-    redis_allowed_subnet    = var.infra_config.allowed_subnet
+    redis_enable_tls        = var.enable_tls
+    redis_tls_node_subnet   = var.infra_config.allowed_subnet
+    redis_service_domain    = var.service_domain
+    redis_pki_role_name     = var.vault_role_name
     redis_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 
