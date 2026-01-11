@@ -30,7 +30,7 @@ template {
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH
-  command = "chown redis:redis /etc/redis/certs/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true)"
+  command = "chown redis:redis /etc/redis/certs/server.crt && chmod 0644 /etc/redis/certs/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true) && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)"
 }
 
 template {
