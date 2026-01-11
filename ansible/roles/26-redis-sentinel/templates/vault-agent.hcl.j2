@@ -51,5 +51,5 @@ template {
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH
-  command = "chown redis:redis /etc/redis/certs/ca.crt"
+  command = "chown redis:redis /etc/redis/certs/ca.crt && chmod 0644 /etc/redis/certs/ca.crt"
 }

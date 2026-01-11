@@ -58,5 +58,5 @@ template {
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH
-  command = "chown postgres:postgres /etc/postgresql/certs/ca.crt"
+  command = "chown postgres:postgres /etc/postgresql/certs/ca.crt && chmod 0644 /etc/postgresql/certs/ca.crt"
 }
