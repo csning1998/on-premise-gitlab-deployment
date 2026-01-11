@@ -1,3 +1,4 @@
+
 gitlab_postgres_compute = {
   cluster_identity = {
     service_name = "gitlab"
@@ -7,28 +8,32 @@ gitlab_postgres_compute = {
 
   # Postgres Data Nodes
   nodes = {
-    "gitlab-postgres-db-node-00" = { ip = "172.16.140.200", vcpu = 4, ram = 4096 }
-    "gitlab-postgres-db-node-01" = { ip = "172.16.140.201", vcpu = 4, ram = 4096 }
-    "gitlab-postgres-db-node-02" = { ip = "172.16.140.202", vcpu = 4, ram = 4096 }
+    "gitlab-postgres-db-node-00" = { ip = "172.16.140.200", vcpu = 2, ram = 4096 }
+    # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
+    # "gitlab-postgres-db-node-01" = { ip = "172.16.140.201", vcpu = 2, ram = 4096 }
+    # "gitlab-postgres-db-node-02" = { ip = "172.16.140.202", vcpu = 2, ram = 4096 }
   }
 
   # Etcd Nodes (Odd number required)
   etcd_nodes = {
-    "gitlab-postgres-etcd-node-00" = { ip = "172.16.140.210", vcpu = 2, ram = 2048 }
-    "gitlab-postgres-etcd-node-01" = { ip = "172.16.140.211", vcpu = 2, ram = 2048 }
-    "gitlab-postgres-etcd-node-02" = { ip = "172.16.140.212", vcpu = 2, ram = 2048 }
+    "gitlab-postgres-etcd-node-00" = { ip = "172.16.140.210", vcpu = 1, ram = 1536 }
+    # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
+    # "gitlab-postgres-etcd-node-01" = { ip = "172.16.140.211", vcpu = 1, ram = 1536 }
+    # "gitlab-postgres-etcd-node-02" = { ip = "172.16.140.212", vcpu = 1, ram = 1536 }
   }
 
   # HAProxy Node
   ha_config = {
     virtual_ip = "172.16.140.250"
     haproxy_nodes = {
-      "gitlab-postgres-haproxy-node-00" = { ip = "172.16.140.220", vcpu = 2, ram = 2048 }
+      "gitlab-postgres-haproxy-node-00" = { ip = "172.16.140.220", vcpu = 1, ram = 2048 }
     }
+    stats_port = 7000 # For HAProxy Stats
+    rw_proxy   = 5000 # For Primary
+    ro_proxy   = 5001 # For Replicas
   }
 
   base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
-  inventory_file  = "inventory-postgres-gitlab.yaml"
 }
 
 gitlab_postgres_infra = {
@@ -46,5 +51,5 @@ gitlab_postgres_infra = {
       cidrv4  = "172.16.140.0/24"
     }
   }
-  allowed_subnet = "172.16.140.0/24"
+  allowed_subnet = "172.16.0.0/16"
 }

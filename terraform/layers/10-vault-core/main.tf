@@ -1,9 +1,9 @@
 
-module "vault_compute" {
+module "vault_config" {
   source = "../../modules/11-vault-ha"
 
-  vault_compute = var.vault_compute
-  vault_infra   = var.vault_infra
+  topology_config = var.vault_compute
+  infra_config    = var.vault_infra
 
   tls_source_dir = module.vault_tls.tls_source_dir
 }
@@ -29,7 +29,7 @@ module "vault_tls" {
 module "vault_pki_config" {
   source = "../../modules/13-vault-pki"
 
-  depends_on = [module.vault_compute]
+  depends_on = [module.vault_config]
 
   providers = {
     vault = vault.target_cluster

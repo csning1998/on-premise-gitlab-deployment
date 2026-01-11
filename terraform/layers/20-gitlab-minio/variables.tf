@@ -26,7 +26,7 @@ variable "gitlab_minio_compute" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
+
   })
 }
 

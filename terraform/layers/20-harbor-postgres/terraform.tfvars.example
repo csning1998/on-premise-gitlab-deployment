@@ -7,26 +7,31 @@ harbor_postgres_compute = {
   }
 
   nodes = {
-    "harbor-postgres-db-node-00" = { ip = "172.16.137.200", vcpu = 4, ram = 4096 }
-    "harbor-postgres-db-node-01" = { ip = "172.16.137.201", vcpu = 4, ram = 4096 }
-    "harbor-postgres-db-node-02" = { ip = "172.16.137.202", vcpu = 4, ram = 4096 }
+    "harbor-postgres-db-node-00" = { ip = "172.16.137.200", vcpu = 2, ram = 4096 }
+    # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
+    # "harbor-postgres-db-node-01" = { ip = "172.16.137.201", vcpu = 2, ram = 4096 }
+    # "harbor-postgres-db-node-02" = { ip = "172.16.137.202", vcpu = 2, ram = 4096 }
   }
 
   etcd_nodes = {
-    "harbor-postgres-etcd-node-00" = { ip = "172.16.137.210", vcpu = 2, ram = 2048 }
-    "harbor-postgres-etcd-node-01" = { ip = "172.16.137.211", vcpu = 2, ram = 2048 }
-    "harbor-postgres-etcd-node-02" = { ip = "172.16.137.212", vcpu = 2, ram = 2048 }
+    "harbor-postgres-etcd-node-00" = { ip = "172.16.137.210", vcpu = 1, ram = 1536 }
+    # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
+    # "harbor-postgres-etcd-node-01" = { ip = "172.16.137.211", vcpu = 1, ram = 1536 }
+    # "harbor-postgres-etcd-node-02" = { ip = "172.16.137.212", vcpu = 1, ram = 1536 }
   }
 
   ha_config = {
     virtual_ip = "172.16.137.250"
+    stats_port = 7000 # For HAProxy Stats
+    rw_proxy   = 5000 # For Primary
+    ro_proxy   = 5001 # For Replicas
+
     haproxy_nodes = {
-      "harbor-postgres-haproxy-node-00" = { ip = "172.16.137.220", vcpu = 2, ram = 2048 }
+      "harbor-postgres-haproxy-node-00" = { ip = "172.16.137.220", vcpu = 1, ram = 2048 }
     }
   }
 
   base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
-  inventory_file  = "inventory-postgres-harbor.yaml"
 }
 
 harbor_postgres_infra = {
@@ -44,5 +49,5 @@ harbor_postgres_infra = {
       cidrv4  = "172.16.137.0/24"
     }
   }
-  allowed_subnet = "172.16.137.0/24"
+  allowed_subnet = "172.16.0.0/16"
 }

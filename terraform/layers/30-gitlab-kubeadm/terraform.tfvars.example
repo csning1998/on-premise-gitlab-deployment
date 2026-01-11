@@ -3,7 +3,7 @@ gitlab_kubeadm_compute = {
   cluster_identity = {
     service_name = "gitlab"
     component    = "kubeadm"
-    cluster_name = "60-gitlab-kubeadm"
+    cluster_name = "30-gitlab-kubeadm"
   }
 
   masters = {
@@ -27,7 +27,6 @@ gitlab_kubeadm_compute = {
   registry_host = "172.16.135.200:5000" # Harbor Registry Endpoint
 
   base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
-  inventory_file  = "inventory-kubeadm-gitlab.yaml"
 }
 
 gitlab_kubeadm_infra = {

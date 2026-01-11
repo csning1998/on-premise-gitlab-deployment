@@ -9,33 +9,34 @@ gitlab_minio_compute = {
 
   nodes = {
     "gitlab-minio-db-node-00" = {
-      ip = "172.16.142.200", vcpu = 2, ram = 2048
+      ip = "172.16.142.200", vcpu = 1, ram = 3072
       data_disks = [
         { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
         { name_suffix = "drive2", capacity = 10737418240 }
       ]
     },
-    "gitlab-minio-db-node-01" = {
-      ip = "172.16.142.201", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    },
-    "gitlab-minio-db-node-02" = {
-      ip = "172.16.142.202", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    },
-    "gitlab-minio-db-node-03" = {
-      ip = "172.16.142.203", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    }
+    # Uncomment the following lines for HA setup, abide by nodes % 4 = 0
+    # "gitlab-minio-db-node-01" = {
+    #   ip = "172.16.142.201", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # },
+    # "gitlab-minio-db-node-02" = {
+    #   ip = "172.16.142.202", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # },
+    # "gitlab-minio-db-node-03" = {
+    #   ip = "172.16.142.203", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # }
   }
 
   ha_config = {
@@ -46,7 +47,6 @@ gitlab_minio_compute = {
   }
 
   base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
-  inventory_file  = "inventory-minio-gitlab.yaml"
 }
 
 gitlab_minio_infra = {
@@ -65,4 +65,42 @@ gitlab_minio_infra = {
     }
   }
   allowed_subnet = "172.16.142.0/24"
+}
+
+gitlab_minio_tenants = {
+  "gitlab-artifacts" = {
+    user_name      = "gitlab-artifacts-user"
+    enable_version = false
+    policy_rw      = true
+  }
+  "gitlab-lfs" = {
+    user_name      = "gitlab-lfs-user"
+    enable_version = false
+    policy_rw      = true
+  }
+  "gitlab-uploads" = {
+    user_name      = "gitlab-uploads-user"
+    enable_version = false
+    policy_rw      = true
+  }
+  "gitlab-packages" = {
+    user_name      = "gitlab-packages-user"
+    enable_version = false
+    policy_rw      = true
+  }
+  "gitlab-terraform-state" = {
+    user_name      = "gitlab-tf-state-user"
+    enable_version = true
+    policy_rw      = true
+  }
+  "gitlab-registry" = {
+    user_name      = "gitlab-registry-user"
+    enable_version = false
+    policy_rw      = true
+  }
+  "gitlab-backups" = {
+    user_name      = "gitlab-backup-user"
+    enable_version = false
+    policy_rw      = true
+  }
 }

@@ -37,7 +37,6 @@ variable "topology_config" {
     pod_subnet      = string # e.g. "10.244.0.0/16"
     registry_host   = string # e.g. "172.16.135.250:5000"
     base_image_path = string
-    inventory_file  = string
   })
 
   # Master Etcd Quorum

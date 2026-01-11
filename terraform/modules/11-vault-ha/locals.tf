@@ -1,8 +1,8 @@
 
 locals {
   # Identity variables
-  svc  = var.vault_compute.cluster_identity.service_name
-  comp = var.vault_compute.cluster_identity.component
+  svc  = var.topology_config.cluster_identity.service_name
+  comp = var.topology_config.cluster_identity.component
 
   # Auto derive infrastructure names
   storage_pool_name = "iac-${local.svc}-${local.comp}"
@@ -19,13 +19,13 @@ locals {
 
   # Convert standard structure to Module 81 vm_config
   all_nodes_map = merge(
-    var.vault_compute.nodes,
-    var.vault_compute.ha_config.haproxy_nodes
+    var.topology_config.nodes,
+    var.topology_config.ha_config.haproxy_nodes
   )
 
   # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")
 
   # Gateway IP prefix extraction
-  nat_network_subnet_prefix = join(".", slice(split(".", var.vault_infra.network.nat.gateway), 0, 3))
+  nat_network_subnet_prefix = join(".", slice(split(".", var.infra_config.network.nat.gateway), 0, 3))
 }

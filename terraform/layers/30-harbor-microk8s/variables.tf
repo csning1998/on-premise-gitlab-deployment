@@ -24,7 +24,7 @@ variable "harbor_microk8s_compute" {
       })), {})
     })
     base_image_path = string
-    inventory_file  = string
+
   })
 }
 

@@ -15,7 +15,7 @@ vault_compute = {
   nodes = {
     # Single Mode
     "vault-node-00" = { ip = "172.16.136.200", vcpu = 2, ram = 2048 },
-    # High Available Mode
+    # Uncomment the following lines for HA setup, abide by node % 2 != 0.
     "vault-node-01" = { ip = "172.16.136.201", vcpu = 2, ram = 2048 },
     "vault-node-02" = { ip = "172.16.136.202", vcpu = 2, ram = 2048 },
     # "vault-node-03" = { ip = "172.16.136.203", vcpu = 2, ram = 2048 },
@@ -25,12 +25,12 @@ vault_compute = {
   ha_config = {
     virtual_ip = "172.16.136.250"
     haproxy_nodes = {
-      "vault-haproxy-node-00" = { ip = "172.16.136.210", vcpu = 1, ram = 1024 }
+      "vault-haproxy-node-00" = { ip = "172.16.136.210", vcpu = 1, ram = 2048 }
     }
   }
 
   base_image_path = "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2"
-  inventory_file  = "inventory-vault-cluster.yaml"
+  
 }
 
 vault_infra = {

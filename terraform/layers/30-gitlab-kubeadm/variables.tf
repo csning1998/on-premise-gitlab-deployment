@@ -35,7 +35,7 @@ variable "gitlab_kubeadm_compute" {
     pod_subnet      = string
     registry_host   = string
     base_image_path = string
-    inventory_file  = string
+
   })
 }
 

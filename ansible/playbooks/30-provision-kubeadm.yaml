@@ -3,28 +3,28 @@
   hosts: "{{ 'master' if (groups['master'] | length) > 1 else 'none' }}"
   become: true
   roles:
-    - 51-kubeadm-ha-haproxy
+    - 35-kubeadm-ha-haproxy
 
 - name: "Play 2: Initialize the primary master node"
   hosts: "{{ groups['master'][0] | default([]) }}"
   become: true
   roles:
-    - 52-kubeadm-init-primary
+    - 36-kubeadm-init-primary
 
 - name: "Play 3: Generate and fetch join commands from primary master"
   hosts: "{{ groups['master'][0] | default([]) }}"
   become: true
   roles:
-    - 53-kubeadm-get-join-token
+    - 37-kubeadm-get-join-token
 
 - name: "Play 4: Join secondary master nodes to the cluster"
   hosts: "{{ groups['master'] | default([]) | difference([ (groups['master'] | default(['placeholder']))[0] ]) }}"
   become: true
   roles:
-    - 54-kubeadm-join-secondary
+    - 38-kubeadm-join-secondary
 
 - name: "Play 5: Join worker nodes to the cluster"
   hosts: workers
   become: true
   roles:
-    - 55-kubeadm-join-workers
+    - 39-kubeadm-join-workers

@@ -5,10 +5,13 @@ locals {
     "${data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip}" = "harbor.iac.local notary.harbor.iac.local"
 
     # Infrastructure VIPs (External Services)
-    "${data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip}" = "postgres.iac.local"
-    "${data.terraform_remote_state.redis.outputs.harbor_redis_virtual_ip}"       = "redis.iac.local"
-    "${data.terraform_remote_state.minio.outputs.harbor_minio_virtual_ip}"       = "minio.iac.local"
-    "${data.terraform_remote_state.vault_core.outputs.vault_ha_virtual_ip}"      = "vault.iac.local"
+    "${data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip}" = "postgres.iac.local ${data.terraform_remote_state.vault_core.outputs.pki_configuration.postgres_domains["harbor"][0]}"
+
+    "${data.terraform_remote_state.redis.outputs.harbor_redis_virtual_ip}" = "redis.iac.local ${data.terraform_remote_state.vault_core.outputs.pki_configuration.redis_domains["harbor"][0]}"
+
+    "${data.terraform_remote_state.minio.outputs.harbor_minio_virtual_ip}" = "s3.iac.local ${data.terraform_remote_state.vault_core.outputs.pki_configuration.minio_domains["harbor"][0]}"
+
+    "${data.terraform_remote_state.vault_core.outputs.vault_ha_virtual_ip}" = "vault.iac.local"
   }
 }
 

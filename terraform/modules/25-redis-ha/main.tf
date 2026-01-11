@@ -64,7 +64,7 @@ module "ansible_runner" {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     playbook_file   = "playbooks/20-provision-data-services.yaml"
-    inventory_file  = var.topology_config.inventory_file
+    inventory_file  = "inventory-${var.topology_config.cluster_identity.cluster_name}.yaml"
   }
 
   inventory_content = templatefile("${path.module}/../../templates/inventory-redis-cluster.yaml.tftpl", {

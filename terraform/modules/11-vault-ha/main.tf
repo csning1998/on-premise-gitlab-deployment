@@ -5,7 +5,7 @@ module "provisioner_kvm" {
   # VM Configuration
   vm_config = {
     all_nodes_map   = local.all_nodes_map
-    base_image_path = var.vault_compute.base_image_path
+    base_image_path = var.topology_config.base_image_path
   }
 
   # VM Credentials from Vault
@@ -23,9 +23,9 @@ module "provisioner_kvm" {
         name_bridge  = local.nat_bridge_name
         mode         = "nat"
         ips = {
-          address = var.vault_infra.network.nat.gateway
-          prefix  = tonumber(split("/", var.vault_infra.network.nat.cidrv4)[1])
-          dhcp    = var.vault_infra.network.nat.dhcp
+          address = var.infra_config.network.nat.gateway
+          prefix  = tonumber(split("/", var.infra_config.network.nat.cidrv4)[1])
+          dhcp    = var.infra_config.network.nat.dhcp
         }
       }
       hostonly = {
@@ -33,8 +33,8 @@ module "provisioner_kvm" {
         name_bridge  = local.hostonly_bridge_name
         mode         = "route"
         ips = {
-          address = var.vault_infra.network.hostonly.gateway
-          prefix  = tonumber(split("/", var.vault_infra.network.hostonly.cidrv4)[1])
+          address = var.infra_config.network.hostonly.gateway
+          prefix  = tonumber(split("/", var.infra_config.network.hostonly.cidrv4)[1])
           dhcp    = null
         }
       }
@@ -46,7 +46,7 @@ module "provisioner_kvm" {
 module "ssh_manager" {
   source = "../../modules/82-ssh-manager"
 
-  config_name = var.vault_compute.cluster_identity.cluster_name
+  config_name = var.topology_config.cluster_identity.cluster_name
   nodes       = [for k, v in local.all_nodes_map : { key = k, ip = v.ip }]
 
   vm_credentials = {
@@ -63,18 +63,18 @@ module "ansible_runner" {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     playbook_file   = "playbooks/10-provision-vault.yaml"
-    inventory_file  = var.vault_compute.inventory_file
+    inventory_file  = "inventory-${var.topology_config.cluster_identity.cluster_name}.yaml"
   }
 
   inventory_content = templatefile("${path.module}/../../templates/inventory-vault-cluster.yaml.tftpl", {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
-    service_name     = var.vault_compute.cluster_identity.service_name
+    service_name     = var.topology_config.cluster_identity.service_name
 
-    vault_nodes  = var.vault_compute.nodes
-    haproxy_node = var.vault_compute.ha_config.haproxy_nodes
+    vault_nodes  = var.topology_config.nodes
+    haproxy_node = var.topology_config.ha_config.haproxy_nodes
 
-    vault_ha_virtual_ip     = var.vault_compute.ha_config.virtual_ip
-    vault_allowed_subnet    = var.vault_infra.allowed_subnet
+    vault_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    vault_allowed_subnet    = var.infra_config.allowed_subnet
     vault_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 

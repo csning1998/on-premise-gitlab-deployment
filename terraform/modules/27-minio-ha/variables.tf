@@ -28,7 +28,6 @@ variable "topology_config" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
   })
 
   # MinIO Erasure Coding node count requires single node (Dev) or 4, 8, 12... (Prod)
@@ -60,13 +59,13 @@ variable "topology_config" {
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
-  # Hardware requirements not met. MinIO: 2vCPU/2GB RAM. HAProxy: 1vCPU/1GB RAM.
+  # Hardware requirements not met. MinIO: 1vCPU/3GB RAM. HAProxy: 1vCPU/2GB RAM.
   validation {
     condition = alltrue(flatten([
-      [for k, node in var.topology_config.nodes : node.vcpu >= 2 && node.ram >= 2048],
-      [for k, node in var.topology_config.ha_config.haproxy_nodes : node.vcpu >= 1 && node.ram >= 1024]
+      [for k, node in var.topology_config.nodes : node.vcpu >= 1 && node.ram >= 3072],
+      [for k, node in var.topology_config.ha_config.haproxy_nodes : node.vcpu >= 1 && node.ram >= 2048]
     ]))
-    error_message = "Hardware requirements not met. MinIO: 2vCPU/2GB RAM. HAProxy: 1vCPU/1GB RAM."
+    error_message = "Hardware requirements not met. MinIO: 1vCPU/3GB RAM. HAProxy: 1vCPU/2GB RAM."
   }
 }
 

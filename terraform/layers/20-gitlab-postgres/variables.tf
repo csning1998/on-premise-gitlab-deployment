@@ -36,7 +36,7 @@ variable "gitlab_postgres_compute" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
+
   })
 }
 

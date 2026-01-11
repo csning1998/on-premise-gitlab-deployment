@@ -3,8 +3,8 @@ variable "ansible_config" {
   type = object({
     root_path       = string # e.g. ".../ansible"
     ssh_config_path = string
-    playbook_file   = string # e.g. "playbooks/10-provision-redis.yaml"
-    inventory_file  = string # e.g. "inventory-redis-cluster.yaml"
+    playbook_file   = string # e.g. "playbooks/10-vault-core.yaml"
+    inventory_file  = string # e.g. "inventory-10-vault-core.yaml"
   })
 }
 

@@ -63,8 +63,8 @@ vault_secret_extractor() {
 
 # [Dev] This function is for faster reset and re-execute the Ansible Playbook
 ansible_playbook_executor() {
-  local playbook_file="$1"  # (e.g., "50-provision-kubeadm.yaml").
-  local inventory_file="$2" # (e.g., "inventory-kubeadm-cluster.yaml").
+  local playbook_file="$1"  # (e.g., "30-provision-kubeadm.yaml").
+  local inventory_file="$2" # (e.g., "inventory-30-gitlab-kubeadm.yaml").
 
   if [ -z "$playbook_file" ] || [ -z "$inventory_file" ]; then
     log_print "FATAL" "Playbook or inventory file not specified for ansible_playbook_executor function."
@@ -158,7 +158,7 @@ ansible_menu_handler() {
           playbook="30-provision-microk8s.yaml"
           ;;
         "kubeadm")
-          playbook="50-provision-kubeadm.yaml"
+          playbook="30-provision-kubeadm.yaml"
           ;;
         *)
           log_print "WARN" "Unknown component '${target_component}' derived from '${inventory}'."

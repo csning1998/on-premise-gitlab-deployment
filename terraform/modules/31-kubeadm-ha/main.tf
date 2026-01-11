@@ -61,8 +61,8 @@ module "ansible_runner" {
   ansible_config = {
     root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_manager.ssh_config_file_path
-    playbook_file   = "playbooks/50-provision-kubeadm.yaml"
-    inventory_file  = var.topology_config.inventory_file
+    playbook_file   = "playbooks/30-provision-kubeadm.yaml"
+    inventory_file  = "inventory-${var.topology_config.cluster_identity.cluster_name}.yaml"
   }
 
   inventory_content = templatefile("${path.module}/../../templates/inventory-kubeadm-cluster.yaml.tftpl", {

@@ -7,20 +7,20 @@ harbor_redis_compute = {
   }
 
   nodes = {
-    "harbor-redis-node-db-00" = { ip = "172.16.138.200", vcpu = 4, ram = 4096 }
-    "harbor-redis-node-db-01" = { ip = "172.16.138.201", vcpu = 4, ram = 4096 }
-    "harbor-redis-node-db-02" = { ip = "172.16.138.202", vcpu = 4, ram = 4096 }
+    "harbor-redis-node-db-00" = { ip = "172.16.138.200", vcpu = 1, ram = 2048 }
+    # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
+    # "harbor-redis-node-db-01" = { ip = "172.16.138.201", vcpu = 1, ram = 2048 }
+    # "harbor-redis-node-db-02" = { ip = "172.16.138.202", vcpu = 1, ram = 2048 }
   }
 
   ha_config = {
     virtual_ip = "172.16.138.250"
     haproxy_nodes = {
-      "harbor-redis-haproxy-node-00" = { ip = "172.16.138.210", vcpu = 2, ram = 2048 }
+      "harbor-redis-haproxy-node-00" = { ip = "172.16.138.210", vcpu = 1, ram = 2048 }
     }
   }
 
   base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
-  inventory_file  = "inventory-redis-harbor.yaml"
 }
 
 harbor_redis_infra = {

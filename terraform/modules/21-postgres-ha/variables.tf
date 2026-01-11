@@ -36,7 +36,6 @@ variable "topology_config" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
   })
 
   # Etcd Raft Quorum
@@ -66,13 +65,22 @@ variable "topology_config" {
     error_message = "Postgres data nodes require at least 2 vCPUs and 4096MB RAM."
   }
 
-  # Etcd Node specification (vCPU >= 2, RAM >= 2048)
+  # Etcd Node specification (vCPU >= 1, RAM >= 3072)
   validation {
     condition = alltrue([
       for k, node in var.topology_config.etcd_nodes :
-      node.vcpu >= 2 && node.ram >= 2048
+      node.vcpu >= 1 && node.ram >= 3072
     ])
-    error_message = "Etcd nodes require at least 2 vCPUs and 2048MB RAM."
+    error_message = "Etcd nodes require at least 1 vCPU and 3072MB RAM."
+  }
+
+  # HAProxy Node Hardware Specification
+  validation {
+    condition = alltrue([
+      for k, node in var.topology_config.ha_config.haproxy_nodes :
+      node.vcpu >= 1 && node.ram >= 2048
+    ])
+    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
   }
 }
 

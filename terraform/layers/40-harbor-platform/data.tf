@@ -39,9 +39,9 @@ data "terraform_remote_state" "minio" {
 
 # Vault Secrets for reading database and service passwords.
 data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/databases"
+  path = "secret/on-premise-gitlab-deployment/harbor/databases"
 }
 
 data "vault_generic_secret" "harbor_vars" {
-  path = "secret/on-premise-gitlab-deployment/harbor"
+  path = "secret/on-premise-gitlab-deployment/harbor/app"
 }

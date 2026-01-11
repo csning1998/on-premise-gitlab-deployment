@@ -8,20 +8,20 @@ gitlab_redis_compute = {
   }
 
   nodes = {
-    "gitlab-redis-node-db-00" = { ip = "172.16.141.200", vcpu = 4, ram = 4096 }
-    "gitlab-redis-node-db-01" = { ip = "172.16.141.201", vcpu = 4, ram = 4096 }
-    "gitlab-redis-node-db-02" = { ip = "172.16.141.202", vcpu = 4, ram = 4096 }
+    "gitlab-redis-node-db-00" = { ip = "172.16.141.200", vcpu = 1, ram = 2048 }
+    # Uncomment the following lines for HA setup, abide by node % 2 != 0.
+    # "gitlab-redis-node-db-01" = { ip = "172.16.141.201", vcpu = 1, ram = 2048 }
+    # "gitlab-redis-node-db-02" = { ip = "172.16.141.202", vcpu = 1, ram = 2048 }
   }
 
   ha_config = {
     virtual_ip = "172.16.141.250"
     haproxy_nodes = {
-      "gitlab-redis-haproxy-node-00" = { ip = "172.16.141.210", vcpu = 2, ram = 2048 }
+      "gitlab-redis-haproxy-node-00" = { ip = "172.16.141.210", vcpu = 1, ram = 2048 }
     }
   }
 
   base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
-  inventory_file  = "inventory-redis-gitlab.yaml"
 }
 
 gitlab_redis_infra = {

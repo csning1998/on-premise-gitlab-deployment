@@ -9,7 +9,7 @@ declare -A DOMAIN_MAP=(
 	["20-gitlab-postgres"]="gitlab-postgres-"
 	["20-gitlab-redis"]="gitlab-redis-"
 	["20-gitlab-minio"]="gitlab-minio-"
-	["50-gitlab-kubeadm"]="gitlab-kubeadm-"
+	["30-gitlab-kubeadm"]="gitlab-kubeadm-"
 
 	["20-harbor-postgres"]="harbor-postgres-"
 	["20-harbor-redis"]="harbor-redis-"
@@ -23,7 +23,7 @@ declare -A POOL_MAP=(
 	["20-gitlab-postgres"]="iac-gitlab-postgres"
 	["20-gitlab-redis"]="iac-gitlab-redis"
 	["20-gitlab-minio"]="iac-gitlab-minio"
-	["50-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+	["30-gitlab-kubeadm"]="iac-gitlab-kubeadm"
 
 	["20-harbor-postgres"]="iac-harbor-postgres"
 	["20-harbor-redis"]="iac-harbor-redis"
@@ -37,7 +37,7 @@ declare -A NET_MAP=(
 	["20-gitlab-postgres"]="iac-gitlab-postgres"
 	["20-gitlab-redis"]="iac-gitlab-redis"
 	["20-gitlab-minio"]="iac-gitlab-minio"
-	["50-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+	["30-gitlab-kubeadm"]="iac-gitlab-kubeadm"
 
 	["20-harbor-postgres"]="iac-harbor-postgres"
 	["20-harbor-redis"]="iac-harbor-redis"

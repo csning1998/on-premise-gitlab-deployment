@@ -99,10 +99,10 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
     [INPUT] Please select an action: 10
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
-    1) 00-github-meta         5) 20-gitlab-redis       9) 30-harbor-microk8s   13) 60-gitlab-platform
-    2) 10-vault-core          6) 20-harbor-minio      10) 40-harbor-platform   14) Back to Main Menu
-    3) 20-gitlab-minio        7) 20-harbor-postgres   11) 50-gitlab-kubeadm
-    4) 20-gitlab-postgres     8) 20-harbor-redis      12) 50-harbor-provision
+    1) 10-vault-core          5) 20-harbor-minio       9) 30-harbor-microk8s    13) 90-github-meta
+    2) 20-gitlab-minio        6) 20-harbor-postgres    10) 40-gitlab-platform   14) Back to Main Menu
+    3) 20-gitlab-postgres     7) 20-harbor-redis       11) 40-harbor-platform
+    4) 20-gitlab-redis        8) 30-gitlab-kubeadm     12) 50-harbor-provision
 
     [INPUT] Select a Terraform layer to REBUILD:
     ```
@@ -113,10 +113,11 @@ Among options `9`, `10`, and `11`, there are submenus. These menus are dynamical
     [INPUT] Please select an action: 11
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
-    1) inventory-kubeadm-gitlab.yaml     5) inventory-postgres-gitlab.yaml   9) inventory-vault-cluster.yaml
-    2) inventory-microk8s-harbor.yaml    6) inventory-postgres-harbor.yaml  10) Back to Main Menu
-    3) inventory-minio-gitlab.yaml       7) inventory-redis-gitlab.yaml
-    4) inventory-minio-harbor.yaml       8) inventory-redis-harbor.yaml
+    1) inventory-10-vault-core.yaml         6) inventory-20-harbor-postgres.yaml
+    2) inventory-20-gitlab-minio.yaml       7) inventory-20-harbor-redis.yaml
+    3) inventory-20-gitlab-postgres.yaml    8) inventory-30-gitlab-kubeadm.yaml
+    4) inventory-20-gitlab-redis.yaml       9) inventory-30-harbor-microk8s.yaml
+    5) inventory-20-harbor-minio.yaml      10) Back to Main Menu
 
     [INPUT] Select a Cluster Inventory to run its Playbook:
     ```
@@ -342,7 +343,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 #### **Step B.1. Prepare GitHub Credentials**
 
-**Note:** This project defaults to using Terraform to manage GitHub's Repository, so a Fine-grained Personal Access Token is required. skip or delete `terraform/layers/00-github-meta` if the user who cloned this project does not use Terraform to manage GitHub's Repository.
+**Note:** This project defaults to using Terraform to manage GitHub's Repository, so a Fine-grained Personal Access Token is required. skip or delete `terraform/layers/90-github-meta` if the user who cloned this project does not use Terraform to manage GitHub's Repository.
 
 1. Visit [GitHub Developer Settings](https://github.com/settings/personal-access-tokens) to apply for a Fine-grained Personal Access Token.
 
@@ -562,7 +563,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
     - **First Step**: Enter the main menu `9) Build Packer Base Image`, then select `02-base-kubeadm` to build the base image required by Kubeadm.
 
-    - **Second Step**: After the previous step is complete, return to the main menu and enter `10) Provision Terraform Layer`, then select `50-gitlab-kubeadm` to deploy the entire GitLab cluster (Now only kubeadm is implemented).
+    - **Second Step**: After the previous step is complete, return to the main menu and enter `10) Provision Terraform Layer`, then select `30-gitlab-kubeadm` to deploy the entire GitLab cluster (Now only kubeadm is implemented).
 
         Based on testing, this complete process (from building the Packer image to completing the Terraform deployment) takes approximately 7 minutes.
 
@@ -590,7 +591,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
-**Note:** This step (B.4) can be performed by `10) Provision Terraform Layer` with `00-github-meta` as the target layer if this repository is cloned for _personal_ use. The following content is provided for imperative manual procedures only.
+**Note:** This step (B.4) can be performed by `10) Provision Terraform Layer` with `90-github-meta` as the target layer if this repository is cloned for _personal_ use. The following content is provided for imperative manual procedures only.
 
 1. Inject Token from Vault with Shell Bridge Pattern. Execute this at the project root to ensure `${PWD}` points to the correct Vault certificate path.
 
@@ -601,7 +602,7 @@ Libvirt's settings directly impact Terraform's execution permissions, thus some 
 2. Execute the governance layer. Since the repository already exists, an import is required for the first run.
 
     ```shell
-    cd terraform/layers/00-github-meta
+    cd terraform/layers/90-github-meta
     ```
 
 3. Initialize and Import.

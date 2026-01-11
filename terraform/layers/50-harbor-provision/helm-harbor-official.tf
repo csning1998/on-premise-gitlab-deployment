@@ -60,7 +60,7 @@ resource "helm_release" "harbor" {
             accesskey = data.vault_generic_secret.s3_credentials.data["access_key"]
             secretkey = data.vault_generic_secret.s3_credentials.data["secret_key"]
             # MinIO supports TLS (not support mTLS), thus use https and port must correspond.
-            regionendpoint = "https://minio.iac.local:9000"
+            regionendpoint = "https://${data.terraform_remote_state.vault_core.outputs.pki_configuration.minio_domains["harbor"][0]}:9000"
             forcePathStyle = true
             secure         = true
             v4auth         = true
@@ -72,7 +72,7 @@ resource "helm_release" "harbor" {
       database = {
         type = "external"
         external = {
-          host     = "postgres.iac.local"
+          host     = data.terraform_remote_state.vault_core.outputs.pki_configuration.postgres_domains["harbor"][0]
           port     = "5000"
           username = "harbor"
           password = data.vault_generic_secret.harbor_vars.data["harbor_pg_db_password"]
@@ -84,8 +84,12 @@ resource "helm_release" "harbor" {
       redis = {
         type = "external"
         external = {
-          addr     = "redis.iac.local:6379"
+          addr     = "${data.terraform_remote_state.vault_core.outputs.pki_configuration.redis_domains["harbor"][0]}:6379"
           password = data.vault_generic_secret.db_vars.data["redis_requirepass"]
+
+          tlsOptions = {
+            enable = true
+          }
         }
       }
     })

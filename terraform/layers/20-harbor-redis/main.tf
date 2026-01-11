@@ -7,8 +7,5 @@ module "redis_harbor" {
   service_domain    = local.service_domain
   vault_role_name   = local.vault_role_name
   vault_ca_cert_b64 = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
-
-  // Harbor presently doesnt support Redis Clusters or TLS based connections.
-  // Ref: https://goharbor.io/docs/main/install-config/harbor-ha-helm/
-  enable_tls = false
+  enable_tls        = true
 }

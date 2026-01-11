@@ -31,7 +31,6 @@ variable "vault_compute" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
   })
 }
 

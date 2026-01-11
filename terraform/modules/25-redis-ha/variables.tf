@@ -24,7 +24,6 @@ variable "topology_config" {
       }))
     })
     base_image_path = string
-    inventory_file  = string
   })
 
   # Redis Sentinel Quorum
@@ -49,18 +48,18 @@ variable "topology_config" {
   validation {
     condition = alltrue([
       for k, node in var.topology_config.nodes :
-      node.vcpu >= 2 && node.ram >= 2048
+      node.vcpu >= 1 && node.ram >= 2048
     ])
-    error_message = "All Redis data nodes must meet minimum requirements: 2 vCPUs and 2048MB RAM."
+    error_message = "All Redis data nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
   }
 
   # HAProxy Node Hardware Specification
   validation {
     condition = alltrue([
       for k, node in var.topology_config.ha_config.haproxy_nodes :
-      node.vcpu >= 1 && node.ram >= 1024
+      node.vcpu >= 1 && node.ram >= 2048
     ])
-    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 1024MB RAM."
+    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
   }
 
   # Redis, HAProxy Node IP Format Validation

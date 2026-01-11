@@ -28,12 +28,15 @@ terraform_artifact_cleaner() {
       continue
     fi
 
-    # log_print "STEP" "Cleaning Terraform artifacts for layer [${layer_name}]..."
-    # rm -rf "${layer_dir}/.terraform.lock.hcl" \
-    #   "${layer_dir}/terraform.tfstate" \
-    #   "${layer_dir}/terraform.tfstate.backup"
+		if [[ "$layer_name" == "20-gitlab-minio" || "$layer_name" == "20-harbor-minio" || "$layer_name" == "50-harbor-provision" ]]; then
+			log_print "STEP" "Cleaning Terraform artifacts for layer [${layer_name}]..."
+			rm -rf "${layer_dir}/.terraform.lock.hcl" \
+				"${layer_dir}/terraform.tfstate" \
+				"${layer_dir}/terraform.tfstate.backup"
 
-    # log_print "INFO" "Terraform artifact cleanup for [${layer_name}] completed."
+			log_print "INFO" "Terraform artifact cleanup for [${layer_name}] completed."
+		fi
+
     log_divider
   done
 }
@@ -72,7 +75,7 @@ terraform_layer_executor() {
 
   # 3. Construct Execution Chain based on Layer Type
   # [Special Logic] Github Meta Layer: Import + Apply ONLY (Skip Destroy)
-  if [[ "$layer_name" == "00-github-meta" ]]; then
+  if [[ "$layer_name" == "90-github-meta" ]]; then
     log_print "WARN" "Github Meta Layer detected: SKIPPING DESTROY phase to preserve repository."
     log_print "TASK" "Checking and Importing existing repository if needed..."
     
@@ -131,7 +134,7 @@ terraform_layer_selector() {
 				echo '{"root_token": "placeholder-for-bootstrap"}' > "$token_file"
 
 				log_print "TASK" "[Vault Core] Stage 1: Infrastructure Bootstrap (VM + TLS)..."
-				terraform_layer_executor "${layer}" "-target=module.vault_tls -target=module.vault_compute"          
+				terraform_layer_executor "${layer}" "-target=module.vault_tls -target=module.vault_config"          
 				
 				log_print "TASK" "[Vault Core] Stage 2: Service Configuration (PKI)..."
 				# Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.

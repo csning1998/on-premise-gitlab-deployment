@@ -18,7 +18,6 @@ harbor_microk8s_compute = {
   }
 
   base_image_path = "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2"
-  inventory_file  = "inventory-microk8s-harbor.yaml"
 }
 
 harbor_microk8s_infra = {

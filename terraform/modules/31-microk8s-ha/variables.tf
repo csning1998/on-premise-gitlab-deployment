@@ -25,7 +25,6 @@ variable "topology_config" {
       })), {})
     })
     base_image_path = string
-    inventory_file  = string
   })
 
   # MicroK8s Dqlite Quorum

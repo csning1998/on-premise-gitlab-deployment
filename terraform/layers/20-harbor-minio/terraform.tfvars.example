@@ -8,33 +8,34 @@ harbor_minio_compute = {
 
   nodes = {
     "harbor-minio-db-node-00" = {
-      ip = "172.16.139.200", vcpu = 2, ram = 2048
+      ip = "172.16.139.200", vcpu = 1, ram = 3072
       data_disks = [
         { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
         { name_suffix = "drive2", capacity = 10737418240 }
       ]
     },
-    "harbor-minio-db-node-01" = {
-      ip = "172.16.139.201", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    },
-    "harbor-minio-db-node-02" = {
-      ip = "172.16.139.202", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    },
-    "harbor-minio-db-node-03" = {
-      ip = "172.16.139.203", vcpu = 2, ram = 2048
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    }
+    # Uncomment the following lines for HA setup, abide by nodes % 4 = 0
+    # "harbor-minio-db-node-01" = {
+    #   ip = "172.16.139.201", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # },
+    # "harbor-minio-db-node-02" = {
+    #   ip = "172.16.139.202", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # },
+    # "harbor-minio-db-node-03" = {
+    #   ip = "172.16.139.203", vcpu = 1, ram = 3072
+    #   data_disks = [
+    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+    #     { name_suffix = "drive2", capacity = 10737418240 }
+    #   ]
+    # }
   }
 
   ha_config = {
@@ -45,7 +46,6 @@ harbor_minio_compute = {
   }
 
   base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
-  inventory_file  = "inventory-minio-harbor.yaml"
 }
 
 harbor_minio_infra = {
@@ -64,4 +64,12 @@ harbor_minio_infra = {
     }
   }
   allowed_subnet = "172.16.139.0/24"
+}
+
+harbor_minio_tenants = {
+  "harbor-registry" = {
+    user_name      = "harbor-user"
+    enable_version = false
+    policy_rw      = true
+  }
 }
