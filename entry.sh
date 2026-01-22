@@ -96,7 +96,7 @@ select opt in "${options[@]}"; do
       break
       ;;
     "[DEV] Unseal Dev Vault (Local)")
-      vault_dev_seal_handler
+      vault_dev_unseal_handler
       break
       ;;
     

@@ -198,7 +198,7 @@ vault_dev_init_handler() {
 	log_print "INFO" "Keys saved to ${DEV_KEYS_DIR}"
 
   # Auto Unseal
-  vault_dev_seal_handler
+  vault_dev_unseal_handler
 
 	vault login -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_VAULT_CACERT}" "${new_token}"
 
@@ -209,7 +209,7 @@ vault_dev_init_handler() {
 }
 
 # Function: Unseal Dev Vault
-vault_dev_seal_handler() {
+vault_dev_unseal_handler() {
   log_print "STEP" "[Dev Vault] Unsealing..."
   
   if [ ! -f "$DEV_UNSEAL_KEY_FILE" ]; then

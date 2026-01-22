@@ -1,3 +1,4 @@
+---
 services:
   iac-vault-server:
     image: docker.io/hashicorp/vault:1.20.2
