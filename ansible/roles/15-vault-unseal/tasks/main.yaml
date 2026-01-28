@@ -1,6 +1,7 @@
 ---
 - name: "Block F: Unseal Vault Node Strategy"
   become: true
+  when: inventory_hostname in groups['vault_leader'] or inventory_hostname in groups['vault_follower']
   block:
     - name: "F1. Check Current Vault Status"
       ansible.builtin.command: vault status -format=json
@@ -57,6 +58,7 @@
 
 - name: "Block G: Verify Vault Cluster Availability"
   become: true
+  when: inventory_hostname in groups['vault_haproxy']
   block:
     - name: "Wait for Vault VIP to be Active (200 OK)"
       ansible.builtin.uri:

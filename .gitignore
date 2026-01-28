@@ -62,4 +62,5 @@ vault/keys/
 
 # Only for recording by commit messages personally.
 commit-message.md
+pull-request.md
 *.bak

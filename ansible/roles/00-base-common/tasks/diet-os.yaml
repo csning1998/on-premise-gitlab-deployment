@@ -1,0 +1,35 @@
+---
+- name: "Minimal: Stop and Mask unnecessary services (Keep binaries)"
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    # Snapd only MicroK8s will unmask/enable this explicitly
+    - snapd.service
+    - snapd.socket
+    - snapd.seeded.service
+
+    # Storage is not needed for KVM qcow2 since Multipath is for SAN/FibreChannel
+    - multipathd.service
+    - multipathd.socket
+
+    # Auto-Updates is dangerous for Immutable Infra
+    - unattended-upgrades.service
+
+    # Desktop/Hardware Integrations are useless in Headless VM
+    - packagekit.service
+    - accounts-daemon.service
+    - ModemManager.service
+    - udisks2.service
+    - switcheroo-control.service
+
+    # Ubuntu Specific Ads/Telemetry
+    - ua-timer.timer
+    - ua-timer.service
+    - motd-news.timer
+    - motd-news.service
+
+  ignore_errors: true # Ignore if service is not found on specific version

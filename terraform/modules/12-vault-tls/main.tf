@@ -16,7 +16,7 @@ resource "tls_self_signed_cert" "vault_ca" {
     organization = "On-Premise GitLab Deployment"
   }
 
-  validity_period_hours = 87600 # 10 Years
+  validity_period_hours = 365 * 24 # 1 Year
   is_ca_certificate     = true
 
   allowed_uses = [
@@ -69,15 +69,15 @@ resource "tls_cert_request" "vault_server" {
       "vault",
       "localhost"
     ],
-    keys(var.vault_cluster.nodes)
+    keys(var.vault_cluster.vault_config.nodes)
   )
 
   ip_addresses = concat(
     [
       "127.0.0.1",
-      var.vault_cluster.ha_config.virtual_ip
+      var.vault_cluster.haproxy_config.virtual_ip
     ],
-    [for n in var.vault_cluster.nodes : n.ip]
+    [for n in var.vault_cluster.vault_config.nodes : n.ip]
   )
 }
 

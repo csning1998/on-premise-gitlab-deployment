@@ -4,6 +4,3 @@
 
 - name: Section B. Install Patroni Runtime Dependencies
   ansible.builtin.include_tasks: B-patroni.yaml
-
-- name: Section C. Install etcd Binaries
-  ansible.builtin.include_tasks: C-etcd-binary.yaml

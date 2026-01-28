@@ -9,46 +9,51 @@ variable "topology_config" {
     })
 
     # Vault Server Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
-    ha_config = object({
-      virtual_ip = string
-
-      # Vault uses HAProxy as entry point
-      haproxy_nodes = map(object({
+    vault_config = object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
+
+    haproxy_config = object({
+      virtual_ip = string
+
+      # Vault uses HAProxy as entry point
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
+
   })
 
   # Vault Raft Quorum
   validation {
-    condition     = length(var.topology_config.nodes) % 2 != 0
+    condition     = length(var.topology_config.vault_config.nodes) % 2 != 0
     error_message = "Vault node count must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
   }
 
   # Vault HA architecture requires at least one HAProxy node
   validation {
-    condition     = length(var.topology_config.ha_config.haproxy_nodes) > 0
+    condition     = length(var.topology_config.haproxy_config.nodes) > 0
     error_message = "Vault HA architecture requires at least one HAProxy node."
   }
 
   # VIP format check
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
   # Vault node hardware specification (vCPU >= 2, RAM >= 2048)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes :
+      for k, node in var.topology_config.vault_config.nodes :
       node.vcpu >= 2 && node.ram >= 2048
     ])
     error_message = "Vault nodes require at least 2 vCPUs and 2048MB RAM."
@@ -57,7 +62,7 @@ variable "topology_config" {
   # HAProxy node hardware specification (vCPU >= 1, RAM >= 1024)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.ha_config.haproxy_nodes :
+      for k, node in var.topology_config.haproxy_config.nodes :
       node.vcpu >= 1 && node.ram >= 1024
     ])
     error_message = "HAProxy nodes require at least 1 vCPU and 1024MB RAM."

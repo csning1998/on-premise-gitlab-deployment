@@ -1,4 +1,40 @@
 ---
+- name: "Block Pre: Revive Snapd (Required for MicroK8s)"
+  become: true
+  block:
+    - name: "Step Pre1. Unmask snapd services explicitly"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        masked: false
+      loop:
+        - snapd.service
+        - snapd.socket
+        - snapd.seeded.service
+
+    - name: "Step Pre2. Reload systemd to recognize unmasked units"
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: "Step Pre3. Enable and start snapd socket first"
+      ansible.builtin.systemd:
+        name: snapd.socket
+        state: started
+        enabled: true
+
+    - name: "Step Pre4. Enable and start snapd service"
+      ansible.builtin.systemd:
+        name: snapd.service
+        state: started
+        enabled: true
+
+    - name: "Step Pre5. Wait for snapd to be fully functional"
+      ansible.builtin.command: snap list
+      register: snap_check
+      retries: 10
+      delay: 5
+      until: snap_check.rc == 0
+      changed_when: false
+
 - name: "Block A: Ensure Snapd service is ready"
   become: true
   block:

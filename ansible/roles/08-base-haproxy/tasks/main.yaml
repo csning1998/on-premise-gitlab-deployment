@@ -1,0 +1,28 @@
+---
+- name: "Block: Install Proxy Components"
+  become: true
+  block:
+    - name: "Step 1. Install HAProxy and Keepalived"
+      ansible.builtin.apt:
+        name:
+          - haproxy
+          - keepalived
+        state: present
+        update_cache: true
+
+    - name: "Step 2. Ensure services are disabled (Configured at runtime)"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - haproxy
+        - keepalived
+
+    - name: "Step 3. Truncate default HAProxy config to avoid confusion"
+      ansible.builtin.copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: |
+          # Default config cleared by Packer build.
+          # Will be provisioned by Terraform/Ansible at runtime.
+        mode: "0644"

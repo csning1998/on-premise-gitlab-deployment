@@ -22,7 +22,7 @@ provider "vault" {
 provider "vault" {
   alias = "target_cluster"
 
-  address      = "https://${var.vault_compute.ha_config.virtual_ip}:443"
+  address      = "https://${var.vault_compute.haproxy_config.virtual_ip}:443"
   ca_cert_file = "${path.root}/tls/vault-ca.crt"
   token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
 }

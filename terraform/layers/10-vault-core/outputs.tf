@@ -1,7 +1,7 @@
 
 output "vault_ha_virtual_ip" {
   description = "The VIP of the Vault HA Cluster"
-  value       = var.vault_compute.ha_config.virtual_ip
+  value       = var.vault_compute.haproxy_config.virtual_ip
 }
 
 output "vault_ca_cert" {

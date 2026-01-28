@@ -1,10 +1,30 @@
 ---
-- name: "Block A: Install Common Base Packages"
+- name: "System: Configure basic apt settings (No Install)"
   become: true
-  block:
-    - name: "Step A1. Install Common Base Packages"
-      ansible.builtin.apt:
-        name: "{{ common.ubuntu.packages }}"
-        state: present
-        update_cache: true
-      no_log: true
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-disable-recommends
+    content: |
+      APT::Install-Recommends "0";
+      APT::Install-Suggests "0";
+    mode: "0644"
+
+- name: "System: Diet execution (Disable Services)"
+  ansible.builtin.include_tasks: diet-os.yaml
+
+- name: "System: Install strictly necessary admin tools"
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - wget
+      - vim
+      - htop
+      - net-tools
+      - gpg
+      - gnupg-agent
+      - bash-completion
+      - python3-pip
+      - jq
+    state: present
+    update_cache: true

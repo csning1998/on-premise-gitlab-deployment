@@ -15,22 +15,26 @@ variable "vault_compute" {
     })
 
     # Vault Server Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
-    ha_config = object({
-      virtual_ip = string
-
-      # Vault uses HAProxy as entry point
-      haproxy_nodes = map(object({
+    vault_config = object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
+
+    haproxy_config = object({
+      virtual_ip = string
+
+      # Vault uses HAProxy as entry point
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
   })
 }
 

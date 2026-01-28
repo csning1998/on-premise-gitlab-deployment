@@ -15,13 +15,15 @@ module "vault_tls" {
   tls_mode = var.tls_mode
 
   vault_cluster = {
-    nodes = {
-      for k, v in var.vault_compute.nodes : k => {
-        ip = v.ip
+    vault_config = {
+      nodes = {
+        for k, v in var.vault_compute.vault_config.nodes : k => {
+          ip = v.ip
+        }
       }
     }
-    ha_config = {
-      virtual_ip = var.vault_compute.ha_config.virtual_ip
+    haproxy_config = {
+      virtual_ip = var.vault_compute.haproxy_config.virtual_ip
     }
   }
 }
@@ -35,5 +37,5 @@ module "vault_pki_config" {
     vault = vault.target_cluster
   }
 
-  vault_addr = "https://${var.vault_compute.ha_config.virtual_ip}:443"
+  vault_addr = "https://${var.vault_compute.haproxy_config.virtual_ip}:443"
 }

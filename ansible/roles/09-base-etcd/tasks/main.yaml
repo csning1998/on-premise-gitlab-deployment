@@ -1,0 +1,31 @@
+---
+- name: "Block: Install etcd Binaries"
+  become: true
+  block:
+    - name: "Step 1. Download etcd package ({{ etcd_base.version }})"
+      ansible.builtin.get_url:
+        url: "{{ _etcd_base_download_url }}"
+        dest: "{{ _etcd_base_temp_path }}"
+        mode: "0644"
+
+    - name: "Step 2. Extract etcd package"
+      ansible.builtin.unarchive:
+        src: "{{ _etcd_base_temp_path }}"
+        dest: /tmp
+        remote_src: true
+
+    - name: "Step 3. Copy etcd binaries to install directory"
+      ansible.builtin.copy:
+        src: "{{ _etcd_base_temp_extract_path }}/{{ item }}"
+        dest: "{{ etcd_base.binary.install_path }}/{{ item }}"
+        remote_src: true
+        mode: "0755"
+      loop: "{{ etcd_base.binary.files }}"
+
+    - name: "Step 4. Clean up temporary etcd files"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ _etcd_base_temp_path }}"
+        - "{{ _etcd_base_temp_extract_path }}"
