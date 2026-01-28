@@ -20,7 +20,7 @@ The machine specifications used for development are listed below for reference o
 The project can be cloned using the following command:
 
 ```shell
-git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
+git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 The following resource allocation is configured based on RAM constraints:
@@ -75,7 +75,7 @@ Before proceeding, ensure the host system meets the following requirements:
 - CPU virtualization support (VT-x or AMD-V).
 - `sudo` privileges for Libvirt management.
 - `podman` and `podman compose` installed for containerized operations.
-- `whois` package (provides the `mkpasswd` command).
+- `openssl` package (provides the `openssl passwd` command).
 - `jq` package (for JSON parsing).
 
 ### C. Progress
@@ -123,6 +123,9 @@ The `entry.sh` script located in the root directory handles all service initiali
 ```
 
 Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packer/output` and `terraform/layers` directories. The submenus for a complete configuration are shown below:
+
+> [!NOTE]
+> Option `11` is currently mulfunctioning.
 
 1. When selecting `9) Build Packer Base Image`.
 
@@ -179,11 +182,11 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 1. **Install HashiCorp Toolkit - Terraform and Packer**
 
-Execute `entry.sh` in the project root directory and select option `7` "Setup Core IaC Tools for Native" to install Terraform, Packer, and Ansible. Refer to the official installation guides for more details:
+    Execute `entry.sh` in the project root directory and select option `7` "Setup Core IaC Tools for Native" to install Terraform, Packer, and Ansible. Refer to the official installation guides for more details:
 
-> _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
-> _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
-> _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
+    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
+    > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
 
     ```text
     ...
@@ -213,47 +216,51 @@ Execute `entry.sh` in the project root directory and select option `7` "Setup Co
 
 2. Verify that Podman or Docker is correctly installed. The appropriate installation method should be selected based on the host operating system by following the official documentation linked below:
 
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_  
+    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
     > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
 
 3. For Podman-based setups, navigate to the project root directory after the installation:
     1. The default memlock limit (`ulimit -l`) is typically insufficient, causing HashiCorp Vault `mlock` system calls to fail. In Rootless Podman environments, processes are mapped via UID to a standard host user and inherit existing permission restrictions. To resolve this, the following configuration should be applied to `/etc/security/limits.conf`:
 
-    ```shell
-    sudo tee -a /etc/security/limits.conf <<EOT
-    ${USER}    soft    memlock    unlimited
-    ${USER}    hard    memlock    unlimited
-    EOT
-    ```
+        ```shell
+        sudo tee -a /etc/security/limits.conf <<EOT
+        ${USER}    soft    memlock    unlimited
+        ${USER}    hard    memlock    unlimited
+        EOT
+        ```
 
-    This configuration enables the Vault process within the user namespace to lock memory. A system reboot is required for these changes to take effect, preventing sensitive data from being paged to unencrypted swap space. 2. For the initial deployment, execute:
+        This configuration enables the Vault process within the user namespace to lock memory. A system reboot is required for these changes to take effect, preventing sensitive data from being paged to unencrypted swap space.
 
-    ```shell
-    podman compose up --build
-    ```
+    2. For the initial deployment, execute:
+
+        ```shell
+        podman compose up --build
+        ```
 
     3. Once the containers are created, use the following command to start the services:
 
-    ```shell
-    podman compose up -d
-    ```
+        ```shell
+        podman compose up -d
+        ```
 
     4. The default environment is set to `DEBIAN_FRONTEND=noninteractive`. To access a container for inspection or modification, execute:
 
-    ```shell
-    podman exec -it iac-controller-base bash
-    ```
+        ```shell
+        podman exec -it iac-controller-base bash
+        ```
 
-    In this context, `iac-controller-base` refers to the root container name for the project. 5. The default container status after running `podman compose --profile all up -d` and `podman ps -a` should resemble the following:
+        In this context, `iac-controller-base` refers to the root container name for the project.
 
-    ```text
-    CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
-    61be68ae276e  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  15 minutes ago  Up 15 minutes (healthy)  8200/tcp    iac-vault-server
-    79b918f440f1  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-base
-    0a4eb3495697  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-packer
-    482f58b67295  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-terraform
-    aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
-    ```
+    5. The default container status after running `podman compose --profile all up -d` and `podman ps -a` should resemble the following:
+
+        ```text
+        CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
+        61be68ae276e  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  15 minutes ago  Up 15 minutes (healthy)  8200/tcp    iac-vault-server
+        79b918f440f1  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-base
+        0a4eb3495697  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-packer
+        482f58b67295  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-terraform
+        aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
+        ```
 
 > [!CAUTION]
 > **Data Loss Warning**
@@ -276,6 +283,7 @@ Execute `entry.sh` in the project root directory and select option `7` "Setup Co
     ```
 
 3. Packer tool extension. [Marketplace Link of Packer Powertools](https://marketplace.visualstudio.com/items?itemName=szTheory.vscode-packer-powertools)
+
     ```shell
     code --install-extension szTheory.vscode-packer-powertools
     ```
@@ -308,7 +316,9 @@ Execute `entry.sh` in the project root directory and select option `7` "Setup Co
     sudo usermod -aG libvirt $(whoami)
     ```
 
-    A full logout and login, or a system reboot, is required for the group membership changes to take effect in the current shell session. 2. Modify the `libvirtd` configuration to delegate socket management to the `libvirt` group.
+    A full logout and login, or a system reboot, is required for the group membership changes to take effect in the current shell session.
+
+2. Modify the `libvirtd` configuration to delegate socket management to the `libvirt` group.
 
     ```shell
     # Using Vim
@@ -326,7 +336,7 @@ Execute `entry.sh` in the project root directory and select option `7` "Setup Co
     unix_sock_rw_perms = "0770"
     ```
 
-2. Override the systemd socket unit settings, as systemd configurations take precedence over `libvirtd.conf`.
+3. Override the systemd socket unit settings, as systemd configurations take precedence over `libvirtd.conf`.
     1. Open the systemd editor for the socket unit:
 
         ```shell
@@ -341,7 +351,7 @@ Execute `entry.sh` in the project root directory and select option `7` "Setup Co
         SocketMode=0770
         ```
 
-Save and exit the editor (Press `Ctrl+O`, `Enter`, then `Ctrl+X` in Nano).
+    Save and exit the editor (Press `Ctrl+O`, `Enter`, then `Ctrl+X` in Nano).
 
 4. Restart the services in the following order to apply the changes.
     1. Reload the `systemd` manager configuration:
@@ -371,15 +381,15 @@ Save and exit the editor (Press `Ctrl+O`, `Enter`, then `Ctrl+X` in Nano).
 5. Verification.
     1. Inspect the socket permissions; the output should indicate the `libvirt` group and `srwxrwx---` permissions.
 
-    ```shell
-    ls -la /var/run/libvirt/libvirt-sock
-    ```
+        ```shell
+        ls -la /var/run/libvirt/libvirt-sock
+        ```
 
     2. Execute the `virsh` command as a non-root user:
 
-    ```shell
-    virsh list --all
-    ```
+        ```shell
+        virsh list --all
+        ```
 
 Successful execution and the display of virtual machines—regardless of whether the list is empty—confirms that permissions are correctly configured.
 
@@ -391,16 +401,17 @@ Successful execution and the display of virtual machines—regardless of whether
 1. Navigate to [GitHub Developer Settings](https://github.com/settings/personal-access-tokens) to generate a Fine-grained Personal Access Token.
 2. Click `Generate new token` and specify the token name, expiration period, and repository access scope.
 3. In the Permissions section, configure the following:
-   | Permission | Access Level | Description |
-   | --- | --- | --- |
-   | Metadata | Read-only | Mandatory |
-   | Administration | Read and Write | For modifying Repo settings and Rulesets |
-   | Contents | Read and Write | For reading Ref and Git information |
-   | Repository security advisories | Read and Write | For managing security advisories |
-   | Dependabot alerts | Read and Write | For managing dependency alerts |
-   | Secrets | Read and Write | (Optional) for managing Actions Secrets |
-   | Variables | Read and Write | (Optional) for managing Actions Variables |
-   | Webhooks | Read and Write | (Optional) for managing Webhooks |
+
+    | Permission                     | Access Level   | Description                               |
+    | ------------------------------ | -------------- | ----------------------------------------- |
+    | Metadata                       | Read-only      | Mandatory                                 |
+    | Administration                 | Read and Write | For modifying Repo settings and Rulesets  |
+    | Contents                       | Read and Write | For reading Ref and Git information       |
+    | Repository security advisories | Read and Write | For managing security advisories          |
+    | Dependabot alerts              | Read and Write | For managing dependency alerts            |
+    | Secrets                        | Read and Write | (Optional) for managing Actions Secrets   |
+    | Variables                      | Read and Write | (Optional) for managing Actions Variables |
+    | Webhooks                       | Read and Write | (Optional) for managing Webhooks          |
 
 4. Click `Generate token` and save the value for the following steps.
 
@@ -431,23 +442,27 @@ Successful execution and the display of virtual machines—regardless of whether
         - `ssh_public_key_path`, `ssh_private_key_path`: Paths to the SSH public and private keys on the host.
 
         ```shell
-        export VAULT_ADDR="https://127.0.0.1:8200"
-        export VAULT_CACERT="${PWD}/vault/tls/ca.pem"
-        export VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt)
-        vault secrets enable -path=secret kv-v2
-        ```
-
-        ```shell
+        printf "Enter ssh Password: "
+        read -s ssh_password
         vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/variables \
             github_pat="your-github-personal-access-token" \
             ssh_username="some-user-name-for-ssh" \
-            ssh_password="some-user-password-for-ssh" \
-            ssh_password_hash=$(echo -n "$ssh_password" | mkpasswd -m sha-512 -P 0) \
+            ssh_password="$ssh_password" \
+            ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
             vm_username="some-user-name-for-vm" \
-            vm_password="some-user-password-for-vm" \
+            vm_password="$ssh_password" \
             ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
             ssh_private_key_path="~/.ssh/some-ssh-key-name"
+
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/infrastructure \
+            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-development-mode" \
+            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-development-mode"
         ```
 
         If `90-github-meta` is not used to manage GitHub repository settings, the `github_pat` secret can be deleted.
@@ -523,36 +538,38 @@ Successful execution and the display of virtual machines—regardless of whether
     - **Note 1. Secret Retrieval**
         1. Use the following command to retrieve credentials from Vault. For example, to fetch the PostgreSQL superuser password:
 
-        ```shell
-        export VAULT_ADDR="https://172.16.136.250:443"
-        export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
-        export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
-        vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
-        ```
+            ```shell
+            export VAULT_ADDR="https://172.16.136.250:443"
+            export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
+            export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
+            vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
+            ```
 
         2. To prevent exposing secrets in the shell output, subshells can be utilized:
 
-        ```shell
-        export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
-        ```
+            ```shell
+            export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            ```
 
         3. For a more streamlined execution, use a single-line command:
 
-        ```shell
-        export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
-        ```
+            ```shell
+            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            ```
 
         The same procedure applies to the Development Vault and other secrets.
 
     - **Note 2**:
 
+        _For reference only since the passwords are already combined into a single-line command_
+
         `ssh_username` and `ssh_password` refer to the credentials used for virtual machine access. `ssh_password_hash` is the hashed value required by cloud-init for automated installation, which must be derived from the `ssh_password` string. For instance, if the password is `HelloWorld@k8s`, generate the hash using the following command:
 
         ```shell
-        mkpasswd -m sha-512 HelloWorld@k8s
+        printf '%s' "HelloWorld@k8s" | openssl passwd -6 -stdin
         ```
 
-        - If a "command not found" error occurs for `mkpasswd`, ensure the `whois` package is installed.
+        - If a "command not found" error occurs for `openssl`, ensure the `openssl` package is installed.
         - `ssh_public_key_path` should point to the filename of the previously generated public key (typically in `*.pub` format).
 
     - **Note 3**:
@@ -648,13 +665,13 @@ Successful execution and the display of virtual machines—regardless of whether
 
 Importing service certificates into the host trust store enables secure access to the following services without triggering browser security warnings:
 
-    - Prod Vault: `https://vault.iac.local`
-    - Harbor: `https://harbor.iac.local`
-    - Harbor MinIO Console: `https://s3.harbor.iac.local`
-    - GitLab: `https://gitlab.iac.local` (**WIP**)
-    - GitLab MinIO Console: `https://s3.gitlab.iac.local` (**WIP**)
+- Prod Vault: `https://vault.iac.local`
+- Harbor: `https://harbor.iac.local`
+- Harbor MinIO Console: `https://s3.harbor.iac.local`
+- GitLab: `https://gitlab.iac.local` (**WIP**)
+- GitLab MinIO Console: `https://s3.gitlab.iac.local` (**WIP**)
 
-    Complete the following configuration steps in sequence:
+Complete the following configuration steps in sequence:
 
 1. Configure DNS resolution by appending the following entries to the host's `/etc/hosts` file. These values must be aligned with the actual static IPs provisioned by Terraform:
 
@@ -677,6 +694,7 @@ Importing service certificates into the host trust store enables secure access t
             ```
 
         - Ubuntu / Debian:
+
             ```shell
             sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
             sudo update-ca-certificates
@@ -794,14 +812,14 @@ This repo leverages Packer, Terraform, and Ansible to implement an automated pip
 
 ### B. Toolchain Roles and Responsibilities
 
-> The cluster configurations in this project draw upon the following resources:
+The cluster configurations in this project draw upon the following resources:
+
+> [!TIP]
+> Procedures derived directly from official documentation are omitted from the list below.
 >
 > 1. Bibin Wilson, B. (2025). [_How To Setup Kubernetes Cluster Using Kubeadm._](https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests) devopscube.
 > 2. Aditi Sangave (2025). [_How to Setup HashiCorp Vault HA Cluster with Integrated Storage (Raft)._](https://www.velotio.com/engineering-blog/how-to-setup-hashicorp-vault-ha-cluster-with-integrated-storage-raft) Velotio Tech Blog.
 > 3. Dickson Gathima (2025). [_Building a Highly Available PostgreSQL Cluster with Patroni, etcd, and HAProxy._](https://medium.com/@dickson.gathima/building-a-highly-available-postgresql-cluster-with-patroni-etcd-and-haproxy-1fd465e2c17f) Medium.
 > 4. Deniz TÜRKMEN (2025). [_Redis Cluster Provisioning — Fully Automated with Ansible._](https://deniz-turkmen.medium.com/redis-cluster-provisioning-fully-automated-with-ansible-dc719bb48f75) Medium.
-
-> [!TIP]
-> Procedures derived directly from official documentation are omitted from the list above.
 
 **_(To be continued...)_**

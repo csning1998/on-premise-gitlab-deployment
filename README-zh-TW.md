@@ -19,7 +19,7 @@ Refer to [README.md](README.md) for English (US) version.
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
+git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供參考：
@@ -74,7 +74,7 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 - CPU 必須有支援 virtualization，即具有 VT-x 或 AMD-V
 - 具備 `sudo` 權限以操作 Libvirt
 - 已安裝 `podman` 與 `podman compose`，用於 containerized 模式
-- 已安裝 `whois` 套件，主要需要 `mkpasswd` 指令
+- 已安裝 `openssl` 套件，主要需要 `openssl passwd` 指令
 - 已安裝 `jq` 套件，用於解析 JSON
 
 ### C. Progress
@@ -122,6 +122,9 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 ```
 
 選擇選項 `9`、`10`、`11` 後會根據 `packer/output` 與 `terraform/layers` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
+
+> [!NOTE]
+> 目前選項 `11` 的功能故障
 
 1. 選 `9) Build Packer Base Image` 時
 
@@ -449,23 +452,27 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
             - `ssh_public_key_path`, `ssh_private_key_path`: 位於 host 的 SSH 公私鑰路徑
 
         ```shell
-        export VAULT_ADDR="https://127.0.0.1:8200"
-        export VAULT_CACERT="${PWD}/vault/tls/ca.pem"
-        export VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt)
-        vault secrets enable -path=secret kv-v2
-        ```
-
-        ```shell
+        printf "Enter ssh Password: "
+        read -s ssh_password
         vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/variables \
             github_pat="your-github-personal-access-token" \
             ssh_username="some-user-name-for-ssh" \
-            ssh_password="some-user-password-for-ssh" \
-            ssh_password_hash=$(echo -n "$ssh_password" | mkpasswd -m sha-512 -P 0) \
+            ssh_password="$ssh_password" \
+            ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
             vm_username="some-user-name-for-vm" \
-            vm_password="some-user-password-for-vm" \
+            vm_password="$ssh_password" \
             ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
             ssh_private_key_path="~/.ssh/some-ssh-key-name"
+
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/infrastructure \
+            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-development-mode" \
+            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-development-mode"
         ```
 
         如果沒有使用 `90-github-meta` 管理 GitHub Repo 的設定，可以刪除 `github_pat` 這個 secret
@@ -565,13 +572,15 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
     - **Note 2:**
 
+        _這裡僅做參考，密碼變數已經整合成單列指令，可以依照需求調整_
+
         `ssh_username` 與 `ssh_password` 是用來登入虛擬機器的帳號與密碼；`ssh_password_hash` 是 cloud-init 自動安裝所需的 hashed 密碼，需使用 `ssh_password` 的原始字串產生。例如密碼為 `HelloWorld@k8s`，則使用以下指令產生對應 hash：
 
         ```shell
-        mkpasswd -m sha-512 HelloWorld@k8s
+        printf '%s' "HelloWorld@k8s" | openssl passwd -6 -stdin
         ```
 
-        - 若出現 `mkpasswd` command not found，可能是缺少 `whois` 套件
+        - 若出現 `openssl` command not found，可能是缺少 `openssl` 套件
         - `ssh_public_key_path` 需改為先前產生的 **公鑰** 名稱，公鑰檔名為 `*.pub` 格式
 
     - **Note 3:**
@@ -821,14 +830,14 @@ git clone https://github.com/csning1998/on-premise-gitlab-deployment.git
 
 ### B. Toolchain Roles and Responsibilities
 
-> 本專案的 Clusters 建立有參考下文章：
+本專案的 Clusters 建立有參考下文章：
+
+> [!TIP]
+> 完全參考官方文件操作的叢集步驟未列入下列清單
 >
 > 1. Bibin Wilson, B. (2025). [_How To Setup Kubernetes Cluster Using Kubeadm._](https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests) devopscube.
 > 2. Aditi Sangave (2025). [_How to Setup HashiCorp Vault HA Cluster with Integrated Storage (Raft)._](https://www.velotio.com/engineering-blog/how-to-setup-hashicorp-vault-ha-cluster-with-integrated-storage-raft) Velotio Tech Blog.
 > 3. Dickson Gathima (2025). [_Building a Highly Available PostgreSQL Cluster with Patroni, etcd, and HAProxy._](https://medium.com/@dickson.gathima/building-a-highly-available-postgresql-cluster-with-patroni-etcd-and-haproxy-1fd465e2c17f) Medium.
 > 4. Deniz TÜRKMEN (2025). [_Redis Cluster Provisioning — Fully Automated with Ansible._](https://deniz-turkmen.medium.com/redis-cluster-provisioning-fully-automated-with-ansible-dc719bb48f75) Medium.
-
-> [!TIP]
-> 完全參考官方文件操作的叢集步驟未列入上述清單
 
 _**(待續...)**_
