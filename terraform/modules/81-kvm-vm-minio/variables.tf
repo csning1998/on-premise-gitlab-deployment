@@ -10,16 +10,16 @@ variable "vm_config" {
   description = "All configurations related to the virtual machines being provisioned."
   type = object({
     all_nodes_map = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
+      ip              = string
+      vcpu            = number
+      ram             = number
+      base_image_path = string
       # Mount multiple disk at once
       data_disks = optional(list(object({
         name_suffix = string
         capacity    = number
       })), [])
     }))
-    base_image_path = string
   })
 }
 

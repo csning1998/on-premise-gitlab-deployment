@@ -4,8 +4,7 @@ module "provisioner_kvm" {
 
   # VM Configuration
   vm_config = {
-    all_nodes_map   = local.all_nodes_map
-    base_image_path = var.topology_config.base_image_path
+    all_nodes_map = local.all_nodes_map
   }
 
   # VM Credentials from Vault
@@ -70,18 +69,18 @@ module "ansible_runner" {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.topology_config.cluster_identity.service_name
 
-    postgres_nodes      = var.topology_config.nodes
-    postgres_etcd_nodes = var.topology_config.etcd_nodes
-    haproxy_nodes       = var.topology_config.ha_config.haproxy_nodes
+    postgres_nodes      = var.topology_config.postgres_config.nodes
+    postgres_etcd_nodes = var.topology_config.etcd_config.nodes
+    haproxy_nodes       = var.topology_config.haproxy_config.nodes
 
-    haproxy_stats_port = var.topology_config.ha_config.stats_port
-    haproxy_rw_port    = var.topology_config.ha_config.rw_proxy
-    haproxy_ro_port    = var.topology_config.ha_config.ro_proxy
+    haproxy_stats_port = var.topology_config.haproxy_config.stats_port
+    haproxy_rw_port    = var.topology_config.haproxy_config.rw_proxy
+    haproxy_ro_port    = var.topology_config.haproxy_config.ro_proxy
 
-    etcd_ips     = [for n in var.topology_config.etcd_nodes : n.ip]
-    postgres_ips = [for n in var.topology_config.nodes : n.ip]
+    etcd_ips     = [for n in var.topology_config.etcd_config.nodes : n.ip]
+    postgres_ips = [for n in var.topology_config.postgres_config.nodes : n.ip]
 
-    postgres_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    postgres_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     postgres_mtls_node_subnet  = var.infra_config.allowed_subnet
     postgres_service_domain    = var.service_domain
     postgres_pki_role_name     = var.vault_role_name

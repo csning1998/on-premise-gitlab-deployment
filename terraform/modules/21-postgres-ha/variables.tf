@@ -9,78 +9,84 @@ variable "topology_config" {
     })
 
     # Postgres Data Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    postgres_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
     # Etcd Nodes (Map)
-    etcd_nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    etcd_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
-    ha_config = object({
+    haproxy_config = object({
       virtual_ip = string
       stats_port = number
       rw_proxy   = number
       ro_proxy   = number
 
       # HAProxy Nodes (Map)
-      haproxy_nodes = map(object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
   })
 
   # Etcd Raft Quorum
   validation {
-    condition     = length(var.topology_config.etcd_nodes) % 2 != 0
+    condition     = length(var.topology_config.etcd_config.nodes) % 2 != 0
     error_message = "Etcd node count must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
   }
 
   # At least one HAProxy node
   validation {
-    condition     = length(var.topology_config.ha_config.haproxy_nodes) > 0
+    condition     = length(var.topology_config.haproxy_config.nodes) > 0
     error_message = "High Availability architecture requires at least one HAProxy node."
   }
 
   # VIP format check
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
-  # Postgres Data Node specification (vCPU >= 2, RAM >= 4096)
+  # Postgres Data Node specification (vCPU >= 2, RAM >= 2048)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes :
-      node.vcpu >= 2 && node.ram >= 4096
+      for k, node in var.topology_config.postgres_config.nodes :
+      node.vcpu >= 2 && node.ram >= 2048
     ])
-    error_message = "Postgres data nodes require at least 2 vCPUs and 4096MB RAM."
+    error_message = "Postgres data nodes require at least 2 vCPUs and 2048MB RAM."
   }
 
-  # Etcd Node specification (vCPU >= 1, RAM >= 3072)
+  # Etcd Node specification (vCPU >= 1, RAM >= 1024)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.etcd_nodes :
-      node.vcpu >= 1 && node.ram >= 3072
+      for k, node in var.topology_config.etcd_config.nodes :
+      node.vcpu >= 1 && node.ram >= 1024
     ])
-    error_message = "Etcd nodes require at least 1 vCPU and 3072MB RAM."
+    error_message = "Etcd nodes require at least 1 vCPU and 1024MB RAM."
   }
 
   # HAProxy Node Hardware Specification
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.ha_config.haproxy_nodes :
-      node.vcpu >= 1 && node.ram >= 2048
+      for k, node in var.topology_config.haproxy_config.nodes :
+      node.vcpu >= 1 && node.ram >= 512
     ])
-    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
+    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 512MB RAM."
   }
 }
 

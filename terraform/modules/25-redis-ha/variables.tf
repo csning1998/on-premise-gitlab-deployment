@@ -8,65 +8,69 @@ variable "topology_config" {
     })
 
     # Redis Data Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
-    ha_config = object({
-      virtual_ip = string
-
-      # HAProxy Nodes (Map)
-      haproxy_nodes = map(object({
+    redis_config = object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
+
+    haproxy_config = object({
+      virtual_ip = string
+
+      # HAProxy Nodes (Map)
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
   })
 
   # Redis Sentinel Quorum
   validation {
-    condition     = length(var.topology_config.nodes) % 2 != 0
+    condition     = length(var.topology_config.redis_config.nodes) % 2 != 0
     error_message = "Redis node count must be an odd number (1, 3, 5, etc.) to ensure a stable Sentinel quorum and prevent split-brain scenarios."
   }
 
   # HAProxy Node Requirement
   validation {
-    condition     = length(var.topology_config.ha_config.haproxy_nodes) > 0
+    condition     = length(var.topology_config.haproxy_config.nodes) > 0
     error_message = "High Availability architecture requires at least one HAProxy node to route traffic via VIP."
   }
 
   # VIP Format Validation
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
   # Redis Node Hardware Specification
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes :
-      node.vcpu >= 1 && node.ram >= 2048
+      for k, node in var.topology_config.redis_config.nodes :
+      node.vcpu >= 1 && node.ram >= 1024
     ])
-    error_message = "All Redis data nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
+    error_message = "All Redis data nodes must meet minimum requirements: 1 vCPU and 1024MB RAM."
   }
 
   # HAProxy Node Hardware Specification
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.ha_config.haproxy_nodes :
-      node.vcpu >= 1 && node.ram >= 2048
+      for k, node in var.topology_config.haproxy_config.nodes :
+      node.vcpu >= 1 && node.ram >= 512
     ])
-    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 2048MB RAM."
+    error_message = "All HAProxy nodes must meet minimum requirements: 1 vCPU and 512MB RAM."
   }
 
   # Redis, HAProxy Node IP Format Validation
   validation {
     condition = alltrue(flatten([
-      [for k, node in var.topology_config.nodes : can(cidrnetmask("${node.ip}/32"))],
-      [for k, node in var.topology_config.ha_config.haproxy_nodes : can(cidrnetmask("${node.ip}/32"))]
+      [for k, node in var.topology_config.redis_config.nodes : can(cidrnetmask("${node.ip}/32"))],
+      [for k, node in var.topology_config.haproxy_config.nodes : can(cidrnetmask("${node.ip}/32"))]
     ]))
     error_message = "All provided node IP addresses (Redis and HAProxy) must be valid IPv4 addresses."
   }

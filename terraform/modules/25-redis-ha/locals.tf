@@ -17,10 +17,24 @@ locals {
   nat_bridge_name      = "${local.svc_abbr}-${local.comp_abbr}-natbr"
   hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
 
-  # Convert standard structure to Module 81 vm_config
+  # 1. Inject Redis Base Image Path
+  redis_nodes_with_img = {
+    for k, v in var.topology_config.redis_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.redis_config.base_image_path
+    })
+  }
+
+  # 2. Inject HAProxy Base Image Path
+  haproxy_nodes_with_img = {
+    for k, v in var.topology_config.haproxy_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.haproxy_config.base_image_path
+    })
+  }
+
+  # 3. Convert standard structure to Module 81 vm_config
   all_nodes_map = merge(
-    var.topology_config.nodes,
-    var.topology_config.ha_config.haproxy_nodes
+    local.redis_nodes_with_img,
+    local.haproxy_nodes_with_img
   )
 
   # Ansible path and network prefix calculation

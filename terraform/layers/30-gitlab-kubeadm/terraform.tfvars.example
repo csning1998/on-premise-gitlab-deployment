@@ -6,27 +6,28 @@ gitlab_kubeadm_compute = {
     cluster_name = "30-gitlab-kubeadm"
   }
 
-  masters = {
-    "gitlab-kubeadm-master-00" = { ip = "172.16.134.200", vcpu = 4, ram = 4096 }
-    "gitlab-kubeadm-master-01" = { ip = "172.16.134.201", vcpu = 4, ram = 4096 }
-    "gitlab-kubeadm-master-02" = { ip = "172.16.134.202", vcpu = 4, ram = 4096 }
+  kubeadm_config = {
+    master_nodes = {
+      "gitlab-kubeadm-master-00" = { ip = "172.16.134.200", vcpu = 2, ram = 6144 }
+      "gitlab-kubeadm-master-01" = { ip = "172.16.134.201", vcpu = 2, ram = 6144 }
+      "gitlab-kubeadm-master-02" = { ip = "172.16.134.202", vcpu = 2, ram = 6144 }
+    }
+    worker_nodes = {
+      "gitlab-kubeadm-worker-00" = { ip = "172.16.134.210", vcpu = 4, ram = 8192 }
+      "gitlab-kubeadm-worker-01" = { ip = "172.16.134.211", vcpu = 4, ram = 8192 }
+      "gitlab-kubeadm-worker-02" = { ip = "172.16.134.212", vcpu = 4, ram = 8192 }
+    }
+    base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
   }
 
-  workers = {
-    "gitlab-kubeadm-worker-00" = { ip = "172.16.134.210", vcpu = 4, ram = 4096 }
-    "gitlab-kubeadm-worker-01" = { ip = "172.16.134.211", vcpu = 4, ram = 4096 }
-    "gitlab-kubeadm-worker-02" = { ip = "172.16.134.212", vcpu = 4, ram = 4096 }
-  }
-
-  ha_config = {
+  haproxy_config = {
     virtual_ip    = "172.16.134.250"
-    haproxy_nodes = {} # Use external Keepalived by Defaults
+    nodes = {} # Use external Keepalived by Defaults
+    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 
   pod_subnet    = "10.244.0.0/16"
   registry_host = "172.16.135.200:5000" # Harbor Registry Endpoint
-
-  base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
 }
 
 gitlab_kubeadm_infra = {

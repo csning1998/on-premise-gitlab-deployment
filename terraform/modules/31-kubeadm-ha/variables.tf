@@ -9,58 +9,62 @@ variable "topology_config" {
     })
 
     # Control Plane Nodes (Map)
-    masters = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
 
-    # Worker Nodes (Map)
-    workers = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    kubeadm_config = object({
+      master_nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
 
-    ha_config = object({
+      # Worker Nodes (Map)
+      worker_nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
+
+    haproxy_config = object({
       virtual_ip = string
 
       # Kubeadm Control Plane defaultly use Master Built-inKeepalived
-      haproxy_nodes = optional(map(object({
+      nodes = optional(map(object({
         ip   = string
         vcpu = number
         ram  = number
       })), {})
+      base_image_path = string
     })
 
     # Kubeadm Specific Configuration
-    pod_subnet      = string # e.g. "10.244.0.0/16"
-    registry_host   = string # e.g. "172.16.135.250:5000"
-    base_image_path = string
+    pod_subnet    = string # e.g. "10.244.0.0/16"
+    registry_host = string # e.g. "172.16.135.250:5000"
   })
 
   # Master Etcd Quorum
   validation {
-    condition     = length(var.topology_config.masters) % 2 != 0
+    condition     = length(var.topology_config.kubeadm_config.master_nodes) % 2 != 0
     error_message = "Kubeadm Master node count must be an odd number (1, 3, 5...) to ensure a stable Etcd quorum."
   }
 
   # At least need one Worker node
   validation {
-    condition     = length(var.topology_config.workers) > 0
+    condition     = length(var.topology_config.kubeadm_config.worker_nodes) > 0
     error_message = "At least one Worker node is required for a functional cluster."
   }
 
   # VIP format check
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
   # Master node specification (At least 2vCPU/4GB)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.masters :
+      for k, node in var.topology_config.kubeadm_config.master_nodes :
       node.vcpu >= 2 && node.ram >= 4096
     ])
     error_message = "Control Plane nodes require at least 2 vCPUs and 4096MB RAM."
@@ -69,7 +73,7 @@ variable "topology_config" {
   # Worker node specification (At least 2vCPU/4GB)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.workers :
+      for k, node in var.topology_config.kubeadm_config.worker_nodes :
       node.vcpu >= 2 && node.ram >= 4096
     ])
     error_message = "Worker nodes require at least 2 vCPUs and 4096MB RAM."

@@ -8,34 +8,37 @@ variable "gitlab_kubeadm_compute" {
       cluster_name = string
     })
 
-    # Control Plane Nodes (Map)
-    masters = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    kubeadm_config = object({
+      # Control Plane Nodes (Map)
+      master_nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
 
-    # Worker Nodes (Map)
-    workers = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+      # Worker Nodes (Map)
+      worker_nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
-    ha_config = object({
+    haproxy_config = object({
       virtual_ip = string
 
       # Kubeadm Control Plane defaultly use Master Built-inKeepalived
-      haproxy_nodes = optional(map(object({
+      nodes = optional(map(object({
         ip   = string
         vcpu = number
         ram  = number
       })), {})
+      base_image_path = string
     })
-    pod_subnet      = string
-    registry_host   = string
-    base_image_path = string
 
+    pod_subnet    = string
+    registry_host = string
   })
 }
 

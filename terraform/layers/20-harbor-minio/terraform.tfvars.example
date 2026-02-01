@@ -6,46 +6,48 @@ harbor_minio_compute = {
     cluster_name = "20-harbor-minio"
   }
 
-  nodes = {
-    "harbor-minio-db-node-00" = {
-      ip = "172.16.139.200", vcpu = 1, ram = 3072
-      data_disks = [
-        { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-        { name_suffix = "drive2", capacity = 10737418240 }
-      ]
-    },
-    # Uncomment the following lines for HA setup, abide by nodes % 4 = 0
-    # "harbor-minio-db-node-01" = {
-    #   ip = "172.16.139.201", vcpu = 1, ram = 3072
-    #   data_disks = [
-    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-    #     { name_suffix = "drive2", capacity = 10737418240 }
-    #   ]
-    # },
-    # "harbor-minio-db-node-02" = {
-    #   ip = "172.16.139.202", vcpu = 1, ram = 3072
-    #   data_disks = [
-    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-    #     { name_suffix = "drive2", capacity = 10737418240 }
-    #   ]
-    # },
-    # "harbor-minio-db-node-03" = {
-    #   ip = "172.16.139.203", vcpu = 1, ram = 3072
-    #   data_disks = [
-    #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-    #     { name_suffix = "drive2", capacity = 10737418240 }
-    #   ]
-    # }
-  }
-
-  ha_config = {
-    virtual_ip = "172.16.139.250"
-    haproxy_nodes = {
-      "harbor-minio-haproxy-node-00" = { ip = "172.16.139.210", vcpu = 1, ram = 2048 }
+  minio_config = {
+    nodes = {
+      "harbor-minio-db-node-00" = {
+        ip = "172.16.139.200", vcpu = 2, ram = 1536
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      },
+      # Uncomment the following lines for HA setup, abide by nodes % 4 = 0
+      # "harbor-minio-db-node-01" = {
+      #   ip = "172.16.139.201", vcpu = 2, ram = 1536
+      #   data_disks = [
+      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #   ]
+      # },
+      # "harbor-minio-db-node-02" = {
+      #   ip = "172.16.139.202", vcpu = 2, ram = 1536
+      #   data_disks = [
+      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #   ]
+      # },
+      # "harbor-minio-db-node-03" = {
+      #   ip = "172.16.139.203", vcpu = 2, ram = 1536
+      #   data_disks = [
+      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #   ]
+      # }
     }
+    base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
   }
 
-  base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
+  haproxy_config = {
+    virtual_ip = "172.16.139.250"
+    nodes = {
+      "harbor-minio-haproxy-node-00" = { ip = "172.16.139.210", vcpu = 1, ram = 512 }
+    }
+    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
+  }
 }
 
 harbor_minio_infra = {

@@ -9,21 +9,23 @@ variable "gitlab_redis_compute" {
       component    = string
       cluster_name = string
     })
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
-    ha_config = object({
-      virtual_ip = string
-      haproxy_nodes = map(object({
+    redis_config = object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
-
+    haproxy_config = object({
+      virtual_ip = string
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
   })
 }
 

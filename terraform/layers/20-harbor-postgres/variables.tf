@@ -9,34 +9,39 @@ variable "harbor_postgres_compute" {
     })
 
     # Postgres Data Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    postgres_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
     # Etcd Nodes (Map)
-    etcd_nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    etcd_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
-    ha_config = object({
+    haproxy_config = object({
       virtual_ip = string
       stats_port = number
       rw_proxy   = number
       ro_proxy   = number
 
       # HAProxy Nodes (Map)
-      haproxy_nodes = map(object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
-
   })
 }
 

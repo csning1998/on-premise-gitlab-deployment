@@ -1,12 +1,12 @@
 
 output "harbor_microk8s_ip_list" {
   description = "List of MicroK8s node IPs for Harbor"
-  value       = [for node in var.harbor_microk8s_compute.nodes : node.ip]
+  value       = [for node in var.harbor_microk8s_compute.microk8s_config.nodes : node.ip]
 }
 
 output "harbor_microk8s_virtual_ip" {
   description = "MicroK8s virtual IP for Harbor"
-  value       = var.harbor_microk8s_compute.ha_config.virtual_ip
+  value       = try(var.harbor_microk8s_compute.haproxy_config.virtual_ip, null)
 }
 
 output "kubeconfig_content" {

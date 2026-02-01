@@ -8,25 +8,29 @@ variable "gitlab_minio_compute" {
       component    = string
       cluster_name = string
     })
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-      data_disks = list(object({
-        name_suffix = string
-        capacity    = number
+
+    minio_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+        data_disks = list(object({
+          name_suffix = string
+          capacity    = number
+        }))
       }))
-    }))
-    ha_config = object({
+      base_image_path = string
+    })
+
+    haproxy_config = object({
       virtual_ip = string
-      haproxy_nodes = map(object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
-
   })
 }
 

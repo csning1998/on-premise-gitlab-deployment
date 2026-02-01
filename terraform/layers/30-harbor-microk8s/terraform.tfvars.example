@@ -6,18 +6,20 @@ harbor_microk8s_compute = {
     cluster_name = "30-harbor-microk8s"
   }
 
-  nodes = {
-    "harbor-microk8s-node-00" = { ip = "172.16.135.200", vcpu = 4, ram = 6144 }
-    "harbor-microk8s-node-01" = { ip = "172.16.135.201", vcpu = 4, ram = 6144 }
-    "harbor-microk8s-node-02" = { ip = "172.16.135.202", vcpu = 4, ram = 6144 }
+  microk8s_config = {
+    nodes = {
+      "harbor-microk8s-node-00" = { ip = "172.16.135.200", vcpu = 4, ram = 6144 }
+      "harbor-microk8s-node-01" = { ip = "172.16.135.201", vcpu = 4, ram = 6144 }
+      "harbor-microk8s-node-02" = { ip = "172.16.135.202", vcpu = 4, ram = 6144 }
+    }
+    base_image_path = "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2"
   }
 
-  ha_config = {
-    virtual_ip    = "172.16.135.250"
-    haproxy_nodes = {} # Use MicroK8s MetalLB/Ingress by Defaults
+  haproxy_config = {
+    virtual_ip = "172.16.135.250"
+    nodes = {}
+    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
-
-  base_image_path = "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2"
 }
 
 harbor_microk8s_infra = {

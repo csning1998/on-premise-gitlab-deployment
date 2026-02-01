@@ -21,5 +21,5 @@ module "minio_harbor_config" {
 
   minio_tenants            = var.harbor_minio_tenants
   vault_secret_path_prefix = "secret/on-premise-gitlab-deployment/harbor/s3_credentials"
-  minio_server_url         = "https://${var.harbor_minio_compute.ha_config.virtual_ip}:9000"
+  minio_server_url         = "https://${var.harbor_minio_compute.haproxy_config.virtual_ip}:9000"
 }

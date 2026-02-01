@@ -6,17 +6,17 @@ output "gitlab_pod_subnet" {
 
 output "gitlab_kubeadm_master_ip_list" {
   description = "List of kubeadm master node IPs for Gitlab"
-  value       = [for node in var.gitlab_kubeadm_compute.masters : node.ip]
+  value       = [for node in var.gitlab_kubeadm_compute.kubeadm_config.master_nodes : node.ip]
 }
 
 output "gitlab_kubeadm_worker_ip_list" {
   description = "List of kubeadm worker node IPs for Gitlab"
-  value       = [for node in var.gitlab_kubeadm_compute.workers : node.ip]
+  value       = [for node in var.gitlab_kubeadm_compute.kubeadm_config.worker_nodes : node.ip]
 }
 
 output "gitlab_kubeadm_virtual_ip" {
   description = "kubeadm virtual IP for Gitlab"
-  value       = var.gitlab_kubeadm_compute.ha_config.virtual_ip
+  value       = var.gitlab_kubeadm_compute.haproxy_config.virtual_ip
 }
 
 output "kubeconfig_content" {

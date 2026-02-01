@@ -3,8 +3,7 @@ module "provisioner_kvm" {
 
   # VM Configuration
   vm_config = {
-    all_nodes_map   = local.all_nodes_map
-    base_image_path = var.topology_config.base_image_path
+    all_nodes_map = local.all_nodes_map
   }
 
   # VM Credentials from Vault
@@ -78,7 +77,7 @@ module "ansible_runner" {
 
     # Network information
     kubeadm_master_ips        = local.kubeadm_master_ips
-    kubeadm_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    kubeadm_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     kubeadm_nat_subnet_prefix = local.nat_network_subnet_prefix
   })
 

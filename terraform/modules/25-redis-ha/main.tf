@@ -3,8 +3,7 @@ module "provisioner_kvm" {
 
   # VM Configuration
   vm_config = {
-    all_nodes_map   = local.all_nodes_map
-    base_image_path = var.topology_config.base_image_path
+    all_nodes_map = local.all_nodes_map
   }
 
   # VM Credentials from Vault
@@ -71,10 +70,10 @@ module "ansible_runner" {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.topology_config.cluster_identity.service_name
 
-    redis_nodes   = var.topology_config.nodes
-    haproxy_nodes = var.topology_config.ha_config.haproxy_nodes
+    redis_nodes   = var.topology_config.redis_config.nodes
+    haproxy_nodes = var.topology_config.haproxy_config.nodes
 
-    redis_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    redis_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     redis_enable_tls        = var.enable_tls
     redis_tls_node_subnet   = var.infra_config.allowed_subnet
     redis_service_domain    = var.service_domain

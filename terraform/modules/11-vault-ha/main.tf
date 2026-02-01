@@ -5,7 +5,6 @@ module "provisioner_kvm" {
   # VM Configuration
   vm_config = {
     all_nodes_map = local.all_nodes_map
-    # base_image_path = var.topology_config.vault_config.base_image_path
   }
 
   # VM Credentials from Vault

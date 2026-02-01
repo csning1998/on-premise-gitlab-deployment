@@ -26,7 +26,7 @@ provider "vault" {
 }
 
 provider "minio" {
-  minio_server   = "${var.harbor_minio_compute.ha_config.virtual_ip}:9000"
+  minio_server   = "${var.harbor_minio_compute.haproxy_config.virtual_ip}:9000"
   minio_user     = data.vault_generic_secret.db_vars.data["minio_root_user"]
   minio_password = data.vault_generic_secret.db_vars.data["minio_root_password"]
   minio_ssl      = true

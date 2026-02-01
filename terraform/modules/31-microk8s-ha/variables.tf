@@ -9,34 +9,37 @@ variable "topology_config" {
     })
 
     # MicroK8s Nodes (Map)
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    microk8s_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
-    ha_config = object({
+    haproxy_config = object({
       virtual_ip = string
       # If not using MetalLB or built-in HA, then the HAProxy node is not mandatory
-      haproxy_nodes = optional(map(object({
+      nodes = optional(map(object({
         ip   = string
         vcpu = number
         ram  = number
       })), {})
+      base_image_path = string
     })
-    base_image_path = string
   })
 
   # MicroK8s Dqlite Quorum
   validation {
-    condition     = length(var.topology_config.nodes) % 2 != 0
+    condition     = length(var.topology_config.microk8s_config.nodes) % 2 != 0
     error_message = "MicroK8s node count must be an odd number (1, 3, 5, etc.) to ensure a stable Dqlite quorum."
   }
 
   # Required MicroK8s hardware specification (2vCPU/4GB)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes :
+      for k, node in var.topology_config.microk8s_config.nodes :
       node.vcpu >= 2 && node.ram >= 4096
     ])
     error_message = "MicroK8s nodes require at least 2 vCPUs and 4096MB RAM to prevent OOM kills."
@@ -44,14 +47,14 @@ variable "topology_config" {
 
   # Required MicroK8s VIP format check
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
   # Required MicroK8s node IP format check
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes : can(cidrnetmask("${node.ip}/32"))
+      for k, node in var.topology_config.microk8s_config.nodes : can(cidrnetmask("${node.ip}/32"))
     ])
     error_message = "All MicroK8s node IPs must be valid IPv4 addresses."
   }

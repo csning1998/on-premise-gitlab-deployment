@@ -8,33 +8,37 @@ variable "topology_config" {
     })
 
     # MinIO Data Nodes (Map) with data_disks
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-      data_disks = list(object({
-        name_suffix = string
-        capacity    = number
+    minio_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+        data_disks = list(object({
+          name_suffix = string
+          capacity    = number
+        }))
       }))
-    }))
-    ha_config = object({
+      base_image_path = string
+    })
+
+    haproxy_config = object({
       virtual_ip = string
 
       # HAProxy Nodes (Map) without data_disks
-      haproxy_nodes = map(object({
+      nodes = map(object({
         ip   = string
         vcpu = number
         ram  = number
       }))
+      base_image_path = string
     })
-    base_image_path = string
   })
 
   # MinIO Erasure Coding node count requires single node (Dev) or 4, 8, 12... (Prod)
   validation {
     condition = (
-      length(var.topology_config.nodes) == 1 ||
-      (length(var.topology_config.nodes) >= 4 && length(var.topology_config.nodes) % 4 == 0)
+      length(var.topology_config.minio_config.nodes) == 1 ||
+      (length(var.topology_config.minio_config.nodes) >= 4 && length(var.topology_config.minio_config.nodes) % 4 == 0)
     )
     error_message = "MinIO cluster size must be exactly 1 node (testing), or a multiple of 4 (4, 8, 16...) for production Erasure Coding."
   }
@@ -42,30 +46,30 @@ variable "topology_config" {
   # Each MinIO data node must have at least one data disk configured
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.nodes : length(node.data_disks) > 0
+      for k, node in var.topology_config.minio_config.nodes : length(node.data_disks) > 0
     ])
     error_message = "Each MinIO data node must have at least one data disk configured."
   }
 
   # HAProxy node count must be greater than 0
   validation {
-    condition     = length(var.topology_config.ha_config.haproxy_nodes) > 0
+    condition     = length(var.topology_config.haproxy_config.nodes) > 0
     error_message = "MinIO HA architecture requires at least one HAProxy node."
   }
 
   # VIP format check
   validation {
-    condition     = can(cidrnetmask("${var.topology_config.ha_config.virtual_ip}/32"))
+    condition     = can(cidrnetmask("${var.topology_config.haproxy_config.virtual_ip}/32"))
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
-  # Hardware requirements not met. MinIO: 1vCPU/3GB RAM. HAProxy: 1vCPU/2GB RAM.
+  # Hardware requirements not met. MinIO: 2vCPU/1.5GiB RAM. HAProxy: 1vCPU/512MiB RAM.
   validation {
     condition = alltrue(flatten([
-      [for k, node in var.topology_config.nodes : node.vcpu >= 1 && node.ram >= 3072],
-      [for k, node in var.topology_config.ha_config.haproxy_nodes : node.vcpu >= 1 && node.ram >= 2048]
+      [for k, node in var.topology_config.minio_config.nodes : node.vcpu >= 2 && node.ram >= 1536],
+      [for k, node in var.topology_config.haproxy_config.nodes : node.vcpu >= 1 && node.ram >= 512]
     ]))
-    error_message = "Hardware requirements not met. MinIO: 1vCPU/3GB RAM. HAProxy: 1vCPU/2GB RAM."
+    error_message = "Hardware requirements not met. MinIO: 2vCPU/1.5GiB RAM. HAProxy: 1vCPU/512MiB RAM."
   }
 }
 

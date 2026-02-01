@@ -3,8 +3,7 @@ module "provisioner_kvm" {
 
   # VM Configuration
   vm_config = {
-    all_nodes_map   = local.all_nodes_map
-    base_image_path = var.topology_config.base_image_path
+    all_nodes_map = local.all_nodes_map
   }
 
   # VM Credentials from Vault
@@ -69,10 +68,10 @@ module "ansible_runner" {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.topology_config.cluster_identity.service_name
 
-    haproxy_nodes = var.topology_config.ha_config.haproxy_nodes
-    minio_nodes   = var.topology_config.nodes
+    haproxy_nodes = var.topology_config.haproxy_config.nodes
+    minio_nodes   = var.topology_config.minio_config.nodes
 
-    minio_ha_virtual_ip     = var.topology_config.ha_config.virtual_ip
+    minio_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     minio_root_user         = data.vault_generic_secret.db_vars.data["minio_root_user"]
     minio_tls_node_subnet   = var.infra_config.allowed_subnet
     minio_service_domain    = var.service_domain

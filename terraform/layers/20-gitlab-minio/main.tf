@@ -21,6 +21,6 @@ module "minio_gitlab_config" {
 
   minio_tenants            = var.gitlab_minio_tenants
   vault_secret_path_prefix = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials"
-  minio_server_url         = "https://${var.gitlab_minio_compute.ha_config.virtual_ip}:9000"
+  minio_server_url         = "https://${var.gitlab_minio_compute.haproxy_config.virtual_ip}:9000"
 }
 

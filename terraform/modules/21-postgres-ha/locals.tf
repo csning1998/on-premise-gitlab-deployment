@@ -17,10 +17,32 @@ locals {
   hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
 
   # Convert standard structure to Module 81 vm_config
+  # 1. Inject Postgres Base Image Path
+  postgres_nodes_with_img = {
+    for k, v in var.topology_config.postgres_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.postgres_config.base_image_path
+    })
+  }
+
+  # 2. Inject Etcd Base Image Path
+  etcd_nodes_with_img = {
+    for k, v in var.topology_config.etcd_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.etcd_config.base_image_path
+    })
+  }
+
+  # 3. Inject HAProxy Base Image Path
+  haproxy_nodes_with_img = {
+    for k, v in var.topology_config.haproxy_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.haproxy_config.base_image_path
+    })
+  }
+
+  # 4. Convert standard structure to Module 81 vm_config
   all_nodes_map = merge(
-    var.topology_config.nodes,
-    var.topology_config.etcd_nodes,
-    var.topology_config.ha_config.haproxy_nodes
+    local.postgres_nodes_with_img,
+    local.etcd_nodes_with_img,
+    local.haproxy_nodes_with_img
   )
 
   # Ansible path and network prefix calculation

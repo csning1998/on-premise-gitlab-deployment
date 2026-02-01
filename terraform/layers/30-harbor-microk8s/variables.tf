@@ -8,23 +8,25 @@ variable "harbor_microk8s_compute" {
       cluster_name = string
     })
 
-    nodes = map(object({
-      ip   = string
-      vcpu = number
-      ram  = number
-    }))
+    microk8s_config = object({
+      nodes = map(object({
+        ip   = string
+        vcpu = number
+        ram  = number
+      }))
+      base_image_path = string
+    })
 
-    ha_config = object({
+    haproxy_config = object({
       virtual_ip = string
       # If not using MetalLB or built-in HA, then the HAProxy node is not mandatory
-      haproxy_nodes = optional(map(object({
+      nodes = optional(map(object({
         ip   = string
         vcpu = number
         ram  = number
       })), {})
+      base_image_path = string
     })
-    base_image_path = string
-
   })
 }
 

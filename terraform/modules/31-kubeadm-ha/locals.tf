@@ -18,16 +18,37 @@ locals {
   hostonly_bridge_name = "${local.svc_abbr}-${local.comp_abbr}-hostbr"
 
   # Convert standard structure to Module 81 vm_config
-  all_nodes_map = merge(
-    var.topology_config.masters,
-    var.topology_config.workers,
-    var.topology_config.ha_config.haproxy_nodes
-  )
+  # 1. Inject Master Node Base Image Path
+  master_nodes_with_img = {
+    for k, v in var.topology_config.kubeadm_config.master_nodes : k => merge(v, {
+      base_image_path = var.topology_config.kubeadm_config.base_image_path
+    })
+  }
 
+  # 2. Inject Worker Node Base Image Path
+  worker_nodes_with_img = {
+    for k, v in var.topology_config.kubeadm_config.worker_nodes : k => merge(v, {
+      base_image_path = var.topology_config.kubeadm_config.base_image_path
+    })
+  }
+
+  # 3. Inject HAProxy Base Image Path
+  haproxy_nodes_with_img = {
+    for k, v in var.topology_config.haproxy_config.nodes : k => merge(v, {
+      base_image_path = var.topology_config.haproxy_config.base_image_path
+    })
+  }
+
+  # 4. Convert standard structure to Module 81 vm_config
+  all_nodes_map = merge(
+    local.master_nodes_with_img,
+    local.worker_nodes_with_img,
+    local.haproxy_nodes_with_img
+  )
   # For generating inventory file
-  masters_node_map   = var.topology_config.masters
-  workers_node_map   = var.topology_config.workers
-  kubeadm_master_ips = [for k, v in var.topology_config.masters : v.ip]
+  masters_node_map   = local.master_nodes_with_img
+  workers_node_map   = local.worker_nodes_with_img
+  kubeadm_master_ips = [for k, v in local.master_nodes_with_img : v.ip]
 
   # Ansible path and network prefix calculation
   ansible_root_path = abspath("${path.root}/../../../ansible")

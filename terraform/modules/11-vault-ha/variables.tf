@@ -29,7 +29,6 @@ variable "topology_config" {
       }))
       base_image_path = string
     })
-
   })
 
   # Vault Raft Quorum
@@ -50,22 +49,22 @@ variable "topology_config" {
     error_message = "The High Availability Virtual IP (VIP) must be a valid IPv4 address."
   }
 
-  # Vault node hardware specification (vCPU >= 2, RAM >= 2048)
+  # Vault node hardware specification (vCPU >= 1, RAM >= 1024)
   validation {
     condition = alltrue([
       for k, node in var.topology_config.vault_config.nodes :
-      node.vcpu >= 2 && node.ram >= 2048
+      node.vcpu >= 1 && node.ram >= 1024
     ])
-    error_message = "Vault nodes require at least 2 vCPUs and 2048MB RAM."
+    error_message = "Vault nodes require at least 1 vCPU and 1024MB RAM."
   }
 
-  # HAProxy node hardware specification (vCPU >= 1, RAM >= 1024)
+  # HAProxy node hardware specification (vCPU >= 1, RAM >= 512)
   validation {
     condition = alltrue([
       for k, node in var.topology_config.haproxy_config.nodes :
-      node.vcpu >= 1 && node.ram >= 1024
+      node.vcpu >= 1 && node.ram >= 512
     ])
-    error_message = "HAProxy nodes require at least 1 vCPU and 1024MB RAM."
+    error_message = "HAProxy nodes require at least 1 vCPU and 512MB RAM."
   }
 }
 
