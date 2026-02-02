@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: raw-local
+description: A generic chart to deploy raw manifests for Late Binding
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
