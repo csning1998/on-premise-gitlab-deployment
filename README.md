@@ -4,8 +4,7 @@ Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) ver
 
 ## Section 0. Introduction
 
-This repository (hereinafter referred to as "this repo") is a Proof of Concept (PoC) for Infrastructure as Code. It primarily achieves automated deployment of a High Availability (HA) Kubernetes cluster (Kubeadm / microk8s) in a purely on-premise environment using QEMU-KVM.
-This repo was developed based on personal exercises conducted during an internship at Cathay General Hospital. The objective is to establish an on-premise GitLab instance capable of automated infrastructure deployment, with the aim of creating a reusable IaC pipeline for legacy systems.
+This repository (hereinafter referred to as "this repo") is a Proof of Concept (PoC) for Infrastructure as Code. It primarily achieves automated deployment of a High Availability (HA) Kubernetes cluster (Kubeadm / microk8s) in a purely on-premise environment using QEMU-KVM. This repo was developed based on personal exercises conducted during an internship at Cathay General Hospital. The objective is to establish an on-premise GitLab instance capable of automated infrastructure deployment, with the aim of creating a reusable IaC pipeline for legacy systems.
 
 > [!NOTE]
 > This repo has been approved for public release by the relevant company department as part of a technical portfolio.
@@ -187,6 +186,8 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
     > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
     > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
     > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+
+    The expected output should be the latest version. For instance (in zsh):
 
     ```text
     ...
@@ -420,7 +421,7 @@ Successful execution and the display of virtual machines—regardless of whether
 > [!IMPORTANT]
 > Confidential data is centralized within HashiCorp Vault and categorized into Development and Production modes. By default, the Vault instances in this repo utilize HTTPS secured by a self-signed CA. Follow these steps for correct configuration.
 
-0. The Development Vault is a prerequisite for establishing the Production Vault. The Dev Vault serves exclusively to provision the Prod Vault and Packer images; thereafter, all sensitive project data is managed by the Prod Vault.
+0. **The Development Vault is a prerequisite for establishing the Production Vault. The Dev Vault serves exclusively to provision the Prod Vault and Packer images; thereafter, all sensitive project data is managed by the Prod Vault.**
 1. Execute `entry.sh` and select option `1` to generate the required TLS handshake files. Fields may be left blank when creating the self-signed CA. If TLS file regeneration is required, execute option `1` again.
 2. Navigate to the project root and execute the following command to start the Development Vault server. This repo defaults to running Vault in sidecar mode within the container:
 
@@ -431,7 +432,6 @@ Successful execution and the display of virtual machines—regardless of whether
     Upon initialization, the Dev Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate the Dev Vault, all files within `vault/data/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
 
 3. After completing the previous steps, execute `entry.sh` and select option `2` to initialize the Dev Vault. This process also automatically performs the unseal operation.
-
 4. Manually update the following variables. All default passwords must be replaced with unique values to ensure security.
     - Purging sensitive variables from shell history after executing `vault kv put` commands is strongly recommended to mitigate data exposure. Refer to Note 0 for details.
     - For Development Vault
@@ -683,9 +683,15 @@ Complete the following configuration steps in sequence:
     172.16.142.250  s3.gitlab.iac.local
     ```
 
-2. Establish host-level trust for service TLS certificates by importing the Vault Root CA.
-    1. Provision Layer 10 (Vault Core) first to generate `vault-ca.crt`, which is stored in `terraform/layers/10-vault-core/tls/`.
-    2. Import the CA into the system trust store:
+2. Establish Host-level Trust (Infrastructure & Service CAs). Since the `tls/` directory is not tracked by git, the Service Root CA should be retrieve from the live Vault server before importing them.
+    1. **Prepare Variables & Download Service CA:** Use `curl` to fetch the public key of the Service CA directly from the Vault PKI engine. Using `-k` is required here as the trust chain is not yet established. Set the Vault Address (VIP) and download the Service CA to the local tls directory.
+
+        ```bash
+        export VAULT_ADDR="https://172.16.136.250:443"
+        curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+        ```
+
+    2. Import CA to system trust chain:
         - RHEL / CentOS:
 
             ```shell
@@ -700,7 +706,36 @@ Complete the following configuration steps in sequence:
             sudo update-ca-certificates
             ```
 
-3. Verify the trust store configuration by testing connectivity to MinIO:
+3. **Import BOTH Certificates into System Trust Store:**
+
+    Now there exists two CA files in `terraform/layers/10-vault-core/tls/`:
+    - `vault-ca.crt`: The **Infrastructure CA** (generated by Terraform locally).
+    - `vault-pki-ca.crt`: The **Service CA** (downloaded from Vault API).
+
+    Execute the import commands based on your OS:
+    - **RHEL / CentOS / Fedora:**
+
+        ```shell
+        # 1. Copy both CAs to the anchors directory
+        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
+
+        # 2. Update the trust store
+        sudo update-ca-trust
+        ```
+
+    - **Ubuntu / Debian:**
+
+        ```shell
+        # 1. Copy both CAs to the shared certificates directory
+        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
+        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
+
+        # 2. Update the certificates
+        sudo update-ca-certificates
+        ```
+
+4. Verify the trust store configuration by testing connectivity to MinIO. This verifies that the host trusts the "Service CA":
 
     ```shell
     curl -I https://s3.harbor.iac.local:9000/minio/health/live
@@ -708,7 +743,7 @@ Complete the following configuration steps in sequence:
 
     An `HTTP/1.1 200 OK` response confirms that the trust store is correctly configured.
 
-4. Verify the complete certificate chain by accessing the Harbor interface:
+5. Verify the complete certificate chain by accessing the Harbor interface:
 
     ```shell
     curl -vI https://harbor.iac.local

@@ -95,11 +95,6 @@ gitlab_minio_tenants = {
     enable_version = true
     policy_rw      = true
   }
-  "gitlab-registry" = {
-    user_name      = "gitlab-registry-user"
-    enable_version = false
-    policy_rw      = true
-  }
   "gitlab-backups" = {
     user_name      = "gitlab-backup-user"
     enable_version = false

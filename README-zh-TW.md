@@ -297,9 +297,7 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 > 為確保此 repo 可以順利執行，請務必依以下順序完成初始化設定
 
 0. **環境變數檔案：** `entry.sh` 會自動產生 `.env` 環境變數檔案，主要是給其他 shell script 使用，可以忽略不管
-
 1. **產生 SSH Key：** 在 Terraform 與 Ansible 執行過程中，SSH key 主要是讓服務可以登入虛擬機進行自動化設定。在執行 `./entry.sh` 的選項 `5` _"Generate SSH Key"_ 就可以產生 SSH Key，預設名稱為 `id_ed25519_on-premise-gitlab-deployment`。這步驟產生的公鑰與私鑰會儲存於 `~/.ssh/` 目錄下
-
 2. **切換環境：** 可透過 `./entry.sh` 的選項 `13` 在 _"Container"_ 與 _"Native"_ 環境之間切換
 
     其中此 repo 以 Podman 作為 container runtime。之所以避開使用 Docker，主要就是避免 SELinux 權限衝突問題。在啟用 SELinux 的系統（例如 Fedora、RHEL、CentOS Stream 等）上，Docker 容器預設執行在 `container_t` 的 SELinux domain。這樣即使正確 mount `/var/run/libvirt/libvirt-sock` 後，SELinux policy 仍會禁止 `container_t` 連線到 `virt_var_run_t` 的 UNIX socket，從而導致 Terraform libvirt provider 或 `virsh` 出現 **Permission denied** 錯誤，即便檔案權限含 `0770` 與 `libvirt` 群組已經正確設定亦同
@@ -402,9 +400,7 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 > 這個專案預設使用 [Terraform GitHub Integration](https://registry.terraform.io/providers/integrations/github/latest) 管理 Repository，因此需要 Fine-grained Personal Access Token 的設定。如果 clone 此 repo 的使用者不使用 Terraform GitHub Integration 管理 repo，可以跳過或刪除 `terraform/layers/90-github-meta`，且後續執行不會受影響
 
 1. 前往 [GitHub Developer Settings](https://github.com/settings/personal-access-tokens) 申請 Fine-grained Personal Access Token
-
 2. 點擊頁面上方右側的 `Generate new token` 按鈕，設定 Token 名稱、有效期限與 Repository 存取範圍
-
 3. 在 Permissions 部分，選擇以下權限：
 
     | Permission                     | Access Level   | Description                               |
@@ -426,24 +422,18 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 > **所有機密資料均整合到 HashiCorp Vault 內，且分為 Development mode 與 Production mode。此 repo 預設使用的 Vault 是走 HTTPS 傳輸、且憑證為 Self-signed CA。請依以下步驟正確設定**
 
 0.  **要先建立 Development Vault 後才能建立 Production Vault。其中 Dev Vault 僅用於建立 Prod Vault 與 Packer Images，之後所有專案的敏感資料皆由 Prod Vault 管理**
-
 1.  首先執行 `entry.sh` 選擇選項 `1`，產生 TLS handshake 所需要的檔案。建立 Self-signed CA 時，部分欄位可留空。若需重新產生 TLS 檔案，可再次執行選項 `1`
-
 2.  切換至專案根目錄，執行以下指令啟動 Development mode Vault server。此 repo 預設在 container 走 side-car 模式執行：
 
     ```shell
     podman compose up -d iac-vault-server
     ```
 
-    啟動 server 後，Dev Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Dev Vault，就必須手動清除 `vault/data/` 內所有檔案
-
-    請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
+    啟動 server 後，Dev Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Dev Vault，就必須手動清除 `vault/data/` 內所有檔案。請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
 
 3.  完成前述步驟後，執行 `entry.sh` 選擇選項 2 初始化 Dev Vault。此過程也會自動執行 Unseal
-
 4.  接下來只需手動修改以下專案使用的變數。密碼必須替換為不重複內容，藉以確保安全性
     - **強烈建議執行完任何 `vault kv put` 指令之後，清除 Shell Histroy 的機敏變數，以免洩漏。詳見下方 Note 0 說明**
-
     - **For Development Vault**
         - 以下變數用來建立 packer 與 Terraform Layer `10` 中的 production HashiCorp Vault
             - `github_pat`: 前一步取得的 GitHub Personal Access Token
@@ -545,7 +535,6 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
         ```
 
     - **Note 0. Security Notice**：在執行完 `vault kv put` 指令之後，強烈建議清除 shell history，以避免敏感資訊外洩
-
     - **Note 1. How to retrieve secrets**
         1. 使用以下指令從 Vault 取出機密資訊。例如要取出 PostgreSQL superuser 密碼：
 
@@ -607,7 +596,6 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     1. 在 HA 模式下，
         - Vault（Production mode）、 Patroni 含 etcd、Sentinel、Microk8s（Harbor）、Kubeadm Master（GitLab） 服務需要符合 `n%2 != 0` 的設定
         - MinIO Distributed 需要符合 `n%4 == 0` 的設定
-
     2. 節點建立的 IP 必須對應到 host-only 網路區段
 
 2. 目前專案預設使用 Ubuntu Server 24.04.3 LTS (Noble) 做為 Guest OS
@@ -628,13 +616,8 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
 
 4. **資源清理**：
-    - **`14) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境
-
-        這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
-
-    - **`15) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts
-
-        這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
+    - **`14) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境。這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
+    - **`15) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts。這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
@@ -700,10 +683,15 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     172.16.142.250  s3.gitlab.iac.local
     ```
 
-2.  匯入 Vault Root CA，讓 Host 可以信任所有服務的 TLS 憑證
-    1.  必須先建立 Layer 10 Vault 以產生 `vault-root-ca.crt`，該檔案會存放在 `terraform/layers/10-vault-core/tls/`
+2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA
+    1. **準備環境變數與下載 CA**： 使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/10-vault-core/tls` 路徑內
 
-    2.  匯入 CA 到系統 trust chain
+        ```bash
+        export VAULT_ADDR="https://172.16.136.250:443"
+        curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+        ```
+
+    2. 匯入 CA 到系統 trust chain
         - RHEL / CentOS：
 
             ```shell
@@ -718,21 +706,50 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
             sudo update-ca-certificates
             ```
 
-    3.  從 host 存取 MinIO 做簡單測試驗證 Trust Store
+3.  **將兩個 Certificates 都匯入 System Trust Store:**
+
+    現在在 `terraform/layers/10-vault-core/tls/` 路徑內存在兩個 CA 檔案：
+    - `vault-ca.crt`：**Infrastructure CA** （由 Terraform 當場產生）
+    - `vault-pki-ca.crt`：**Service CA** （透過 Vault API 下載）
+
+    執行以下指令將兩份 CA 匯入作業系統：
+    - **RHEL / CentOS / Fedora:**
 
         ```shell
-        curl -I https://s3.harbor.iac.local:9000/minio/health/live
+        # 1. Copy both CAs to the anchors directory
+        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
+
+        # 2. Update the trust store
+        sudo update-ca-trust
         ```
 
-        若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定
-
-    4.  從 host 存取 Harbor 驗證 Trust Store
+    - **Ubuntu / Debian:**
 
         ```shell
-        curl -vI https://harbor.iac.local
+        # 1. Copy both CAs to the shared certificates directory
+        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
+        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
+
+        # 2. Update the certificates
+        sudo update-ca-certificates
         ```
 
-        若顯示 `SSL certificate verify ok` 與 `HTTP/2 200`，代表從 Vault 憑證發行、經 cert-manager 簽署、Ingress 部署到 host 信任的完整 PKI Chain 已成功建立
+4.  從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA
+
+    ```shell
+    curl -I https://s3.harbor.iac.local:9000/minio/health/live
+    ```
+
+    若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定
+
+5.  從 host 存取 Harbor 驗證 Trust Store
+
+    ```shell
+    curl -vI https://harbor.iac.local
+    ```
+
+    若顯示 `SSL certificate verify ok` 與 `HTTP/2 200`，代表從 Vault 憑證發行、經 cert-manager 簽署、Ingress 部署到 host 信任的完整 PKI Chain 已成功建立
 
 ## Section 3. System Architecture
 
