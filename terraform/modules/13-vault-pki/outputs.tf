@@ -20,10 +20,10 @@ output "harbor_ingress_role_name" {
   value       = vault_pki_secret_backend_role.harbor_ingress.name
 }
 
-# output "gitlab_ingress_role_name" {
-#   description = "GitLab Ingress PKI Role Name"
-#   value       = vault_pki_secret_backend_role.gitlab_ingress.name
-# }
+output "gitlab_ingress_role_name" {
+  description = "GitLab Ingress PKI Role Name"
+  value       = vault_pki_secret_backend_role.gitlab_ingress.name
+}
 
 # VM Services Domains (Map: Platform -> Domain List)
 
@@ -47,7 +47,17 @@ output "harbor_ingress_domains" {
   value       = vault_pki_secret_backend_role.harbor_ingress.allowed_domains
 }
 
-# output "gitlab_ingress_domains" {
-#   description = "List of allowed domains for GitLab Ingress role"
-#   value       = vault_pki_secret_backend_role.gitlab_ingress.allowed_domains
-# }
+output "gitlab_ingress_domains" {
+  description = "List of allowed domains for GitLab Ingress role"
+  value       = vault_pki_secret_backend_role.gitlab_ingress.allowed_domains
+}
+
+output "vault_pki_path" {
+  description = "The path of the PKI backend"
+  value       = var.vault_pki_path
+}
+
+output "pki_root_ca_certificate" {
+  description = "The Public Certificate of the PKI Root CA"
+  value       = vault_pki_secret_backend_root_cert.prod_root_ca.certificate
+}

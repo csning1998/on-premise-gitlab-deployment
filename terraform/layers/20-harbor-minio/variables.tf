@@ -20,7 +20,11 @@ variable "harbor_minio_compute" {
       base_image_path = string
     })
     haproxy_config = object({
-      virtual_ip = string
+      virtual_ip            = string
+      frontend_port_api     = number # MinIO API
+      frontend_port_console = number # MinIO Console
+      backend_port_api      = number
+      backend_port_console  = number
       nodes = map(object({
         ip   = string
         vcpu = number

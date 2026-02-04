@@ -24,3 +24,13 @@ output "kubeconfig_content" {
   value       = module.kubeadm_gitlab.kubeconfig_content
   sensitive   = true
 }
+
+output "gitlab_http_nodeport" {
+  description = "The HTTP NodePort for Gitlab"
+  value       = var.gitlab_kubeadm_compute.http_nodeport
+}
+
+output "gitlab_https_nodeport" {
+  description = "The HTTPS NodePort for Gitlab"
+  value       = var.gitlab_kubeadm_compute.https_nodeport
+}

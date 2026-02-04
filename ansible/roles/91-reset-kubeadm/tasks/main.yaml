@@ -101,3 +101,6 @@
     - kubelet
   changed_when: false
   failed_when: false
+
+- name: "Final Step: Clear Ansible Fact Cache"
+  ansible.builtin.meta: clear_facts

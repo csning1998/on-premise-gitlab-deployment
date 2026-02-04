@@ -39,8 +39,10 @@ variable "topology_config" {
     })
 
     # Kubeadm Specific Configuration
-    pod_subnet    = string # e.g. "10.244.0.0/16"
-    registry_host = string # e.g. "172.16.135.250:5000"
+    pod_subnet     = string # e.g. "10.244.0.0/16"
+    registry_host  = string # e.g. "172.16.135.250:5000"
+    http_nodeport  = number # e.g. 30080
+    https_nodeport = number # e.g. 30443
   })
 
   # Master Etcd Quorum

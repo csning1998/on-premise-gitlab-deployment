@@ -1,7 +1,7 @@
 
 # PKI Engine
 resource "vault_mount" "pki_prod" {
-  path        = "pki/prod"
+  path        = var.vault_pki_path
   type        = "pki"
   description = "Production PKI Engine for internal services"
 

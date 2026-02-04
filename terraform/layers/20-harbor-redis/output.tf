@@ -13,3 +13,8 @@ output "harbor_redis_virtual_ip" {
   description = "Redis virtual IP for Harbor"
   value       = var.harbor_redis_compute.haproxy_config.virtual_ip
 }
+
+output "harbor_redis_haproxy_stats_port" {
+  description = "HAProxy stats port for Harbor Redis"
+  value       = var.harbor_redis_compute.haproxy_config.stats_port
+}

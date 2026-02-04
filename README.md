@@ -683,28 +683,12 @@ Complete the following configuration steps in sequence:
     172.16.142.250  s3.gitlab.iac.local
     ```
 
-2. Establish Host-level Trust (Infrastructure & Service CAs). Since the `tls/` directory is not tracked by git, the Service Root CA should be retrieve from the live Vault server before importing them.
-    1. **Prepare Variables & Download Service CA:** Use `curl` to fetch the public key of the Service CA directly from the Vault PKI engine. Using `-k` is required here as the trust chain is not yet established. Set the Vault Address (VIP) and download the Service CA to the local tls directory.
+2. Establish Host-level Trust (Infrastructure & Service CAs). Since the `tls/` directory is not tracked by git, the Service Root CA should be retrieve from the live Vault server before importing them. Use `curl` to fetch the public key of the Service CA directly from the Vault PKI engine. Using `-k` is required here as the trust chain is not yet established. Set the Vault Address (VIP) and download the Service CA to the local tls directory.
 
-        ```bash
-        export VAULT_ADDR="https://172.16.136.250:443"
-        curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
-        ```
-
-    2. Import CA to system trust chain:
-        - RHEL / CentOS:
-
-            ```shell
-            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
-            sudo update-ca-trust
-            ```
-
-        - Ubuntu / Debian:
-
-            ```shell
-            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
-            sudo update-ca-certificates
-            ```
+    ```bash
+    export VAULT_ADDR="https://172.16.136.250:443"
+    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+    ```
 
 3. **Import BOTH Certificates into System Trust Store:**
 

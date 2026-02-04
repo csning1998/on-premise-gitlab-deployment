@@ -6,6 +6,11 @@ all:
     minio_cluster_name: "${service_name}-minio-cluster"
     minio_root_user: "${minio_root_user}"
 
+    haproxy_frontend_port_api: "${haproxy_frontend_port_api}"
+    haproxy_frontend_port_console: "${haproxy_frontend_port_console}"
+    haproxy_backend_port_api: "${haproxy_backend_port_api}"
+    haproxy_backend_port_console: "${haproxy_backend_port_console}"
+
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
     minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
     minio_tls_node_subnet: "${minio_tls_node_subnet}"

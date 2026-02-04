@@ -16,11 +16,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubeadm_version }}"
 {# imageRepository: "{{ registry_host }}" #}
-{% if (groups['master'] | length) > 1 %}
 controlPlaneEndpoint: "{{ kubeadm_ha_virtual_ip }}:6443"
-{% else %}
-controlPlaneEndpoint: "{{ kubeadm_advertise_ip }}:6443"
-{% endif %}
 apiServer:
   extraArgs:
     - name: bind-address

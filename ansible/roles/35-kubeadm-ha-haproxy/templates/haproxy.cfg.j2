@@ -26,3 +26,31 @@ backend k8s_api_backend
 {% for host in groups['master'] %}
     server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ haproxy_backend_port }} check fall 3 rise 2
 {% endfor %}
+
+# GitLab HTTP Ingress (Port 80 -> NodePort 30080)
+frontend gitlab_http
+    bind {{ kubeadm_ha_virtual_ip }}:80
+    mode tcp
+    default_backend gitlab_http_backend
+
+backend gitlab_http_backend
+    mode tcp
+    balance roundrobin
+    option tcp-check
+{% for host in groups['workers'] %}
+    server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ kubeadm_http_nodeport }} check
+{% endfor %}
+
+# GitLab HTTPS Ingress (Port 443 -> NodePort 30443)
+frontend gitlab_https
+    bind {{ kubeadm_ha_virtual_ip }}:443
+    mode tcp
+    default_backend gitlab_https_backend
+
+backend gitlab_https_backend
+    mode tcp
+    balance roundrobin
+    option tcp-check
+{% for host in groups['workers'] %}
+    server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ kubeadm_https_nodeport }} check
+{% endfor %}

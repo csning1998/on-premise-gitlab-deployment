@@ -9,3 +9,9 @@ variable "root_domain" {
   type        = string
   default     = "iac.local"
 }
+
+variable "vault_pki_path" {
+  description = "The path of the PKI backend"
+  type        = string
+  default     = "pki/prod"
+}

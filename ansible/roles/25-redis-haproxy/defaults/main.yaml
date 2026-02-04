@@ -1,7 +1,6 @@
 ---
 # HAProxy Tuning
 haproxy_maxconn: 4096
-haproxy_stats_port: 6379
 haproxy_timeout_connect: 5000
 haproxy_timeout_client: 50000
 haproxy_timeout_server: 50000

@@ -18,6 +18,7 @@ variable "topology_config" {
     })
 
     haproxy_config = object({
+      stats_port = number
       virtual_ip = string
 
       # HAProxy Nodes (Map)

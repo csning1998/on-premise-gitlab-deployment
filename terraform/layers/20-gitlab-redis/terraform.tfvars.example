@@ -18,6 +18,7 @@ gitlab_redis_compute = {
   }
 
   haproxy_config = {
+    stats_port = 6379
     virtual_ip = "172.16.141.250"
     nodes = {
       "gitlab-redis-haproxy-node-00" = { ip = "172.16.141.210", vcpu = 1, ram = 512 }

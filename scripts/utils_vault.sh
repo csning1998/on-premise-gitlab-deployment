@@ -245,11 +245,7 @@ vault_dev_unseal_handler() {
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
   
-  local inventory_file="${ANSIBLE_DIR}/inventory-vault-cluster.yaml"
-  
-  if [[ ! -f "$inventory_file" ]]; then
-		inventory_file="${TERRAFORM_DIR}/layers/10-vault-core/inventory-vault-cluster.yaml"
-  fi
+  local inventory_file="${ANSIBLE_DIR}/inventory-10-vault-core.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
 		log_print "ERROR" "Inventory file not found."

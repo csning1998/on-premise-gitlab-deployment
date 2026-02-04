@@ -37,8 +37,10 @@ variable "gitlab_kubeadm_compute" {
       base_image_path = string
     })
 
-    pod_subnet    = string
-    registry_host = string
+    pod_subnet     = string
+    registry_host  = string
+    http_nodeport  = number
+    https_nodeport = number
   })
 }
 

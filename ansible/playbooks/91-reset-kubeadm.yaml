@@ -1,3 +1,13 @@
+## On the project root, execute the following command:
+##
+## ```shell
+# ansible-playbook -i ansible/inventory-30-gitlab-kubeadm.yaml \
+#     --private-key ~/.ssh/id_ed25519_on-premise-gitlab-deployment \
+#     --extra-vars "ansible_ssh_user=csning1998" \
+#     ansible/playbooks/91-reset-kubeadm.yaml
+## ```
+##
+
 ---
 - name: "Play: Reset kubeadm cluster to a clean state"
   hosts: all

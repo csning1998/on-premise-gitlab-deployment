@@ -26,8 +26,10 @@ gitlab_kubeadm_compute = {
     base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 
-  pod_subnet    = "10.244.0.0/16"
-  registry_host = "172.16.135.200:5000" # Harbor Registry Endpoint
+  pod_subnet     = "10.244.0.0/16"
+  registry_host  = "172.16.135.200:5000" # Harbor Registry Endpoint
+  http_nodeport  = 30080
+  https_nodeport = 30443
 }
 
 gitlab_kubeadm_infra = {

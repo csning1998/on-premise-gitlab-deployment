@@ -13,6 +13,9 @@ all:
     kubeadm_nat_subnet_prefix: "${kubeadm_nat_subnet_prefix}"
     kubeadm_registry_host: "${kubeadm_registry_host}"
 
+    kubeadm_http_nodeport: "${kubeadm_http_nodeport}"
+    kubeadm_https_nodeport: "${kubeadm_https_nodeport}"
+
   children:
     master:
       hosts:

@@ -119,7 +119,6 @@ ansible_playbook_executor() {
 # Function: Display a sub-menu to select and run a Playbook based on Inventory.
 ansible_menu_handler() {
   local inventory_options=()
-  
   local inventory_dir="${ANSIBLE_DIR}" 
 
   # [Fix] Updated glob pattern to match new naming convention (e.g., inventory-redis-gitlab.yaml)
@@ -139,37 +138,45 @@ ansible_menu_handler() {
     
     elif [ -n "$inventory" ]; then
       
-      # Logic to parse 'inventory-<component>-<service>.yaml' by removing prefix and suffix
-      local filename_base=${inventory#inventory-}  # e.g. "redis-gitlab.yaml"
-      filename_base=${filename_base%.yaml}         # e.g. "redis-gitlab"
+      # Logic to parse 'inventory-<component>-<platform>-<service>.yaml' by removing prefix and suffix
+      local filename_base=${inventory#inventory-}
+      filename_base=${filename_base%.yaml}         # e.g. 30-gitlab-kubeadm
 
       # Extract the component (first word before the hyphen)
-      local target_component=${filename_base%%-*}
+      local playbook_prefix=${filename_base%%-*}   # 30
+      local target_service=${filename_base#*-}     # gitlab-kubeadm
       local playbook=""
 
-      case "$target_component" in
-        "vault")
+      case "$playbook_prefix" in
+        "10")
           playbook="10-provision-vault.yaml"
           ;;
-        "postgres"|"redis"|"minio")
+        "20")
           playbook="20-provision-data-services.yaml"
           ;;
-        "microk8s")
-          playbook="30-provision-microk8s.yaml"
-          ;;
-        "kubeadm")
-          playbook="30-provision-kubeadm.yaml"
+        "30")
+          case "$target_service" in
+            *kubeadm*)
+              playbook="30-provision-kubeadm.yaml"
+              ;;
+            *microk8s*)
+              playbook="30-provision-microk8s.yaml"
+              ;;
+            *)
+              log_print "WARN" "Unknown k8s variant in '${target_service}', defaulting to kubeadm"
+              playbook="30-provision-kubeadm.yaml"
+              ;;
+          esac
           ;;
         *)
-          log_print "WARN" "Unknown component '${target_component}' derived from '${inventory}'."
-          log_print "WARN" "      Mapping defaulted to '10-provision-${target_component}.yaml' (May fail)."
-          playbook="10-provision-${target_component}.yaml"
+          log_print "WARN" "Unknown prefix '${playbook_prefix}' in '${inventory}'"
+          playbook="10-provision-${target_service}.yaml"  # fallback
           ;;
       esac
       
       log_divider
       log_print "INFO" "Selected Inventory: ${inventory}"
-      log_print "INFO" "Derived Component:  ${target_component}"
+      log_print "INFO" "Derived Service:    ${target_service}"
       log_print "INFO" "Mapped Playbook:    ${playbook}"
       log_divider
       

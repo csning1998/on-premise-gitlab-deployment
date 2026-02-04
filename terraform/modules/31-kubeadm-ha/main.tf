@@ -80,6 +80,9 @@ module "ansible_runner" {
     kubeadm_master_ips        = local.kubeadm_master_ips
     kubeadm_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     kubeadm_nat_subnet_prefix = local.nat_network_subnet_prefix
+
+    kubeadm_http_nodeport  = var.topology_config.http_nodeport
+    kubeadm_https_nodeport = var.topology_config.https_nodeport
   })
 
   vm_credentials = {

@@ -683,28 +683,12 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     172.16.142.250  s3.gitlab.iac.local
     ```
 
-2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA
-    1. **準備環境變數與下載 CA**： 使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/10-vault-core/tls` 路徑內
+2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA。這裡可以使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/10-vault-core/tls` 路徑內
 
-        ```bash
-        export VAULT_ADDR="https://172.16.136.250:443"
-        curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
-        ```
-
-    2. 匯入 CA 到系統 trust chain
-        - RHEL / CentOS：
-
-            ```shell
-            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
-            sudo update-ca-trust
-            ```
-
-        - Ubuntu / Debian：
-
-            ```shell
-            sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/
-            sudo update-ca-certificates
-            ```
+    ```bash
+    export VAULT_ADDR="https://172.16.136.250:443"
+    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+    ```
 
 3.  **將兩個 Certificates 都匯入 System Trust Store:**
 

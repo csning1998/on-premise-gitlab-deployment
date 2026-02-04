@@ -25,7 +25,8 @@ auto_auth {
 template {
   destination = "/etc/redis/certs/server.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' 
+~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
@@ -36,7 +37,7 @@ EOH
 template {
   destination = "/etc/redis/certs/server.key"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ redis_pki_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.private_key }}' }}
 {{ '{{- end -}}' }}
 EOH

@@ -18,6 +18,7 @@ variable "gitlab_redis_compute" {
       base_image_path = string
     })
     haproxy_config = object({
+      stats_port = number
       virtual_ip = string
       nodes = map(object({
         ip   = string

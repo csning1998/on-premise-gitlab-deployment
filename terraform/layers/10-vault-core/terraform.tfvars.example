@@ -31,8 +31,6 @@ vault_compute = {
     }
     base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
-
-  inventory_file = "inventory-vault-cluster.yaml"
 }
 
 vault_infra = {

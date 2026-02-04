@@ -68,9 +68,13 @@ module "ansible_runner" {
     ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
     service_name     = var.topology_config.cluster_identity.service_name
 
-    haproxy_nodes = var.topology_config.haproxy_config.nodes
-    minio_nodes   = var.topology_config.minio_config.nodes
+    haproxy_nodes                 = var.topology_config.haproxy_config.nodes
+    haproxy_frontend_port_api     = var.topology_config.haproxy_config.frontend_port_api
+    haproxy_frontend_port_console = var.topology_config.haproxy_config.frontend_port_console
+    haproxy_backend_port_api      = var.topology_config.haproxy_config.backend_port_api
+    haproxy_backend_port_console  = var.topology_config.haproxy_config.backend_port_console
 
+    minio_nodes             = var.topology_config.minio_config.nodes
     minio_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
     minio_root_user         = data.vault_generic_secret.db_vars.data["minio_root_user"]
     minio_tls_node_subnet   = var.infra_config.allowed_subnet

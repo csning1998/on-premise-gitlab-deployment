@@ -17,3 +17,8 @@ output "gitlab_redis_virtual_ip" {
   description = "Redis virtual IP for GitLab"
   value       = var.gitlab_redis_compute.haproxy_config.virtual_ip
 }
+
+output "gitlab_redis_haproxy_stats_port" {
+  description = "HAProxy stats port for GitLab Redis"
+  value       = var.gitlab_redis_compute.haproxy_config.stats_port
+}

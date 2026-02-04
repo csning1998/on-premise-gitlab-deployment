@@ -17,6 +17,7 @@ harbor_redis_compute = {
   }
 
   haproxy_config = {
+    stats_port = 6379
     virtual_ip = "172.16.138.250"
     nodes = {
       "harbor-redis-haproxy-node-00" = { ip = "172.16.138.210", vcpu = 1, ram = 512 }

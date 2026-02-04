@@ -11,6 +11,8 @@ locals {
 
   gitlab_ingress_domains = [
     "gitlab.${local.root_domain}",
-    "kas.gitlab.${local.root_domain}"
+    "kas.gitlab.${local.root_domain}",
+    "registry.gitlab.${local.root_domain}",
+    "minio.gitlab.${local.root_domain}"
   ]
 }

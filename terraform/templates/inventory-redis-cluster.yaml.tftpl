@@ -4,6 +4,7 @@ all:
     ansible_user: "${ansible_ssh_user}"
     service_identifier: "${service_name}"
     redis_cluster_name: "${service_name}-redis-cluster"
+    haproxy_stats_port: "${haproxy_stats_port}"
 
     redis_enable_tls: "${redis_enable_tls}"
     redis_cluster_ips: ${jsonencode([for node in redis_nodes : node.ip])}

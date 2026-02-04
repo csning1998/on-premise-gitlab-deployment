@@ -18,6 +18,7 @@ variable "harbor_redis_compute" {
     })
 
     haproxy_config = object({
+      stats_port = number
       virtual_ip = string
       nodes = map(object({
         ip   = string
