@@ -21,8 +21,8 @@ gitlab_kubeadm_compute = {
   }
 
   haproxy_config = {
-    virtual_ip    = "172.16.134.250"
-    nodes = {} # Use external Keepalived by Defaults
+    virtual_ip      = "172.16.134.250"
+    nodes           = {} # Use external Keepalived by Defaults
     base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 

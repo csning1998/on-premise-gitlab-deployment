@@ -1,0 +1,62 @@
+---
+hostname: {{ dev_harbor_service_domain }}
+
+# http related config
+http:
+  port: 80
+
+# https related config
+https:
+  port: 443
+  # The path of cert and key on the HOST machine.
+  # Harbor's prepare script will map these into the nginx container.
+  certificate: {{ harbor_cert_path }}
+  private_key: {{ harbor_key_path }}
+
+# [CRITICAL FIX] Internal TLS should be disabled by default.
+# Enabling this without generating internal certs caused the FileNotFoundError.
+# internal_tls:
+#   enabled: true
+#   dir: /etc/harbor/tls/internal
+
+# The default data volume
+data_volume: {{ harbor_data_dir }}
+
+harbor_admin_password: "{{ dev_harbor_admin_password }}"
+
+# Database config
+database:
+  password: "{{ dev_harbor_db_password }}"
+  max_idle_conns: 50
+  max_open_conns: 100
+  conn_max_lifetime: 5m
+  conn_max_idle_time: 0
+
+# Job service config
+jobservice:
+  max_job_workers: 10
+  max_job_duration_hours: 24
+  job_loggers:
+    - STD_OUTPUT
+    - FILE
+  logger_sweeper_duration: 1 #days
+
+# Notification config
+notification:
+  webhook_job_max_retry: 3
+  webhook_job_http_client_timeout: 3 #seconds
+
+# Log config
+log:
+  level: info
+  local:
+    rotate_count: 50
+    rotate_size: 200M
+    location: /var/log/harbor
+
+# Trivy scanner
+trivy:
+  ignore_unfixed: false
+  skip_update: false
+  insecure: false
+  debug_mode: false

@@ -1,0 +1,57 @@
+
+pid_file = "/var/run/vault-agent.pid"
+
+vault {
+  address = "{{ vault_address }}"
+  ca_cert = "{{ vault_agent_config_dir }}/vault-ca.crt"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/approle"
+    config = {
+      role_id_file_path = "{{ vault_agent_config_dir }}/approle/role_id"
+      secret_id_file_path = "{{ vault_agent_config_dir }}/approle/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/tmp/vault-token"
+    }
+  }
+}
+
+# Server Certificate & Key Template
+template {
+  destination = "{{ harbor_cert_path }}"
+  contents = <<EOH
+{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.certificate }}' }}
+{{ '{{- end -}}' }}
+EOH
+  # Logic: Check if harbor-nginx container is running. If yes, reload nginx. If not (first install), do nothing.
+  command = "(docker ps -q -f name=harbor-nginx | grep -q . && docker exec -t harbor-nginx nginx -s reload) || true"
+}
+
+template {
+  destination = "{{ harbor_key_path }}"
+  contents = <<EOH
+{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.private_key }}' }}
+{{ '{{- end -}}' }}
+EOH
+  command = "chmod 0600 {{ harbor_key_path }}"
+}
+
+# CA Certificate (Trust Anchor)
+template {
+  destination = "{{ harbor_ca_path }}"
+  contents = <<EOH
+{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{- end -}}' }}
+EOH
+  command = "chmod 0644 {{ harbor_ca_path }}"
+}

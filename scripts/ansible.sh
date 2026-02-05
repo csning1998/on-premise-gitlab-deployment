@@ -5,30 +5,45 @@ vault_secret_extractor() {
   local playbook_file="$1"
   local extra_vars_string=""
   local secrets_json
-  local keys_needed=() # Bash array to hold the keys that need
-  local vault_path=""
+  
+  # Define an array to store configurations, format: "VAULT_PATH|KEY1 KEY2 KEY3"
+  local vault_configs=()
 
-  # 1. Determine the key and vault path to fetch by playbook
+  # 1. Determine the configurations (paths and keys) by playbook
   case "${playbook_file}" in
-		"10-provision-vault.yaml")
+    "10-provision-vault.yaml")
       log_print "INFO" "Vault playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/infrastructure"
-      keys_needed=("vault_keepalived_auth_pass" "vault_haproxy_stats_pass")
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/infrastructure|vault_keepalived_auth_pass vault_haproxy_stats_pass"
+      )
       ;;
     "20-provision-data-services.yaml")
       log_print "INFO" "Data Services playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed+=("pg_superuser_password" "pg_replication_password" "pg_vrrp_secret" "redis_requirepass" "redis_masterauth" "redis_vrrp_secret" "minio_root_password" "minio_vrrp_secret")
+
+      # Path 1: GitLab Databases
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/gitlab/databases|pg_superuser_password pg_replication_password pg_vrrp_secret redis_requirepass redis_masterauth redis_vrrp_secret minio_root_password minio_vrrp_secret minio_root_user"
+      )
+      # Path 2: Harbor Databases
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/harbor/databases|pg_superuser_password pg_replication_password pg_vrrp_secret redis_requirepass redis_masterauth redis_vrrp_secret minio_root_password minio_vrrp_secret minio_root_user"
+      )
+      # Path 3: Dev Harbor App
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/dev-harbor/app|dev_harbor_admin_password dev_harbor_pg_db_password"
+      )
       ;;
-		"30-provision-microk8s.yaml")
+    "30-provision-microk8s.yaml")
       log_print "INFO" "MicroK8s playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/databases"
-      keys_needed=("redis_requirepass")
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/databases|redis_requirepass"
+      )
       ;;
     "40-provision-harbor.yaml")
       log_print "INFO" "Harbor playbook detected. Preparing credentials..." >&2
-      vault_path="secret/on-premise-gitlab-deployment/harbor"
-      keys_needed=("harbor_admin_password" "harbor_pg_db_password")
+      vault_configs+=(
+        "secret/on-premise-gitlab-deployment/harbor|harbor_admin_password harbor_pg_db_password"
+      )
       ;;
     *)
       echo "${extra_vars_string}"
@@ -36,23 +51,31 @@ vault_secret_extractor() {
       ;;
   esac
 
-  # 2. Once-only vault fetching if and only if the vault_path is set
-  if ! secrets_json=$(vault kv get -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json "${vault_path}"); then
-    log_print "FATAL" "Failed to fetch secrets from Vault at path '${vault_path}'. Is Vault unsealed?"
-    return 1
-  fi
+  # 2. Iterate through each configuration config
+  for config in "${vault_configs[@]}"; do
+    # Parse the string: extract Path and Keys
+    local vault_path="${config%%|*}"    # Get the string on the left of |
+    local keys_str="${config#*|}"       # Get the string on the right of |
+    local keys_needed=(${keys_str})     # Convert the string to an array
 
-  # 3. Process Key, validation, and then establish the extra-vars string
-  for key in "${keys_needed[@]}"; do
-    local value
-    value=$(echo "${secrets_json}" | jq -r ".data.data.${key}")
-
-    if [[ -z "${value}" || "${value}" == "null" ]]; then
-      log_print "FATAL" "Could not find required key '${key}' in Vault at '${vault_path}'."
+    # Fetch secrets for this specific path
+    if ! secrets_json=$(vault kv get -address="${VAULT_ADDR}" -ca-cert="${VAULT_CACERT}" -format=json "${vault_path}"); then
+      log_print "FATAL" "Failed to fetch secrets from Vault at path '${vault_path}'. Is Vault unsealed?"
       return 1
     fi
 
-    extra_vars_string+=" --extra-vars '${key}=${value}'"
+    # 3. Process Keys for this path
+    for key in "${keys_needed[@]}"; do
+      local value
+      value=$(echo "${secrets_json}" | jq -r ".data.data.${key}")
+
+      if [[ -z "${value}" || "${value}" == "null" ]]; then
+        log_print "FATAL" "Could not find required key '${key}' in Vault at '${vault_path}'."
+        return 1
+      fi
+
+      extra_vars_string+=" --extra-vars '${key}=${value}'"
+    done
   done
 
   log_print "OK" "Credentials fetched successfully." >&2

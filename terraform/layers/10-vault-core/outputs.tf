@@ -26,8 +26,9 @@ output "pki_configuration" {
     minio_roles    = module.vault_pki_config.minio_role_names
 
     ingress_roles = {
-      harbor = module.vault_pki_config.harbor_ingress_role_name
-      gitlab = module.vault_pki_config.gitlab_ingress_role_name
+      dev_harbor = module.vault_pki_config.dev_harbor_ingress_role_name
+      harbor     = module.vault_pki_config.harbor_ingress_role_name
+      gitlab     = module.vault_pki_config.gitlab_ingress_role_name
     }
 
     # Part B: Allowed Domains for App Config / Ingress
@@ -36,8 +37,9 @@ output "pki_configuration" {
     minio_domains    = module.vault_pki_config.minio_role_domains
 
     ingress_domains = {
-      harbor = module.vault_pki_config.harbor_ingress_domains
-      gitlab = module.vault_pki_config.gitlab_ingress_domains
+      dev_harbor = module.vault_pki_config.dev_harbor_ingress_domains
+      harbor     = module.vault_pki_config.harbor_ingress_domains
+      gitlab     = module.vault_pki_config.gitlab_ingress_domains
     }
   }
 }

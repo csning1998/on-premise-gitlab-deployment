@@ -217,7 +217,7 @@ ansible_core_install_handler() {
   sudo pip3 install ansible-core
 
   log_print "TASK" "Installing Ansible Galaxy collections..."
-  ansible-galaxy collection install ansible.posix community.general community.docker community.kubernetes community.crypto
+  ansible-galaxy collection install ansible.posix community.general community.docker community.kubernetes community.crypto community.hashi_vault
 }
 
 # Function: Install HashiCorp tools using the universal binary method

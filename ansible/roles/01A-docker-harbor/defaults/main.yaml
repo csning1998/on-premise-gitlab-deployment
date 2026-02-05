@@ -1,0 +1,8 @@
+---
+harbor_preload:
+  # Latest Harbor version number can be fetched via 'echo $(curl -s https://api.github.com/repos/goharbor/harbor/releases/latest | jq -r .tag_name)'
+  version: "2.14.2"
+  dest_dir: "/opt/harbor-install"
+  installer_filename: "harbor-offline-installer.tgz"
+
+_download_url_template: "https://github.com/goharbor/harbor/releases/download/v{{ harbor_preload.version }}/harbor-offline-installer-v{{ harbor_preload.version }}.tgz"

@@ -1,0 +1,20 @@
+
+[Unit]
+Description=HashiCorp Vault Agent
+Documentation=https://www.vaultproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/local/bin/vault agent -config=/etc/vault.d/vault-agent.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

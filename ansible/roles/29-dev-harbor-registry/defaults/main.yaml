@@ -1,0 +1,19 @@
+---
+# Harbor Installation Paths
+harbor_install_dir: "/opt/harbor-install"
+harbor_data_dir: "/data/harbor"
+
+# PKI Paths (Host Side)
+# Vault Agent will write certs here.
+# Harbor will mount these files into the container.
+harbor_pki_dir: "{{ harbor_data_dir }}/pki"
+harbor_cert_path: "{{ harbor_pki_dir }}/server.crt"
+harbor_key_path: "{{ harbor_pki_dir }}/server.key"
+harbor_ca_path: "{{ harbor_pki_dir }}/ca.crt"
+
+# Vault Agent Configuration
+vault_agent_config_dir: "/etc/vault.d"
+
+# Database and Harbor Admin Password from Vault
+dev_harbor_admin_password: "{{ harbor_vault_secrets.secret.dev_harbor_admin_password }}"
+dev_harbor_db_password: "{{ harbor_vault_secrets.secret.dev_harbor_pg_db_password }}"

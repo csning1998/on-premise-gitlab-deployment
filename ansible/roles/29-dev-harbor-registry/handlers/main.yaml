@@ -1,0 +1,6 @@
+---
+- name: Restart Vault Agent
+  listen: "Restart Vault Agent"
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted

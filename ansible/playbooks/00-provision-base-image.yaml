@@ -5,12 +5,13 @@
   roles:
     - 00-base-common
 
-- name: "Play: Provision Docker Base Image"
-  hosts: "01-base-docker"
+- name: "Play: Provision Docker Base Image for Bootstrapper Harbor"
+  hosts: "01A-docker-harbor"
   become: true
   roles:
     - 01-base-docker
     - 07-base-vault
+    - 01A-docker-harbor
 
 - name: "Play: Provision Kubernetes (Kubeadm) Base Image"
   hosts: "02-base-kubeadm"

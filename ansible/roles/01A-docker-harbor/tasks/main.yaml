@@ -1,0 +1,20 @@
+---
+- name: "Step 1. Create directory for Harbor installer"
+  ansible.builtin.file:
+    path: "{{ harbor_preload.dest_dir }}" # e.g. /opt/harbor
+    state: directory
+    mode: "0755"
+
+- name: "Step 2. Download and Unarchive Harbor Installer"
+  ansible.builtin.unarchive:
+    src: "{{ _download_url_template }}"
+    dest: "{{ harbor_preload.dest_dir }}"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+    creates: "{{ harbor_preload.dest_dir }}/install.sh"
+
+- name: "Step 3. Ensure hvac library is installed"
+  ansible.builtin.package:
+    name: python3-hvac
+    state: present

@@ -1,7 +1,7 @@
 
-# This file defines the variables for building the 'docker-base' image.
+# This file defines the variables for building the 'docker-<service>' image.
 build_spec = {
-  suffix   = "01-base-docker"
+  suffix   = "01A-docker-harbor"
   vnc_port = 5991
 }
 

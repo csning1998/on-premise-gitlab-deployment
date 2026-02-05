@@ -5,7 +5,7 @@ resource "vault_auth_backend" "kubernetes" {
   path = "kubernetes"
 }
 
-# Role: Harbor Ingress
+# Role: Harbor Ingress on Microk8s
 resource "vault_pki_secret_backend_role" "harbor_ingress" {
   backend = vault_mount.pki_prod.path
   name    = "harbor-ingress-role"
@@ -26,8 +26,36 @@ resource "vault_pki_secret_backend_role" "harbor_ingress" {
   server_flag = true
   client_flag = true
 
-  max_ttl = 2592000 # 30 Days
-  ttl     = 86400   # 24 Hours
+  max_ttl = 60 * 60 * 24 * 30 # 30 Days
+  ttl     = 60 * 60 * 24      # 24 Hours
+
+  allow_any_name    = false
+  enforce_hostnames = true
+}
+
+# Role: Dev Harbor Ingress on Docker
+resource "vault_pki_secret_backend_role" "dev_harbor_ingress" {
+  backend = vault_mount.pki_prod.path
+  name    = "dev-harbor-ingress-role"
+
+  allowed_domains = local.dev_harbor_ingress_domains
+
+  allow_subdomains   = true
+  allow_glob_domains = false
+  allow_ip_sans      = true
+  allow_bare_domains = true
+
+  key_usage = [
+    "DigitalSignature",
+    "KeyEncipherment",
+    "KeyAgreement"
+  ]
+
+  server_flag = true
+  client_flag = true
+
+  max_ttl = 60 * 60 * 24 * 30 # 30 Days
+  ttl     = 60 * 60 * 24      # 24 Hours
 
   allow_any_name    = false
   enforce_hostnames = true

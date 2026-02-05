@@ -43,3 +43,9 @@
   become: true
   roles:
     - 28-minio-distributed
+
+- name: "Play 8: Configure Dev Harbor (Bootstrapper) Cluster"
+  hosts: dev_harbor_nodes
+  become: true
+  roles:
+    - 29-dev-harbor-registry

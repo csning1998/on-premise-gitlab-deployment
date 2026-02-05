@@ -15,6 +15,11 @@ output "minio_role_names" {
   value       = { for k, v in vault_pki_secret_backend_role.minio : k => v.name }
 }
 
+output "dev_harbor_ingress_role_name" {
+  description = "Dev Harbor Ingress PKI Role Name"
+  value       = vault_pki_secret_backend_role.dev_harbor_ingress.name
+}
+
 output "harbor_ingress_role_name" {
   description = "Harbor Ingress PKI Role Name"
   value       = vault_pki_secret_backend_role.harbor_ingress.name
@@ -40,6 +45,11 @@ output "redis_role_domains" {
 output "minio_role_domains" {
   description = "Map of allowed domains for MinIO PKI roles by platform"
   value       = { for k, v in vault_pki_secret_backend_role.minio : k => v.allowed_domains }
+}
+
+output "dev_harbor_ingress_domains" {
+  description = "List of allowed domains for Dev Harbor Ingress role"
+  value       = vault_pki_secret_backend_role.dev_harbor_ingress.allowed_domains
 }
 
 output "harbor_ingress_domains" {
