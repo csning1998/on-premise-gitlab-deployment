@@ -11,20 +11,20 @@ locals {
 }
 
 source "qemu" "ubuntu" {
-  # --- Dynamic Settings from Variables ---
+  # Dynamic Settings from Variables
   vm_name          = local.final_vm_name
   output_directory = "./output/${var.build_spec.suffix}"
   vnc_port_min     = var.build_spec.vnc_port
   vnc_port_max     = var.build_spec.vnc_port
 
-  # --- Common Settings from Variables ---
+  # Common Settings from Variables
   iso_url      = var.common_spec.iso_url
   iso_checksum = var.common_spec.iso_checksum
   cpus         = var.common_spec.cpus
   memory       = var.common_spec.memory
   disk_size    = var.common_spec.disk_size
 
-  # --- Common Hardcoded Settings ---
+  # Common Hardcoded Settings
   disk_interface = "virtio"
   net_bridge     = var.net_bridge
   net_device     = var.net_device
@@ -34,7 +34,7 @@ source "qemu" "ubuntu" {
   headless       = true
   format         = "qcow2"
 
-  # --- Cloud-Init & Autoinstall ---
+  # Cloud-Init & Autoinstall
   http_directory = "./http"
   cd_content = {
     "/user-data" = templatefile("${path.root}/http/user-data", {
@@ -46,7 +46,7 @@ source "qemu" "ubuntu" {
   }
   cd_label = "cidata"
 
-  # --- Boot & SSH ---
+  # Boot & SSH
   boot_wait = "5s"
   boot_command = [
     "<wait2s>", "e<wait>", "<down><down><down><end>",
