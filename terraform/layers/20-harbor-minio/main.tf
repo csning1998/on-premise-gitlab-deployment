@@ -1,6 +1,6 @@
 
 module "minio_harbor" {
-  source = "../../modules/27-minio-ha"
+  source = "../../modules/service-ha/minio-distributed-cluster"
 
   topology_config   = var.harbor_minio_compute
   infra_config      = var.harbor_minio_infra
@@ -15,8 +15,8 @@ resource "time_sleep" "wait_for_minio_storage" {
   create_duration = "30s"
 }
 
-module "minio_harbor_config" {
-  source     = "../../modules/28-minio-config"
+module "minio_harbor_system_config" {
+  source     = "../../modules/configuration/minio-bucket-setup"
   depends_on = [time_sleep.wait_for_minio_storage]
 
   minio_tenants            = var.harbor_minio_tenants

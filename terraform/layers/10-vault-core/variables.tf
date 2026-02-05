@@ -15,7 +15,7 @@ variable "vault_compute" {
     })
 
     # Vault Server Nodes (Map)
-    vault_config = object({
+    vault_cluster = object({
       nodes = map(object({
         ip   = string
         vcpu = number

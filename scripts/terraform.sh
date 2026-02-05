@@ -134,11 +134,11 @@ terraform_layer_selector() {
 				echo '{"root_token": "placeholder-for-bootstrap"}' > "$token_file"
 
 				log_print "TASK" "[Vault Core] Stage 1: Infrastructure Bootstrap (VM + TLS)..."
-				terraform_layer_executor "${layer}" "-target=module.vault_tls -target=module.vault_config"          
+				terraform_layer_executor "${layer}" "-target=module.vault_tls_gen -target=module.vault_cluster"          
 				
 				log_print "TASK" "[Vault Core] Stage 2: Service Configuration (PKI)..."
 				# Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.
-				terraform_layer_executor "${layer}" "-target=module.vault_pki_config -refresh=false"
+				terraform_layer_executor "${layer}" "-target=module.vault_pki_setup -refresh=false"
 				
 				cd "${TERRAFORM_DIR}/layers/10-vault-core" && terraform refresh -var-file=terraform.tfvars
 				cd "${SCRIPT_DIR}" || exit

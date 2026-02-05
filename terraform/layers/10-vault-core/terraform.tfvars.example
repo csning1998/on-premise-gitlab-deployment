@@ -12,7 +12,7 @@ vault_compute = {
     cluster_name = "10-vault-core"
   }
   
-  vault_config = {
+  vault_cluster = {
     nodes = {
       # Single Mode
       "vault-node-00" = { ip = "172.16.136.200", vcpu = 2, ram = 1024 },

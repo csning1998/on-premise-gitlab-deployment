@@ -1,23 +1,23 @@
 
-module "vault_config" {
-  source = "../../modules/11-vault-ha"
+module "vault_cluster" {
+  source = "../../modules/service-ha/vault-raft-cluster"
 
   topology_config = var.vault_compute
   infra_config    = var.vault_infra
 
-  tls_source_dir = module.vault_tls.tls_source_dir
+  tls_source_dir = module.vault_tls_gen.tls_source_dir
 }
 
-module "vault_tls" {
-  source     = "../../modules/12-vault-tls"
+module "vault_tls_gen" {
+  source     = "../../modules/configuration/vault-tls-gen"
   output_dir = local.layer_tls_dir
 
   tls_mode = var.tls_mode
 
   vault_cluster = {
-    vault_config = {
+    vault_cluster = {
       nodes = {
-        for k, v in var.vault_compute.vault_config.nodes : k => {
+        for k, v in var.vault_compute.vault_cluster.nodes : k => {
           ip = v.ip
         }
       }
@@ -28,10 +28,10 @@ module "vault_tls" {
   }
 }
 
-module "vault_pki_config" {
-  source = "../../modules/13-vault-pki"
+module "vault_pki_setup" {
+  source = "../../modules/configuration/vault-pki-setup"
 
-  depends_on = [module.vault_config]
+  depends_on = [module.vault_cluster]
 
   providers = {
     vault = vault.target_cluster

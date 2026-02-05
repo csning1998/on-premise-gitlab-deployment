@@ -19,7 +19,7 @@ The machine specifications used for development are listed below for reference o
 The project can be cloned using the following command:
 
 ```shell
-git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 The following resource allocation is configured based on RAM constraints:
@@ -611,7 +611,7 @@ Successful execution and the display of virtual machines—regardless of whether
     - Use menu option `9) Build Packer Base Image` to generate a base image.
     - Use menu option `10) Provision Terraform Layer` to test or redeploy specific layers (e.g., Harbor, Postgres).
 
-        Note: When rebuilding Harbor in Layer 50, a `module.harbor_config.harbor_garbage_collection.gc` "Resource not found" error may occur. This is resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/50-harbor-platform` before re-executing `terraform apply`.
+        Note: When rebuilding Harbor in Layer 50, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. This is resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/50-harbor-platform` before re-executing `terraform apply`.
 
     To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use option `11) Rebuild Layer via Ansible`.
 
@@ -833,7 +833,7 @@ This repo leverages Packer, Terraform, and Ansible to implement an automated pip
 
 The cluster configurations in this project draw upon the following resources:
 
-> [!TIP]
+> [!NOTE]
 > Procedures derived directly from official documentation are omitted from the list below.
 >
 > 1. Bibin Wilson, B. (2025). [_How To Setup Kubernetes Cluster Using Kubeadm._](https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests) devopscube.

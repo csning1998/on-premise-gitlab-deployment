@@ -7,7 +7,7 @@ dev_harbor_compute = {
   }
 
   # Postgres Data Nodes
-  dev_harbor_config = {
+  dev_harbor_system_config = {
     node = {
       "dev-harbor-node-00" = { ip = "172.16.143.250", vcpu = 2, ram = 4096 }
     }

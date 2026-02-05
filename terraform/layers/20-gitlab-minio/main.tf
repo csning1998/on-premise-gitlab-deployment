@@ -1,6 +1,6 @@
 
 module "minio_gitlab" {
-  source = "../../modules/27-minio-ha"
+  source = "../../modules/service-ha/minio-distributed-cluster"
 
   topology_config   = var.gitlab_minio_compute
   infra_config      = var.gitlab_minio_infra
@@ -16,7 +16,7 @@ resource "time_sleep" "wait_for_minio_storage" {
 }
 
 module "minio_gitlab_config" {
-  source     = "../../modules/28-minio-config"
+  source     = "../../modules/configuration/minio-bucket-setup"
   depends_on = [time_sleep.wait_for_minio_storage]
 
   minio_tenants            = var.gitlab_minio_tenants

@@ -9,7 +9,7 @@ variable "dev_harbor_compute" {
     })
 
     # Dev Harbor Data Nodes
-    dev_harbor_config = object({
+    dev_harbor_system_config = object({
       node = map(object({
         ip   = string
         vcpu = number

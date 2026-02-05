@@ -1,6 +1,6 @@
 
 module "redis_gitlab" {
-  source = "../../modules/25-redis-ha"
+  source = "../../modules/service-ha/sentinel-cluster"
 
   topology_config   = var.gitlab_redis_compute
   infra_config      = var.gitlab_redis_infra

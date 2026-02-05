@@ -7,13 +7,13 @@ vault_secret_extractor() {
   local secrets_json
   
   # Define an array to store configurations, format: "VAULT_PATH|KEY1 KEY2 KEY3"
-  local vault_configs=()
+  local vault_clusters=()
 
   # 1. Determine the configurations (paths and keys) by playbook
   case "${playbook_file}" in
     "10-provision-vault.yaml")
       log_print "INFO" "Vault playbook detected. Preparing credentials..." >&2
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/infrastructure|vault_keepalived_auth_pass vault_haproxy_stats_pass"
       )
       ;;
@@ -21,27 +21,27 @@ vault_secret_extractor() {
       log_print "INFO" "Data Services playbook detected. Preparing credentials..." >&2
 
       # Path 1: GitLab Databases
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/gitlab/databases|pg_superuser_password pg_replication_password pg_vrrp_secret redis_requirepass redis_masterauth redis_vrrp_secret minio_root_password minio_vrrp_secret minio_root_user"
       )
       # Path 2: Harbor Databases
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/harbor/databases|pg_superuser_password pg_replication_password pg_vrrp_secret redis_requirepass redis_masterauth redis_vrrp_secret minio_root_password minio_vrrp_secret minio_root_user"
       )
       # Path 3: Dev Harbor App
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/dev-harbor/app|dev_harbor_admin_password dev_harbor_pg_db_password"
       )
       ;;
     "30-provision-microk8s.yaml")
       log_print "INFO" "MicroK8s playbook detected. Preparing credentials..." >&2
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/databases|redis_requirepass"
       )
       ;;
     "40-provision-harbor.yaml")
       log_print "INFO" "Harbor playbook detected. Preparing credentials..." >&2
-      vault_configs+=(
+      vault_clusters+=(
         "secret/on-premise-gitlab-deployment/harbor|harbor_admin_password harbor_pg_db_password"
       )
       ;;
@@ -52,7 +52,7 @@ vault_secret_extractor() {
   esac
 
   # 2. Iterate through each configuration config
-  for config in "${vault_configs[@]}"; do
+  for config in "${vault_clusters[@]}"; do
     # Parse the string: extract Path and Keys
     local vault_path="${config%%|*}"    # Get the string on the left of |
     local keys_str="${config#*|}"       # Get the string on the right of |

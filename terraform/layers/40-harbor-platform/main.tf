@@ -7,7 +7,7 @@ resource "kubernetes_namespace" "harbor" {
 
 # Ingress Controller
 module "ingress_controller" {
-  source = "../../modules/32-microk8s-ingress"
+  source = "../../modules/kubernetes-addons/microk8s-ingress"
 
   ingress_vip        = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip
   ingress_class_name = "nginx"
@@ -15,7 +15,7 @@ module "ingress_controller" {
 
 # Harbor DB Initialization
 module "harbor_db_init" {
-  source = "../../modules/41-harbor-postgres-init"
+  source = "../../modules/configuration/patroni-init"
 
   pg_host = data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip
   pg_port = data.terraform_remote_state.postgres.outputs.harbor_postgres_haproxy_rw_port

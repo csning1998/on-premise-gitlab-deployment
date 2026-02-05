@@ -104,7 +104,7 @@
         src: harbor.yml.j2
         dest: "{{ harbor_install_dir }}/harbor.yml"
         mode: "0644"
-      register: harbor_config_status
+      register: harbor_system_config_status
 
     - name: "Step C2. Run Install Script (First Time Only)"
       ansible.builtin.command:
@@ -121,7 +121,7 @@
           docker compose up -d
         chdir: "{{ harbor_install_dir }}"
       when:
-        - harbor_config_status.changed
+        - harbor_system_config_status.changed
         - not (ansible_check_mode | bool)
 
 - name: "Section D: Verification"

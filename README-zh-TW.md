@@ -19,7 +19,7 @@ Refer to [README.md](README.md) for English (US) version.
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供參考：
@@ -611,7 +611,7 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     - 選單 `9) Build Packer Base Image` 建立 Packer image
     - 選單 `10) Provision Terraform Layer` 獨立測試或重建特定 Terraform module layer（如 Harbor 或 Postgres 等）
 
-        有時在 Layer 50 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/50-harbor-platform` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
+        有時在 Layer 50 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/50-harbor-platform` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
 
     若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
 
@@ -833,7 +833,7 @@ git clone -b v1.5.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 本專案的 Clusters 建立有參考下文章：
 
-> [!TIP]
+> [!NOTE]
 > 完全參考官方文件操作的叢集步驟未列入下列清單
 >
 > 1. Bibin Wilson, B. (2025). [_How To Setup Kubernetes Cluster Using Kubeadm._](https://devopscube.com/setup-kubernetes-cluster-kubeadm/#vagrantfile-kubeadm-scripts-manifests) devopscube.

@@ -1,6 +1,6 @@
 
 module "redis_harbor" {
-  source = "../../modules/25-redis-ha"
+  source = "../../modules/service-ha/sentinel-cluster"
 
   topology_config   = var.harbor_redis_compute
   infra_config      = var.harbor_redis_infra
