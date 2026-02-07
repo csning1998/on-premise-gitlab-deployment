@@ -1,21 +1,30 @@
 
-# Get PKI CA from Vault
-data "http" "vault_pki_ca" {
-  url         = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443/v1/pki/prod/ca/pem"
-  ca_cert_pem = data.terraform_remote_state.vault_pki.outputs.vault_ca_cert
+# Declare Harbor certificate for PKI rotation
+resource "kubernetes_manifest" "harbor_certificate" {
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
+    metadata = {
+      name      = var.harbor_helm_config.tls_secret_name
+      namespace = var.harbor_helm_config.namespace
+    }
+    spec = {
+      secretName = var.harbor_helm_config.tls_secret_name
+      issuerRef = {
+        name = local.issuer_name
+        kind = local.issuer_kind
+      }
+      commonName  = local.harbor_hostname
+      dnsNames    = [local.harbor_hostname]
+      duration    = var.certificate_config.duration
+      renewBefore = var.certificate_config.renew_before
+    }
+  }
 }
 
-# Add PKI CA to Bundle
-resource "kubernetes_secret" "harbor_ca_bundle" {
-  metadata {
-    name      = "harbor-ca-bundle"
-    namespace = "harbor"
-  }
-
-  data = {
-    "ca.crt" = join("\n", [
-      data.terraform_remote_state.vault_pki.outputs.vault_ca_cert,
-      data.http.vault_pki_ca.response_body
-    ])
-  }
+# For Harbor core secret key
+resource "random_password" "harbor_core_secret_key" {
+  length  = 32
+  special = true
+  upper   = true
 }

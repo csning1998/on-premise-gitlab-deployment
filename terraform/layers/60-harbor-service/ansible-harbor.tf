@@ -1,5 +1,5 @@
 
-resource "ansible_host" "harbor_node" {
+resource "ansible_host" "harbor_trust" {
   name   = "harbor-microk8s-node-00"
   groups = ["harbor_nodes"]
 
@@ -14,18 +14,18 @@ resource "ansible_host" "harbor_node" {
 
 resource "ansible_playbook" "harbor_trust" {
 
-  depends_on = [helm_release.harbor, ansible_host.harbor_node]
+  depends_on = [module.harbor_core, ansible_host.harbor_trust]
 
   playbook   = "${path.module}/ansible/harbor_trust.yaml"
-  name       = ansible_host.harbor_node.name
-  groups     = ansible_host.harbor_node.groups
+  name       = ansible_host.harbor_trust.name
+  groups     = ansible_host.harbor_trust.groups
   replayable = true
 
   extra_vars = {
-    ansible_host                 = ansible_host.harbor_node.variables["ansible_host"]
-    ansible_user                 = ansible_host.harbor_node.variables["ansible_user"]
-    ansible_ssh_private_key_file = ansible_host.harbor_node.variables["ansible_ssh_private_key_file"]
-    ansible_ssh_common_args      = ansible_host.harbor_node.variables["ansible_ssh_common_args"]
-    harbor_domain                = "harbor.iac.local"
+    ansible_host                 = ansible_host.harbor_trust.variables["ansible_host"]
+    ansible_user                 = ansible_host.harbor_trust.variables["ansible_user"]
+    ansible_ssh_private_key_file = ansible_host.harbor_trust.variables["ansible_ssh_private_key_file"]
+    ansible_ssh_common_args      = ansible_host.harbor_trust.variables["ansible_ssh_common_args"]
+    harbor_domain                = local.harbor_hostname
   }
 }

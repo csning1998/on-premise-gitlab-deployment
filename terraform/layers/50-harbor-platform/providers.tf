@@ -29,37 +29,37 @@ terraform {
 }
 
 provider "vault" {
-  address      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443"
+  address      = local.vault_address
   ca_cert_file = abspath("${path.root}/../10-vault-raft/tls/vault-ca.crt")
   token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
 }
 
 provider "kubernetes" {
-  host                   = local.cluster_info.server
-  cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-  client_certificate     = base64decode(local.user_info["client-certificate-data"])
-  client_key             = base64decode(local.user_info["client-key-data"])
+  host                   = local.k8s_provider_auth.host
+  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+  client_certificate     = local.k8s_provider_auth.client_certificate
+  client_key             = local.k8s_provider_auth.client_key
 }
 
 provider "kubectl" {
   load_config_file       = false
-  host                   = local.cluster_info.server
-  cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-  client_certificate     = base64decode(local.user_info["client-certificate-data"])
-  client_key             = base64decode(local.user_info["client-key-data"])
+  host                   = local.k8s_provider_auth.host
+  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+  client_certificate     = local.k8s_provider_auth.client_certificate
+  client_key             = local.k8s_provider_auth.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.cluster_info.server
-    cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-    client_certificate     = base64decode(local.user_info["client-certificate-data"])
-    client_key             = base64decode(local.user_info["client-key-data"])
+    host                   = local.k8s_provider_auth.host
+    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+    client_certificate     = local.k8s_provider_auth.client_certificate
+    client_key             = local.k8s_provider_auth.client_key
   }
 }
 
 provider "harbor" {
-  url      = "https://${var.harbor_hostname}"
+  url      = "https://${local.harbor_hostname}"
   username = "admin"
-  password = data.vault_generic_secret.harbor_vars.data["harbor_admin_password"]
+  password = local.harbor_admin_password
 }

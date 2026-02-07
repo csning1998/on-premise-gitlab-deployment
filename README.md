@@ -1,6 +1,7 @@
 # PoC: Deploy GitLab Helm on HA Kubeadm Cluster using QEMU + KVM with Packer, Terraform, Vault, and Ansible
 
-Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
+> [!NOTE]
+> Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
 
 ## Section 0. Introduction
 

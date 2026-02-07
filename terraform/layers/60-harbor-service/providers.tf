@@ -35,23 +35,23 @@ provider "vault" {
 }
 
 provider "kubernetes" {
-  host                   = local.cluster_info.server
-  cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-  client_certificate     = base64decode(local.user_info["client-certificate-data"])
-  client_key             = base64decode(local.user_info["client-key-data"])
+  host                   = local.k8s_provider_auth.host
+  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+  client_certificate     = local.k8s_provider_auth.client_certificate
+  client_key             = local.k8s_provider_auth.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.cluster_info.server
-    cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-    client_certificate     = base64decode(local.user_info["client-certificate-data"])
-    client_key             = base64decode(local.user_info["client-key-data"])
+    host                   = local.k8s_provider_auth.host
+    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+    client_certificate     = local.k8s_provider_auth.client_certificate
+    client_key             = local.k8s_provider_auth.client_key
   }
 }
 
 provider "harbor" {
-  url      = "https://${var.harbor_hostname}"
+  url      = "https://${local.harbor_hostname}"
   username = "admin"
-  password = data.vault_generic_secret.harbor_vars.data["harbor_admin_password"]
+  password = local.harbor_admin_password
 }

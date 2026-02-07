@@ -1,6 +1,7 @@
 # Service Catalog Definition
 
-Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
+> [!NOTE]
+> Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
 
 ## Overview
 

@@ -1,6 +1,7 @@
 # Service Catalog Definition
 
-Refer to [README.md](README.md) for English (US) version.
+> [!NOTE]
+> Refer to [README.md](README.md) for English (US) version.
 
 ## Overview
 

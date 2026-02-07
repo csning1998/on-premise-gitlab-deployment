@@ -3,13 +3,10 @@
   hosts: harbor_nodes
   become: true
   vars:
-    harbor_domain: "harbor.iac.local"
     certs_dir: "/var/snap/microk8s/current/args/certs.d/{{ harbor_domain }}"
 
   tasks:
     - name: Detect Harbor Ingress IP from Kubernetes
-      # Attempt to fetch Ingress Controller LoadBalancer IP first
-      # If failed, attempt to fetch Harbor Ingress object IP
       shell: |
         export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
         IP=$(kubectl get svc -n ingress-system -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null)
@@ -38,7 +35,7 @@
       shell: |
         echo -n | openssl s_client -connect {{ harbor_domain }}:443 -servername {{ harbor_domain }} 2>/dev/null | openssl x509 > {{ certs_dir }}/ca.crt
       args:
-        creates: "" # Always run to ensure the latest certificate
+        creates: ""
       register: fetch_cert
 
     - name: Create hosts.toml for Containerd
@@ -53,7 +50,6 @@
 
     - name: Restart MicroK8s Containerd (if config or cert changed)
       command: snap restart microk8s.daemon-containerd
-      # Restart when hosts.toml changes or certificate is refreshed
       when: fetch_cert.changed
 
     - name: Verify Connectivity (Allow 200 or 401)
@@ -67,67 +63,3 @@
         - curl_check.stdout == "200" or curl_check.stdout == "401"
       retries: 20
       delay: 5
-
-    - name: Ensure .kube directory exists
-      file:
-        path: "/home/{{ ansible_user }}/.kube"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0755"
-
-    - name: Generate kubeconfig from MicroK8s
-      shell: microk8s config > /home/{{ ansible_user }}/.kube/config
-      args:
-        creates: "/home/{{ ansible_user }}/.kube/config"
-
-    - name: Set permissions on kubeconfig
-      file:
-        path: "/home/{{ ansible_user }}/.kube/config"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0600"
-
-    - name: Get current Harbor Registry ConfigMap
-      kubernetes.core.k8s_info:
-        kubeconfig: "/home/{{ ansible_user }}/.kube/config"
-        kind: ConfigMap
-        name: harbor-registry
-        namespace: harbor
-      register: harbor_cm
-
-    - name: Inject forcepathstyle into config.yml content
-      set_fact:
-        patched_config_content: >-
-          {{ 
-            harbor_cm.resources[0].data['config.yml'] 
-            | regex_replace(
-                '(regionendpoint: .*)', 
-                '\1\n    forcepathstyle: true'
-              ) 
-          }}
-      when: "'forcepathstyle: true' not in harbor_cm.resources[0].data['config.yml']"
-
-    - name: Apply Patched ConfigMap
-      kubernetes.core.k8s:
-        kubeconfig: "/home/{{ ansible_user }}/.kube/config"
-        state: present
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: harbor-registry
-            namespace: harbor
-          data:
-            config.yml: "{{ patched_config_content | default(harbor_cm.resources[0].data['config.yml']) }}"
-      when: "'forcepathstyle: true' not in harbor_cm.resources[0].data['config.yml']"
-
-    - name: Restart Harbor Registry Pods to pick up changes
-      kubernetes.core.k8s:
-        kubeconfig: "/home/{{ ansible_user }}/.kube/config"
-        state: absent
-        kind: Pod
-        namespace: harbor
-        label_selectors:
-          - component=registry
-      when: "'forcepathstyle: true' not in harbor_cm.resources[0].data['config.yml']"
