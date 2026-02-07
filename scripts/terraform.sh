@@ -28,7 +28,12 @@ terraform_artifact_cleaner() {
       continue
     fi
 
-		if [[ "$layer_name" == "20-gitlab-minio" || "$layer_name" == "20-harbor-minio" || "$layer_name" == "50-harbor-provision" ]]; then
+		if [[ 
+			"$layer_name" == "10-vault-raft" || 
+			"$layer_name" == "30-gitlab-minio" || 
+			"$layer_name" == "30-harbor-minio" || 
+			"$layer_name" == "60-harbor-service"
+		]]; then
 			log_print "STEP" "Cleaning Terraform artifacts for layer [${layer_name}]..."
 			rm -rf "${layer_dir}/.terraform.lock.hcl" \
 				"${layer_dir}/terraform.tfstate" \
@@ -116,36 +121,7 @@ terraform_layer_selector() {
       libvirt_resource_purger "${layer}"
       libvirt_service_manager
       terraform_artifact_cleaner "${layer}"
-      
-      if [[ "$layer" == "10-vault-core" ]]; then
-				log_print "WARN" "[Vault Core] Detected complex layer. Initiating 2-Stage Bootstrap..."
-				local tls_dir="${TERRAFORM_DIR}/layers/10-vault-core/tls"
-				local token_file="${ANSIBLE_DIR}/fetched/vault/vault_init_output.json"
-
-				mkdir -p "$tls_dir" && touch "$tls_dir/vault-ca.crt"  # 1. Dummy CA
-				rm -rf "${ANSIBLE_DIR}/fetched/vault"                 # 2. Dummy Token
-
-				# 3. Since refrash is set to false (below), the state files should be removed manually.
-				rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate
-				rm -rf "${TERRAFORM_DIR}"/layers/10-vault-core/terraform.tfstate.backup
-
-				# 4. Create the token file with a placeholder value.
-				mkdir -p "$(dirname "$token_file")"
-				echo '{"root_token": "placeholder-for-bootstrap"}' > "$token_file"
-
-				log_print "TASK" "[Vault Core] Stage 1: Infrastructure Bootstrap (VM + TLS)..."
-				terraform_layer_executor "${layer}" "-target=module.vault_tls_gen -target=module.vault_cluster"          
-				
-				log_print "TASK" "[Vault Core] Stage 2: Service Configuration (PKI)..."
-				# Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.
-				terraform_layer_executor "${layer}" "-target=module.vault_pki_setup -target=module.vault_workload_identity_components -target=module.vault_workload_identity_dependencies -refresh=false"
-				
-				cd "${TERRAFORM_DIR}/layers/10-vault-core" && terraform refresh -var-file=terraform.tfvars
-				cd "${SCRIPT_DIR}" || exit
-      else
-          terraform_layer_executor "${layer}"
-      fi
-      
+      terraform_layer_executor "${layer}"
       execution_time_reporter
       break
     else

@@ -9,17 +9,17 @@ module "hypervisor_kvm" {
 
   # VM Credentials from Vault
   credentials = {
-    username            = data.vault_generic_secret.iac_vars.data["vm_username"]
-    password            = data.vault_generic_secret.iac_vars.data["vm_password"]
-    ssh_public_key_path = data.vault_generic_secret.iac_vars.data["ssh_public_key_path"]
+    username            = var.vm_credentials.username
+    password            = var.vm_credentials.password
+    ssh_public_key_path = var.vm_credentials.ssh_public_key_path
   }
 
   # Libvirt Network & Storage Configuration
   libvirt_infrastructure = {
     network = {
       nat = {
-        name_network = local.nat_net_name
-        name_bridge  = local.nat_bridge_name
+        name_network = var.network_identity.nat_net_name
+        name_bridge  = var.network_identity.nat_bridge_name
         mode         = "nat"
         ips = {
           address = var.infra_config.network.nat.gateway
@@ -28,8 +28,8 @@ module "hypervisor_kvm" {
         }
       }
       hostonly = {
-        name_network = local.hostonly_net_name
-        name_bridge  = local.hostonly_bridge_name
+        name_network = var.network_identity.hostonly_net_name
+        name_bridge  = var.network_identity.hostonly_bridge_name
         mode         = "route"
         ips = {
           address = var.infra_config.network.hostonly.gateway
@@ -38,7 +38,7 @@ module "hypervisor_kvm" {
         }
       }
     }
-    storage_pool_name = local.storage_pool_name
+    storage_pool_name = var.network_identity.storage_pool_name
   }
 }
 
@@ -49,8 +49,8 @@ module "ssh_manager" {
   nodes       = [for k, v in local.all_nodes_map : { key = k, ip = v.ip }]
 
   vm_credentials = {
-    username             = data.vault_generic_secret.iac_vars.data["vm_username"]
-    ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
+    username             = var.vm_credentials.username
+    ssh_private_key_path = var.vm_credentials.ssh_private_key_path
   }
   status_trigger = module.hypervisor_kvm.vm_status_trigger
 }
@@ -66,10 +66,10 @@ module "ansible_runner" {
   }
 
   inventory_content = templatefile("${path.module}/../../../templates/inventory-vault-cluster.yaml.tftpl", {
-    ansible_ssh_user = data.vault_generic_secret.iac_vars.data["vm_username"]
+    ansible_ssh_user = var.vm_credentials.username
     service_name     = var.topology_config.cluster_identity.service_name
 
-    vault_nodes  = var.topology_config.vault_cluster.nodes
+    vault_nodes  = var.topology_config.vault_config.nodes
     haproxy_node = var.topology_config.haproxy_config.nodes
 
     vault_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
@@ -78,13 +78,13 @@ module "ansible_runner" {
   })
 
   vm_credentials = {
-    username             = data.vault_generic_secret.iac_vars.data["vm_username"]
-    ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
+    username             = var.vm_credentials.username
+    ssh_private_key_path = var.vm_credentials.ssh_private_key_path
   }
 
   extra_vars = {
-    "vault_keepalived_auth_pass" = data.vault_generic_secret.infra_vars.data["vault_keepalived_auth_pass"]
-    "vault_haproxy_stats_pass"   = data.vault_generic_secret.infra_vars.data["vault_haproxy_stats_pass"]
+    "vault_keepalived_auth_pass" = var.vault_credentials.vault_keepalived_auth_pass
+    "vault_haproxy_stats_pass"   = var.vault_credentials.vault_haproxy_stats_pass
     "vault_local_tls_source_dir" = var.tls_source_dir
   }
 

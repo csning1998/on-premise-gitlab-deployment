@@ -69,7 +69,7 @@ resource "tls_cert_request" "vault_server" {
       "vault",
       "localhost"
     ],
-    keys(var.vault_cluster.vault_cluster.nodes)
+    keys(var.vault_cluster.vault_config.nodes)
   )
 
   ip_addresses = concat(
@@ -77,7 +77,7 @@ resource "tls_cert_request" "vault_server" {
       "127.0.0.1",
       var.vault_cluster.haproxy_config.virtual_ip
     ],
-    [for n in var.vault_cluster.vault_cluster.nodes : n.ip]
+    [for n in var.vault_cluster.vault_config.nodes : n.ip]
   )
 }
 

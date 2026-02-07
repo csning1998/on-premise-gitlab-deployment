@@ -9,7 +9,7 @@ variable "topology_config" {
     })
 
     # Vault Server Nodes (Map)
-    vault_cluster = object({
+    vault_config = object({
       nodes = map(object({
         ip   = string
         vcpu = number
@@ -33,7 +33,7 @@ variable "topology_config" {
 
   # Vault Raft Quorum
   validation {
-    condition     = length(var.topology_config.vault_cluster.nodes) % 2 != 0
+    condition     = length(var.topology_config.vault_config.nodes) % 2 != 0
     error_message = "Vault node count must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
   }
 
@@ -52,7 +52,7 @@ variable "topology_config" {
   # Vault node hardware specification (vCPU >= 1, RAM >= 1024)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.vault_cluster.nodes :
+      for k, node in var.topology_config.vault_config.nodes :
       node.vcpu >= 1 && node.ram >= 1024
     ])
     error_message = "Vault nodes require at least 1 vCPU and 1024MB RAM."
@@ -103,4 +103,37 @@ variable "tls_source_dir" {
   description = "The absolute path of the tls directory that Ansible needs to read the certificates from."
   type        = string
   default     = "../../../terraform/layers/10-vault-core/tls"
+}
+
+# Network Identity for Naming Policy
+variable "network_identity" {
+  description = "Pre-calculated network and bridge names passed from Layer"
+  type = object({
+    nat_net_name         = string
+    nat_bridge_name      = string
+    hostonly_net_name    = string
+    hostonly_bridge_name = string
+    storage_pool_name    = string
+  })
+}
+
+# Credentials Injection
+variable "vm_credentials" {
+  description = "System level credentials (ssh user, password, keys)"
+  sensitive   = true
+  type = object({
+    username             = string
+    password             = string
+    ssh_public_key_path  = string
+    ssh_private_key_path = string
+  })
+}
+
+variable "vault_credentials" {
+  description = "Database level credentials (patroni, replication)"
+  sensitive   = true
+  type = object({
+    vault_keepalived_auth_pass = string
+    vault_haproxy_stats_pass   = string
+  })
 }

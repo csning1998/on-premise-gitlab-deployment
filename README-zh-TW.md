@@ -133,9 +133,9 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
-    1) 01-base-docker           4) 04-base-postgres         7) 07-base-vault
-    2) 02-base-kubeadm          5) 05-base-redis            8) Build ALL Packer Images
-    3) 03-base-microk8s         6) 06-base-minio            9) Back to Main Menu
+    1) 01A-docker-harbor          4) 04-base-postgres          7) 07-base-vault            10) Build ALL Packer Images
+    2) 02-base-kubeadm            5) 05-base-redis             8) 08-base-haproxy          11) Back to Main Menu
+    3) 03-base-microk8s           6) 06-base-minio             9) 09-base-etcd
 
     [INPUT] Select a Packer build to run:
     ```
@@ -146,10 +146,9 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     [INPUT] Please select an action: 10
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
-    1) 10-vault-core          5) 20-harbor-minio       9) 30-harbor-microk8s    13) 90-github-meta
-    2) 20-gitlab-minio        6) 20-harbor-postgres    10) 40-gitlab-platform   14) Back to Main Menu
-    3) 20-gitlab-postgres     7) 20-harbor-redis       11) 40-harbor-platform
-    4) 20-gitlab-redis        8) 30-gitlab-kubeadm     12) 50-harbor-provision
+    1) 10-vault-raft         4) 30-gitlab-minio      7) 30-harbor-minio     10) 40-gitlab-kubeadm   13) 50-harbor-platform  16) 90-github-meta
+    2) 20-vault-pki          5) 30-gitlab-postgres   8) 30-harbor-postgres  11) 40-harbor-microk8s  14) 60-gitlab-service   17) Back to Main Menu
+    3) 30-dev-harbor-core    6) 30-gitlab-redis      9) 30-harbor-redis     12) 50-gitlab-platform  15) 60-harbor-service
 
     [INPUT] Select a Terraform layer to REBUILD:
     ```
@@ -540,7 +539,7 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
             ```shell
             export VAULT_ADDR="https://172.16.136.250:443"
-            export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
+            export VAULT_CACERT="${PWD}/terraform/layers/10-vault-raft/tls/vault-ca.crt"
             export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
             vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
             ```
@@ -554,7 +553,7 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
         3. 若需保持 shell 環境乾淨，可使用單行指令：
 
             ```shell
-            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-raft/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
             ```
 
         在 Development Vault 及其他機密操作方式相同

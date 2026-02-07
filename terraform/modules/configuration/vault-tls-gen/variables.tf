@@ -2,7 +2,7 @@
 variable "vault_cluster" {
   description = "Vault Cluster (used for SANs)"
   type = object({
-    vault_cluster = object({
+    vault_config = object({
       nodes = map(object({
         ip = string
       }))
