@@ -4,7 +4,6 @@ all:
     ansible_user: "${ansible_ssh_user}"
     service_identifier: "${service_name}"
     minio_cluster_name: "${service_name}-minio-cluster"
-    minio_root_user: "${minio_root_user}"
 
     haproxy_frontend_port_api: "${haproxy_frontend_port_api}"
     haproxy_frontend_port_console: "${haproxy_frontend_port_console}"
@@ -15,7 +14,6 @@ all:
     minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
     minio_tls_node_subnet: "${minio_tls_node_subnet}"
     minio_service_domain: "${minio_service_domain}"
-    minio_pki_role_name: "${minio_pki_role_name}"
     minio_nat_subnet_prefix: "${minio_nat_subnet_prefix}"
 
   children:

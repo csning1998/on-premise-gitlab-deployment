@@ -1,9 +1,9 @@
 
 harbor_postgres_compute = {
   cluster_identity = {
+    layer_number = 20
     service_name = "harbor"
     component    = "postgres"
-    cluster_name = "20-harbor-postgres"
   }
 
   postgres_config = {

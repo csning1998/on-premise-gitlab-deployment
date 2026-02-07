@@ -86,7 +86,7 @@
   block:
     - name: "Step B1. Retrieve Harbor Credentials"
       community.hashi_vault.vault_kv2_get:
-        url: "{{ vault_address }}"
+        url: "{{ vault_server_address }}"
         path: "on-premise-gitlab-deployment/dev-harbor/app"
         engine_mount_point: "secret"
         auth_method: approle

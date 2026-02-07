@@ -2,9 +2,9 @@
 gitlab_redis_compute = {
 
   cluster_identity = {
+    layer_number = 20
     service_name = "gitlab"
     component    = "redis"
-    cluster_name = "20-gitlab-redis"
   }
 
   redis_config = {

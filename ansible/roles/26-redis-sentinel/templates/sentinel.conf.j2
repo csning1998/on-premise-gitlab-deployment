@@ -1,9 +1,6 @@
-{% if redis_enable_tls | bool %}
+
 port 0
 tls-port 26379
-{% else %}
-port 26379
-{% endif %}
 
 daemonize no
 loglevel notice
@@ -17,13 +14,11 @@ protected-mode yes
 # Systemd Integration
 supervised systemd
 
-{% if redis_enable_tls | bool %}
 # TLS Configuration same as Redis Server
 tls-cert-file /etc/redis/certs/server.crt
 tls-key-file /etc/redis/certs/server.key
 tls-ca-cert-file /etc/redis/certs/ca.crt
 tls-replication yes
-{% endif %}
 
 # Monitor Configuration
 sentinel monitor {{ sentinel_master_name }} {{ redis_initial_master_ip }} {{ haproxy_stats_port }} {{ sentinel_quorum }}

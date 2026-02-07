@@ -3,9 +3,9 @@ variable "dev_harbor_compute" {
   description = "Compute topology for Dev Harbor service"
   type = object({
     cluster_identity = object({
+      layer_number = number
       service_name = string
       component    = string
-      cluster_name = string
     })
 
     # Dev Harbor Data Nodes

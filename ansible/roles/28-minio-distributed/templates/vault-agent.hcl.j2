@@ -27,7 +27,7 @@ auto_auth {
 template {
   destination = "/etc/minio/certs/public.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ minio_pki_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
@@ -38,7 +38,7 @@ EOH
 template {
   destination = "/etc/minio/certs/private.key"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ minio_pki_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.private_key }}' }}
 {{ '{{- end -}}' }}
 EOH
@@ -49,7 +49,7 @@ EOH
 template {
   destination = "/etc/minio/certs/CAs/root_ca.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ minio_pki_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH

@@ -2,28 +2,27 @@
 # Call the Identity Module to generate AppRole & Secret ID
 resource "vault_approle_auth_backend_role_secret_id" "this" {
   backend   = data.terraform_remote_state.vault_core.outputs.auth_backend_paths["approle"]
-  role_name = data.terraform_remote_state.vault_core.outputs.workload_identities_dependencies[local.lookup_key].role_name
+  role_name = data.terraform_remote_state.vault_core.outputs.workload_identities_components[local.lookup_key].role_name
 }
 
-module "postgres_gitlab" {
-  source = "../../modules/service-ha/patroni-cluster"
+module "dev_harbor" {
+  source = "../../modules/services-docker/harbor"
 
-  # Topology
   topology_config = merge(
-    var.gitlab_postgres_compute,
+    var.dev_harbor_compute,
     {
       cluster_identity = merge(
-        var.gitlab_postgres_compute.cluster_identity,
+        var.dev_harbor_compute.cluster_identity,
         {
           cluster_name = local.cluster_name
         }
       )
     }
   )
-  infra_config   = var.gitlab_postgres_infra
+
+  infra_config   = var.dev_harbor_infra
   service_domain = local.service_domain
 
-  # Network Identity
   network_identity = {
     nat_net_name         = local.nat_net_name
     nat_bridge_name      = local.nat_bridge_name
@@ -40,16 +39,16 @@ module "postgres_gitlab" {
     ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
   }
 
-  db_credentials = {
-    superuser_password   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
-    replication_password = data.vault_generic_secret.db_vars.data["pg_replication_password"]
-    vrrp_secret          = data.vault_generic_secret.db_vars.data["pg_vrrp_secret"]
+  service_credentials = {
+    harbor_admin_password = data.vault_generic_secret.db_vars.data["dev_harbor_admin_password"]
+    harbor_pg_db_password = data.vault_generic_secret.db_vars.data["dev_harbor_pg_db_password"]
   }
 
   vault_agent_config = {
-    role_id     = data.terraform_remote_state.vault_core.outputs.workload_identities_dependencies[local.lookup_key].role_id
-    secret_id   = vault_approle_auth_backend_role_secret_id.this.secret_id
-    ca_cert_b64 = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
-    role_name   = local.vault_role_name
+    role_id              = data.terraform_remote_state.vault_core.outputs.workload_identities_components[local.lookup_key].role_id
+    secret_id            = vault_approle_auth_backend_role_secret_id.this.secret_id
+    ca_cert_b64          = filebase64("${path.root}/../10-vault-core/tls/vault-ca.crt")
+    role_name            = local.vault_role_name
+    vault_server_address = "https://${data.terraform_remote_state.vault_core.outputs.vault_ha_virtual_ip}:443"
   }
 }

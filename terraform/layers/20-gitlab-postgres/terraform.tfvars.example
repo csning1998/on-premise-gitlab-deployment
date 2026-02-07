@@ -1,9 +1,9 @@
 
 gitlab_postgres_compute = {
   cluster_identity = {
+    layer_number = 20
     service_name = "gitlab"
     component    = "postgres"
-    cluster_name = "20-gitlab-postgres"
   }
 
   # Postgres Data Nodes

@@ -1,4 +1,9 @@
 
+output "gitlab_minio_cluster_name" {
+  description = "GitLab MinIO cluster name."
+  value       = local.cluster_name
+}
+
 output "gitlab_minio_ip_list" {
   description = "List of MinIO node IPs for GitLab"
   value       = [for node in var.gitlab_minio_compute.minio_config.nodes : node.ip]

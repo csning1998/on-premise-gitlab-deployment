@@ -1,9 +1,9 @@
 
 harbor_redis_compute = {
   cluster_identity = {
+    layer_number = 20
     service_name = "harbor"
     component    = "redis"
-    cluster_name = "20-harbor-redis"
   }
 
   redis_config = {

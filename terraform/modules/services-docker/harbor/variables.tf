@@ -65,23 +65,47 @@ variable "service_domain" {
   type        = string
 }
 
-variable "vault_address" {
-  description = "The address of the Production Vault"
-  type        = string
+# Network Identity for Naming Policy
+variable "network_identity" {
+  description = "Pre-calculated network and bridge names passed from Layer"
+  type = object({
+    nat_net_name         = string
+    nat_bridge_name      = string
+    hostonly_net_name    = string
+    hostonly_bridge_name = string
+    storage_pool_name    = string
+  })
 }
 
-variable "vault_ca_cert_b64" {
-  description = "Base64 encoded CA certificate for Vault Agent"
-  type        = string
+# Credentials Injection
+variable "vm_credentials" {
+  description = "System level credentials (ssh user, password, keys)"
+  sensitive   = true
+  type = object({
+    username             = string
+    password             = string
+    ssh_public_key_path  = string
+    ssh_private_key_path = string
+  })
 }
 
-variable "vault_role_name" {
-  description = "The AppRole name to create in Vault (e.g. gitlab-postgres-role, harbor-postgres-role)"
-  type        = string
+variable "service_credentials" {
+  description = "Service level credentials (patroni, replication)"
+  sensitive   = true
+  type = object({
+    harbor_admin_password = string
+    harbor_pg_db_password = string
+  })
 }
 
-variable "vault_pki_mount_path" {
-  description = "The mount path for the PKI backend in Vault"
-  type        = string
-  default     = "pki/prod"
+variable "vault_agent_config" {
+  description = "Vault Agent Configuration"
+  sensitive   = true
+  type = object({
+    role_id              = string
+    secret_id            = string
+    ca_cert_b64          = string
+    role_name            = string # PKI Role Name
+    vault_server_address = string # Vault Server Address
+  })
 }

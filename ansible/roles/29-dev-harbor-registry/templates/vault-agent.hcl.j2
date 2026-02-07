@@ -2,7 +2,7 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_address }}"
+  address = "{{ vault_server_address }}"
   ca_cert = "{{ vault_agent_config_dir }}/vault-ca.crt"
 }
 
@@ -27,7 +27,7 @@ auto_auth {
 template {
   destination = "{{ harbor_cert_path }}"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{- end -}}' }}
 EOH
@@ -38,7 +38,7 @@ EOH
 template {
   destination = "{{ harbor_key_path }}"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.private_key }}' }}
 {{ '{{- end -}}' }}
 EOH
@@ -49,7 +49,7 @@ EOH
 template {
   destination = "{{ harbor_ca_path }}"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ dev_harbor_pki_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ dev_harbor_service_domain ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH

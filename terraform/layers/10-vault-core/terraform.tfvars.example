@@ -11,7 +11,7 @@ vault_compute = {
     component    = "core"
     cluster_name = "10-vault-core"
   }
-  
+
   vault_cluster = {
     nodes = {
       # Single Mode
@@ -49,4 +49,66 @@ vault_infra = {
     }
   }
   allowed_subnet = "172.16.136.0/24"
+}
+
+service_catalog = {
+  "gitlab" = {
+    runtime = "kubeadm"
+    stage   = "production"
+
+    components = {
+      "frontend" = { subdomains = ["gitlab", "kas", "minio"] }
+    }
+
+    dependencies = {
+      "postgres" = { service_name = "postgres", runtime = "baremetal" }
+      "redis"    = { service_name = "redis", runtime = "baremetal" }
+      "minio"    = { service_name = "minio", runtime = "baremetal" }
+    }
+  }
+
+  "harbor" = {
+    runtime = "microk8s"
+    stage   = "production"
+
+    components = {
+      "frontend" = { subdomains = ["harbor", "notary.harbor"] }
+    }
+
+    dependencies = {
+      "postgres" = { service_name = "postgres", runtime = "baremetal" }
+      "redis"    = { service_name = "redis", runtime = "baremetal" }
+      "minio"    = { service_name = "minio", runtime = "baremetal" }
+    }
+  }
+
+  "dev-harbor" = {
+    runtime = "docker"
+    stage   = "development"
+
+    components = {
+      "frontend" = { subdomains = ["dev-harbor", "notary.dev-harbor"] }
+    }
+
+    dependencies = {}
+  }
+}
+
+vault_auth_backends = {
+  "approle" = {
+    type = "approle"
+    path = "approle"
+  }
+  "kubernetes" = {
+    type = "kubernetes"
+    path = "kubernetes"
+  }
+}
+
+vault_pki_engine_config = {
+  path                = "pki/prod"
+  root_ca_common_name = "on-premise-gitlab-deployment-root-ca"
+
+  default_lease_ttl_seconds = 60 * 60 * 24       # 1 Day
+  max_lease_ttl_seconds     = 60 * 60 * 24 * 365 # 1 Year
 }

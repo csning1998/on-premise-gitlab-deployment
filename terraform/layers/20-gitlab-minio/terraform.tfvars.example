@@ -2,9 +2,9 @@
 gitlab_minio_compute = {
 
   cluster_identity = {
+    layer_number = 20
     service_name = "gitlab"
     component    = "minio"
-    cluster_name = "20-gitlab-minio"
   }
 
   minio_config = {

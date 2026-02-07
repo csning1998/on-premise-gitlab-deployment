@@ -14,7 +14,6 @@ supervised systemd
 dir /var/lib/redis
 
 # TLS Configuration for GitLab.
-{% if redis_enable_tls | bool %}
 port 0
 tls-port {{ haproxy_stats_port }}
 tls-cert-file /etc/redis/certs/server.crt
@@ -22,10 +21,6 @@ tls-key-file /etc/redis/certs/server.key
 tls-ca-cert-file /etc/redis/certs/ca.crt
 tls-auth-clients no 
 tls-replication yes
-{% else %}
-# TLS disabled for Harbor.
-port {{ haproxy_stats_port }}
-{% endif %}
 
 # Persistence
 appendonly yes

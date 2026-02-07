@@ -1,4 +1,9 @@
 
+output "harbor_postgres_cluster_name" {
+  description = "Harbor Postgres cluster name."
+  value       = local.cluster_name
+}
+
 output "harbor_postgres_db_ip_list" {
   description = "List of Postgres node IPs for Harbor"
   value       = [for node in var.harbor_postgres_compute.postgres_config.nodes : node.ip]

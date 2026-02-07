@@ -31,16 +31,7 @@
     - /var/run/redis
     - /var/lib/redis
 
-- name: "Section C-Alt: Stop Vault Agent since TLS is disabled for Redis"
-  when: not (redis_enable_tls | bool)
-  ansible.builtin.systemd:
-    name: vault-agent
-    state: stopped
-    enabled: false
-  ignore_errors: true
-
 - name: "Section C: Configure Vault Agent"
-  when: redis_enable_tls | bool
   block:
     - name: "Step C0. Ensure Vault Binary is installed"
       ansible.builtin.include_role:

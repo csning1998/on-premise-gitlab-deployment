@@ -1,4 +1,9 @@
 
+output "harbor_redis_cluster_name" {
+  description = "Harbor Redis cluster name."
+  value       = local.cluster_name
+}
+
 output "harbor_redis_ip_list" {
   description = "List of Redis node IPs for Harbor"
   value       = [for node in var.harbor_redis_compute.redis_config.nodes : node.ip]

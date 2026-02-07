@@ -3,9 +3,9 @@ variable "harbor_redis_compute" {
   description = "Compute topology for Harbor Redis service"
   type = object({
     cluster_identity = object({
+      layer_number = number
       service_name = string
       component    = string
-      cluster_name = string
     })
 
     redis_config = object({

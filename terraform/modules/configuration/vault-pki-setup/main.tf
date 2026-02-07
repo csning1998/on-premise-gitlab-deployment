@@ -1,12 +1,19 @@
 
+resource "vault_auth_backend" "this" {
+  for_each = var.auth_backends
+
+  type = each.value.type
+  path = each.value.path
+}
+
 # PKI Engine
 resource "vault_mount" "pki_prod" {
-  path        = var.vault_pki_path
+  path        = var.pki_engine_config.path
   type        = "pki"
   description = "Production PKI Engine for internal services"
 
-  default_lease_ttl_seconds = 60 * 60 * 24       # 1 Day
-  max_lease_ttl_seconds     = 60 * 60 * 24 * 365 # 1 Year
+  default_lease_ttl_seconds = var.pki_engine_config.default_lease_ttl_seconds
+  max_lease_ttl_seconds     = var.pki_engine_config.max_lease_ttl_seconds
 }
 
 # Root CA
@@ -14,7 +21,7 @@ resource "vault_pki_secret_backend_root_cert" "prod_root_ca" {
   backend = vault_mount.pki_prod.path
 
   type                 = "internal"
-  common_name          = "on-premise-gitlab-deployment-root-ca"
+  common_name          = var.root_ca_common_name
   ttl                  = 60 * 60 * 24 * 365 # 1 Year
   format               = "pem"
   private_key_format   = "der"
@@ -29,16 +36,4 @@ resource "vault_pki_secret_backend_config_urls" "config_urls" {
 
   issuing_certificates    = ["${var.vault_addr}/v1/${vault_mount.pki_prod.path}/ca"]
   crl_distribution_points = ["${var.vault_addr}/v1/${vault_mount.pki_prod.path}/crl"]
-}
-
-# Enable Global AppRole Auth Method
-resource "vault_auth_backend" "approle" {
-  type = "approle"
-  path = "approle"
-}
-
-# Kubernetes Auth Method
-resource "vault_auth_backend" "kubernetes" {
-  type = "kubernetes"
-  path = "kubernetes"
 }

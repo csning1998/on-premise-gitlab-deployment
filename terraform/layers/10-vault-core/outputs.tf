@@ -4,42 +4,46 @@ output "vault_ha_virtual_ip" {
   value       = var.vault_compute.haproxy_config.virtual_ip
 }
 
-output "vault_ca_cert" {
-  description = "The Root CA Certificate content (Public Key) of the Vault Cluster"
-  value       = module.vault_tls_gen.ca_cert_pem
-  sensitive   = false
-}
-
-output "internal_pki_ca_cert" {
-  description = "The CA Certificate used for Internal Services (Redis/Postgres)"
-  value       = module.vault_pki_setup.pki_root_ca_certificate
+output "vault_certificates" {
+  description = "The Certificates content of the Vault Cluster"
+  value = {
+    root_ca = module.vault_pki_setup.pki_root_ca_certificate
+    ca_cert = module.vault_tls_gen.ca_cert_pem # for PKI
+  }
 }
 
 output "pki_configuration" {
-  description = "Centralized PKI configuration containing Role Names and Allowed Domains"
+  description = "PKI Configuration Summary"
   value = {
-    vault_pki_path = module.vault_pki_setup.vault_pki_path
+    path             = module.vault_pki_setup.vault_pki_path
+    dependency_roles = module.vault_pki_setup.dependency_roles
+    component_roles  = module.vault_pki_setup.component_roles
+  }
+}
 
-    # Part A: Role Names for Vault Agent / Cert-Manager
-    postgres_roles = module.vault_pki_setup.postgres_role_names
-    redis_roles    = module.vault_pki_setup.redis_role_names
-    minio_roles    = module.vault_pki_setup.minio_role_names
-
-    ingress_roles = {
-      dev_harbor = module.vault_pki_setup.dev_harbor_ingress_role_name
-      harbor     = module.vault_pki_setup.harbor_ingress_role_name
-      gitlab     = module.vault_pki_setup.gitlab_ingress_role_name
-    }
-
-    # Part B: Allowed Domains for App Config / Ingress
-    postgres_domains = module.vault_pki_setup.postgres_role_domains
-    redis_domains    = module.vault_pki_setup.redis_role_domains
-    minio_domains    = module.vault_pki_setup.minio_role_domains
-
-    ingress_domains = {
-      dev_harbor = module.vault_pki_setup.dev_harbor_ingress_domains
-      harbor     = module.vault_pki_setup.harbor_ingress_domains
-      gitlab     = module.vault_pki_setup.gitlab_ingress_domains
+output "workload_identities_components" {
+  description = "AppRole credentials for Component services"
+  value = {
+    for service_name, mod in module.vault_workload_identity_components : service_name => {
+      role_id   = mod.approle_role_id
+      role_name = mod.approle_name
+      auth_path = mod.approle_path
     }
   }
+}
+
+output "workload_identities_dependencies" {
+  description = "AppRole credentials for Dependency services"
+  value = {
+    for service_name, mod in module.vault_workload_identity_dependencies : service_name => {
+      role_id   = mod.approle_role_id
+      role_name = mod.approle_name
+      auth_path = mod.approle_path
+    }
+  }
+}
+
+output "auth_backend_paths" {
+  description = "Map of enabled Auth Backend paths"
+  value       = module.vault_pki_setup.auth_backend_paths
 }

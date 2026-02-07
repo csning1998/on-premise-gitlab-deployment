@@ -1,4 +1,10 @@
 
+
+output "gitlab_redis_cluster_name" {
+  description = "GitLab Redis cluster name."
+  value       = local.cluster_name
+}
+
 output "gitlab_redis_ip_list" {
   description = "List of Redis node IPs for GitLab"
   value = [

@@ -1,4 +1,9 @@
 
+output "harbor_minio_cluster_name" {
+  description = "Harbor MinIO cluster name."
+  value       = local.cluster_name
+}
+
 output "harbor_minio_ip_list" {
   description = "List of MinIO node IPs for Harbor"
   value       = [for node in var.harbor_minio_compute.minio_config.nodes : node.ip]

@@ -138,7 +138,7 @@ terraform_layer_selector() {
 				
 				log_print "TASK" "[Vault Core] Stage 2: Service Configuration (PKI)..."
 				# Since Stage 1 just done and to prevent drift bug from Provider, Terraform does not need to scan KVM.
-				terraform_layer_executor "${layer}" "-target=module.vault_pki_setup -refresh=false"
+				terraform_layer_executor "${layer}" "-target=module.vault_pki_setup -target=module.vault_workload_identity_components -target=module.vault_workload_identity_dependencies -refresh=false"
 				
 				cd "${TERRAFORM_DIR}/layers/10-vault-core" && terraform refresh -var-file=terraform.tfvars
 				cd "${SCRIPT_DIR}" || exit
