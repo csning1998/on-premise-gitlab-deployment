@@ -6,6 +6,7 @@
 declare -A DOMAIN_MAP=(
 	["10-vault-raft"]="vault-raft"
 
+	["30-dev-harbor-core"]="dev-harbor"
 	["30-gitlab-postgres"]="gitlab-postgres-"
 	["30-gitlab-redis"]="gitlab-redis-"
 	["30-gitlab-minio"]="gitlab-minio-"
@@ -20,6 +21,7 @@ declare -A DOMAIN_MAP=(
 # Storage Pool names.
 declare -A POOL_MAP=(
 	["10-vault-raft"]="iac-vault-raft"
+	["30-dev-harbor-core"]="iac-dev-harbor-frontend"
 	["30-gitlab-postgres"]="iac-gitlab-postgres"
 	["30-gitlab-redis"]="iac-gitlab-redis"
 	["30-gitlab-minio"]="iac-gitlab-minio"
@@ -34,6 +36,7 @@ declare -A POOL_MAP=(
 # Network prefixes.
 declare -A NET_MAP=(
 	["10-vault-raft"]="iac-vault-raft"
+	["30-dev-harbor-core"]="iac-dev-harbor-frontend"
 	["30-gitlab-postgres"]="iac-gitlab-postgres"
 	["30-gitlab-redis"]="iac-gitlab-redis"
 	["30-gitlab-minio"]="iac-gitlab-minio"

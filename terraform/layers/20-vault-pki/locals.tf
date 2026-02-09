@@ -54,3 +54,18 @@ locals {
     }
   ]...)
 }
+
+locals {
+  # Specific Vault Policy for some Workload Identity
+  # Key must correspond to service_catalog of "${service_name}-${component_name}"
+
+  # Authorize Ansible using AppRole identity to read secrets from Vault.
+  workload_identity_extra_policies = {
+    "dev-harbor-frontend" = <<EOT
+# Allow reading Harbor related App Secrets (KV v2)
+path "secret/data/on-premise-gitlab-deployment/dev-harbor/*" {
+  capabilities = ["read"]
+}
+EOT
+  }
+}

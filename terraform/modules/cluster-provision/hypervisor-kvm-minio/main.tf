@@ -221,4 +221,11 @@ resource "libvirt_domain" "nodes" {
       }
     }
   }
+
+  # 4. Lifecycle Management: Ignore Changes for Devices
+  lifecycle {
+    ignore_changes = [
+      devices,
+    ]
+  }
 }

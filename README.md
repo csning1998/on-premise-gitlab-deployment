@@ -110,14 +110,12 @@ The `entry.sh` script located in the root directory handles all service initiali
 [OK] Production Vault (Layer10): Running (Unsealed)
 ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
-2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
-3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
-4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
-5) Generate SSH Key                               13) Switch Environment Strategy
-6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
-7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
-8) Verify IaC Environment                         16) Quit
+1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
+2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
+3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
+4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
+5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
+6) Setup KVM / QEMU for Native                    12) Verify SSH
 
 [INPUT] Please select an action:
 ```
@@ -151,7 +149,7 @@ Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packe
     2) 20-vault-pki          5) 30-gitlab-postgres   8) 30-harbor-postgres  11) 40-harbor-microk8s  14) 60-gitlab-service   17) Back to Main Menu
     3) 30-dev-harbor-core    6) 30-gitlab-redis      9) 30-harbor-redis     12) 50-gitlab-platform  15) 60-harbor-service
 
-    [INPUT] Select a Terraform layer to REBUILD:
+    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
 3. When selecting `11) Rebuild Layer via Ansible`.
@@ -616,8 +614,9 @@ Successful execution and the display of virtual machines—regardless of whether
     To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use option `11) Rebuild Layer via Ansible`.
 
 4. **Resource Cleanup**:
-    - **`14) Purge All Libvirt Resources`**: Used to clear virtualization resources while maintaining the project state. This executes `libvirt_resource_purger "all"`, which deletes all guest VMs, networks, and storage pools created by this project, while preserving Packer images and Terraform local state files.
-    - **`15) Purge All Packer and Terraform Resources`**: Used for a complete cleanup of all artifacts. This deletes all Packer output images and all Terraform local state files, resetting the project environment to a pristine state.
+    - **`14) Purge Specific Terraform Layer`**: Destroys a specific layer's virtual machines, associated libvirt resources (networks, storage pools), and its Terraform state file. This allows for a clean reprovisioning of that specific layer.
+    - **`15) Purge All Libvirt Resources`**: Used to clear virtualization resources while maintaining the project state. This executes `libvirt_resource_purger "all"`, which deletes all guest VMs, networks, and storage pools created by this project, while preserving Packer images and Terraform local state files.
+    - **`16) Purge All Packer and Terraform Resources`**: Used for a complete cleanup of all artifacts. This deletes all Packer output images and all Terraform local state files, resetting the project environment to a pristine state.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 

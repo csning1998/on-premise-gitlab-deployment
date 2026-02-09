@@ -61,7 +61,7 @@ options+=("[DEV] Set up TLS for Dev Vault (Local)")
 options+=("[DEV] Initialize Dev Vault (Local)")
 options+=("[DEV] Unseal Dev Vault (Local)")
 
-# [Prod Vault - Service Provider]
+# [Production Vault - PKI Service Provider]
 options+=("[PROD] Unseal Production Vault (via Ansible)")
 
 # [Infrastructure]
@@ -73,9 +73,10 @@ options+=("Verify IaC Environment")
 # [Operations]
 options+=("Build Packer Base Image")
 options+=("Provision Terraform Layer")
-options+=("Rebuild Layer via Ansible")
+options+=("Rebuild Terraform Layer via Ansible")
 options+=("Verify SSH")
 options+=("Switch Environment Strategy")
+options+=("Purge Specific Terraform Layer")
 
 # [Reset]
 options+=("Purge All Libvirt Resources")
@@ -95,18 +96,20 @@ select opt in "${options[@]}"; do
       vault_dev_init_handler
       break
       ;;
+
+		# Development Vault for Bootstrapping Packer / Production Vault
     "[DEV] Unseal Dev Vault (Local)")
       vault_dev_unseal_handler
       break
       ;;
     
-    # --- Prod Vault ---
+    # Production Vault with PKI Functionality
     "[PROD] Unseal Production Vault (via Ansible)")
       vault_prod_unseal_trigger
       break
       ;;
 
-    # --- Infrastructure ---
+    # Infrastructure
     "Generate SSH Key")
       log_print "STEP" "Generate SSH Key for this project..."
       ssh_key_generator_handler
@@ -126,7 +129,7 @@ select opt in "${options[@]}"; do
       break
       ;;
 
-    # --- Operations ---
+    # Operations
     "Build Packer Base Image")
       libvirt_service_manager
       packer_menu_handler
@@ -137,7 +140,7 @@ select opt in "${options[@]}"; do
       terraform_layer_selector
       break
       ;;
-    "Rebuild Layer via Ansible")
+    "Rebuild Terraform Layer via Ansible")
       if ssh_key_verifier; then
         libvirt_service_manager
         ansible_menu_handler
@@ -152,8 +155,12 @@ select opt in "${options[@]}"; do
     "Switch Environment Strategy")
       strategy_switch_handler
       ;;
-
-    # --- Reset ---
+    "Purge Specific Terraform Layer")
+      libvirt_service_manager
+      terraform_layer_purger_selector
+      break
+      ;;
+    # Reset
     "Purge All Libvirt Resources")
       if manual_confirmation_prompter "Libvirt resources"; then
         libvirt_service_manager

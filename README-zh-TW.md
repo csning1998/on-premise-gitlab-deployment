@@ -110,14 +110,12 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 [OK] Production Vault (Layer10): Running (Unsealed)
 ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          9) Build Packer Base Image
-2) [DEV] Initialize Dev Vault (Local)             10) Provision Terraform Layer
-3) [DEV] Unseal Dev Vault (Local)                 11) Rebuild Layer via Ansible
-4) [PROD] Unseal Production Vault (via Ansible)   12) Verify SSH
-5) Generate SSH Key                               13) Switch Environment Strategy
-6) Setup KVM / QEMU for Native                    14) Purge All Libvirt Resources
-7) Setup Core IaC Tools                           15) Purge All Packer and Terraform Resources
-8) Verify IaC Environment                         16) Quit
+1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
+2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
+3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
+4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
+5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
+6) Setup KVM / QEMU for Native                    12) Verify SSH
 
 [INPUT] Please select an action:
 ```
@@ -151,7 +149,7 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     2) 20-vault-pki          5) 30-gitlab-postgres   8) 30-harbor-postgres  11) 40-harbor-microk8s  14) 60-gitlab-service   17) Back to Main Menu
     3) 30-dev-harbor-core    6) 30-gitlab-redis      9) 30-harbor-redis     12) 50-gitlab-platform  15) 60-harbor-service
 
-    [INPUT] Select a Terraform layer to REBUILD:
+    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
 3. 選 `11) Rebuild Layer via Ansible` 時
@@ -616,8 +614,9 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
 
 4. **資源清理**：
-    - **`14) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境。這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
-    - **`15) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts。這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
+    - **`14) Purge Specific Terraform Layer`** 主要用於清空特定 Terraform Layer 的虛擬機、儲存空間、網卡、以及 Terraform 的 state 檔案
+    - **`15) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境。這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
+    - **`16) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts。這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 

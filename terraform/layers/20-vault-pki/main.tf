@@ -23,6 +23,7 @@ module "vault_workload_identity_components" {
   vault_role_name    = each.value.name
   pki_mount_path     = module.vault_pki_setup.vault_pki_path
   approle_mount_path = module.vault_pki_setup.auth_backend_paths["approle"]
+  extra_policy_hcl   = lookup(local.workload_identity_extra_policies, each.key, "")
 }
 
 module "vault_workload_identity_dependencies" {

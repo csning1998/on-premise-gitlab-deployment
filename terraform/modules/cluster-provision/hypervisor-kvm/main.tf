@@ -113,6 +113,7 @@ resource "libvirt_volume" "cloud_init_iso" {
 }
 
 resource "libvirt_domain" "nodes" {
+
   for_each = var.vm_config.all_nodes_map
 
   # 1. Basic Configuration (Required)
@@ -202,5 +203,12 @@ resource "libvirt_domain" "nodes" {
     video = {
       type = "vga"
     }
+  }
+
+  # 4. Lifecycle Management: Ignore Changes for Devices
+  lifecycle {
+    ignore_changes = [
+      devices,
+    ]
   }
 }
