@@ -15,7 +15,6 @@ locals {
 
 # for platform-trust-engine module
 locals {
-
   harbor_hostname = data.terraform_remote_state.vault_pki.outputs.pki_configuration.component_roles["harbor-frontend"].allowed_domains[0]
 
   # K8s API Endpoint for Vault Callback

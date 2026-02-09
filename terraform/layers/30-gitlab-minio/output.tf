@@ -28,3 +28,8 @@ output "gitlab_minio_haproxy_ports" {
     backend_port_console  = var.gitlab_minio_compute.haproxy_config.backend_port_console
   }
 }
+
+output "gitlab_minio_tenants" {
+  description = "GitLab MinIO tenants"
+  value       = var.gitlab_minio_tenants
+}

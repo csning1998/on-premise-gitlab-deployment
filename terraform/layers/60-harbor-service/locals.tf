@@ -13,8 +13,8 @@ locals {
   }
 
   # Get Issuer Information from Layer 50
-  issuer_name = data.terraform_remote_state.harbor_platform.outputs.platform_issuer_name
-  issuer_kind = data.terraform_remote_state.harbor_platform.outputs.platform_issuer_kind
+  issuer_name = data.terraform_remote_state.harbor_platform.outputs.trust_context.issuer_name
+  issuer_kind = data.terraform_remote_state.harbor_platform.outputs.trust_context.issuer_kind
 }
 
 # Vault Generic Secrets

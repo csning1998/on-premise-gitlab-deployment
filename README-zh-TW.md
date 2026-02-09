@@ -667,9 +667,9 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 - Prod Vault：`https://vault.iac.local`
 - Harbor：`https://harbor.iac.local`
-- Harhor MinIO Console：`https://s3.harbor.iac.local`
-- GitLab：`https://gitlab.iac.local` （**WIP**）
-- GitLab MinIO Console：`https://s3.gitlab.iac.local` （**WIP**）
+- Harhor MinIO Console：`https://minio.harbor.iac.local`
+- GitLab：`https://gitlab.iac.local`
+- GitLab MinIO Console：`https://minio.gitlab.iac.local`
 
 這樣需要做兩件事情，依序如下：
 
@@ -679,8 +679,8 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     172.16.134.250  gitlab.iac.local
     172.16.135.250  harbor.iac.local notary.harbor.iac.local
     172.16.136.250  vault.iac.local
-    172.16.139.250  s3.harbor.iac.local
-    172.16.142.250  s3.gitlab.iac.local
+    172.16.139.250  minio.harbor.iac.local
+    172.16.142.250  minio.gitlab.iac.local
     ```
 
 2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA。這裡可以使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/10-vault-core/tls` 路徑內
@@ -722,7 +722,7 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 4.  從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA
 
     ```shell
-    curl -I https://s3.harbor.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.iac.local:9000/minio/health/live
     ```
 
     若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定

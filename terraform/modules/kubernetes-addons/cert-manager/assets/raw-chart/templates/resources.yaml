@@ -1,5 +1,0 @@
----
-{{- range .Values.resources }}
-{{ toYaml . }}
----
-{{- end }}

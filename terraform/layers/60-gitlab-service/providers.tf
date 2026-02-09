@@ -30,31 +30,30 @@ provider "vault" {
   token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
 }
 
+
 provider "kubernetes" {
-  host                   = local.cluster_info.server
-  cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-  client_certificate     = base64decode(local.user_info["client-certificate-data"])
-  client_key             = base64decode(local.user_info["client-key-data"])
+  host                   = local.k8s_provider_auth.host
+  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+  client_certificate     = local.k8s_provider_auth.client_certificate
+  client_key             = local.k8s_provider_auth.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.cluster_info.server
-    cluster_ca_certificate = base64decode(local.cluster_info["certificate-authority-data"])
-    client_certificate     = base64decode(local.user_info["client-certificate-data"])
-    client_key             = base64decode(local.user_info["client-key-data"])
+    host                   = local.k8s_provider_auth.host
+    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
+    client_certificate     = local.k8s_provider_auth.client_certificate
+    client_key             = local.k8s_provider_auth.client_key
   }
 }
 
 provider "postgresql" {
-  scheme = "postgres"
-  host   = data.terraform_remote_state.gitlab_postgres.outputs.gitlab_postgres_virtual_ip
-  port   = data.terraform_remote_state.gitlab_postgres.outputs.gitlab_postgres_haproxy_rw_port
-
+  scheme   = "postgres"
+  host     = local.postgres_vip
+  port     = local.postgres_rw_port
   username = "postgres"
-  password = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
+  password = local.postgres_password
 
-  sslmode = "require"
-
+  sslmode         = "require"
   connect_timeout = 15
 }

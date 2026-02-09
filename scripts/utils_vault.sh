@@ -245,7 +245,7 @@ vault_dev_unseal_handler() {
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
   
-  local inventory_file="${ANSIBLE_DIR}/inventory-10-vault-core.yaml"
+  local inventory_file="${ANSIBLE_DIR}/inventory-10-vault-raft.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
 		log_print "ERROR" "Inventory file not found."

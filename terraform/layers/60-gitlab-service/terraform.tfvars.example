@@ -1,2 +1,7 @@
 
-# This file is intentionally left blank
+gitlab_helm_config = {
+  version         = "9.8.2"
+  namespace       = "gitlab"
+  ingress_class   = "nginx"
+  tls_secret_name = "gitlab-ingress-tls"
+}

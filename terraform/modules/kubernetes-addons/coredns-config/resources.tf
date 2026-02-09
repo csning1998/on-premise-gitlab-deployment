@@ -1,23 +1,14 @@
 
-resource "kubernetes_manifest" "coredns_custom_config" {
-  field_manager {
-    name            = "terraform-coredns-manager"
-    force_conflicts = true
+resource "kubernetes_config_map_v1_data" "coredns_custom_config" {
+
+  metadata {
+    name      = "coredns"
+    namespace = "kube-system"
   }
 
-  manifest = {
-    apiVersion = "v1"
-    kind       = "ConfigMap"
-    metadata = {
-      name      = "coredns"
-      namespace = "kube-system"
-      labels = {
-        "addonmanager.kubernetes.io/mode" = "EnsureExists"
-        "k8s-app"                         = "kube-dns"
-      }
-    }
-    data = {
-      Corefile = local.final_corefile
-    }
+  force = true
+
+  data = {
+    Corefile = local.final_corefile
   }
 }

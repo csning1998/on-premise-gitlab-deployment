@@ -17,14 +17,6 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.3.0"
     }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "4.1.0"
-    }
-    harbor = {
-      source  = "goharbor/harbor"
-      version = "3.11.3"
-    }
   }
 }
 
@@ -56,10 +48,4 @@ provider "helm" {
     client_certificate     = local.k8s_provider_auth.client_certificate
     client_key             = local.k8s_provider_auth.client_key
   }
-}
-
-provider "harbor" {
-  url      = "https://${local.harbor_hostname}"
-  username = "admin"
-  password = local.harbor_admin_password
 }

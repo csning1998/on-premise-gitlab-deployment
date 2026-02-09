@@ -42,21 +42,8 @@ resource "vault_generic_secret" "gitlab_db_keys" {
     password = postgresql_role.gitlab.password
     database = postgresql_database.gitlabhq_production.name
     # Also record host
-    host = data.terraform_remote_state.gitlab_postgres.outputs.gitlab_postgres_virtual_ip
-    port = data.terraform_remote_state.gitlab_postgres.outputs.gitlab_postgres_haproxy_rw_port
+    host = local.postgres_vip
+    port = local.postgres_rw_port
   })
 }
 
-# Create Kubernetes Secret for Helm Chart, this will be mounted to GitLab's Webservice/Sidekiq/Migrations
-resource "kubernetes_secret" "gitlab_postgres_password" {
-  metadata {
-    name      = "gitlab-postgres-password"
-    namespace = kubernetes_namespace.gitlab.metadata[0].name
-  }
-
-  data = {
-    # GitLab Helm Chart default key is "postgresql-password" or "password"
-    password              = postgresql_role.gitlab.password
-    "postgresql-password" = postgresql_role.gitlab.password
-  }
-}

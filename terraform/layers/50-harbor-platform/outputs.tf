@@ -1,14 +1,17 @@
 
-output "harbor_hostname" {
-  value = local.harbor_hostname
+output "trust_context" {
+  description = "Cert-Manager issuer details for services to consume"
+  value = {
+    issuer_name = module.platform_trust_engine.issuer_name
+    issuer_kind = module.platform_trust_engine.issuer_kind
+  }
 }
 
-output "platform_issuer_name" {
-  description = "The name of the ClusterIssuer created by the trust engine"
-  value       = module.platform_trust_engine.issuer_name
-}
-
-output "platform_issuer_kind" {
-  description = "The kind of the issuer (ClusterIssuer)"
-  value       = module.platform_trust_engine.issuer_kind
+output "ingress_context" {
+  description = "Ingress controller details"
+  value = {
+    class_name       = var.ingress_class_name
+    load_balancer_ip = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip
+    node_ports       = null
+  }
 }

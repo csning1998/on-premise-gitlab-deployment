@@ -2,17 +2,17 @@
 
 # Kubeadm Cluster State
 
-data "terraform_remote_state" "gitlab_cluster" {
+data "terraform_remote_state" "kubeadm_provision" {
   backend = "local"
   config = {
-    path = "../30-gitlab-kubeadm/terraform.tfstate"
+    path = "../40-gitlab-kubeadm/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "gitlab_platform" {
   backend = "local"
   config = {
-    path = "../40-gitlab-platform/terraform.tfstate"
+    path = "../50-gitlab-platform/terraform.tfstate"
   }
 }
 
@@ -25,24 +25,24 @@ data "terraform_remote_state" "vault_pki" {
 }
 
 # Infrastructure VIPs
-data "terraform_remote_state" "gitlab_redis" {
+data "terraform_remote_state" "redis" {
   backend = "local"
   config = {
-    path = "../20-gitlab-redis/terraform.tfstate"
+    path = "../30-gitlab-redis/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "gitlab_postgres" {
+data "terraform_remote_state" "postgres" {
   backend = "local"
   config = {
-    path = "../20-gitlab-postgres/terraform.tfstate"
+    path = "../30-gitlab-postgres/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "gitlab_minio" {
+data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
-    path = "../20-gitlab-minio/terraform.tfstate"
+    path = "../30-gitlab-minio/terraform.tfstate"
   }
 }
 
@@ -55,17 +55,15 @@ data "vault_generic_secret" "db_vars" {
   path = "secret/on-premise-gitlab-deployment/gitlab/databases"
 }
 
-data "vault_generic_secret" "gitlab_vars" {
-  path = "secret/on-premise-gitlab-deployment/gitlab/app"
-}
-
 # path: secret/on-premise-gitlab-deployment/gitlab/s3_credentials/[bucket_name]
 
 data "vault_generic_secret" "s3_credentials" {
-  for_each = local.s3_bucket_names
-  path     = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/${each.key}"
+  for_each = local.minio_function_map
+  path     = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/${each.value}"
 }
 
-data "vault_generic_secret" "s3_artifacts" {
-  path = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/gitlab-artifacts"
+# Get PKI CA from Vault
+data "http" "vault_pki_ca" {
+  url         = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443/v1/pki/prod/ca/pem"
+  ca_cert_pem = data.terraform_remote_state.vault_pki.outputs.vault_certificates.ca_cert.ca_cert
 }

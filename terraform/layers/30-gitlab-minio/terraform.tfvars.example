@@ -104,4 +104,9 @@ gitlab_minio_tenants = {
     enable_version = false
     policy_rw      = true
   }
+  "gitlab-tmp-backups" = {
+    user_name      = "gitlab-tmp-backup-user"
+    enable_version = false
+    policy_rw      = true
+  }
 }

@@ -28,3 +28,8 @@ output "harbor_minio_haproxy_ports" {
     backend_port_console  = var.harbor_minio_compute.haproxy_config.backend_port_console
   }
 }
+
+output "harbor_minio_tenants" {
+  description = "Harbor MinIO tenants"
+  value       = var.harbor_minio_tenants
+}

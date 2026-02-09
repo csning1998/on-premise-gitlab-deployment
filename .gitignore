@@ -21,6 +21,7 @@ packer/output
 .terraform/
 .terraform.tfstate.lock.info
 terraform.tfstate
+terraform.tfstate.*
 terraform.tfstate.backup
 # This is processed while executing `entry.sh`
 terraform/*.tf.bak

@@ -667,9 +667,9 @@ Importing service certificates into the host trust store enables secure access t
 
 - Prod Vault: `https://vault.iac.local`
 - Harbor: `https://harbor.iac.local`
-- Harbor MinIO Console: `https://s3.harbor.iac.local`
-- GitLab: `https://gitlab.iac.local` (**WIP**)
-- GitLab MinIO Console: `https://s3.gitlab.iac.local` (**WIP**)
+- Harbor MinIO Console: `https://minio.harbor.iac.local`
+- GitLab: `https://gitlab.iac.local`
+- GitLab MinIO Console: `https://minio.gitlab.iac.local`
 
 Complete the following configuration steps in sequence:
 
@@ -679,8 +679,8 @@ Complete the following configuration steps in sequence:
     172.16.134.250  gitlab.iac.local
     172.16.135.250  harbor.iac.local notary.harbor.iac.local
     172.16.136.250  vault.iac.local
-    172.16.139.250  s3.harbor.iac.local
-    172.16.142.250  s3.gitlab.iac.local
+    172.16.139.250  minio.harbor.iac.local
+    172.16.142.250  minio.gitlab.iac.local
     ```
 
 2. Establish Host-level Trust (Infrastructure & Service CAs). Since the `tls/` directory is not tracked by git, the Service Root CA should be retrieve from the live Vault server before importing them. Use `curl` to fetch the public key of the Service CA directly from the Vault PKI engine. Using `-k` is required here as the trust chain is not yet established. Set the Vault Address (VIP) and download the Service CA to the local tls directory.
@@ -722,7 +722,7 @@ Complete the following configuration steps in sequence:
 4. Verify the trust store configuration by testing connectivity to MinIO. This verifies that the host trusts the "Service CA":
 
     ```shell
-    curl -I https://s3.harbor.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.iac.local:9000/minio/health/live
     ```
 
     An `HTTP/1.1 200 OK` response confirms that the trust store is correctly configured.

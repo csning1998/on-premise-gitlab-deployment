@@ -1,6 +1,6 @@
 
 module "harbor_core" {
-  source = "../../modules/kubernetes-addons/harbor-helm-chart"
+  source = "../../modules/kubernetes-addons/helm-chart-harbor"
 
   ca_bundle = local.ca_bundle_config
 
