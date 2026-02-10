@@ -20,7 +20,7 @@ The machine specifications used for development are listed below for reference o
 The project can be cloned using the following command:
 
 ```shell
-git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 The following resource allocation is configured based on RAM constraints:
@@ -254,16 +254,13 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
         ```text
         CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
-        61be68ae276e  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  15 minutes ago  Up 15 minutes (healthy)  8200/tcp    iac-vault-server
-        79b918f440f1  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-base
-        0a4eb3495697  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-packer
-        482f58b67295  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-terraform
-        aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
+        974baf0177f6  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  24 seconds ago  Up 14 seconds (healthy)  8200/tcp    iac-vault-server
+        ea3b31db9a5c  localhost/on-premise-iac-controller:qemu-latest  /bin/bash -c whil...  24 seconds ago  Up 14 seconds                        iac-runner
         ```
 
-> [!CAUTION]
-> **Data Loss Warning**
-> When switching between Podman container and Native environments, all Libvirt resources provisioned by Terraform will be automatically deleted. This measure prevents permission and context conflicts associated with the Libvirt UNIX socket.
+> [!NOTE]
+> **Resolved: Data Loss Warning**
+> ~~When switching between Podman container and Native environments, all Libvirt resources provisioned by Terraform will be automatically deleted. This measure prevents permission and context conflicts associated with the Libvirt UNIX socket.~~
 
 ### C. Miscellaneous
 
@@ -427,7 +424,7 @@ Successful execution and the display of virtual machines—regardless of whether
     podman compose up -d iac-vault-server
     ```
 
-    Upon initialization, the Dev Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate the Dev Vault, all files within `vault/data/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
+    Upon initialization, the Dev Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate the Dev Vault, all files within `vault/data/` and `vault/keys/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
 
 3. After completing the previous steps, execute `entry.sh` and select option `2` to initialize the Dev Vault. This process also automatically performs the unseal operation.
 4. Manually update the following variables. All default passwords must be replaced with unique values to ensure security.

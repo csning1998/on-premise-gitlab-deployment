@@ -1,9 +1,12 @@
 ---
+x-podman:
+  in_pod: false
+
 services:
+  # Service 1: Vault Server (Target System)
   iac-vault-server:
     image: docker.io/hashicorp/vault:1.20.2
     container_name: iac-vault-server
-    user: "0:0"
     entrypoint: "vault"
     command: server -config=/vault/vault.hcl
     volumes:
@@ -12,26 +15,20 @@ services:
       - ./vault/tls:/vault/tls:z
     cap_add:
       - IPC_LOCK
-      - SETFCAP
     network_mode: "host"
-    security_opt:
-      - label=disable
+    userns_mode: keep-id
     environment:
       - SKIP_SETCAP=true
       - VAULT_ADDR=https://127.0.0.1:8200
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "vault status -address=https://127.0.0.1:8200 -tls-skip-verify || if [ $? -eq 2 ]; then exit 0; else exit 1; fi",
-        ]
+      test: ["CMD-SHELL", "vault status -address=https://127.0.0.1:8200 -tls-skip-verify || if [ $? -eq 2 ]; then exit 0; else exit 1; fi"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  # Common Configuration (x-iac-base)
-  x-iac-base: &iac-base
-    container_name: iac-controller-base
+  # Service 2: Unified IaC Runner (The One Container to Rule Them All)
+  iac-runner:
+    container_name: iac-runner
     build:
       context: .
       dockerfile: Containerfile
@@ -42,45 +39,25 @@ services:
         USERNAME: ${UNAME}
     image: on-premise-iac-controller:qemu-latest
     network_mode: "host"
-    user: "0:0"
+    userns_mode: keep-id
+    group_add:
+      - "keep-groups"
     security_opt:
       - label=disable
       - apparmor=unconfined
     env_file:
       - .env
     environment:
-      - VAULT_CACERT=/app/vault/tls/ca.pem
+      - VAULT_CACERT=${PROJECT_ROOT}/vault/tls/ca.pem
       - HOME=/home/${UNAME}
+    working_dir: ${PROJECT_ROOT}
     volumes:
-      - .:/app:z
+      - ${PROJECT_ROOT}:${PROJECT_ROOT}:z
       - ${UHOME}/.cache/packer:/home/${UNAME}/.cache/packer:z
       - ${UHOME}/.ssh:/home/${UNAME}/.ssh:z
       - /dev/kvm:/dev/kvm
-      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
       - /dev/net/tun:/dev/net/tun
+      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+    command: ["/bin/bash", "-c", "while true; do sleep 3600; done"]
     tty: true
     stdin_open: true
-
-  # Service 1: Packer (No keep-groups)
-  iac-packer:
-    <<: *iac-base
-    container_name: iac-controller-packer
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/kvm:/dev/kvm
-      - /dev/net/tun:/dev/net/tun
-
-  # Service 2: Terraform (With keep-groups)
-  iac-terraform:
-    <<: *iac-base
-    container_name: iac-controller-terraform
-    group_add:
-      - "keep-groups" # Needs for libvirt socket
-
-  # Service 3: Ansible (With keep-groups)
-  iac-ansible:
-    <<: *iac-base
-    container_name: iac-controller-ansible
-    group_add:
-      - "keep-groups" # Ensure able to read mapped SSH key

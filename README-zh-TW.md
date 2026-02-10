@@ -20,7 +20,7 @@
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供參考：
@@ -254,17 +254,13 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
         ```text
         CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
-        61be68ae276e  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  15 minutes ago  Up 15 minutes (healthy)  8200/tcp    iac-vault-server
-        79b918f440f1  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-base
-        0a4eb3495697  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-packer
-        482f58b67295  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-terraform
-        aa8d17213095  localhost/on-premise-iac-controller:qemu-latest  /bin/bash             15 minutes ago  Up 15 minutes                        iac-controller-ansible
+        974baf0177f6  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  24 seconds ago  Up 14 seconds (healthy)  8200/tcp    iac-vault-server
+        ea3b31db9a5c  localhost/on-premise-iac-controller:qemu-latest  /bin/bash -c whil...  24 seconds ago  Up 14 seconds                        iac-runner
         ```
 
-> [!CAUTION]
-> **Data Loss Warning**
->
-> 當在 Podman 容器與 Native 環境之間切換時，所有由 Terraform 建立的 Libvirt 資源都會被 **自動刪除**，以避免 Libvirt UNIX socket 的權限與上下文衝突
+> [!NOTE]
+> **Resolved: Data Loss Warning**
+> ~~當在 Podman 容器與 Native 環境之間切換時，所有由 Terraform 建立的 Libvirt 資源都會被 **自動刪除**，以避免 Libvirt UNIX socket 的權限與上下文衝突~~
 
 ### C. Miscellaneous
 
@@ -427,7 +423,7 @@ git clone -b v1.6.0 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     podman compose up -d iac-vault-server
     ```
 
-    啟動 server 後，Dev Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Dev Vault，就必須手動清除 `vault/data/` 內所有檔案。請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
+    啟動 server 後，Dev Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Dev Vault，就必須手動清除 `vault/data/` 與 `vault/keys/` 內所有檔案。請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
 
 3.  完成前述步驟後，執行 `entry.sh` 選擇選項 2 初始化 Dev Vault。此過程也會自動執行 Unseal
 4.  接下來只需手動修改以下專案使用的變數。密碼必須替換為不重複內容，藉以確保安全性

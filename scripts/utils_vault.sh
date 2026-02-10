@@ -7,9 +7,9 @@ readonly DEV_VAULT_ADDR="${DEV_VAULT_ADDR:-https://127.0.0.1:8200}"
 
 # Determine the CA path based on environment strategy
 if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
-	readonly DEV_CA="${DEV_VAULT_CACERT_PODMAN:-/app/vault/tls/ca.pem}"
+	DEV_CA="${DEV_VAULT_CACERT_PODMAN:-/app/vault/tls/ca.pem}"
 else
-	readonly DEV_CA="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
+	DEV_CA="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
 fi
 readonly DEV_KEYS_DIR="${SCRIPT_DIR}/vault/keys"
 readonly DEV_TLS_DIR="${SCRIPT_DIR}/vault/tls"
@@ -72,13 +72,16 @@ vault_status_reporter() {
   log_divider
 
   # Check Development Vault on Host
-	if curl -s --connect-timeout 0.5 --cacert "${DEV_CA}" "${DEV_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then
-    local dev_status_json
-    dev_status_json=$(vault status -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json 2>/dev/null || true)
+	local host_ca="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
 
-    if [[ -n "$dev_status_json" ]]; then
+	if curl -s --connect-timeout 0.5 --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then
+
+		local dev_status_json
+		dev_status_json=$(curl -s --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health")
+    
+		if [[ -n "$dev_status_json" ]]; then
       local sealed
-      sealed=$(echo "$dev_status_json" | jq .sealed)
+      sealed=$(echo "$dev_status_json" | jq .sealed 2>/dev/null)
       if [[ "$sealed" == "true" ]]; then
 				log_print "WARN" "Development Vault (Local): Running (Sealed)"
       else
@@ -128,24 +131,24 @@ vault_dev_tls_generator() {
   mkdir -p "${DEV_TLS_DIR}"
 
   # Generate CA and Certs
-  openssl genrsa -out "${DEV_TLS_DIR}/ca-key.pem" 2048
-  openssl req -new -x509 -days 365 -key "${DEV_TLS_DIR}/ca-key.pem" -sha256 -out "${DEV_TLS_DIR}/ca.pem" -subj "/CN=DevVaultCA"
+  run_command "openssl genrsa -out vault/tls/ca-key.pem 2048"
+  run_command "openssl req -new -x509 -days 365 -key vault/tls/ca-key.pem -sha256 -out vault/tls/ca.pem -subj '/CN=DevVaultCA'"
 
-  openssl genrsa -out "${DEV_TLS_DIR}/vault-key.pem" 2048
-  openssl req -subj "/CN=localhost" -sha256 -new -key "${DEV_TLS_DIR}/vault-key.pem" -out "${DEV_TLS_DIR}/vault.csr"
+  run_command "openssl genrsa -out vault/tls/vault-key.pem 2048"
+  run_command "openssl req -subj '/CN=localhost' -sha256 -new -key vault/tls/vault-key.pem -out vault/tls/vault.csr"
 
   echo "subjectAltName = DNS:localhost,IP:127.0.0.1" > "${DEV_TLS_DIR}/extfile.cnf"
 
-  openssl x509 -req -days 365 -sha256 -in "${DEV_TLS_DIR}/vault.csr" \
-    -CA "${DEV_TLS_DIR}/ca.pem" -CAkey "${DEV_TLS_DIR}/ca-key.pem" \
-    -CAcreateserial -out "${DEV_TLS_DIR}/vault.pem" \
-    -extfile "${DEV_TLS_DIR}/extfile.cnf"
+	run_command "openssl x509 -req -days 365 -sha256 -in vault/tls/vault.csr \
+    -CA vault/tls/ca.pem -CAkey vault/tls/ca-key.pem \
+    -CAcreateserial -out vault/tls/vault.pem \
+    -extfile vault/tls/extfile.cnf"
 
   rm -f "${DEV_TLS_DIR}/vault.csr" "${DEV_TLS_DIR}/extfile.cnf"
   chmod 600 "${DEV_TLS_DIR}/"*key.pem
   chmod 644 "${DEV_TLS_DIR}/"*.pem
   
-  log_print "OK" "Dev Vault TLS Certificates generated in ${DEV_TLS_DIR}"
+  log_print "OK" "Dev Vault TLS Certificates generated."
 }
 
 # Function: Ensure KV Engine is enabled (Dev Vault)

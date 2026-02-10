@@ -52,29 +52,19 @@ log_divider() {
 # Function: Execute a command string based on the selected strategy.
 run_command() {
   local cmd_string="$1"
-  local host_work_dir="$2" # Optional working directory for native mode
+	local host_work_dir="${2:-${SCRIPT_DIR}}" # Optional working directory for native mode
 
   if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
 
-    # --- Containerized Execution Path ---
+    # Containerized Execution Path
     local compose_cmd="podman compose"
     local compose_file="compose.yml"
-    local container_name=""
+    local service_name="iac-runner"
+    local container_name="iac-runner"
     local engine_cmd="podman"
-    local service_name=""
 
-		# 0. Determine the Container to use
-		case "$cmd_string" in
-      packer*)    service_name="iac-packer" ;;
-      terraform*) service_name="iac-terraform" ;;
-      ansible*)   service_name="iac-ansible" ;;
-      *)          
-			service_name="iac-ansible"
-			log_print "INFO" "Defaulting command '${cmd_string}' to '${service_name}' container."
-			;;
-    esac
-
-		local container_name="iac-controller-${service_name#iac-}"
+		# 0. Determine the Container AND Service to use
+    local container_work_dir="${host_work_dir}"
 
     # 1. Check if Podman is installed
     if ! command -v podman >/dev/null 2>&1; then
@@ -90,20 +80,25 @@ run_command() {
 
     # 3. Ensure the controller service is running.
     if ! ${engine_cmd} ps -q --filter "name=${container_name}" | grep -q .; then
-			log_print "TASK" "Starting container service '${container_name}' using ${compose_file}..."
+			log_print "TASK" "Starting container service '${container_name}'..."
       (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" up -d "${service_name}")
     fi
 
     # 4. Execute the command within the container.
     # The working directory inside the container is always /app.
     # Map the host path to the container's /app path.
-    local container_work_dir="${host_work_dir/#$SCRIPT_DIR//app}"
+
+    # local container_work_dir="${host_work_dir/#$SCRIPT_DIR//app}"
     echo "INFO: Executing command in container '${container_name}'..."
-    (cd "${SCRIPT_DIR}" && ${compose_cmd} -f "${compose_file}" exec \
-      -e "VAULT_ADDR=${VAULT_ADDR}" \
-      -e "VAULT_CACERT=${DEV_VAULT_CACERT_PODMAN}" \
+
+		${engine_cmd} exec \
+      -e "VAULT_ADDR=${DEV_VAULT_ADDR}" \
+      -e "VAULT_CACERT=${DEV_VAULT_CACERT}" \
       -e "VAULT_TOKEN=${DEV_VAULT_TOKEN}" \
-      "${service_name}" bash -c "cd \"${container_work_dir}\" && ${cmd_string}")
+      -w "${container_work_dir}" \
+      "${container_name}" \
+      bash -c "${cmd_string}"
+
   else
     # Native Mode: Execute the command directly on the host. 
     (cd "${host_work_dir}" && eval "${cmd_string}")

@@ -2,6 +2,9 @@
 
 set -e -u
 
+# Define project root directory
+CURRENT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Define base directory and load configuration
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPTS_LIB_DIR="${SCRIPT_DIR}/scripts"
@@ -16,7 +19,7 @@ source "${SCRIPTS_LIB_DIR}/utils_environment.sh"
 # MAIN ENVIRONMENT BOOTSTRAP LOGIC
 host_os_detail_handler
 cpu_virt_support_checker
-env_file_bootstrapper
+env_file_bootstrapper "${CURRENT_ROOT}"
 iac_layer_discoverer
 
 # Source the .env file to export its variables to any sub-processes
@@ -89,23 +92,23 @@ select opt in "${options[@]}"; do
   case $opt in
     # --- Dev Vault ---
     "[DEV] Set up TLS for Dev Vault (Local)")
-      vault_dev_tls_generator
+      ENVIRONMENT_STRATEGY="native" vault_dev_tls_generator
       break
       ;;
     "[DEV] Initialize Dev Vault (Local)")
-      vault_dev_init_handler
+      ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_init_handler
       break
       ;;
 
 		# Development Vault for Bootstrapping Packer / Production Vault
     "[DEV] Unseal Dev Vault (Local)")
-      vault_dev_unseal_handler
+      ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_unseal_handler
       break
       ;;
     
     # Production Vault with PKI Functionality
     "[PROD] Unseal Production Vault (via Ansible)")
-      vault_prod_unseal_trigger
+      ENVIRONMENT_STRATEGY="native" vault_prod_unseal_trigger
       break
       ;;
 
