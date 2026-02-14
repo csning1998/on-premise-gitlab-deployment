@@ -73,11 +73,9 @@ resource "tls_cert_request" "vault_server" {
   )
 
   ip_addresses = concat(
-    [
-      "127.0.0.1",
-      var.vault_cluster.haproxy_config.virtual_ip
-    ],
-    [for n in var.vault_cluster.vault_config.nodes : n.ip]
+    ["127.0.0.1"],
+    [for n in var.vault_cluster.vault_config.nodes : n.ip],
+    var.vault_vip != null ? [var.vault_vip] : []
   )
 }
 

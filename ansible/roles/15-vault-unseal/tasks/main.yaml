@@ -58,14 +58,14 @@
 
 - name: "Block G: Verify Vault Cluster Availability"
   become: true
-  when: inventory_hostname in groups['vault_haproxy']
+  when: inventory_hostname in groups['vault_leader']
   block:
     - name: "Wait for Vault VIP to be Active (200 OK)"
       ansible.builtin.uri:
         url: "https://{{ vault_ha_virtual_ip }}:443/v1/sys/health"
         validate_certs: false
         status_code: 200
-      when: inventory_hostname in groups['vault_haproxy']
+      when: inventory_hostname in groups['vault_leader']
       register: health_check
       until: health_check.status == 200
       retries: 60

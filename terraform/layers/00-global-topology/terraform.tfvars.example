@@ -1,0 +1,243 @@
+
+domain_suffix = "iac.local"
+
+network_baseline = {
+  cidr_block    = "172.16.0.0/16"
+  vip_offset    = 250        # VIP always .250
+  node_ip_start = 200        # node ip from .200
+  mac_prefix    = "52:54:00" # KVM/Libvirt common prefix
+}
+
+# The Single Source of Truth for the Root CA Identity
+pki_settings = {
+  root_ca_common_name = "on-premise-gitlab-deployment-root-ca"
+}
+
+/** Service Catalog Definition rules:
+ * 0. name: define UNIQUE name of the service. 
+ *      (e.g. gitlab)
+ * 1. owner: define the owner of the service 
+ *      (e.g. devops, secops...)
+ * 2. project_code: define the project code of the service 
+ *      (e.g. iac, core...)
+ * 3. provider: define the Terraform provider for the service 
+ *      (e.g. kvm, aws, gcp, azure, vmware...)
+ * 4. runtime: define the runtime of the service 
+ *      (e.g. kubeadm, microk8s, baremetal...)
+ * 5. stage: define the stage of the service 
+ *      (e.g. production, staging, development...)
+ * 6. cidr_index: used to calculate subnet 
+ *      (e.g. 172.16.X.0/24)
+ * 7. tags: define the tags of the service for better governance. 
+ *      (e.g. ["with-128-etcd", "with-127-postgres"])
+ * 8. ip_range: define the IP range of the service. 
+ *      (e.g. { start_ip = 200, end_ip = 220 })
+ * 9. component: define the component of the service. 
+ *      (e.g. frontend, backend, database...)
+ *    - subdomains: define the subdomains of the component. 
+ *        (e.g. gitlab, kas...)
+ * 10. dependencies: define the external dependency of a specific component. Leave empty if no external dependency.
+ *      (e.g. postgres, redis, minio...)
+ *    - cidr_index: define the cidr index of the dependency.
+ *    - runtime: define the runtime of the dependency.
+ *    - component: define the component of the dependency.
+ *    - tags: define the tags of the dependency for better governance.
+ * 11. ports: define the ports of the service.
+ *      (e.g. { frontend_port = 80, backend_port = 443 })
+ */
+
+service_catalog = [
+  {
+    name         = "central-lb"
+    owner        = "devops"
+    project_code = "core"
+    provider     = "kvm"
+    runtime      = "baremetal"
+    stage        = "production"
+    cidr_index   = 125
+    tags         = []
+
+    ip_range = { start_ip = 200, end_ip = 202 }
+    ports = {
+      "stats" = { frontend_port = 8404, backend_port = 8404 } # HAProxy Stats (Self)
+    }
+    components   = {}
+    dependencies = {}
+  },
+  {
+    name         = "gitlab"
+    owner        = "devops"
+    project_code = "core"
+    provider     = "kvm"
+    runtime      = "kubeadm"
+    stage        = "production"
+    cidr_index   = 126
+    tags         = []
+
+    ip_range = { start_ip = 200, end_ip = 220 }
+    ports = {
+      "api-server"    = { frontend_port = 6443, backend_port = 6443 }
+      "ingress-http"  = { frontend_port = 80, backend_port = 30080 }
+      "ingress-https" = { frontend_port = 443, backend_port = 30443 }
+    }
+    components = {
+      "frontend" = { subdomains = ["gitlab", "kas"] }
+      "minio"    = { subdomains = ["minio"] }
+    }
+    dependencies = {
+      "postgres" = {
+        component  = "postgres",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 127,
+        tags       = ["with-128-etcd"],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432 }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432 }
+          "stats"    = { frontend_port = 7000, backend_port = 7000 }
+        }
+      }
+      "etcd" = {
+        component  = "etcd",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 128,
+        tags       = ["with-127-postgres"],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "client" = { frontend_port = 2379, backend_port = 2379 }
+        }
+      }
+      "redis" = {
+        component  = "redis",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 129,
+        tags       = [],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "main" = { frontend_port = 6379, backend_port = 6379 }
+        }
+      }
+      "minio" = {
+        component  = "minio",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 130,
+        tags       = [],
+        ip_range   = { start_ip = 200, end_ip = 204 }
+        ports = {
+          "api"     = { frontend_port = 9000, backend_port = 9000 }
+          "console" = { frontend_port = 9001, backend_port = 9001 }
+        }
+      }
+    }
+  },
+  {
+    name         = "harbor"
+    owner        = "devops"
+    project_code = "core"
+    provider     = "kvm"
+    runtime      = "microk8s"
+    stage        = "production"
+    cidr_index   = 131
+    tags         = []
+    ip_range     = { start_ip = 200, end_ip = 205 }
+    ports = {
+      "k8s-api" = { frontend_port = 16443, backend_port = 16443 }
+      "http"    = { frontend_port = 80, backend_port = 80 }
+      "https"   = { frontend_port = 443, backend_port = 443 }
+    }
+    components = {
+      "frontend" = { subdomains = ["harbor", "notary.harbor"] }
+    }
+    dependencies = {
+      "postgres" = {
+        component  = "postgres",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 132,
+        tags       = ["with-133-etcd"],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432 }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432 }
+          "stats"    = { frontend_port = 7000, backend_port = 7000 }
+        }
+      }
+      "etcd" = {
+        component  = "etcd",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 133,
+        tags       = ["with-132-postgres"],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "client" = { frontend_port = 2379, backend_port = 2379 }
+        }
+      }
+
+      "redis" = {
+        component  = "redis",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 134,
+        tags       = [],
+        ip_range   = { start_ip = 200, end_ip = 205 }
+        ports = {
+          "main" = { frontend_port = 6379, backend_port = 6379 }
+        }
+      }
+      "minio" = {
+        component  = "minio",
+        provider   = "kvm",
+        runtime    = "baremetal",
+        cidr_index = 135,
+        tags       = [],
+        ip_range   = { start_ip = 200, end_ip = 204 }
+        ports = {
+          "api"     = { frontend_port = 9000, backend_port = 9000 }
+          "console" = { frontend_port = 9001, backend_port = 9001 }
+        }
+      }
+    }
+  },
+  {
+    name         = "vault"
+    owner        = "secops"
+    project_code = "core"
+    provider     = "kvm"
+    runtime      = "baremetal"
+    stage        = "production"
+    cidr_index   = 136
+    tags         = []
+    ip_range     = { start_ip = 200, end_ip = 205 }
+    ports = {
+      "api" = { frontend_port = 443, backend_port = 8200 }
+    }
+    components = {
+      "core" = { subdomains = ["vault"] }
+    }
+    dependencies = {}
+  },
+  {
+    name         = "bootstrap-harbor"
+    owner        = "devops"
+    project_code = "core"
+    provider     = "kvm"
+    runtime      = "baremetal"
+    stage        = "production"
+    cidr_index   = 137
+    tags         = []
+    ip_range     = { start_ip = 200, end_ip = 200 }
+    ports = {
+      "http"  = { frontend_port = 80, backend_port = 80 }
+      "https" = { frontend_port = 443, backend_port = 443 }
+    }
+    components = {
+      "core" = { subdomains = ["bootstrap-harbor"] }
+    }
+    dependencies = {}
+  }
+]

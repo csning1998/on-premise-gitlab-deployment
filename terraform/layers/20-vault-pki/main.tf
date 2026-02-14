@@ -4,13 +4,13 @@ module "vault_pki_setup" {
 
   vault_addr          = "https://${data.terraform_remote_state.vault_raft_config.outputs.vault_ha_virtual_ip}:443"
   root_domain         = local.root_domain
-  root_ca_common_name = var.vault_pki_engine_config.root_ca_common_name
+  root_ca_common_name = local.root_ca_common_name
 
   auth_backends     = var.vault_auth_backends
   pki_engine_config = var.vault_pki_engine_config
 
-  component_roles  = local.component_roles
-  dependency_roles = local.dependency_roles
+  component_roles  = local.flat_component_roles
+  dependency_roles = local.flat_dependency_roles
 }
 
 module "vault_workload_identity_components" {
@@ -18,7 +18,7 @@ module "vault_workload_identity_components" {
   source     = "../../modules/configuration/vault-workload-identity"
   depends_on = [module.vault_pki_setup]
 
-  for_each           = local.component_roles
+  for_each           = local.flat_component_roles
   name               = each.key
   vault_role_name    = each.value.name
   pki_mount_path     = module.vault_pki_setup.vault_pki_path
@@ -31,7 +31,7 @@ module "vault_workload_identity_dependencies" {
   source     = "../../modules/configuration/vault-workload-identity"
   depends_on = [module.vault_pki_setup]
 
-  for_each           = local.dependency_roles
+  for_each           = local.flat_dependency_roles
   name               = each.key
   vault_role_name    = each.value.name
   pki_mount_path     = module.vault_pki_setup.vault_pki_path

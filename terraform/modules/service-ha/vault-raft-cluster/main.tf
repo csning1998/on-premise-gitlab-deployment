@@ -4,15 +4,11 @@ module "hypervisor_kvm" {
 
   # VM Configuration
   vm_config = {
-    all_nodes_map = local.all_nodes_map
+    all_nodes_map = local.nodes_config
   }
 
   # VM Credentials from Vault
-  credentials = {
-    username            = var.vm_credentials.username
-    password            = var.vm_credentials.password
-    ssh_public_key_path = var.vm_credentials.ssh_public_key_path
-  }
+  credentials = local.vm_credentials_for_hypervisor
 
   # Libvirt Network & Storage Configuration
   libvirt_infrastructure = {
@@ -22,71 +18,50 @@ module "hypervisor_kvm" {
         name_bridge  = var.network_identity.nat_bridge_name
         mode         = "nat"
         ips = {
-          address = var.infra_config.network.nat.gateway
-          prefix  = tonumber(split("/", var.infra_config.network.nat.cidrv4)[1])
-          dhcp    = var.infra_config.network.nat.dhcp
+          prefix  = tonumber(split("/", var.network_config.network.nat.cidrv4)[1])
+          address = var.network_config.network.nat.gateway
+          dhcp    = var.network_config.network.nat.dhcp
         }
       }
       hostonly = {
         name_network = var.network_identity.hostonly_net_name
         name_bridge  = var.network_identity.hostonly_bridge_name
-        mode         = "route"
+        mode         = "bridge"
         ips = {
-          address = var.infra_config.network.hostonly.gateway
-          prefix  = tonumber(split("/", var.infra_config.network.hostonly.cidrv4)[1])
+          prefix  = tonumber(split("/", var.network_config.network.hostonly.cidrv4)[1])
+          address = var.network_config.network.hostonly.gateway
           dhcp    = null
         }
       }
     }
-    storage_pool_name = var.network_identity.storage_pool_name
+    storage_pool_name = var.topology_config.storage_pool_name
   }
 }
 
 module "ssh_manager" {
-  source = "../../cluster-provision/ssh-manager"
-
-  config_name = var.topology_config.cluster_identity.cluster_name
-  nodes       = [for k, v in local.all_nodes_map : { key = k, ip = v.ip }]
-
-  vm_credentials = {
-    username             = var.vm_credentials.username
-    ssh_private_key_path = var.vm_credentials.ssh_private_key_path
-  }
+  source         = "../../cluster-provision/ssh-manager"
   status_trigger = module.hypervisor_kvm.vm_status_trigger
+
+  nodes          = local.nodes_list_for_ssh
+  vm_credentials = local.vm_credentials_for_ssh
+  config_name    = var.topology_config.cluster_name
 }
 
 module "ansible_runner" {
-  source = "../../cluster-provision/ansible-runner"
+  source         = "../../cluster-provision/ansible-runner"
+  status_trigger = module.ssh_manager.ssh_access_ready_trigger
+
+  inventory_content = local.ansible.inventory_contents
+  vm_credentials    = local.vm_credentials_for_ssh
 
   ansible_config = {
-    root_path       = local.ansible_root_path
     ssh_config_path = module.ssh_manager.ssh_config_file_path
-    playbook_file   = "playbooks/10-provision-vault.yaml"
-    inventory_file  = "inventory-${var.topology_config.cluster_identity.cluster_name}.yaml"
-  }
-
-  inventory_content = templatefile("${path.module}/../../../templates/inventory-vault-cluster.yaml.tftpl", {
-    ansible_ssh_user = var.vm_credentials.username
-    service_name     = var.topology_config.cluster_identity.service_name
-
-    vault_nodes  = var.topology_config.vault_config.nodes
-    haproxy_node = var.topology_config.haproxy_config.nodes
-
-    vault_ha_virtual_ip     = var.topology_config.haproxy_config.virtual_ip
-    vault_allowed_subnet    = var.infra_config.allowed_subnet
-    vault_nat_subnet_prefix = local.nat_network_subnet_prefix
-  })
-
-  vm_credentials = {
-    username             = var.vm_credentials.username
-    ssh_private_key_path = var.vm_credentials.ssh_private_key_path
+    root_path       = local.ansible.root_path
+    playbook_file   = local.ansible.playbook_file
+    inventory_file  = local.ansible.inventory_file
   }
 
   extra_vars = {
-    "vault_keepalived_auth_pass" = var.vault_credentials.vault_keepalived_auth_pass
-    "vault_haproxy_stats_pass"   = var.vault_credentials.vault_haproxy_stats_pass
     "vault_local_tls_source_dir" = var.tls_source_dir
   }
-
-  status_trigger = module.ssh_manager.ssh_access_ready_trigger
 }

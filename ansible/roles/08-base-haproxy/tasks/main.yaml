@@ -2,11 +2,12 @@
 - name: "Block: Install Proxy Components"
   become: true
   block:
-    - name: "Step 1. Install HAProxy and Keepalived"
+    - name: "Step 1. Install HAProxy, Keepalived and Utils"
       ansible.builtin.apt:
         name:
           - haproxy
           - keepalived
+          - socat # Used to communicate with HAProxy Socket
         state: present
         update_cache: true
 
@@ -26,3 +27,25 @@
           # Default config cleared by Packer build.
           # Will be provisioned by Terraform/Ansible at runtime.
         mode: "0644"
+
+    - name: "Step 4. Configure Sysctl for HAProxy/Keepalived"
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_set: true
+        state: present
+        reload: true
+      loop:
+        - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
+        - { name: "net.ipv4.ip_forward", value: "1" }
+
+    - name: "Step 5. Create configuration directories for Assembly"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - /etc/haproxy/conf.d
+        - /etc/keepalived/conf.d

@@ -20,7 +20,16 @@
       register: init_result
       ignore_errors: true
 
-    - name: "E3. Save Keys to Local"
+    - name: "E3. Ensure Local Fetch Directory Exists"
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+      become: false
+      when: init_result.rc == 0
+
+    - name: "E4. Save Keys to Local"
       ansible.builtin.copy:
         content: "{{ init_result.stdout | from_json | to_nice_json(indent=2) }}"
         dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/vault_init_output.json"

@@ -1,0 +1,41 @@
+#cloud-config
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    id0:
+      match:
+        macaddress: "${config.nat_mac}"
+%{ if config.nat_ip_cidr != "" ~}
+      dhcp4: false
+      addresses:
+        - "${config.nat_ip_cidr}"
+      gateway4: "${config.nat_gateway}"
+%{ else ~}
+      dhcp4: true
+%{ endif ~}
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
+
+    id1:
+      match:
+        macaddress: "${config.hostonly_mac}"
+      dhcp4: false
+      addresses:
+        - "${config.hostonly_ip_cidr}"
+      routes:
+        - to: 172.16.0.0/16
+          via: "${config.hostonly_gateway}"
+          metric: 100
+
+%{ for iface in config.service_interfaces ~}
+    id${iface.index + 2}:
+      match:
+        macaddress: "${iface.mac_address}"
+%{ if iface.alias != null ~}
+      set-name: ${iface.alias}
+%{ endif ~}
+      dhcp4: false
+      addresses:
+        - "${iface.ip_cidr}"
+%{ endfor ~}

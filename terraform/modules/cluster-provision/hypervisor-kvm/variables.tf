@@ -23,6 +23,12 @@ variable "vm_config" {
   })
 }
 
+variable "create_networks" {
+  description = "Whether to create libvirt_network resources. Set to false if attaching to existing networks (e.g. created by Layer 05)."
+  type        = bool
+  default     = true
+}
+
 variable "credentials" {
   description = "Access credentials for the virtual machines."
   type = object({

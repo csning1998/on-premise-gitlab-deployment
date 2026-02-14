@@ -1,47 +1,4 @@
 
-service_catalog = {
-  "gitlab" = {
-    runtime = "kubeadm"
-    stage   = "production"
-
-    components = {
-      "frontend" = { subdomains = ["gitlab", "kas", "minio"] }
-    }
-
-    dependencies = {
-      "postgres" = { service_name = "postgres", runtime = "baremetal" }
-      "redis"    = { service_name = "redis", runtime = "baremetal" }
-      "minio"    = { service_name = "minio", runtime = "baremetal" }
-    }
-  }
-
-  "harbor" = {
-    runtime = "microk8s"
-    stage   = "production"
-
-    components = {
-      "frontend" = { subdomains = ["harbor", "notary.harbor"] }
-    }
-
-    dependencies = {
-      "postgres" = { service_name = "postgres", runtime = "baremetal" }
-      "redis"    = { service_name = "redis", runtime = "baremetal" }
-      "minio"    = { service_name = "minio", runtime = "baremetal" }
-    }
-  }
-
-  "dev-harbor" = {
-    runtime = "docker"
-    stage   = "development"
-
-    components = {
-      "frontend" = { subdomains = ["dev-harbor", "notary.dev-harbor"] }
-    }
-
-    dependencies = {}
-  }
-}
-
 vault_auth_backends = {
   "approle" = {
     type = "approle"

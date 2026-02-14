@@ -1,0 +1,12 @@
+
+# This should match the name in the service catalog.
+service_catalog_name = "central-lb"
+
+# LB Nodes definition
+node_config = {
+  "lb-node-00" = { ip_suffix = 10, vcpu = 2, ram = 1024 }
+  "lb-node-01" = { ip_suffix = 11, vcpu = 2, ram = 1024 }
+  # "lb-node-02" = { ip_suffix = 12, vcpu = 2, ram = 1024 }
+}
+
+base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"

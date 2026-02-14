@@ -1,0 +1,32 @@
+global_defs {
+    router_id {{ inventory_hostname }}
+    vrrp_version 2
+    enable_script_security
+    script_user root
+}
+
+{# Iterate to generate VRRP Instance #}
+{% for segment in lb_service_segments %}
+vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
+    state BACKUP
+    {# Bind to the specific interface alias defined in Inventory, e.g. v_gitlab-frontend #}
+    interface {{ segment.interface_alias }}
+
+    {# Each segment must have its own VRID (computed and passed by Terraform) #}
+    virtual_router_id {{ segment.vrid }}
+
+    {# Priority setting: Node-00 (Master) = 100, Node-01 (Backup) = 90 #}
+    priority {{ 100 if 'node-00' in inventory_hostname else 90 }}
+
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass {{ keepalived_auth_pass }}
+    }
+
+    virtual_ipaddress {
+        {{ segment.vip }}
+    }
+}
+{% endfor %}

@@ -7,10 +7,13 @@ variable "vault_cluster" {
         ip = string
       }))
     })
-    haproxy_config = object({
-      virtual_ip = string
-    })
   })
+}
+
+variable "vault_vip" {
+  description = "Optional Virtual IP to include in the Server Certificate SANs"
+  type        = string
+  default     = null
 }
 
 variable "output_dir" {

@@ -1,3 +1,4 @@
+
 output "all_nodes_map" {
   description = "List of all provisioned KVM nodes"
   value = [

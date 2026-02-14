@@ -2,8 +2,8 @@
 all:
   vars:
     ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
-    vault_cluster_name: "${service_name}-vault-cluster"
+    service_identifier: "${service_identifier}"
+    vault_cluster_name: "${service_identifier}-vault-cluster"
 
     vault_cluster_ips: ${jsonencode([for node in vault_nodes : node.ip])}
     vault_bootstrap_ip: "${vault_nodes[keys(vault_nodes)[0]].ip}"
@@ -26,8 +26,3 @@ all:
           advertise_ip: ${vault_nodes[key].ip}
           node_id: "vault-node-${format("%02d", idx + 1)}"
 %{ endfor ~}
-
-    vault_haproxy:
-      hosts:
-        ${keys(haproxy_node)[0]}:
-          advertise_ip: ${haproxy_node[keys(haproxy_node)[0]].ip}

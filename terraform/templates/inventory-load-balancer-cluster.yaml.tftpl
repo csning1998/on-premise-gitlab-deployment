@@ -1,0 +1,38 @@
+---
+all:
+  vars:
+    ansible_user: "${ansible_ssh_user}"
+    service_identifier: "${service_name}"
+    service_domain: "${service_domain}"
+    
+    lb_service_segments:
+%{ for seg in service_segments ~}
+      - name: "${seg.name}"
+        vip: "${seg.vip}"
+        vrid: ${seg.vrid}
+        interface_alias: "${seg.interface_name}"
+        ports:
+%{ for p_key, p_val in seg.ports ~}
+          ${p_key}:
+            frontend: ${p_val.frontend_port}
+            backend: ${p_val.backend_port}
+%{ endfor ~}
+        tags: ${jsonencode(seg.tags)}
+        backend_servers:
+%{ for srv in seg.backend_servers ~}
+          - name: "${srv.name}"
+            ip: "${srv.ip}"
+%{ endfor ~}
+%{ endfor ~}
+
+  children:
+    load_balancer:
+      hosts:
+%{ for name, node in load_balancer_nodes ~}
+        ${name}:
+          ansible_host: ${node.ip}
+          service_ips:
+%{ for seg in service_segments ~}
+            ${seg.name}: ${seg.node_ips[name]}
+%{ endfor ~}
+%{ endfor ~}

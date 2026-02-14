@@ -119,6 +119,17 @@ resource "libvirt_volume" "cloud_init_iso" {
 }
 
 resource "libvirt_domain" "nodes" {
+
+  depends_on = [
+    libvirt_network.nat_net,
+    libvirt_network.hostonly_net,
+    libvirt_pool.storage_pool,
+    libvirt_volume.os_disk,
+    libvirt_volume.data_disk,
+    libvirt_cloudinit_disk.cloud_init,
+    libvirt_volume.cloud_init_iso
+  ]
+
   for_each = var.vm_config.all_nodes_map
 
   name    = each.key

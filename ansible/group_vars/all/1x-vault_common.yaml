@@ -4,9 +4,9 @@ vault_target_arch: "amd64"
 vault_target_version: "1.21.1"
 
 # Load Balancer
-vault_haproxy_frontend_port: 443
-vault_haproxy_stats_port: 8404
-vault_haproxy_stats_user: "admin"
+haproxy_frontend_port: 443
+haproxy_stats_port: 8404
+haproxy_stats_user: "admin"
 
 # System Identity
 vault_owner: vault

@@ -1,0 +1,38 @@
+---
+- name: "Play 1: Configure Vault Nodes (Setup & Config)"
+  hosts: vault_leader, vault_follower
+  become: true
+  roles:
+    - 12-vault-setup
+    - 13-vault-configure
+
+- name: "Play 2: Initialize Vault Cluster (Primary Only)"
+  hosts: vault_leader
+  become: true
+  roles:
+    - 14-vault-initialize
+
+- name: "Play 3a: Unseal Primary Node"
+  hosts: vault_leader
+  become: true
+  roles:
+    - 15-vault-unseal
+
+- name: "Play 3b: Unseal Standby Nodes"
+  hosts: vault_follower
+  become: true
+  roles:
+    - 15-vault-unseal
+
+- name: "Play 3c: Verify Vault Cluster Availability"
+  hosts: vault_leader
+  gather_facts: false
+  roles:
+    - 15-vault-unseal
+
+- name: "Play 4: Configure Central Load Balancer"
+  hosts: load_balancer
+  become: true
+  roles:
+    - 16-central-lb-base
+    - 17-central-lb-service

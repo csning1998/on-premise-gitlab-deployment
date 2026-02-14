@@ -1,3 +1,4 @@
+
 variable "ansible_config" {
   description = "Ansible execution configuration"
   type = object({

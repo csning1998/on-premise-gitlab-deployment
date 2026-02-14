@@ -1,0 +1,57 @@
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+    # Default SSL material locations
+    ca-base /etc/ssl/certs
+    crt-base /etc/ssl/private
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+
+# Stats Interface, only bind to management IP
+listen stats
+    bind {{ ansible_host }}:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats uri /
+    stats refresh 10s
+    stats auth {{ haproxy_stats_user }}:{{ haproxy_stats_pass }}
+    stats admin if TRUE
+
+{# Service Port Mapping #}
+{% for segment in lb_service_segments %}
+# --- Service: {{ segment.name }} ---
+{% for port_name, port_cfg in segment.ports.items() %}
+
+# Frontend for {{ port_name }}
+frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+    bind {{ segment.vip }}:{{ port_cfg.frontend }}
+    mode tcp
+    option tcplog
+    default_backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+
+# Backend for {{ port_name }} (Saturation Slots)
+backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    {% for server in segment.backend_servers %}
+    # Slot {{ loop.index0 }}: If backend is down, HAProxy will exclude it via health check
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter 3s fall 3 rise 2
+    {% endfor %}
+
+{% endfor %}
+{% endfor %}

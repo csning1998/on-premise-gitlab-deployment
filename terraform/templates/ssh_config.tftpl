@@ -1,6 +1,6 @@
 
 %{~ for node in nodes ~}
-Host ${node.key}
+Host ${node.key} ${node.ip}
   HostName ${node.ip}
   User ${ssh_user}
   IdentityFile ${ssh_private_key_path}

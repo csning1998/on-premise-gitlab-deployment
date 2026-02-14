@@ -1,0 +1,73 @@
+---
+- name: "Section A: Kernel Parameter Tuning"
+  block:
+    - name: "Step A1. Enable non-local binding (Essential for VIP)"
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_nonlocal_bind
+        value: "1"
+        state: present
+        reload: true
+
+    - name: "Step A2. Configure ARP Ignore to Prevent ARP Flux"
+      ansible.posix.sysctl:
+        name: "net.ipv4.conf.{{ item }}.arp_ignore"
+        value: "1"
+        state: present
+        reload: true
+      loop:
+        - all
+        - default
+
+    - name: "Step A3. Configure ARP Announce to Prevent ARP Flux"
+      ansible.posix.sysctl:
+        name: "net.ipv4.conf.{{ item }}.arp_announce"
+        value: "2"
+        state: present
+        reload: true
+      loop:
+        - all
+        - default
+
+    - name: "Step A4. Enable IP Forwarding that Required for L3 Traffic"
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+        reload: true
+
+    - name: "Step A5. Disable Systemd Socket Activation for SSH (Ubuntu specific)"
+      ansible.builtin.systemd:
+        name: ssh.socket
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: "Step A6. Configure SSHD to listen only on Management IP"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?ListenAddress "
+        line: "ListenAddress {{ ansible_host }}"
+        state: present
+      notify: Restart sshd Service
+
+- name: "Section B: Package Installation & User Prep"
+  block:
+    - name: "Step B1. Ensure Service Groups exist"
+      ansible.builtin.group:
+        name: "{{ item }}"
+        state: present
+        system: true
+      loop:
+        - haproxy
+        - keepalived
+
+    - name: "Step B2. Ensure Service Users exist (Fixed Identity)"
+      ansible.builtin.user:
+        name: "{{ item }}"
+        group: "{{ item }}"
+        shell: /usr/sbin/nologin
+        system: true
+        create_home: false
+      loop:
+        - haproxy
+        - keepalived
