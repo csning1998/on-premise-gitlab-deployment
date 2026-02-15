@@ -1,22 +1,4 @@
 
-module "vault_tls_generator" {
-  source     = "../../modules/configuration/vault-tls-generator"
-  output_dir = local.layer_tls_dir
-
-  tls_mode  = var.tls_mode
-  vault_vip = local.service_vip
-
-  vault_cluster = {
-    vault_config = {
-      nodes = {
-        for k, v in local.nodes_configuration : k => {
-          ip = v.ip
-        }
-      }
-    }
-  }
-}
-
 module "vault_cluster" {
   source = "../../modules/service-ha/vault-raft-cluster"
 
@@ -38,5 +20,5 @@ module "vault_cluster" {
   vm_credentials   = local.vm_credentials
 
   # Credentials Injection and output directory for TLS
-  tls_source_dir = module.vault_tls_generator.tls_source_dir
+  pki_artifacts = local.vault_pki
 }

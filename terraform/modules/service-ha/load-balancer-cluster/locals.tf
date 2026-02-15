@@ -25,15 +25,30 @@ locals {
     inventory_template = local.inventory_template
 
     inventory_contents = templatefile(local.inventory_template, {
+      load_balancer_nodes = local.nodes_map_for_template
       ansible_ssh_user    = var.vm_credentials.username
       service_name        = var.topology_config.cluster_name
       service_domain      = var.service_domain
       service_segments    = var.service_segments
-      load_balancer_nodes = local.nodes_map_for_template
       interface_name      = var.service_segments[0].interface_name
       backend_servers     = var.service_segments[0].backend_servers
     })
   }
+}
+
+locals {
+  ansible_extra_vars = merge(
+    {
+      terraform_runner_subnet = var.network_config.network.hostonly.cidrv4
+      haproxy_stats_pass      = local.haproxy_credentials_for_ansible.haproxy_stats_pass
+      keepalived_auth_pass    = local.haproxy_credentials_for_ansible.keepalived_auth_pass
+    },
+    # Inject PKI artifacts only if and only if Layer 00 has base64 encoded output.
+    var.pki_artifacts != null ? {
+      vault_haproxy_bundle = var.pki_artifacts.haproxy_bundle
+      vault_ca_cert        = var.pki_artifacts.ca_cert
+    } : {}
+  )
 }
 
 locals {

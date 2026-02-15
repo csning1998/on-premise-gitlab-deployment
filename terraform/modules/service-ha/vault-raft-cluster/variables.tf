@@ -69,10 +69,10 @@ variable "network_config" {
   }
 }
 
-variable "tls_source_dir" {
-  description = "The absolute path of the tls directory that Ansible needs to read the certificates from."
-  type        = string
-  default     = "../../../terraform/layers/10-vault-core/tls"
+variable "pki_artifacts" {
+  description = "PKI certificates passed from Layer 00 via Layer 10"
+  type        = any
+  default     = null
 }
 
 # Network Identity for Naming Policy

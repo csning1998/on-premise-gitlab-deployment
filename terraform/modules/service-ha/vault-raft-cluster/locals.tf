@@ -40,6 +40,17 @@ locals {
 }
 
 locals {
+  ansible_extra_vars = merge(
+    {},
+    var.pki_artifacts != null ? {
+      vault_server_cert = var.pki_artifacts.server_cert
+      vault_server_key  = var.pki_artifacts.server_key
+      vault_ca_cert     = var.pki_artifacts.ca_cert
+    } : {}
+  )
+}
+
+locals {
   vm_credentials_for_hypervisor = {
     username            = var.vm_credentials.username
     password            = var.vm_credentials.password

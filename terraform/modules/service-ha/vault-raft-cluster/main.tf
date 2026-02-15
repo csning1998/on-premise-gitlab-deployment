@@ -61,7 +61,5 @@ module "ansible_runner" {
     inventory_file  = local.ansible.inventory_file
   }
 
-  extra_vars = {
-    "vault_local_tls_source_dir" = var.tls_source_dir
-  }
+  extra_vars = local.ansible_extra_vars
 }

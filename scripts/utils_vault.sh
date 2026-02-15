@@ -19,8 +19,7 @@ readonly DEV_ROOT_TOKEN_FILE="${DEV_KEYS_DIR}/root-token.txt"
 
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
-readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/10-vault-raft/tls/vault-ca.crt"
-readonly PROD_VAULT_TOKEN_FILE="${ANSIBLE_DIR}/fetched/vault/vault_init_output.json"
+readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/20-vault-pki/tls/bootstrap-ca.crt"
 
 vault_context_handler() {
   local target="$1"
@@ -33,20 +32,28 @@ vault_context_handler() {
     export VAULT_ADDR="$PROD_VAULT_ADDR"
     export VAULT_CACERT="$PROD_CA_CERT"
 
-    # Read the token
-    if [[ -f "$PROD_VAULT_TOKEN_FILE" ]]; then
+    # Fetch Prod Token from Dev Vault (Bootstrap)
+    if [[ -f "$DEV_ROOT_TOKEN_FILE" ]]; then
+      local dev_token
+      dev_token=$(cat "$DEV_ROOT_TOKEN_FILE")
+      
+      # Use curl to fetch the secret from Bootstrap Vault
+      # Path: secret/data/on-premise-gitlab-deployment/infrastructure
+      local response
+      response=$(curl -s --cacert "${DEV_CA}" --header "X-Vault-Token: ${dev_token}" \
+        "${DEV_VAULT_ADDR}/v1/secret/data/on-premise-gitlab-deployment/infrastructure")
+      
       local prod_token
-      prod_token=$(jq -r '.root_token // empty' "$PROD_VAULT_TOKEN_FILE" 2>/dev/null)
+      prod_token=$(echo "$response" | jq -r '.data.data.prod_vault_root_token // empty')
       
       if [[ -n "$prod_token" ]]; then
 				export VAULT_TOKEN="$prod_token"
-				log_print "INFO" "    - Token loaded from file."
+				log_print "INFO" "    - Prod Token retrieved from Bootstrap Vault."
       else
-				log_print "WARN" "Token file exists but could not parse root_token."
+				log_print "WARN" "Connected to Bootstrap Vault, but 'prod_vault_root_token' was not found."
       fi
     else
-      log_print "WARN" "Prod Vault Token file not found at $PROD_VAULT_TOKEN_FILE"
-      log_print "WARN" "(Expected if Prod Vault is not yet initialized)"
+      log_print "WARN" "Bootstrap Vault Token not found. Cannot retrieve Prod Credentials."
     fi
 
   else
@@ -96,21 +103,21 @@ vault_status_reporter() {
 
   # Check Production Vault on Production Guest VM
 	if [[ ! -f "$PROD_CA_CERT" ]]; then
-    log_print "WARN" "Production Vault (Layer10): Unknown (CA Cert missing)"
-  elif curl -s --connect-timeout 1 --cacert "${PROD_CA_CERT}" "${PROD_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then
-		local prod_status_json
-    prod_status_json=$(vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json 2>/dev/null || true)
-	
-		if [[ -n "$prod_status_json" ]]; then
-				log_print "OK" "Production Vault (Layer10): Running (Unsealed)"
-		fi
-	else	# including connection refused, SSL error, Unsealed, EOF, timeout...
-		log_print "ERROR" "Production Vault (Layer10): Stopped or Unsealed or Unreachable"
+    log_print "WARN" "Production Vault (Layer10): Unknown (CA Cert missing at $PROD_CA_CERT)"
+    log_print "INFO" "Run Layer 20 Terraform to generate the Bootstrap CA file."
+  else
+    # Exit code 0 for Unsealed; 2 for Sealed; 1 for Error
+    if vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json >/dev/null 2>&1; then
+      log_print "OK" "Production Vault (Layer10): Running (Unsealed)"
+    elif [[ $? -eq 2 ]]; then
+      log_print "WARN" "Production Vault (Layer10): Running (Sealed)"
+    else
+      log_print "ERROR" "Production Vault (Layer10): Stopped or Unreachable"
+    fi
 	fi
   log_divider
 }
 
-# Function: Generate TLS Certs for Development Vault (Host)
 # Function: Generate TLS Certs for Development Vault (Host)
 vault_dev_tls_generator() {
 
@@ -248,15 +255,37 @@ vault_dev_unseal_handler() {
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
   
-  local inventory_file="${ANSIBLE_DIR}/inventory-10-vault-raft.yaml"
+  local inventory_file="${ANSIBLE_DIR}/inventory-vault-core.yaml"
+  local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-vault-unseal.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
-		log_print "ERROR" "Inventory file not found."
-		return 1
+    log_print "ERROR" "Inventory file not found at: $inventory_file"
+    return 1
   fi
   
-  ansible-playbook -i "$inventory_file" "${ANSIBLE_DIR}/playbooks/90-operation-vault-unseal.yaml"
-  log_print "OK" "[Prod Vault] Unseal Playbook execution completed."
+  if [[ ! -f "$playbook_file" ]]; then
+    log_print "ERROR" "Playbook file not found at: $playbook_file"
+    return 1
+  fi
 
-	sleep 2
+  if [[ ! -f "${DEV_ROOT_TOKEN_FILE}" ]]; then
+		log_print "ERROR" "Bootstrap Vault Root Token not found at: ${DEV_ROOT_TOKEN_FILE}"
+		log_print "INFO" "Please ensure Dev/Bootstrap Vault is initialized."
+		return 1
+  fi
+
+  # No need to pass token string, just the path and URL.
+  if ansible-playbook \
+    -i "$inventory_file" \
+    "$playbook_file" \
+    --extra-vars "dev_vault_url=${DEV_VAULT_ADDR}" \
+    --extra-vars "dev_root_token_path=${DEV_ROOT_TOKEN_FILE}"; then
+    
+    log_print "OK" "[Prod Vault] Unseal Playbook execution completed."
+  else
+    log_print "ERROR" "[Prod Vault] Unseal Playbook failed."
+    return 1
+  fi
+
+  sleep 2
 }

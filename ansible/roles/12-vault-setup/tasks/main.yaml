@@ -34,8 +34,9 @@
         mode: "0644"
       notify: Reload Systemd
 
-- name: "Block B: Deploy Vault TLS Certificates (Managed by Terraform)"
+- name: "Block B: Deploy Vault TLS Certificates"
   become: true
+  when: vault_server_cert is defined
   block:
     - name: "Step B1. Ensure Vault TLS directory exists with secure permissions"
       ansible.builtin.file:
@@ -47,7 +48,7 @@
 
     - name: "Step B2. Deploy Vault Server Certificate"
       ansible.builtin.copy:
-        src: "{{ vault_local_tls_source_dir }}/vault.crt"
+        content: "{{ vault_server_cert | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.crt"
         owner: vault
         group: vault
@@ -56,7 +57,7 @@
 
     - name: "Step B3. Deploy Vault Server Private Key"
       ansible.builtin.copy:
-        src: "{{ vault_local_tls_source_dir }}/vault.key"
+        content: "{{ vault_server_key | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.key"
         owner: vault
         group: vault
@@ -65,16 +66,16 @@
 
     - name: "Step B4. Deploy Vault CA Certificate"
       ansible.builtin.copy:
-        src: "{{ vault_local_tls_source_dir }}/vault-ca.crt"
+        content: "{{ vault_ca_cert | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault-ca.crt"
         owner: vault
         group: vault
         mode: "0644"
       notify: Restart Vault
 
-    - name: "Step B5. Trust Vault Root CA on OS level (for local client tools)"
+    - name: "Step B5. Trust Vault Root CA on OS level"
       ansible.builtin.copy:
-        src: "{{ vault_local_tls_source_dir }}/vault-ca.crt"
+        content: "{{ vault_ca_cert | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt
         mode: "0644"
       register: trust_ca

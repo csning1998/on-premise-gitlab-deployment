@@ -8,8 +8,17 @@ terraform {
   }
 }
 
+# Bootstrap Provider (Podman Vault)
+provider "vault" {
+  alias           = "bootstrapper"
+  address         = "https://127.0.0.1:8200"
+  token           = trimspace(file(abspath("${path.root}/../../../vault/keys/root-token.txt")))
+  skip_tls_verify = true
+}
+
+# Production Provider (Layer 10 Vault)
 provider "vault" {
   address      = "https://${data.terraform_remote_state.vault_raft_config.outputs.vault_ha_virtual_ip}:443"
-  ca_cert_file = abspath("${path.root}/../10-vault-raft/tls/vault-ca.crt")
-  token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault-core/vault_init_output.json"))).root_token
+  token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
+  ca_cert_file = local_file.bootstrap_ca.filename
 }

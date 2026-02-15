@@ -30,28 +30,35 @@
         - vault_status_check.rc == 2
         - (vault_status_check.stdout | from_json).initialized == false
 
-    - name: "F3. Read Unseal Key from Local Controller"
-      ansible.builtin.set_fact:
-        vault_keys: "{{ lookup('file', playbook_dir + '/../fetched/' + service_identifier + '/vault_init_output.json') | from_json }}"
+    - name: "F3. Fetch Unseal Keys from Bootstrap Vault"
+      community.hashi_vault.vault_kv2_get:
+        url: "{{ dev_vault_url }}"
+        engine_mount_point: "secret"
+        path: "{{ dev_vault_api_path }}"
+        token: "{{ lookup('file', dev_root_token_path) }}"
+        validate_certs: false
+      register: bootstrap_secrets
       delegate_to: localhost
       become: false
       when:
         - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
           (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed == true)
 
-    - name: "F4. Execute Unseal"
-      ansible.builtin.command: "vault operator unseal {{ vault_keys.unseal_keys_b64[0] }}"
+    - name: "F4. Parse Unseal Keys"
+      ansible.builtin.set_fact:
+        vault_unseal_keys: "{{ bootstrap_secrets.secret.prod_vault_unseal_keys }}"
+      when: bootstrap_secrets is not skipped
+
+    - name: "F5 Execute Unseal"
+      ansible.builtin.command: "vault operator unseal {{ vault_unseal_keys[0] }}"
       environment:
         VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
         VAULT_SKIP_VERIFY: "true"
       register: unseal_result
       changed_when: "'Sealed: false' in unseal_result.stdout"
-      when:
-        - vault_keys is defined
-        - (vault_status_check.stdout | default('{}') | from_json).sealed | default(false) or
-          (vault_init_check.stdout | default('{}') | from_json).sealed | default(false)
+      when: vault_unseal_keys is defined
 
-    - name: "F5. Verify Unseal Status"
+    - name: "F6. Verify Unseal Status"
       ansible.builtin.debug:
         msg: "Vault node {{ inventory_hostname }} is successfully Unsealed."
       when: unseal_result is changed

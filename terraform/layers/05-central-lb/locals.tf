@@ -7,6 +7,7 @@ locals {
   domain_suffix    = local.global_topology.domain_suffix
   cluster_name     = "${local.service_meta.name}-${local.service_meta.project_code}"
   node_name_prefix = "${local.cluster_name}-node"
+  vault_pki        = try(data.terraform_remote_state.topology.outputs.vault_pki, null)
 }
 
 locals {

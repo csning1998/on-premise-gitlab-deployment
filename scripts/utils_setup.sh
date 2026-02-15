@@ -215,6 +215,7 @@ os_dependency_install_handler() {
 ansible_core_install_handler() {
   log_print "TASK" "Installing Ansible Core using pip..."
   sudo pip3 install ansible-core
+	sudo /usr/bin/python3 -m pip install hvac
 
   log_print "TASK" "Installing Ansible Galaxy collections..."
   ansible-galaxy collection install ansible.posix community.general community.docker community.kubernetes community.crypto community.hashi_vault

@@ -16,7 +16,6 @@ storage "raft" {
     leader_ca_cert_file     = "{{ vault_dir_tls }}/vault-ca.crt"
     leader_client_cert_file = "{{ vault_dir_tls }}/vault.crt"
     leader_client_key_file  = "{{ vault_dir_tls }}/vault.key"
-    leader_tls_servername   = "{{ hostvars[groups['vault_leader'][0]]['inventory_hostname'] }}"
   }
 {% endif %}
 }

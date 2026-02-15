@@ -32,8 +32,8 @@ locals {
     for s in var.service_catalog : [
       for d_key, d_data in s.dependencies : {
 
-        key       = "${s.name}-${d_key}"
-        role_name = "${s.project_code}-${s.name}-${d_data.component}-role"
+        key       = "${s.name}-${d_key}-dep"
+        role_name = "${s.project_code}-${s.name}-${d_data.component}-dep-role"
         dns_san   = ["${d_data.component}.${s.name}.${s.stage}.${var.domain_suffix}"]
 
         # Inject Context

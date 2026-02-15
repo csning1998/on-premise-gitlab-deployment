@@ -20,20 +20,33 @@
       register: init_result
       ignore_errors: true
 
-    - name: "E3. Ensure Local Fetch Directory Exists"
-      ansible.builtin.file:
-        path: "{{ playbook_dir }}/../fetched/{{ service_identifier }}"
-        state: directory
-        mode: "0700"
+    - name: "E3. Read existing Infrastructure Secrets"
+      community.hashi_vault.vault_kv2_get:
+        url: "{{ dev_vault_url }}"
+        engine_mount_point: "secret"
+        path: "{{ dev_vault_api_path }}"
+        token: "{{ lookup('file', dev_root_token_path) }}"
+        validate_certs: false
+      register: existing_secrets
       delegate_to: localhost
       become: false
-      when: init_result.rc == 0
+      ignore_errors: true
 
-    - name: "E4. Save Keys to Local"
-      ansible.builtin.copy:
-        content: "{{ init_result.stdout | from_json | to_nice_json(indent=2) }}"
-        dest: "{{ playbook_dir }}/../fetched/{{ service_identifier }}/vault_init_output.json"
-        mode: "0600"
+    - name: "E4. Write Merged Secrets back to Vault"
+      community.hashi_vault.vault_kv2_write:
+        url: "{{ dev_vault_url }}"
+        engine_mount_point: "secret"
+        path: "{{ dev_vault_api_path }}"
+        token: "{{ lookup('file', dev_root_token_path) }}"
+        validate_certs: false
+        data: >-
+          {{ 
+            (existing_secrets.secret | default({})) 
+            | combine({
+                'prod_vault_root_token': (init_result.stdout | from_json).root_token,
+                'prod_vault_unseal_keys': (init_result.stdout | from_json).unseal_keys_b64
+              }) 
+          }}
       delegate_to: localhost
       become: false
       when: init_result.rc == 0

@@ -16,6 +16,10 @@ all:
           ${p_key}:
             frontend: ${p_val.frontend_port}
             backend: ${p_val.backend_port}
+            health_check_type: "${p_val.health_check_type}"
+            health_check_http_path: "${p_val.health_check_http_path}"
+            health_check_http_expect: "${p_val.health_check_http_expect}"
+            health_check_ssl: ${p_val.health_check_ssl}
 %{ endfor ~}
         tags: ${jsonencode(seg.tags)}
         backend_servers:

@@ -49,17 +49,12 @@ module "ansible_runner" {
 
   inventory_content = local.ansible.inventory_contents
   vm_credentials    = local.vm_credentials_for_ssh
+  extra_vars        = local.ansible_extra_vars
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     root_path       = local.ansible.root_path
     playbook_file   = local.ansible.playbook_file
     inventory_file  = local.ansible.inventory_file
-  }
-
-  extra_vars = {
-    terraform_runner_subnet = var.network_config.network.hostonly.cidrv4
-    haproxy_stats_pass      = local.haproxy_credentials_for_ansible.haproxy_stats_pass
-    keepalived_auth_pass    = local.haproxy_credentials_for_ansible.keepalived_auth_pass
   }
 }

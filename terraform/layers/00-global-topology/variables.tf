@@ -11,6 +11,12 @@ variable "pki_settings" {
   })
 }
 
+variable "pki_force_rotate" {
+  description = "Set to true to force regeneration of all certificates (Root CA and Server Certs)."
+  type        = bool
+  default     = false
+}
+
 variable "network_baseline" {
   description = "Base network configuration including CIDR, VIP offsets, and MAC prefixes."
   type = object({
@@ -57,8 +63,12 @@ variable "service_catalog" {
     })
 
     ports = optional(map(object({
-      frontend_port = number
-      backend_port  = number
+      frontend_port            = number
+      backend_port             = number
+      health_check_type        = optional(string, "tcp")
+      health_check_http_path   = optional(string, "/")
+      health_check_http_expect = optional(string, "status 200")
+      health_check_ssl         = optional(bool, false)
     })), {})
 
     components = map(object({

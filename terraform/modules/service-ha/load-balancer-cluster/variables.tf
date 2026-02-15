@@ -46,23 +46,35 @@ variable "service_domain" {
 variable "service_segments" {
   description = "List of network segments (Infrastructure creation only)."
   type = list(object({
-    name        = string
-    bridge_name = string
-    cidr        = optional(string)
-    vrid        = optional(number)
-    vip         = optional(string)
-    node_ips    = optional(map(string))
+    name           = string
+    bridge_name    = string
+    interface_name = string
+    tags           = optional(list(string))
+    cidr           = optional(string)
+    vrid           = optional(number)
+    vip            = optional(string)
+    node_ips       = optional(map(string))
+
+    ports = optional(map(object({
+      frontend_port            = number
+      backend_port             = number
+      health_check_type        = optional(string, "tcp")
+      health_check_http_path   = optional(string, "/")
+      health_check_http_expect = optional(string, "")
+      health_check_ssl         = optional(bool, false)
+    })))
+
     backend_servers = optional(list(object({
       name = string
       ip   = string
     })))
-    interface_name = string
-    ports = optional(map(object({
-      frontend_port = number
-      backend_port  = number
-    })))
-    tags = optional(list(string))
   }))
+}
+
+variable "pki_artifacts" {
+  description = "PKI certificates passed from Layer 00 via Layer 05"
+  type        = any
+  default     = null
 }
 
 variable "network_config" {

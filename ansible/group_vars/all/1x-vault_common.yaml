@@ -24,3 +24,8 @@ vault_port_cluster: 8201
 # PKI Defaults
 vault_ca_subject_common_name: "Vault Root CA"
 vault_cluster_name: "vault-ha-cluster"
+
+# Development Vault Path for 'community.hashi_vault.vault_kv2_get'
+dev_vault_api_path: "on-premise-gitlab-deployment/infrastructure"
+dev_vault_url: "https://127.0.0.1:8200"
+dev_root_token_path: "{{ playbook_dir }}/../../vault/keys/root-token.txt"

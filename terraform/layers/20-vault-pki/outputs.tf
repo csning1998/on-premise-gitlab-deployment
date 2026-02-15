@@ -4,14 +4,6 @@ output "vault_ha_virtual_ip" {
   value       = data.terraform_remote_state.vault_raft_config.outputs.vault_ha_virtual_ip
 }
 
-output "vault_certificates" {
-  description = "The Certificates content of the Vault Cluster"
-  value = {
-    root_ca = module.vault_pki_setup.pki_root_ca_certificate
-    ca_cert = data.terraform_remote_state.vault_raft_config.outputs.vault_ca_cert # for PKI
-  }
-}
-
 output "pki_configuration" {
   description = "PKI Configuration Summary"
   value = {

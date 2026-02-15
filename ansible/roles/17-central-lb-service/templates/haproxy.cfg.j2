@@ -23,7 +23,7 @@ defaults
 
 # Stats Interface, only bind to management IP
 listen stats
-    bind {{ ansible_host }}:{{ haproxy_stats_port }}
+    bind {{ ansible_host }}:{{ haproxy_stats_port }} ssl crt /etc/haproxy/certs/vault.pem
     mode http
     stats enable
     stats uri /
@@ -38,7 +38,11 @@ listen stats
 
 # Frontend for {{ port_name }}
 frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+    {% if port_cfg.frontend == 443 and vault_haproxy_bundle is defined and segment.name == 'vault' %}
+    bind {{ segment.vip }}:{{ port_cfg.frontend }} ssl crt /etc/haproxy/certs/vault.pem
+    {% else %}
     bind {{ segment.vip }}:{{ port_cfg.frontend }}
+    {% endif %}
     mode tcp
     option tcplog
     default_backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
@@ -47,10 +51,17 @@ frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
 backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
     mode tcp
     balance roundrobin
+
+    {# Dynamic Health Check Logic #}
+    {% if port_cfg.health_check_type == 'http' %}
+    option httpchk GET {{ port_cfg.health_check_http_path | default('/') }}
+    http-check expect {{ port_cfg.health_check_http_expect | default('status 200') }}
+    {% else %}
     option tcp-check
+    {% endif %}
+
     {% for server in segment.backend_servers %}
-    # Slot {{ loop.index0 }}: If backend is down, HAProxy will exclude it via health check
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter 3s fall 3 rise 2
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter 3s fall 3 rise 2{{ ' ssl verify none' if port_cfg.health_check_ssl | default(false) else '' }}
     {% endfor %}
 
 {% endfor %}
