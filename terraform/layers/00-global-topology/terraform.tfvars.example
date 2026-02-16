@@ -214,7 +214,14 @@ service_catalog = [
     tags         = []
     ip_range     = { start_ip = 200, end_ip = 205 }
     ports = {
-      "api" = { frontend_port = 443, backend_port = 8200 }
+      "api" = {
+        frontend_port            = 443,
+        backend_port             = 8200
+        health_check_type        = "http"
+        health_check_http_path   = "/v1/sys/health"
+        health_check_http_expect = "rstatus (200|429)"
+        health_check_ssl         = true
+      }
     }
     components = {
       "core" = { subdomains = ["vault"] }

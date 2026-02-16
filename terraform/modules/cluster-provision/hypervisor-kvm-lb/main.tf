@@ -54,33 +54,15 @@ resource "libvirt_network" "service_networks" {
 
   name      = each.value.name        # e.g., "gitlab-frontend"
   bridge    = each.value.bridge_name # e.g., "br-gitlab-front"
-  mode      = "none"
+  mode      = "route"
   autostart = true
-}
 
-resource "null_resource" "host_gateway_ip" {
-  depends_on = [
-    libvirt_network.service_networks,
-    libvirt_network.nat_net,
-    libvirt_network.hostonly_net
+  ips = [
+    {
+      address = cidrhost(each.value.cidr, 1)
+      prefix  = tonumber(split("/", each.value.cidr)[1])
+    }
   ]
-
-  for_each = { for seg in var.service_segments : seg.name => seg }
-
-  triggers = {
-    bridge_interface = each.value.bridge_name
-    gateway_ip       = cidrhost(each.value.cidr, 1)
-    cidr_prefix      = split("/", each.value.cidr)[1]
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      if ! ip addr show ${self.triggers.bridge_interface} | grep -q "${self.triggers.gateway_ip}"; then
-        sudo ip addr add ${self.triggers.gateway_ip}/${self.triggers.cidr_prefix} dev ${self.triggers.bridge_interface}
-      fi
-      sudo ip link set ${self.triggers.bridge_interface} up
-    EOT
-  }
 }
 
 resource "libvirt_pool" "storage_pool" {

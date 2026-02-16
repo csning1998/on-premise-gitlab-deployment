@@ -8,7 +8,8 @@ module "hypervisor_kvm" {
   }
 
   # VM Credentials from Vault
-  credentials = local.vm_credentials_for_hypervisor
+  credentials     = local.vm_credentials_for_hypervisor
+  create_networks = false
 
   # Libvirt Network & Storage Configuration
   libvirt_infrastructure = {
@@ -26,7 +27,7 @@ module "hypervisor_kvm" {
       hostonly = {
         name_network = var.network_identity.hostonly_net_name
         name_bridge  = var.network_identity.hostonly_bridge_name
-        mode         = "bridge"
+        mode         = "route"
         ips = {
           prefix  = tonumber(split("/", var.network_config.network.hostonly.cidrv4)[1])
           address = var.network_config.network.hostonly.gateway

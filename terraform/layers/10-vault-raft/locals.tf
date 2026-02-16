@@ -23,9 +23,9 @@ locals {
   # 2. Network Identity & Specs (Corrected Source)
   # Use unique network names for this service cluster to avoid conflict with LB infra
   network_identity = {
-    nat_net_name         = "${local.cluster_name}-nat"
-    nat_bridge_name      = "br-nat-${substr(md5(local.cluster_name), 0, 6)}"
-    hostonly_net_name    = "${local.cluster_name}-hostonly"
+    nat_net_name         = local.central_lb_outputs.infra_network.nat.name_network
+    nat_bridge_name      = local.central_lb_outputs.infra_network.nat.name_bridge
+    hostonly_net_name    = var.service_catalog_name
     hostonly_bridge_name = local.my_segment_info.bridge_name
   }
 
@@ -40,7 +40,7 @@ locals {
       nat = {
         gateway = local.my_segment_info.nat_gateway # e.g. 172.16.12.1
         cidrv4  = local.my_segment_info.nat_cidr    # e.g. 172.16.12.0/24
-        dhcp    = local.network_segment.nat_dhcp    # .12.100 - .12.199
+        dhcp    = local.network_segment.nat_dhcp    # e.g. 172.16.12.100 - 172.16.12.199
       }
       hostonly = {
         gateway = cidrhost(local.my_segment_info.cidr, 1) # Implied Gateway for HostOnly is typically the .1 of the CIDR
@@ -50,7 +50,6 @@ locals {
     allowed_subnet = local.my_segment_info.cidr
   }
 }
-
 
 locals {
   vm_credentials = {

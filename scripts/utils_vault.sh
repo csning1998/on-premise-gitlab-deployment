@@ -107,7 +107,7 @@ vault_status_reporter() {
     log_print "INFO" "Run Layer 20 Terraform to generate the Bootstrap CA file."
   else
     # Exit code 0 for Unsealed; 2 for Sealed; 1 for Error
-    if vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json >/dev/null 2>&1; then
+    if timeout 2 vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json >/dev/null 2>&1; then
       log_print "OK" "Production Vault (Layer10): Running (Unsealed)"
     elif [[ $? -eq 2 ]]; then
       log_print "WARN" "Production Vault (Layer10): Running (Sealed)"
