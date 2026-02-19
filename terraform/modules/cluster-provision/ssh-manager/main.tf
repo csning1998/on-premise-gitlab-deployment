@@ -8,9 +8,10 @@ terraform {
 }
 
 locals {
+  cluster_name = var.config_name.cluster_name
   # Dynamically construct file paths based on the provided config_name
-  ssh_config_path  = pathexpand("~/.ssh/config_iac-${var.config_name}")
-  known_hosts_path = pathexpand("~/.ssh/known_hosts_${var.config_name}")
+  ssh_config_path  = pathexpand("~/.ssh/config_iac-${local.cluster_name}")
+  known_hosts_path = pathexpand("~/.ssh/known_hosts_${local.cluster_name}")
 }
 
 /*
@@ -21,9 +22,9 @@ resource "local_file" "ssh_config" {
 
   content = templatefile("${path.module}/../../../templates/ssh_config.tftpl", {
     nodes                = var.nodes
-    ssh_user             = var.vm_credentials.username
-    ssh_private_key_path = var.vm_credentials.ssh_private_key_path
-    config_name          = var.config_name
+    ssh_user             = var.credentials_vm.username
+    ssh_private_key_path = var.credentials_vm.ssh_private_key_path
+    config_name          = local.cluster_name
     known_hosts_path     = local.known_hosts_path
   })
   filename        = local.ssh_config_path
@@ -74,7 +75,7 @@ resource "null_resource" "prepare_ssh_access" {
       set -e
       . ${path.module}/../../../../scripts/utils_ssh.sh
       log_print "STEP" "Verifying VM liveness and preparing SSH access..."
-      known_hosts_bootstrapper "${var.config_name}" ${join(" ", [for node in var.nodes : node.ip])}
+      known_hosts_bootstrapper "${local.cluster_name}" ${join(" ", [for node in var.nodes : node.ip])}
       log_print "OK" "Liveness check passed. SSH access is ready."
     EOT
     interpreter = ["/bin/bash", "-c"]

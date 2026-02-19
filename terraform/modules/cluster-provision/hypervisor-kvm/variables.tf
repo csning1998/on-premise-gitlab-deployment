@@ -14,6 +14,7 @@ variable "vm_config" {
       vcpu            = number
       ram             = number
       base_image_path = string
+      network_tier    = string
 
       data_disks = optional(list(object({
         name_suffix = string
@@ -40,7 +41,7 @@ variable "credentials" {
 
 variable "libvirt_infrastructure" {
   description = "All configurations for Libvirt-managed networks and storage."
-  type = object({
+  type = map(object({
     network = object({
       nat = object({
         name_network = string
@@ -70,5 +71,5 @@ variable "libvirt_infrastructure" {
       })
     })
     storage_pool_name = string
-  })
+  }))
 }

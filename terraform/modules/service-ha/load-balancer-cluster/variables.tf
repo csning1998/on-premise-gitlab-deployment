@@ -1,5 +1,5 @@
 
-variable "topology_config" {
+variable "topology_cluster" {
   description = "Standardized compute topology configuration for Load Balancer HA Cluster."
   type = object({
 
@@ -12,11 +12,10 @@ variable "topology_config" {
         vcpu            = number
         ram             = number
         interfaces = list(object({
-          network_name   = string
-          mac            = string
-          alias          = optional(string)
-          addresses      = list(string)
-          wait_for_lease = bool
+          network_name = string
+          mac          = string
+          alias        = optional(string)
+          addresses    = list(string)
         }))
       }))
     })
@@ -24,26 +23,26 @@ variable "topology_config" {
 
   # At least one Load Balancer Class node
   validation {
-    condition     = length(var.topology_config.load_balancer_config.nodes) > 0
+    condition     = length(var.topology_cluster.load_balancer_config.nodes) > 0
     error_message = "High Availability architecture requires at least one Load Balancer Class node."
   }
 
   # Load Balancer Node specification (vCPU >= 2, RAM >= 1024)
   validation {
     condition = alltrue([
-      for k, node in var.topology_config.load_balancer_config.nodes :
+      for k, node in var.topology_cluster.load_balancer_config.nodes :
       node.vcpu >= 2 && node.ram >= 1024
     ])
     error_message = "Load Balancer nodes require at least 2 vCPUs and 1024MB RAM."
   }
 }
 
-variable "service_domain" {
+variable "service_fqdn" {
   description = "The FQDN for the Load Balancer service"
   type        = string
 }
 
-variable "service_segments" {
+variable "network_service_segments" {
   description = "List of network segments (Infrastructure creation only)."
   type = list(object({
     name           = string
@@ -71,13 +70,13 @@ variable "service_segments" {
   }))
 }
 
-variable "pki_artifacts" {
+variable "security_pki_bundle" {
   description = "PKI certificates passed from Layer 00 via Layer 05"
   type        = any
   default     = null
 }
 
-variable "network_config" {
+variable "network_parameters" {
   description = "Standardized infrastructure network configuration."
   type = object({
     network = object({
@@ -94,22 +93,41 @@ variable "network_config" {
         cidrv4  = string
       })
     })
-    allowed_subnet = string
+    access_scope = string
   })
 
   # Network CIDR validation
   validation {
     condition = alltrue([
-      can(cidrnetmask(var.network_config.network.nat.cidrv4)),
-      can(cidrnetmask(var.network_config.network.hostonly.cidrv4)),
-      can(cidrnetmask(var.network_config.allowed_subnet))
+      can(cidrnetmask(var.network_parameters.network.nat.cidrv4)),
+      can(cidrnetmask(var.network_parameters.network.hostonly.cidrv4)),
+      can(cidrnetmask(var.network_parameters.access_scope))
     ])
     error_message = "All network CIDRs must be valid."
   }
 }
 
+variable "network_infrastructure" {
+  description = "Map of all networks to be passed to KVM module."
+  type = map(object({
+    hostonly = object({
+      name        = string
+      bridge_name = string
+      gateway     = string
+      prefix      = number
+    })
+    nat = object({
+      name        = string
+      bridge_name = string
+      gateway     = string
+      prefix      = number
+      dhcp        = optional(any)
+    })
+  }))
+}
+
 # Network Identity for Naming Policy
-variable "network_identity" {
+variable "network_bindings" {
   description = "Pre-calculated network and bridge names passed from Layer"
   type = object({
     nat_net_name         = string
@@ -120,7 +138,7 @@ variable "network_identity" {
 }
 
 # Credentials Injection
-variable "vm_credentials" {
+variable "credentials_vm" {
   description = "System level credentials (ssh user, password, keys)"
   sensitive   = true
   type = object({
@@ -131,7 +149,7 @@ variable "vm_credentials" {
   })
 }
 
-variable "haproxy_credentials" {
+variable "credentials_application" {
   description = "HAProxy credentials (stats user, stats password, keepalived auth password)"
   sensitive   = true
   type = object({

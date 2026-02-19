@@ -1,7 +1,7 @@
 
-output "vault_ha_virtual_ip" {
+output "vault_service_vip" {
   description = "The Virtual IP of the Vault Raft Cluster"
-  value       = data.terraform_remote_state.vault_raft_config.outputs.vault_ha_virtual_ip
+  value       = data.terraform_remote_state.vault_raft_config.outputs.service_vip
 }
 
 output "pki_configuration" {
@@ -38,4 +38,9 @@ output "workload_identities_dependencies" {
 output "auth_backend_paths" {
   description = "Map of enabled Auth Backend paths"
   value       = module.vault_pki_setup.auth_backend_paths
+}
+
+output "bootstrap_ca_path" {
+  description = "Path to the bootstrap CA certificate"
+  value       = abspath(local_file.bootstrap_ca.filename)
 }

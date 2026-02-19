@@ -12,21 +12,28 @@ variable "vault_dev_addr" {
 
 variable "vault_config" {
   description = "Compute topology for Vault Core service."
-  type = object({
+  type = map(object({
+    role            = string
+    network_tier    = string
+    base_image_path = string
+
     nodes = map(object({
       ip_suffix = number
       vcpu      = number
       ram       = number
+
+      data_disks = optional(list(object({
+        name_suffix = string
+        capacity    = number
+      })), [])
     }))
+  }))
+}
+
+variable "ansible_files" {
+  description = "Meta configuration of Ansible inventory for Vault Core service."
+  type = object({
+    playbook_file           = string
+    inventory_template_file = string
   })
-}
-
-variable "base_image_path" {
-  description = "The path to the base image for the Load Balancer nodes."
-  type        = string
-}
-
-variable "tls_mode" {
-  description = "TLS generation mode: 'generated' (Terraform creates keys via tls provider) or 'manual' (Terraform assumes files exist and does nothing)."
-  type        = string
 }

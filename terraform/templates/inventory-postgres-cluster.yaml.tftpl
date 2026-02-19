@@ -1,27 +1,25 @@
 ---
 all:
   vars:
-    ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
-    postgres_cluster_name: "${service_name}-postgres-cluster"
-
-    etcd_cluster_ips: ${jsonencode(etcd_ips)}
-    postgres_cluster_ips: ${jsonencode(postgres_ips)}
-    postgres_ha_virtual_ip: "${postgres_ha_virtual_ip}"
-    postgres_mtls_node_subnet: "${postgres_mtls_node_subnet}"
-    postgres_nat_subnet_prefix: "${postgres_nat_subnet_prefix}"
-    postgres_service_domain: "${postgres_service_domain}"
-
-    haproxy_stats_port: "${haproxy_stats_port}"
-    haproxy_rw_port: "${haproxy_rw_port}"
-    haproxy_ro_port: "${haproxy_ro_port}"
+    service_identifier: "${cluster_identity.name}-postgres-cluster"
+    postgres_ha_virtual_ip: "${cluster_network.postgres_vip}"
+    postgres_nat_subnet_prefix: "${cluster_network.nat_prefix}"
+    postgres_common_name: "${cluster_identity.common_name}"
+    postgres_cluster_name: "${cluster_identity.name}"
+    postgres_mtls_node_subnet: "${cluster_network.access_scope}"
+    postgres_static_routes:
+      - to: "${cluster_network.vault_vip}/32"
+        via: "${cluster_network.postgres_vip}"
+        dev: "ens3"
+        metric: 100
 
   children:
     postgres_etcd_nodes:
       hosts:
-%{ for key, node in postgres_etcd_nodes ~}
+%{ for key, node in etcd_nodes ~}
         ${key}:
           advertise_ip: ${node.ip}
+          node_role: "etcd"
 %{ endfor ~}
 
     postgres_db_nodes:
@@ -29,11 +27,5 @@ all:
 %{ for key, node in postgres_nodes ~}
         ${key}:
           advertise_ip: ${node.ip}
-%{ endfor ~}
-
-    postgres_haproxy_nodes:
-      hosts:
-%{ for key, node in haproxy_nodes ~}
-        ${key}:
-          advertise_ip: ${node.ip}
+          node_role: "postgres"
 %{ endfor ~}

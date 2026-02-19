@@ -19,7 +19,7 @@ readonly DEV_ROOT_TOKEN_FILE="${DEV_KEYS_DIR}/root-token.txt"
 
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
-readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/20-vault-pki/tls/bootstrap-ca.crt"
+readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/10-vault-raft/tls/bootstrap-ca.crt"
 
 vault_context_handler() {
   local target="$1"

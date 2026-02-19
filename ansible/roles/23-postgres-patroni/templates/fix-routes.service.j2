@@ -1,0 +1,18 @@
+[Unit]
+Description=Fix Asymmetric Routing for Vault VIP
+# Ensure network is fully up before running
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Force traffic to Vault VIP (e.g. 172.16.136.250) to go via Local LB VIP (e.g. 172.16.127.250)
+# This bypasses the Default Gateway to prevent stateful firewall drops
+{% for route in postgres_static_routes %}
+ExecStart=/usr/sbin/ip route replace {{ route.to }} via {{ route.via }} dev {{ route.dev | default('ens3') }} metric {{ route.metric | default(100) }}
+{% endfor %}
+# RemainAfterExit ensures systemd considers this service "active" once run
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

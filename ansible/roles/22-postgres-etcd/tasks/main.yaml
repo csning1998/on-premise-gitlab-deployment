@@ -52,6 +52,19 @@
         mode: "0644"
       notify: Restart etcd
 
+    - name: "Step B3. Check if UFW is installed"
+      ansible.builtin.stat:
+        path: /usr/sbin/ufw
+      register: ufw_stat
+
+    - name: "Step B4. Allow Etcd Client port from Postgres subnet"
+      community.general.ufw:
+        rule: allow
+        port: "{{ etcd_client_port }}"
+        proto: tcp
+        src: "{{ postgres_mtls_node_subnet }}"
+      when: ufw_stat.stat.exists
+
 - name: "Section C: Start and Enable etcd Service"
   block:
     - name: "Step C1. Reload systemd daemon"

@@ -2,50 +2,40 @@
 module "hypervisor_kvm" {
   source = "../../cluster-provision/hypervisor-kvm"
 
-  # VM Configuration
   vm_config = {
-    all_nodes_map = local.nodes_config
-  }
-
-  # VM Credentials from Vault
-  credentials     = local.vm_credentials_for_hypervisor
-  create_networks = false
-
-  # Libvirt Network & Storage Configuration
-  libvirt_infrastructure = {
-    network = {
-      nat = {
-        name_network = var.network_identity.nat_net_name
-        name_bridge  = var.network_identity.nat_bridge_name
-        mode         = "nat"
-        ips = {
-          prefix  = tonumber(split("/", var.network_config.network.nat.cidrv4)[1])
-          address = var.network_config.network.nat.gateway
-          dhcp    = var.network_config.network.nat.dhcp
-        }
-      }
-      hostonly = {
-        name_network = var.network_identity.hostonly_net_name
-        name_bridge  = var.network_identity.hostonly_bridge_name
-        mode         = "route"
-        ips = {
-          prefix  = tonumber(split("/", var.network_config.network.hostonly.cidrv4)[1])
-          address = var.network_config.network.hostonly.gateway
-          dhcp    = null
-        }
+    all_nodes_map = {
+      for k, v in local.flat_node_map : k => {
+        ip              = v.ip
+        vcpu            = v.vcpu
+        ram             = v.ram
+        base_image_path = v.base_image_path
+        data_disks      = v.data_disks
+        network_tier    = v.network_tier
       }
     }
-    storage_pool_name = var.topology_config.storage_pool_name
   }
+
+  create_networks        = false
+  credentials            = local.vm_credentials_for_hypervisor
+  libvirt_infrastructure = local.hypervisor_kvm_infrastructure
 }
 
 module "ssh_manager" {
   source         = "../../cluster-provision/ssh-manager"
   status_trigger = module.hypervisor_kvm.vm_status_trigger
 
-  nodes          = local.nodes_list_for_ssh
-  vm_credentials = local.vm_credentials_for_ssh
-  config_name    = var.topology_config.cluster_name
+  nodes = [
+    for k, v in local.flat_node_map : {
+      key = k
+      ip  = v.ip
+    }
+  ]
+
+  config_name = {
+    cluster_name = var.cluster_name
+  }
+
+  credentials_vm = local.vm_credentials_for_ssh
 }
 
 module "ansible_runner" {
@@ -53,7 +43,7 @@ module "ansible_runner" {
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_content = local.ansible.inventory_contents
-  vm_credentials    = local.vm_credentials_for_ssh
+  credentials_vm    = local.vm_credentials_for_ssh
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path

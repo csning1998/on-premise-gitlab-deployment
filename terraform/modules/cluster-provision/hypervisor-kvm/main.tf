@@ -5,22 +5,25 @@ data "local_file" "ssh_public_key" {
 
 resource "libvirt_network" "nat_net" {
 
-  count = var.create_networks && var.libvirt_infrastructure.network.nat.mode != "route" ? 1 : 0
+  for_each = var.create_networks ? {
+    for k, v in var.libvirt_infrastructure : k => v
+    if v.network.nat.mode != "route"
+  } : {}
 
-  name      = var.libvirt_infrastructure.network.nat.name_network
-  mode      = var.libvirt_infrastructure.network.nat.mode
-  bridge    = var.libvirt_infrastructure.network.nat.name_bridge
+  name      = each.value.network.nat.name_network
+  mode      = each.value.network.nat.mode
+  bridge    = each.value.network.nat.name_bridge
   autostart = true
 
   ips = [
     {
-      address = var.libvirt_infrastructure.network.nat.ips.address
-      prefix  = var.libvirt_infrastructure.network.nat.ips.prefix
-      dhcp = var.libvirt_infrastructure.network.nat.ips.dhcp != null ? {
+      address = each.value.network.nat.ips.address
+      prefix  = each.value.network.nat.ips.prefix
+      dhcp = each.value.network.nat.ips.dhcp != null ? {
         ranges = [
           {
-            start = var.libvirt_infrastructure.network.nat.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.nat.ips.dhcp.end
+            start = each.value.network.nat.ips.dhcp.start
+            end   = each.value.network.nat.ips.dhcp.end
           }
         ]
       } : null
@@ -30,23 +33,26 @@ resource "libvirt_network" "nat_net" {
 
 resource "libvirt_network" "hostonly_net" {
 
-  count = var.create_networks && var.libvirt_infrastructure.network.hostonly.mode != "route" ? 1 : 0
+  for_each = var.create_networks ? {
+    for k, v in var.libvirt_infrastructure : k => v
+    if v.network.hostonly.mode != "route"
+  } : {}
 
-  name      = var.libvirt_infrastructure.network.hostonly.name_network
-  mode      = var.libvirt_infrastructure.network.hostonly.mode
-  bridge    = var.libvirt_infrastructure.network.hostonly.name_bridge
+  name      = each.value.network.hostonly.name_network
+  mode      = each.value.network.hostonly.mode
+  bridge    = each.value.network.hostonly.name_bridge
   autostart = true
 
-  ips = var.libvirt_infrastructure.network.hostonly.mode == "route" ? null : [
+  ips = [
     {
-      address = var.libvirt_infrastructure.network.hostonly.ips.address
-      prefix  = var.libvirt_infrastructure.network.hostonly.ips.prefix
+      address = each.value.network.hostonly.ips.address
+      prefix  = each.value.network.hostonly.ips.prefix
 
-      dhcp = var.libvirt_infrastructure.network.hostonly.ips.dhcp != null ? {
+      dhcp = each.value.network.hostonly.ips.dhcp != null ? {
         ranges = [
           {
-            start = var.libvirt_infrastructure.network.hostonly.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.hostonly.ips.dhcp.end
+            start = each.value.network.hostonly.ips.dhcp.start
+            end   = each.value.network.hostonly.ips.dhcp.end
           }
         ]
       } : null
@@ -55,10 +61,10 @@ resource "libvirt_network" "hostonly_net" {
 }
 
 resource "libvirt_pool" "storage_pool" {
-  name = var.libvirt_infrastructure.storage_pool_name
+  name = values(var.libvirt_infrastructure)[0].storage_pool_name
   type = "dir"
   target = {
-    path = abspath("/var/lib/libvirt/images/${var.libvirt_infrastructure.storage_pool_name}")
+    path = abspath("/var/lib/libvirt/images/${values(var.libvirt_infrastructure)[0].storage_pool_name}")
   }
 }
 
@@ -98,8 +104,8 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     nat_ip_cidr      = local.nodes_config[each.key].nat_ip_cidr
     hostonly_mac     = local.nodes_config[each.key].hostonly_mac
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
-    nat_gateway      = var.libvirt_infrastructure.network.nat.ips.address
-    hostonly_gateway = var.libvirt_infrastructure.network.hostonly.ips.address
+    nat_gateway      = var.libvirt_infrastructure[each.value.network_tier].network.nat.ips.address
+    hostonly_gateway = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.ips.address
   })
 }
 
@@ -171,13 +177,13 @@ resource "libvirt_domain" "nodes" {
       }
     ]
 
-    # Network Interfaces
+    # Network Interfaces search by network tier
     interfaces = [
       # 1. NAT Interface
       {
         type = "network"
         source = {
-          network = var.libvirt_infrastructure.network.nat.name_network
+          network = var.libvirt_infrastructure[each.value.network_tier].network.nat.name_network
         }
         mac = local.nodes_config[each.key].nat_mac
       },
@@ -185,7 +191,7 @@ resource "libvirt_domain" "nodes" {
       {
         type = "network"
         source = {
-          network = var.libvirt_infrastructure.network.hostonly.name_network
+          network = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.name_network
         }
         mac = local.nodes_config[each.key].hostonly_mac
       }

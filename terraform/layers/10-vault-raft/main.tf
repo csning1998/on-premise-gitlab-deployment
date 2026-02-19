@@ -2,23 +2,22 @@
 module "vault_cluster" {
   source = "../../modules/service-ha/vault-raft-cluster"
 
-  # Topology
-  topology_config = {
-    cluster_name      = local.cluster_name
-    storage_pool_name = local.storage_pool_name
+  # Identity & Service Definitions
+  cluster_name   = local.cluster_name
+  service_vip    = local.service_vip
+  service_domain = local.service_fqdn
 
-    vault_config = {
-      nodes = local.nodes_configuration
-    }
-  }
+  # Topology (Compute & Storage)
+  topology_cluster = local.topology_cluster
 
-  # Inject VIP from SSoT and Network Config / Identity from Layer 05 (Bridge, Gateway, CIDR, DHCP)
-  service_vip      = local.service_vip
-  service_domain   = local.domain_suffix
-  network_config   = local.network_config
-  network_identity = local.network_identity
-  vm_credentials   = local.vm_credentials
+  # Network Infrastructure (L2/L3)
+  network_bindings   = local.network_bindings
+  network_parameters = local.network_parameters
 
-  # Credentials Injection and output directory for TLS
-  pki_artifacts = local.vault_pki
+  # Security & Credentials
+  credentials_system  = local.credentials_system
+  security_pki_bundle = local.security_pki_bundle
+
+  # Ansible Configuration
+  ansible_files = var.ansible_files
 }

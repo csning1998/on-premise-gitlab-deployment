@@ -1,8 +1,9 @@
 
 module "central_lb_cluster" {
+
   source = "../../modules/service-ha/load-balancer-cluster"
 
-  topology_config = {
+  topology_cluster = {
     cluster_name      = local.cluster_name
     storage_pool_name = local.storage_pool_name
 
@@ -11,31 +12,32 @@ module "central_lb_cluster" {
     }
   }
 
-  network_config = {
+  network_parameters = {
     network = {
       nat = {
-        gateway = local.infra_network.nat.gateway
-        cidrv4  = local.infra_network.nat.cidrv4
-        dhcp    = local.infra_network.nat.dhcp
+        gateway = local.lb_network_config.nat.gateway
+        cidrv4  = local.lb_network_config.nat.cidr
+        dhcp    = local.lb_network_config.nat.dhcp
       }
       hostonly = {
-        gateway = local.infra_network.hostonly.gateway
-        cidrv4  = local.infra_network.hostonly.cidrv4
+        gateway = local.lb_network_config.hostonly.gateway
+        cidrv4  = local.lb_network_config.hostonly.cidr
       }
     }
-    allowed_subnet = local.allowed_subnet
+    access_scope = local.network_access_scope
   }
 
-  pki_artifacts       = local.vault_pki
-  service_segments    = local.hydrated_service_segments
-  service_domain      = local.domain_suffix
-  vm_credentials      = local.vm_credentials
-  haproxy_credentials = local.haproxy_credentials
+  security_pki_bundle      = local.vault_pki
+  network_service_segments = local.network_service_segments
+  service_fqdn             = local.domain_suffix
+  credentials_vm           = local.credentials_vm
+  credentials_application  = local.credentials_haproxy
+  network_infrastructure   = local.network_infrastructure
 
-  network_identity = {
-    nat_net_name         = local.infra_network.nat.name_network
-    nat_bridge_name      = local.infra_network.nat.name_bridge
-    hostonly_net_name    = local.infra_network.hostonly.name_network
-    hostonly_bridge_name = local.infra_network.hostonly.name_bridge
+  network_bindings = {
+    nat_net_name         = local.lb_network_config.nat.name
+    nat_bridge_name      = local.lb_network_config.nat.bridge_name
+    hostonly_net_name    = local.lb_network_config.hostonly.name
+    hostonly_bridge_name = local.lb_network_config.hostonly.bridge_name
   }
 }

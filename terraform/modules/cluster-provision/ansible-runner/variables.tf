@@ -14,7 +14,7 @@ variable "inventory_content" {
   type        = string
 }
 
-variable "vm_credentials" {
+variable "credentials_vm" {
   description = "SSH credentials for Ansible"
   type = object({
     username             = string

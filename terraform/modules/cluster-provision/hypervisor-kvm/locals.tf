@@ -1,16 +1,8 @@
 
 locals {
-  # Determine whether to establish NAT and HostOnly networks
-  create_nat_network      = var.libvirt_infrastructure.network.nat.mode != "bridge"
-  create_hostonly_network = var.libvirt_infrastructure.network.hostonly.mode != "bridge"
-}
-
-locals {
-  nat_net_prefixlen      = var.libvirt_infrastructure.network.nat.ips.prefix
-  hostonly_net_prefixlen = var.libvirt_infrastructure.network.hostonly.ips.prefix
-
-  #  e.g. Gateway (172.16.86.1) -> split -> first three segments -> join -> "172.16.86"
-  nat_subnet_prefix = join(".", slice(split(".", var.libvirt_infrastructure.network.nat.ips.address), 0, 3))
+  tier_nat_prefixes = {
+    for k, v in var.libvirt_infrastructure : k => join(".", slice(split(".", v.network.nat.ips.address), 0, 3))
+  }
 
   nodes_config = {
     for node_name, node_config in var.vm_config.all_nodes_map :
@@ -36,10 +28,14 @@ locals {
         substr(md5(node_config.ip), 10, 2)
       )
 
-      last_ip_octet    = split(".", node_config.ip)[3] # Only used for variable calculation, does not affect MAC
-      nat_ip           = "${local.nat_subnet_prefix}.${split(".", node_config.ip)[3]}"
-      nat_ip_cidr      = "${local.nat_subnet_prefix}.${split(".", node_config.ip)[3]}/${local.nat_net_prefixlen}"
-      hostonly_ip_cidr = "${node_config.ip}/${local.hostonly_net_prefixlen}"
+      last_ip_octet = split(".", node_config.ip)[3]
+
+      # NAT IP Calculation
+      nat_ip      = "${local.tier_nat_prefixes[node_config.network_tier]}.${split(".", node_config.ip)[3]}"
+      nat_ip_cidr = "${local.tier_nat_prefixes[node_config.network_tier]}.${split(".", node_config.ip)[3]}/${var.libvirt_infrastructure[node_config.network_tier].network.nat.ips.prefix}"
+
+      # HostOnly IP Calculation
+      hostonly_ip_cidr = "${node_config.ip}/${var.libvirt_infrastructure[node_config.network_tier].network.hostonly.ips.prefix}"
     }
   }
 }

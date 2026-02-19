@@ -24,16 +24,35 @@
       # Ignore errors if the service doesn't exist (it might be postgresql@.service)
       ignore_errors: true
 
-- name: "Section C: Configure TLS Certificates"
+- name: "Section C: Configure Network Routing"
   become: true
   block:
-    - name: "Step C0. Ensure Vault Binary is installed"
+    - name: "Step C1. Deploy Routing Fix Service"
+      ansible.builtin.template:
+        src: fix-routes.service.j2
+        dest: /etc/systemd/system/fix-vault-routes.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Route Service
+
+    - name: "Step C2. Enable and Start Routing Fix"
+      ansible.builtin.systemd:
+        name: fix-vault-routes.service
+        state: started
+        enabled: true
+        daemon_reload: true
+
+- name: "Section D: Configure TLS Certificates"
+  become: true
+  block:
+    - name: "Step D0. Ensure Vault Binary is installed"
       ansible.builtin.include_role:
         name: 07-base-vault
       vars:
         vault_install_only: true
 
-    - name: "Step C1. Create Vault Agent Config Directory"
+    - name: "Step D1. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "/etc/vault.d/approle"
         state: directory
@@ -41,7 +60,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step C2. Write AppRole Credentials"
+    - name: "Step D2. Write AppRole Credentials"
       ansible.builtin.copy:
         content: "{{ item.content }}"
         dest: "/etc/vault.d/approle/{{ item.file }}"
@@ -53,7 +72,7 @@
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
 
-    - name: "Step C3. Deploy Vault CA Certificate (Trust Anchor)"
+    - name: "Step D3. Deploy Vault CA Certificate (Trust Anchor)"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "/etc/vault.d/vault-ca.crt"
@@ -61,7 +80,7 @@
         group: vault
         mode: "0644"
 
-    - name: "Step C4. Ensure Postgres Cert Directory Exists"
+    - name: "Step D4. Ensure Postgres Cert Directory Exists"
       ansible.builtin.file:
         path: /etc/postgresql/certs
         state: directory
@@ -69,7 +88,7 @@
         group: postgres
         mode: "0750"
 
-    - name: "Step C5. Configure Vault Agent (vault-agent.hcl)"
+    - name: "Step D5. Configure Vault Agent (vault-agent.hcl)"
       ansible.builtin.template:
         src: vault-agent.hcl.j2
         dest: /etc/vault.d/vault-agent.hcl
@@ -78,7 +97,7 @@
         mode: "0640"
       notify: Restart Vault Agent
 
-    - name: "Step C6. Configure Vault Agent Service"
+    - name: "Step D6. Configure Vault Agent Service"
       ansible.builtin.template:
         src: vault-agent.service.j2
         dest: /etc/systemd/system/vault-agent.service
@@ -87,22 +106,22 @@
         mode: "0644"
       notify: Restart Vault Agent
 
-    - name: "Step C7. Enable and Start Vault Agent"
+    - name: "Step D7. Enable and Start Vault Agent"
       ansible.builtin.systemd:
         name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step C8. Wait for Certificates to be generated"
+    - name: "Step D8. Wait for Certificates to be generated"
       ansible.builtin.wait_for:
         path: /etc/postgresql/certs/server.crt
         timeout: 120
         msg: "Timeout waiting for Vault Agent to generate certificates."
 
-- name: "Section D: Configure Patroni Service"
+- name: "Section E: Configure Patroni Service"
   block:
-    - name: "Step D1. Create Patroni config file"
+    - name: "Step E1. Create Patroni config file"
       ansible.builtin.template:
         src: patroni.yml.j2
         dest: /etc/patroni.yml
@@ -111,7 +130,7 @@
         mode: "0600"
       notify: Restart Patroni
 
-    - name: "Step D2. Create Patroni systemd service file"
+    - name: "Step E2. Create Patroni systemd service file"
       ansible.builtin.template:
         src: patroni.service.j2
         dest: /etc/systemd/system/patroni.service
@@ -120,9 +139,25 @@
         mode: "0644"
       notify: Restart Patroni
 
-- name: "Section E: Start and Enable Patroni Service"
+- name: "Section F: Start and Enable Patroni Service"
   block:
-    - name: "Step E1. Reload systemd and start Patroni"
+    - name: "Step F1. Check if UFW is installed"
+      ansible.builtin.stat:
+        path: /usr/sbin/ufw
+      register: patroni_ufw_stat
+
+    - name: "Step F2. Allow PostgreSQL and Patroni ports"
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        src: "{{ postgres_mtls_node_subnet }}"
+      loop:
+        - "{{ postgres_port }}"
+        - "{{ patroni_restapi_port }}"
+      when: patroni_ufw_stat.stat.exists
+
+    - name: "Step F3. Reload systemd and start Patroni"
       ansible.builtin.systemd:
         name: patroni
         state: started

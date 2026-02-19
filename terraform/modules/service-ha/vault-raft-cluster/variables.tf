@@ -1,35 +1,7 @@
 
-variable "topology_config" {
-  description = "Compute topology for Vault Core service"
-  type = object({
-
-    cluster_name      = string
-    storage_pool_name = string
-
-    vault_config = object({
-      nodes = map(object({
-        base_image_path = string
-        vcpu            = number
-        ram             = number
-        ip              = string
-      }))
-    })
-  })
-
-  # Vault Raft Quorum
-  validation {
-    condition     = length(var.topology_config.vault_config.nodes) % 2 != 0
-    error_message = "Vault node count must be an odd number (1, 3, 5, etc.) to ensure a stable Raft quorum."
-  }
-
-  # Vault node hardware specification (vCPU >= 1, RAM >= 1024)
-  validation {
-    condition = alltrue([
-      for k, node in var.topology_config.vault_config.nodes :
-      node.vcpu >= 1 && node.ram >= 1024
-    ])
-    error_message = "Vault nodes require at least 1 vCPU and 1024MB RAM."
-  }
+variable "cluster_name" {
+  description = "The unique name of the cluster (e.g. gitlab-core)"
+  type        = string
 }
 
 variable "service_vip" {
@@ -41,53 +13,88 @@ variable "service_domain" {
   type        = string
 }
 
-variable "network_config" {
-  description = "Network Config for Hypervisor (Gateways/CIDRs)"
-  type = object({
-    network = object({
-      nat = object({
-        gateway = string
-        cidrv4  = string
-        dhcp    = optional(object({ start = string, end = string }))
-      })
-      hostonly = object({
-        gateway = string
-        cidrv4  = string
-      })
-    })
-    allowed_subnet = string
-  })
-
-  # Network CIDR validation
-  validation {
-    condition = alltrue([
-      can(cidrnetmask(var.network_config.network.nat.cidrv4)),
-      can(cidrnetmask(var.network_config.network.hostonly.cidrv4)),
-      can(cidrnetmask(var.network_config.allowed_subnet))
-    ])
-    error_message = "All network CIDRs must be valid."
-  }
-}
-
-variable "pki_artifacts" {
+variable "security_pki_bundle" {
   description = "PKI certificates passed from Layer 00 via Layer 10"
   type        = any
   default     = null
 }
 
-# Network Identity for Naming Policy
-variable "network_identity" {
-  description = "Pre-calculated network and bridge names passed from Layer"
+variable "topology_cluster" {
+  description = "Standardized compute topology supporting multi-component architecture."
   type = object({
+    storage_pool_name = string
+
+    # Key: Component Name (e.g., "node", whatever if it matches `locals.topology_cluster.components.name`.)
+    components = map(object({
+      base_image_path = string
+      role            = string
+      network_tier    = optional(string, "default")
+
+      nodes = map(object({
+        ip_suffix = number
+        vcpu      = number
+        ram       = number
+
+        data_disks = optional(list(object({
+          name_suffix = string
+          capacity    = number
+        })), [])
+      }))
+    }))
+  })
+}
+
+variable "network_parameters" {
+  description = "Map of L3 network configurations keyed by tier name."
+  type = map(object({
+    network = object({
+      nat = object({
+        gateway = string,
+        cidrv4  = string,
+        dhcp    = optional(any)
+      })
+      hostonly = object({
+        gateway = string,
+        cidrv4  = string
+      })
+    })
+    network_access_scope = string
+  }))
+
+  # Network CIDR validation
+  validation {
+    condition = alltrue(flatten([
+      for k, v in var.network_parameters : [
+        can(cidrnetmask(v.network.nat.cidrv4)),
+        can(cidrnetmask(v.network.hostonly.cidrv4)),
+        can(cidrnetmask(v.network_access_scope))
+      ]
+    ]))
+    error_message = "All network CIDRs must be valid IPv4 CIDR ranges."
+  }
+}
+
+# Network Identity for Naming Policy
+variable "network_bindings" {
+  description = "Map of L2 network bindings keyed by tier name."
+  type = map(object({
     nat_net_name         = string
     nat_bridge_name      = string
     hostonly_net_name    = string
     hostonly_bridge_name = string
+  }))
+}
+
+variable "ansible_files" {
+  description = "Meta configuration of Ansible inventory for Vault Core service."
+  type = object({
+    playbook_file           = string
+    inventory_template_file = string
   })
 }
 
 # Credentials Injection
-variable "vm_credentials" {
+variable "credentials_system" {
   description = "System level credentials (ssh user, password, keys)"
   sensitive   = true
   type = object({

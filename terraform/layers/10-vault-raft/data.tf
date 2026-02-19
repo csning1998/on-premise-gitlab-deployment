@@ -2,14 +2,14 @@
 data "terraform_remote_state" "topology" {
   backend = "local"
   config = {
-    path = "${path.module}/../00-global-topology/terraform.tfstate"
+    path = "${path.root}/../00-global-topology/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "central_lb" {
   backend = "local"
   config = {
-    path = "${path.module}/../05-central-lb/terraform.tfstate"
+    path = "${path.root}/../05-central-lb/terraform.tfstate"
   }
 }
 

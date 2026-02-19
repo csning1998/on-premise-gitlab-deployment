@@ -2,7 +2,7 @@
 module "vault_pki_setup" {
   source = "../../modules/configuration/vault-pki-setup"
 
-  vault_addr          = "https://${data.terraform_remote_state.vault_raft_config.outputs.vault_ha_virtual_ip}:443"
+  vault_addr          = "https://${data.terraform_remote_state.vault_raft_config.outputs.service_vip}:443"
   root_domain         = local.root_domain
   root_ca_common_name = local.root_ca_common_name
 

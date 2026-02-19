@@ -1,50 +1,34 @@
 ---
-# Postgres, Patroni, HAProxy
-- name: "Play 1: Configure HAProxy for Load Balancing"
-  hosts: postgres_haproxy_nodes
-  become: true
-  roles:
-    - 21-postgres-haproxy
-
-- name: "Play 2: Configure etcd Cluster"
+# (HA) ETCD
+- name: "Play [ETCD]: Configure etcd Cluster"
   hosts: postgres_etcd_nodes
   become: true
   roles:
     - 22-postgres-etcd
 
-- name: "Play 3: Configure Patroni and PostgreSQL Cluster"
+# Patroni
+- name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
   hosts: postgres_db_nodes
   become: true
   roles:
     - 23-postgres-patroni
 
-# Redis Sentinel, HAProxy
-- name: "Play 4: Configure HAProxy for Load Balancing"
-  hosts: redis_haproxy_nodes
-  become: true
-  roles:
-    - 25-redis-haproxy
-
-- name: "Play 5: Configure Redis High Availability Cluster"
+# Redis Sentinel
+- name: "Play [Redis]: Configure Redis High Availability Cluster"
   hosts: redis_db_master, redis_db_replicas
   become: true
   roles:
     - 26-redis-sentinel
 
-# MinIO, HAProxy
-- name: "Play 6: Configure HAProxy for Load Balancing"
-  hosts: minio_haproxy_nodes
-  become: true
-  roles:
-    - 27-minio-haproxy
-
-- name: "Play 7: Configure MinIO High Availability Cluster"
+# MinIO Distributed
+- name: "Play [MinIO]: Configure MinIO High Availability Cluster"
   hosts: minio_db_nodes
   become: true
   roles:
     - 28-minio-distributed
 
-- name: "Play 8: Configure Dev Harbor (Bootstrapper) Cluster"
+# Dev Harbor Bootstrapper Registry
+- name: "Play [Dev Harbor]: Configure Dev Harbor (Bootstrapper) Cluster"
   hosts: dev_harbor_nodes
   become: true
   roles:

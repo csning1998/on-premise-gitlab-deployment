@@ -1,56 +1,49 @@
 
 data "local_file" "ssh_public_key" {
-  filename = pathexpand(var.credentials.ssh_public_key_path)
+  filename = pathexpand(var.credentials_vm.ssh_public_key_path)
 }
 
-resource "libvirt_network" "nat_net" {
-  name      = var.libvirt_infrastructure.network.nat.name_network
-  mode      = var.libvirt_infrastructure.network.nat.mode
-  bridge    = var.libvirt_infrastructure.network.nat.name_bridge
+resource "libvirt_network" "nat_networks" {
+
+  for_each = var.network_infrastructure
+
+  name      = each.value.nat.name
+  bridge    = each.value.nat.bridge_name
+  mode      = "nat"
   autostart = true
 
-  ips = [
-    {
-      address = var.libvirt_infrastructure.network.nat.ips.address
-      prefix  = var.libvirt_infrastructure.network.nat.ips.prefix
-
-      dhcp = var.libvirt_infrastructure.network.nat.ips.dhcp != null ? {
-        ranges = [
-          {
-            start = var.libvirt_infrastructure.network.nat.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.nat.ips.dhcp.end
-          }
-        ]
-      } : null
+  ips = [{
+    address = each.value.nat.gateway
+    prefix  = each.value.nat.prefix
+    dhcp = {
+      enabled = true
+      ranges = each.value.nat.dhcp != null ? [{
+        start = each.value.nat.dhcp.start
+        end   = each.value.nat.dhcp.end
+      }] : []
     }
-  ]
+  }]
 }
 
-resource "libvirt_network" "hostonly_net" {
-  name      = var.libvirt_infrastructure.network.hostonly.name_network
-  mode      = var.libvirt_infrastructure.network.hostonly.mode
-  bridge    = var.libvirt_infrastructure.network.hostonly.name_bridge
+
+resource "libvirt_network" "hostonly_networks" {
+
+  for_each = var.network_infrastructure
+
+  name      = each.value.hostonly.name
+  bridge    = each.value.hostonly.bridge_name
+  mode      = "route"
   autostart = true
 
-  ips = [
-    {
-      address = var.libvirt_infrastructure.network.hostonly.ips.address
-      prefix  = var.libvirt_infrastructure.network.hostonly.ips.prefix
-
-      dhcp = var.libvirt_infrastructure.network.hostonly.ips.dhcp != null ? {
-        ranges = [
-          {
-            start = var.libvirt_infrastructure.network.hostonly.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.hostonly.ips.dhcp.end
-          }
-        ]
-      } : null
-    }
-  ]
+  ips = [{
+    address = each.value.hostonly.gateway
+    prefix  = each.value.hostonly.prefix
+  }]
 }
 
 resource "libvirt_network" "service_networks" {
-  for_each = { for seg in var.service_segments : seg.name => seg }
+
+  for_each = var.create_networks ? { for seg in var.lb_cluster_service_segments : seg.name => seg } : {}
 
   name      = each.value.name        # e.g., "gitlab-frontend"
   bridge    = each.value.bridge_name # e.g., "br-gitlab-front"
@@ -66,10 +59,10 @@ resource "libvirt_network" "service_networks" {
 }
 
 resource "libvirt_pool" "storage_pool" {
-  name = var.libvirt_infrastructure.storage_pool_name
+  name = var.lb_cluster_vm_config.storage_pool_name
   type = "dir"
   target = {
-    path = abspath("/var/lib/libvirt/images/${var.libvirt_infrastructure.storage_pool_name}")
+    path = abspath("/var/lib/libvirt/images/${var.lb_cluster_vm_config.storage_pool_name}")
   }
 }
 
@@ -77,7 +70,7 @@ resource "libvirt_volume" "os_disk" {
 
   depends_on = [libvirt_pool.storage_pool]
 
-  for_each = var.vm_config
+  for_each = var.lb_cluster_vm_config.nodes
   name     = "${each.key}-os.qcow2"
   pool     = libvirt_pool.storage_pool.name
   format   = "qcow2"
@@ -93,14 +86,14 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 
   depends_on = [libvirt_pool.storage_pool]
 
-  for_each = var.vm_config
+  for_each = var.lb_cluster_vm_config.nodes
   name     = "${each.key}-cloud-init.iso"
 
   meta_data = yamlencode({})
   user_data = templatefile("${path.module}/../../../templates/user_data.tftpl", {
     hostname       = each.key
-    vm_username    = var.credentials.username
-    vm_password    = var.credentials.password
+    vm_username    = var.credentials_vm.username
+    vm_password    = var.credentials_vm.password
     ssh_public_key = data.local_file.ssh_public_key.content
   })
 
@@ -108,11 +101,11 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     config = {
       nat_mac     = each.value.interfaces[0].mac
       nat_ip_cidr = try(each.value.interfaces[0].addresses[0], "")
-      nat_gateway = var.libvirt_infrastructure.network.nat.ips.address
+      nat_gateway = var.lb_cluster_network_config.network.nat.ips.address
 
       hostonly_mac     = each.value.interfaces[1].mac
       hostonly_ip_cidr = try(each.value.interfaces[1].addresses[0], "")
-      hostonly_gateway = var.libvirt_infrastructure.network.hostonly.ips.address
+      hostonly_gateway = var.lb_cluster_network_config.network.hostonly.ips.address
 
       service_interfaces = [
         for idx, iface in slice(each.value.interfaces, 2, length(each.value.interfaces)) : {
@@ -128,7 +121,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 }
 
 resource "libvirt_volume" "cloud_init_iso" {
-  for_each = var.vm_config
+  for_each = var.lb_cluster_vm_config.nodes
 
   name   = "${each.key}-cloud-init.iso"
   pool   = libvirt_pool.storage_pool.name
@@ -145,15 +138,15 @@ resource "libvirt_domain" "nodes" {
 
   depends_on = [
     libvirt_network.service_networks,
-    libvirt_network.nat_net,
-    libvirt_network.hostonly_net,
+    libvirt_network.nat_networks,
+    libvirt_network.hostonly_networks,
     libvirt_volume.cloud_init_iso,
     libvirt_volume.os_disk,
     libvirt_cloudinit_disk.cloud_init,
     libvirt_pool.storage_pool
   ]
 
-  for_each = var.vm_config
+  for_each = var.lb_cluster_vm_config.nodes
 
   # 1. Basic Configuration (Required)
   name      = each.key
