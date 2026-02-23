@@ -1,31 +1,30 @@
 ---
 all:
   vars:
-    ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
+    service_identifier: "${cluster_identity.name}-kubeadm-cluster"
 
     kubeadm_master_nodes: ${jsonencode(kubeadm_master_nodes)}
     kubeadm_worker_nodes: ${jsonencode(kubeadm_worker_nodes)}
 
-    kubeadm_master_ips: ${jsonencode(kubeadm_master_ips)}
-    kubeadm_ha_virtual_ip: "${kubeadm_ha_virtual_ip}"
-    kubeadm_pod_subnet: "${kubeadm_pod_subnet}"
-    kubeadm_nat_subnet_prefix: "${kubeadm_nat_subnet_prefix}"
-    kubeadm_registry_host: "${kubeadm_registry_host}"
+    kubeadm_master_ips: ${jsonencode([for node in values(kubeadm_master_nodes) : node.ip])}
+    kubeadm_ha_virtual_ip: "${cluster_network.vip}"
+    kubeadm_pod_subnet: "${cluster_network.pod_subnet}"
+    kubeadm_nat_subnet_prefix: "${cluster_network.nat_prefix}"
+    kubeadm_registry_host: "${cluster_network.registry_host}"
 
-    kubeadm_http_nodeport: "${kubeadm_http_nodeport}"
-    kubeadm_https_nodeport: "${kubeadm_https_nodeport}"
+    kubeadm_http_nodeport: "${cluster_network.http_nodeport}"
+    kubeadm_https_nodeport: "${cluster_network.https_nodeport}"
 
   children:
     master:
       hosts:
-%{ for key in keys(kubeadm_master_nodes) ~}
+%{ for key, node in kubeadm_master_nodes ~}
         ${key}:
-          kubeadm_advertise_ip: ${kubeadm_master_nodes[key].ip}
+          kubeadm_advertise_ip: ${node.ip}
 %{ endfor ~}
     workers:
       hosts:
-%{ for key in keys(kubeadm_worker_nodes) ~}
+%{ for key, node in kubeadm_worker_nodes ~}
         ${key}:
-          kubeadm_advertise_ip: ${kubeadm_worker_nodes[key].ip}
+          kubeadm_advertise_ip: ${node.ip}
 %{ endfor ~}

@@ -1,6 +1,6 @@
 
 module "hypervisor_kvm" {
-  source = "../../cluster-provision/hypervisor-kvm-lb"
+  source = "../../../modules/cluster-provision/hypervisor-kvm-lb"
 
   lb_cluster_service_segments = var.network_service_segments
   network_infrastructure      = var.network_infrastructure
@@ -39,7 +39,7 @@ module "hypervisor_kvm" {
 }
 
 module "ssh_manager" {
-  source         = "../../cluster-provision/ssh-manager"
+  source         = "../../../modules/cluster-provision/ssh-manager"
   status_trigger = module.hypervisor_kvm.vm_status_trigger
 
   nodes          = local.nodes_list_for_ssh
@@ -50,7 +50,7 @@ module "ssh_manager" {
 }
 
 module "ansible_runner" {
-  source         = "../../cluster-provision/ansible-runner"
+  source         = "../../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_content = local.ansible.inventory_contents

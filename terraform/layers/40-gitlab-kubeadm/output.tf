@@ -1,36 +1,32 @@
 
-output "gitlab_pod_subnet" {
-  description = "The CIDR for the Pod network."
-  value       = var.gitlab_kubeadm_compute.pod_subnet
+output "service_vip" {
+  description = "The virtual IP assigned to the Vault service from Central LB topology."
+  value       = local.service_vip
 }
 
-output "gitlab_kubeadm_master_ip_list" {
-  description = "List of kubeadm master node IPs for Gitlab"
-  value       = [for node in var.gitlab_kubeadm_compute.kubeadm_config.master_nodes : node.ip]
-}
-
-output "gitlab_kubeadm_worker_ip_list" {
-  description = "List of kubeadm worker node IPs for Gitlab"
-  value       = [for node in var.gitlab_kubeadm_compute.kubeadm_config.worker_nodes : node.ip]
-}
-
-output "gitlab_kubeadm_virtual_ip" {
-  description = "kubeadm virtual IP for Gitlab"
-  value       = var.gitlab_kubeadm_compute.haproxy_config.virtual_ip
-}
-
-output "kubeconfig_content" {
-  description = "The content of the Kubeconfig file fetched from the cluster."
-  value       = module.kubeadm_gitlab.kubeconfig_content
+output "security_pki_bundle" {
+  description = "PKI artifacts retrieved from the global topology."
+  value       = local.security_pki_bundle
   sensitive   = true
 }
 
-output "gitlab_http_nodeport" {
-  description = "The HTTP NodePort for Gitlab"
-  value       = var.gitlab_kubeadm_compute.http_nodeport
+output "credentials_system" {
+  description = "System-level access credentials for the cluster nodes."
+  value       = local.credentials_system
+  sensitive   = true
 }
 
-output "gitlab_https_nodeport" {
-  description = "The HTTPS NodePort for Gitlab"
-  value       = var.gitlab_kubeadm_compute.https_nodeport
+output "network_bindings" {
+  description = "L2 network identity mapping (Verified from KVM Module)."
+  value       = module.kubeadm_gitlab.network_bindings
+}
+
+output "network_parameters" {
+  description = "L3 network configurations (Verified from KVM Module)."
+  value       = module.kubeadm_gitlab.network_parameters
+}
+
+output "topology_cluster" {
+  description = "The actual provisioned configuration for Vault nodes."
+  value       = module.kubeadm_gitlab.cluster_nodes
 }

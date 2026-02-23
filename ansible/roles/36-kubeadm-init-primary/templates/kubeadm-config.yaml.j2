@@ -18,12 +18,6 @@ kubernetesVersion: "{{ kubeadm_version }}"
 {# imageRepository: "{{ registry_host }}" #}
 controlPlaneEndpoint: "{{ kubeadm_ha_virtual_ip }}:6443"
 apiServer:
-  extraArgs:
-    - name: bind-address
-      value: "{{ kubeadm_advertise_ip }}"
-    - name: etcd-servers
-      value: "https://127.0.0.1:2379"
-  
   certSANs:
     - "{{ kubeadm_ha_virtual_ip }}"
 {% for san in kubeadm_extra_sans %}

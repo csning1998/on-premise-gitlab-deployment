@@ -1,6 +1,6 @@
 
 module "hypervisor_kvm" {
-  source = "../../cluster-provision/hypervisor-kvm"
+  source = "../../../modules/cluster-provision/hypervisor-kvm"
 
   vm_config = {
     all_nodes_map = {
@@ -21,7 +21,7 @@ module "hypervisor_kvm" {
 }
 
 module "ssh_manager" {
-  source         = "../../cluster-provision/ssh-manager"
+  source         = "../../../modules/cluster-provision/ssh-manager"
   status_trigger = module.hypervisor_kvm.vm_status_trigger
 
   nodes = [
@@ -39,7 +39,7 @@ module "ssh_manager" {
 }
 
 module "ansible_runner" {
-  source         = "../../cluster-provision/ansible-runner"
+  source         = "../../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_content = local.ansible.inventory_contents

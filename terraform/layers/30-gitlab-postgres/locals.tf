@@ -73,7 +73,7 @@ locals {
 
 # Topology Component Construction
 locals {
-  storage_pool_name = "iac-${local.cluster_name}"
+  storage_pool_name = "iac-${local.cluster_name}-postgres"
 
   topology_cluster = {
     storage_pool_name = local.storage_pool_name
