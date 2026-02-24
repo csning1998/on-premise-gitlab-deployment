@@ -26,6 +26,7 @@
 
 - name: "Section C: Configure Network Routing"
   become: true
+  when: postgres_static_routes is defined and postgres_static_routes | length > 0
   block:
     - name: "Step C1. Deploy Routing Fix Service"
       ansible.builtin.template:

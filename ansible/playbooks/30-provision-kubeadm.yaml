@@ -28,3 +28,9 @@
   become: true
   roles:
     - 39-kubeadm-join-workers
+
+- name: "Play 6: Setup Kubeconfig Vault Storage"
+  hosts: "{{ groups['master'][0] | default([]) }}"
+  become: true
+  roles:
+    - 40-kubeadm-kubeconfig

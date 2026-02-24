@@ -1,23 +1,19 @@
 
 output "service_vip" {
   description = "The virtual IP assigned to the Postgres service from Central LB topology."
-  value       = local.service_vip
+  value       = local.net_service_vip
 }
 
-output "security_pki_bundle" {
-  description = "PKI artifacts (Root CA) used for trust establishment."
-  value       = local.security_pki_bundle
-  sensitive   = true
-}
+
 
 output "credentials_system" {
   description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = local.credentials_system
+  value       = local.sec_system_creds
   sensitive   = true
 }
 output "credentials_postgres" {
   description = "Database-level credentials for Patroni and PostgreSQL replication."
-  value       = local.credentials_postgres
+  value       = local.sec_postgres_creds
   sensitive   = true
 }
 

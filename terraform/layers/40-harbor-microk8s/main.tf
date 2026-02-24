@@ -1,7 +1,20 @@
 
 module "microk8s_harbor" {
-  source = "../../modules/service-ha/microk8s-cluster"
+  source = "../../middleware/ha-service-kvm/ha-cluster"
 
-  topology_config = var.harbor_microk8s_compute
-  infra_config    = var.harbor_microk8s_infra
+  # Core Identifier & Topology
+  cluster_name     = local.svc_cluster_name
+  topology_cluster = local.topology_cluster
+
+  # Network & Infrastructure
+  network_parameters = local.network_parameters
+  network_bindings   = local.network_bindings
+
+  # System Credentials
+  credentials_system = local.sec_system_creds
+
+  # Generic Ansible Configuration
+  ansible_inventory_content = local.ansible_inventory_content
+  ansible_extra_vars        = local.ansible_extra_vars
+  ansible_playbook_file     = var.ansible_files.playbook_file
 }

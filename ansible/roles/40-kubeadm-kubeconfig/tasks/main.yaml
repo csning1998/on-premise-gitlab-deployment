@@ -1,0 +1,43 @@
+---
+- name: "Section A: Upload Kubeconfig to Vault"
+  run_once: true
+  block:
+    - name: "Step A1. Read kubeconfig from primary master"
+      ansible.builtin.slurp:
+        src: "/etc/kubernetes/admin.conf"
+      register: remote_kubeconfig
+
+    - name: "Step A2. Upload Kubeconfig to Vault KV"
+      delegate_to: localhost
+      become: false
+      block:
+        - name: Create temporary CA file for Vault
+          ansible.builtin.tempfile:
+            state: file
+            suffix: .crt
+          register: vault_ca_file
+
+        - name: Write Vault CA to temp file
+          ansible.builtin.copy:
+            content: "{{ vault_ca_cert_b64 | b64decode }}"
+            dest: "{{ vault_ca_file.path }}"
+            mode: "0600"
+
+        - name: Upload Kubeconfig to Vault KV
+          community.hashi_vault.vault_kv2_write:
+            url: "{{ vault_addr }}"
+            path: "on-premise-gitlab-deployment/infrastructure/kubeconfig/{{ service_name }}"
+            engine_mount_point: "secret"
+            auth_method: approle
+            role_id: "{{ vault_agent_role_id }}"
+            secret_id: "{{ vault_agent_secret_id }}"
+            validate_certs: true
+            ca_cert: "{{ vault_ca_file.path }}"
+            data:
+              content_b64: "{{ remote_kubeconfig['content'] }}"
+      always:
+        - name: Clean up temporary Vault CA file
+          ansible.builtin.file:
+            path: "{{ vault_ca_file.path }}"
+            state: absent
+          when: vault_ca_file.path is defined

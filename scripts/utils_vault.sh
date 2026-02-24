@@ -255,7 +255,7 @@ vault_dev_unseal_handler() {
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
   
-  local inventory_file="${ANSIBLE_DIR}/inventory-vault-core.yaml"
+  local inventory_file="${ANSIBLE_DIR}/inventory-core-vault-core.yaml"
   local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-vault-unseal.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then

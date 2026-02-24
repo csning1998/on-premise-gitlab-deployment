@@ -1,20 +1,23 @@
 ---
 all:
   vars:
-    ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
-    minio_cluster_name: "${service_name}-minio-cluster"
+    service_identifier: "${cluster_identity.name}"
+    minio_cluster_name: "${cluster_identity.name}-minio-cluster"
+    minio_service_domain: "${cluster_identity.domain}"
 
-    haproxy_frontend_port_api: "${haproxy_frontend_port_api}"
-    haproxy_frontend_port_console: "${haproxy_frontend_port_console}"
-    haproxy_backend_port_api: "${haproxy_backend_port_api}"
-    haproxy_backend_port_console: "${haproxy_backend_port_console}"
+    minio_frontend_port_api: "${cluster_network.api_frontend_port}"
+    minio_frontend_port_console: "${cluster_network.console_frontend_port}"
 
     minio_cluster_ips: ${jsonencode([for node in minio_nodes : node.ip])}
-    minio_ha_virtual_ip: "${minio_ha_virtual_ip}"
-    minio_tls_node_subnet: "${minio_tls_node_subnet}"
-    minio_service_domain: "${minio_service_domain}"
-    minio_nat_subnet_prefix: "${minio_nat_subnet_prefix}"
+    minio_ha_virtual_ip: "${cluster_network.minio_vip}"
+    minio_tls_node_subnet: "${cluster_network.access_scope}"
+    minio_nat_subnet_prefix: "${cluster_network.nat_prefix}"
+
+    minio_static_routes:
+      - to: "${cluster_network.vault_vip}/32"
+        via: "${cluster_network.minio_vip}"
+        dev: "ens3"
+        metric: 100
 
   children:
     minio_db_nodes:
@@ -22,11 +25,4 @@ all:
 %{ for key in keys(minio_nodes) ~}
         ${key}:
           advertise_ip: ${minio_nodes[key].ip}
-%{ endfor ~}
-
-    minio_haproxy_nodes:
-      hosts:
-%{ for key in keys(haproxy_nodes) ~}
-        ${key}:
-          advertise_ip: ${haproxy_nodes[key].ip}
 %{ endfor ~}

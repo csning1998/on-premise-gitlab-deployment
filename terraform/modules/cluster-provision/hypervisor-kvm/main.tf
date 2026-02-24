@@ -66,6 +66,13 @@ resource "libvirt_pool" "storage_pool" {
   target = {
     path = abspath("/var/lib/libvirt/images/${values(var.libvirt_infrastructure)[0].storage_pool_name}")
   }
+
+  lifecycle {
+    precondition {
+      condition     = length(distinct([for k, v in var.libvirt_infrastructure : v.storage_pool_name])) <= 1
+      error_message = "All network tiers must use the same storage_pool_name when using this module."
+    }
+  }
 }
 
 resource "libvirt_volume" "os_disk" {

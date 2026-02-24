@@ -9,8 +9,8 @@ module "vault_pki_setup" {
   auth_backends     = var.vault_auth_backends
   pki_engine_config = var.vault_pki_engine_config
 
-  component_roles  = local.flat_component_roles
-  dependency_roles = local.flat_dependency_roles
+  component_roles  = local.component_roles
+  dependency_roles = local.dependency_roles
 }
 
 module "vault_workload_identity_components" {
@@ -18,7 +18,7 @@ module "vault_workload_identity_components" {
   source     = "../../modules/configuration/vault-workload-identity"
   depends_on = [module.vault_pki_setup]
 
-  for_each           = local.flat_component_roles
+  for_each           = local.component_roles
   name               = each.key
   vault_role_name    = each.value.name
   pki_mount_path     = module.vault_pki_setup.vault_pki_path
@@ -31,7 +31,7 @@ module "vault_workload_identity_dependencies" {
   source     = "../../modules/configuration/vault-workload-identity"
   depends_on = [module.vault_pki_setup]
 
-  for_each           = local.flat_dependency_roles
+  for_each           = local.dependency_roles
   name               = each.key
   vault_role_name    = each.value.name
   pki_mount_path     = module.vault_pki_setup.vault_pki_path

@@ -51,15 +51,37 @@
         mode: "0600"
       notify: Restart MinIO
 
-- name: "Section C: Certificate"
+- name: "Section C: Configure Network Routing"
+  become: true
+  when: minio_static_routes is defined and minio_static_routes | length > 0
   block:
-    - name: "Step C1. Ensure Vault Binary is installed"
+    - name: "Step C1. Deploy Routing Fix Service"
+      ansible.builtin.template:
+        src: fix-routes.service.j2
+        dest: /etc/systemd/system/fix-vault-routes.service
+        owner: root
+        group: root
+        mode: "0644"
+      register: route_service_config
+
+    - name: "Step C2. Enable and Start Routing Fix"
+      ansible.builtin.systemd:
+        name: fix-vault-routes.service
+        state: restarted
+        enabled: true
+        daemon_reload: true
+      when: route_service_config.changed
+
+- name: "Section D: Certificate"
+  become: true
+  block:
+    - name: "Step D1. Ensure Vault Binary is installed"
       ansible.builtin.include_role:
         name: 07-base-vault
       vars:
         vault_install_only: true
 
-    - name: "Step C2. Create Vault Agent Config Directory"
+    - name: "Step D2. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "/etc/vault.d/approle"
         state: directory
@@ -67,7 +89,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step C3. Write AppRole Credentials"
+    - name: "Step D3. Write AppRole Credentials"
       ansible.builtin.copy:
         content: "{{ item.content }}"
         dest: "/etc/vault.d/approle/{{ item.file }}"
@@ -79,7 +101,7 @@
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
 
-    - name: "Step C4. Deploy Vault CA Certificate"
+    - name: "Step D4. Deploy Vault CA Certificate"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "/etc/vault.d/vault-ca.crt"
@@ -87,7 +109,7 @@
         group: vault
         mode: "0644"
 
-    - name: "Step C5. Ensure MinIO Cert Directory Exists"
+    - name: "Step D5. Ensure MinIO Cert Directory Exists"
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -98,7 +120,7 @@
         - /etc/minio/certs
         - /etc/minio/certs/CAs
 
-    - name: "Step C6. Configure Vault Agent (vault-agent.hcl)"
+    - name: "Step D6. Configure Vault Agent (vault-agent.hcl)"
       ansible.builtin.template:
         src: vault-agent.hcl.j2
         dest: /etc/vault.d/vault-agent.hcl
@@ -107,7 +129,7 @@
         mode: "0640"
       notify: Restart Vault Agent
 
-    - name: "Step C7. Configure Vault Agent Service"
+    - name: "Step D7. Configure Vault Agent Service"
       ansible.builtin.template:
         src: vault-agent.service.j2
         dest: /etc/systemd/system/vault-agent.service
@@ -116,40 +138,40 @@
         mode: "0644"
       notify: Restart Vault Agent
 
-    - name: "Step C8. Enable and Start Vault Agent"
+    - name: "Step D8. Enable and Start Vault Agent"
       ansible.builtin.systemd:
         name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step C9. Wait for Certificates"
+    - name: "Step D9. Wait for Certificates"
       ansible.builtin.wait_for:
         path: /etc/minio/certs/public.crt
         timeout: 30
 
-- name: "Section D: Start Service"
+- name: "Section E: Start Service"
   ansible.builtin.systemd:
     name: minio
     state: started
     enabled: true
     daemon_reload: true
 
-- name: "Section E: Configure MinIO Client Trust & Verification"
+- name: "Section F: Configure MinIO Client Trust & Verification"
   block:
-    - name: "Task E0. Copy Vault CA to system-wide trust store"
+    - name: "Task F0. Copy Vault CA to system-wide trust store"
       ansible.builtin.copy:
         src: "/etc/minio/certs/CAs/root_ca.crt"
         dest: "/usr/local/share/ca-certificates/vault-root-ca.crt"
         remote_src: true
         mode: "0644"
 
-    - name: "Task E1. Force update CA certificates"
+    - name: "Task F1. Force update CA certificates"
       ansible.builtin.command: update-ca-certificates
       register: ca_update_result
       changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
 
-    - name: "Task E2. Ensure Root .mc directory exists"
+    - name: "Task F2. Ensure Root .mc directory exists"
       ansible.builtin.file:
         path: "/root/.mc/certs/CAs"
         state: directory
@@ -157,7 +179,7 @@
         group: root
         mode: "0700"
 
-    - name: "Task E3. Trust CA for Root mc"
+    - name: "Task F3. Trust CA for Root mc"
       ansible.builtin.copy:
         src: "/etc/minio/certs/CAs/root_ca.crt"
         dest: "/root/.mc/certs/CAs/root_ca.crt"
@@ -166,7 +188,7 @@
         group: root
         mode: "0644"
 
-    - name: "Task E4. Ensure Ansible User .mc directory exists"
+    - name: "Task F4. Ensure Ansible User .mc directory exists"
       ansible.builtin.file:
         path: "/home/{{ ansible_user }}/.mc/certs/CAs"
         state: directory
@@ -175,7 +197,7 @@
         mode: "0700"
       when: ansible_user != 'root'
 
-    - name: "Task E5. Trust CA for Ansible User mc"
+    - name: "Task F5. Trust CA for Ansible User mc"
       ansible.builtin.copy:
         src: "/etc/minio/certs/CAs/root_ca.crt"
         dest: "/home/{{ ansible_user }}/.mc/certs/CAs/root_ca.crt"
@@ -185,7 +207,7 @@
         mode: "0644"
       when: ansible_user != 'root'
 
-    - name: "Task E5.5 Wait for Vault Agent"
+    - name: "Task F6 Wait for Vault Agent"
       ansible.builtin.command: systemctl is-active vault-agent
       register: vault_status
       until: vault_status.rc == 0
@@ -193,7 +215,7 @@
       delay: 2
       changed_when: false
 
-    - name: "Task E6. Wait for MinIO Cluster Readiness"
+    - name: "Task F7. Wait for MinIO Cluster Readiness"
       ansible.builtin.uri:
         url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/ready"
         validate_certs: true
@@ -203,7 +225,7 @@
       retries: 30
       delay: 5
 
-    - name: "Task E7. Configure local alias 'myminio' for Root"
+    - name: "Task F8. Configure local alias 'myminio' for Root"
       ansible.builtin.command:
         cmd: >-
           mc alias set myminio
@@ -216,7 +238,7 @@
       delay: 3
       changed_when: false
 
-    - name: "Task E8. Verify MinIO Cluster Status (Deep Check)"
+    - name: "Task F9. Verify MinIO Cluster Status (Deep Check)"
       ansible.builtin.command:
         cmd: mc admin info myminio
       register: mc_info

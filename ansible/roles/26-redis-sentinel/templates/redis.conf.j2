@@ -15,7 +15,7 @@ dir /var/lib/redis
 
 # TLS Configuration for GitLab.
 port 0
-tls-port {{ haproxy_stats_port }}
+tls-port {{ redis_tls_port }}
 tls-cert-file /etc/redis/certs/server.crt
 tls-key-file /etc/redis/certs/server.key
 tls-ca-cert-file /etc/redis/certs/ca.crt
@@ -36,5 +36,5 @@ masterauth {{ redis_masterauth }}
 # Replication
 {% if inventory_hostname in (groups['redis_db_replicas'] | default([])) %}
 # Note: redis_initial_master_ip must be defined in inventory or group_vars
-replicaof {{ redis_initial_master_ip }} {{ haproxy_stats_port }}
+replicaof {{ redis_initial_master_ip }} {{ redis_tls_port }}
 {% endif %}

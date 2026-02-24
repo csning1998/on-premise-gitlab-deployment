@@ -1,63 +1,32 @@
 
-# MinIO Compute Topology & Configuration
-variable "gitlab_minio_compute" {
-  description = "Compute topology for Gitlab MinIO service"
-  type = object({
-    cluster_identity = object({
-      layer_number = number
-      service_name = string
-      component    = string
-    })
-
-    minio_config = object({
-      nodes = map(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-        data_disks = list(object({
-          name_suffix = string
-          capacity    = number
-        }))
-      }))
-      base_image_path = string
-    })
-
-    haproxy_config = object({
-      virtual_ip            = string
-      frontend_port_api     = number # MinIO API
-      frontend_port_console = number # MinIO Console
-      backend_port_api      = number
-      backend_port_console  = number
-      nodes = map(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-      }))
-      base_image_path = string
-    })
-  })
+variable "service_catalog_name" {
+  description = "The name of the service mapped in the Layer 00 Single Source of Truth"
+  type        = string
+  default     = "gitlab"
 }
 
-# MinIO Infrastructure Network Configuration
-variable "gitlab_minio_infra" {
-  description = "Infrastructure config for Gitlab MinIO service"
-  type = object({
-    network = object({
-      nat = object({
-        gateway = string
-        cidrv4  = string
-        dhcp = optional(object({
-          start = string
-          end   = string
-        }))
-      })
-      hostonly = object({
-        gateway = string
-        cidrv4  = string
-      })
-    })
-    allowed_subnet = string
-  })
+variable "vault_dev_addr" {
+  description = "The address of the Vault server"
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
+
+variable "gitlab_minio_config" {
+  description = "Compute configuration for Gitlab MinIO service"
+  type = map(object({
+    role            = string
+    base_image_path = string
+    network_tier    = optional(string, "default")
+    nodes = map(object({
+      ip_suffix = number
+      vcpu      = number
+      ram       = number
+      data_disks = optional(list(object({
+        name_suffix = string
+        capacity    = number
+      })), [])
+    }))
+  }))
 }
 
 variable "gitlab_minio_tenants" {

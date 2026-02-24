@@ -1,76 +1,42 @@
 
-gitlab_minio_compute = {
+service_catalog_name = "gitlab"
 
-  cluster_identity = {
-    layer_number = 20
-    service_name = "gitlab"
-    component    = "minio"
-  }
-
-  minio_config = {
+gitlab_minio_config = {
+  "minio" = {
+    role            = "minio"
+    network_tier    = "minio"
+    base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
     nodes = {
-      "gitlab-minio-db-node-00" = {
-        ip = "172.16.142.200", vcpu = 2, ram = 3072
+      "00" = {
+        ip_suffix = 200, vcpu = 2, ram = 3072
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      }
+      "01" = {
+        ip_suffix = 201, vcpu = 2, ram = 3072
         data_disks = [
           { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
           { name_suffix = "drive2", capacity = 10737418240 }
         ]
       },
-      # Uncomment the following lines for HA setup, abide by nodes % 4 = 0
-      # "gitlab-minio-db-node-01" = {
-      #   ip = "172.16.142.201", vcpu = 2, ram = 3072
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
-      #   ]
-      # },
-      # "gitlab-minio-db-node-02" = {
-      #   ip = "172.16.142.202", vcpu = 2, ram = 3072
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
-      #   ]
-      # },
-      # "gitlab-minio-db-node-03" = {
-      #   ip = "172.16.142.203", vcpu = 2, ram = 3072
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
-      #   ]
-      # }
-    }
-    base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
-  }
-
-  haproxy_config = {
-    virtual_ip = "172.16.142.250"
-    frontend_port_api     = 9000 # MinIO API
-    frontend_port_console = 9001 # MinIO Console
-    backend_port_api      = 9000
-    backend_port_console  = 9001
-    nodes = {
-      "gitlab-minio-haproxy-node-00" = { ip = "172.16.142.210", vcpu = 1, ram = 512 }
-    }
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
-  }
-}
-
-gitlab_minio_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.94.1"
-      cidrv4  = "172.16.94.0/24"
-      dhcp = {
-        start = "172.16.94.2"
-        end   = "172.16.94.254"
+      "02" = {
+        ip_suffix = 202, vcpu = 2, ram = 3072
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
+      },
+      "03" = {
+        ip_suffix = 203, vcpu = 2, ram = 3072
+        data_disks = [
+          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
+          { name_suffix = "drive2", capacity = 10737418240 }
+        ]
       }
     }
-    hostonly = {
-      gateway = "172.16.142.1"
-      cidrv4  = "172.16.142.0/24"
-    }
   }
-  allowed_subnet = "172.16.142.0/24"
 }
 
 gitlab_minio_tenants = {

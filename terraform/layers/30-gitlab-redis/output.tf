@@ -1,30 +1,34 @@
 
-
-output "gitlab_redis_cluster_name" {
-  description = "GitLab Redis cluster name."
-  value       = local.cluster_name
+output "service_vip" {
+  description = "The virtual IP assigned to the Vault service from Central LB topology."
+  value       = local.net_service_vip
 }
 
-output "gitlab_redis_ip_list" {
-  description = "List of Redis node IPs for GitLab"
-  value = [
-    for node in var.gitlab_redis_compute.redis_config.nodes : node.ip
-  ]
+
+
+output "credentials_system" {
+  description = "System-level access credentials for the cluster nodes."
+  value       = local.sec_system_creds
+  sensitive   = true
 }
 
-output "gitlab_redis_haproxy_ip_list" {
-  description = "List of Redis HAProxy node IPs for GitLab"
-  value = [
-    for node in var.gitlab_redis_compute.haproxy_config.nodes : node.ip
-  ]
+output "credentials_redis" {
+  description = "Database-level credentials for Patroni and PostgreSQL replication."
+  value       = local.sec_redis_creds
+  sensitive   = true
 }
 
-output "gitlab_redis_virtual_ip" {
-  description = "Redis virtual IP for GitLab"
-  value       = var.gitlab_redis_compute.haproxy_config.virtual_ip
+output "network_bindings" {
+  description = "L2 network identity mapping (Verified from KVM Module)."
+  value       = module.redis_gitlab.network_bindings
 }
 
-output "gitlab_redis_haproxy_stats_port" {
-  description = "HAProxy stats port for GitLab Redis"
-  value       = var.gitlab_redis_compute.haproxy_config.stats_port
+output "network_parameters" {
+  description = "L3 network configurations (Verified from KVM Module)."
+  value       = module.redis_gitlab.network_parameters
+}
+
+output "topology_cluster" {
+  description = "The actual provisioned configuration for Vault nodes."
+  value       = module.redis_gitlab.cluster_nodes
 }

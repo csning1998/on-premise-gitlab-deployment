@@ -30,6 +30,13 @@ variable "gitlab_kubeadm_config" {
   }))
 }
 
+variable "kubernetes_cluster_configuration" {
+  description = "Kubernetes specific cluster parameters"
+  type = object({
+    pod_subnet = string
+  })
+}
+
 variable "ansible_files" {
   description = "Meta configuration of Ansible inventory for Vault Core service."
   type = object({

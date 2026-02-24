@@ -3,21 +3,20 @@ output "network_slot_topology" {
   description = "Computed topology including calculated VIPs and Node IPs per segment."
 
   value = {
-    for seg in local.network_service_segments : seg.name => seg.backend_servers
+    for seg in local.net_service_segments : seg.name => seg.backend_servers
   }
 }
 
 
-output "network_service_topology" {
-  description = "All infrastructure and application details for each service."
+output "infrastructure_map" {
+  description = "Physical realization bridging Layer 00 Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys"
 
   value = {
-    for seg in local.network_service_segments : seg.name => {
+    for seg in local.net_service_segments : seg.name => {
+      # 1. Physical Infrastructure (Libvirt bridges, IPs)
+      network = local.net_infrastructure[seg.name]
 
-      # 1. Network Infrastructure (L2 Bridge, L3 CIDR/Gateway)
-      network = local.network_infrastructure[seg.name]
-
-      # 2. Service Delivery (L3 VIP/VRID, L4 Ports)
+      # 2. HAProxy / Keepalived Details
       lb_config = {
         vip            = seg.vip
         vrid           = seg.vrid
@@ -25,11 +24,14 @@ output "network_service_topology" {
         ports          = seg.ports
         tags           = seg.tags
       }
+
+      # 3. Available Node IP slots for downstream consumption
+      backend_servers = seg.backend_servers
     }
   }
 }
 
 output "central_lb_info" {
   description = "Connection details for the Central LB itself."
-  value       = local.network_infrastructure[var.service_catalog_name]
+  value       = local.net_infrastructure[var.service_catalog_name]
 }

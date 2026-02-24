@@ -3,9 +3,9 @@ module "vault_cluster" {
   source = "../../middleware/ha-service-kvm/vault-raft-cluster"
 
   # Identity & Service Definitions
-  cluster_name   = local.cluster_name
-  service_vip    = local.service_vip
-  service_domain = local.service_fqdn
+  cluster_name   = local.svc_cluster_name
+  service_vip    = local.net_service_vip
+  service_domain = local.svc_fqdn
 
   # Topology (Compute & Storage)
   topology_cluster = local.topology_cluster
@@ -15,8 +15,8 @@ module "vault_cluster" {
   network_parameters = local.network_parameters
 
   # Security & Credentials
-  credentials_system  = local.credentials_system
-  security_pki_bundle = local.security_pki_bundle
+  credentials_system  = local.sec_system_creds
+  security_pki_bundle = local.pki_global_ca
 
   # Ansible Configuration
   ansible_files = var.ansible_files

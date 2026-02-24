@@ -31,15 +31,36 @@
     - /var/run/redis
     - /var/lib/redis
 
-- name: "Section C: Configure Vault Agent"
+- name: "Section C: Configure Network Routing"
+  become: true
+  when: redis_static_routes is defined and redis_static_routes | length > 0
   block:
-    - name: "Step C0. Ensure Vault Binary is installed"
+    - name: "Step C1. Deploy Routing Fix Service"
+      ansible.builtin.template:
+        src: fix-routes.service.j2
+        dest: /etc/systemd/system/fix-vault-routes.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Route Service
+
+    - name: "Step C2. Enable and Start Routing Fix"
+      ansible.builtin.systemd:
+        name: fix-vault-routes.service
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
+- name: "Section D: Configure Vault Agent"
+  become: true
+  block:
+    - name: "Step D0. Ensure Vault Binary is installed"
       ansible.builtin.include_role:
         name: 07-base-vault
       vars:
         vault_install_only: true
 
-    - name: "Step C1. Create Vault Agent Config Directory"
+    - name: "Step D1. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "/etc/vault.d/approle"
         state: directory
@@ -47,7 +68,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step C2. Write AppRole Credentials"
+    - name: "Step D2. Write AppRole Credentials"
       ansible.builtin.copy:
         content: "{{ item.content }}"
         dest: "/etc/vault.d/approle/{{ item.file }}"
@@ -59,7 +80,7 @@
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
 
-    - name: "Step C3. Deploy Vault CA Certificate"
+    - name: "Step D3. Deploy Vault CA Certificate"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "/etc/vault.d/vault-ca.crt"
@@ -67,7 +88,7 @@
         group: vault
         mode: "0644"
 
-    - name: "Step C4. Ensure Redis Cert Directory Exists"
+    - name: "Step D4. Ensure Redis Cert Directory Exists"
       ansible.builtin.file:
         path: /etc/redis/certs
         state: directory
@@ -75,7 +96,7 @@
         group: redis
         mode: "0750"
 
-    - name: "Step C5. Configure Vault Agent (agent.hcl)"
+    - name: "Step D5. Configure Vault Agent (agent.hcl)"
       ansible.builtin.template:
         src: vault-agent.hcl.j2
         dest: /etc/vault.d/vault-agent.hcl
@@ -84,7 +105,7 @@
         mode: "0640"
       notify: Restart Vault Agent
 
-    - name: "Step C6. Configure Vault Agent Service"
+    - name: "Step D6. Configure Vault Agent Service"
       ansible.builtin.template:
         src: vault-agent.service.j2
         dest: /etc/systemd/system/vault-agent.service
@@ -93,22 +114,22 @@
         mode: "0644"
       notify: Restart Vault Agent
 
-    - name: "Step C7. Enable and Start Vault Agent"
+    - name: "Step D7. Enable and Start Vault Agent"
       ansible.builtin.systemd:
         name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step C8. Wait for Certificates"
+    - name: "Step D8. Wait for Certificates"
       ansible.builtin.wait_for:
         path: /etc/redis/certs/server.crt
         timeout: 120
         msg: "Timeout waiting for Vault Agent to generate certificates."
 
-- name: "Section D: Start Services"
+- name: "Section E: Start Services"
   block:
-    - name: "Step D1. Enable and start Redis services"
+    - name: "Step E1. Enable and start Redis services"
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started

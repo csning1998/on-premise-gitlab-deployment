@@ -4,20 +4,26 @@ data "local_file" "ssh_public_key" {
 }
 
 resource "libvirt_network" "nat_net" {
-  name      = var.libvirt_infrastructure.network.nat.name_network
-  mode      = var.libvirt_infrastructure.network.nat.mode
-  bridge    = var.libvirt_infrastructure.network.nat.name_bridge
+
+  for_each = var.create_networks ? {
+    for k, v in var.libvirt_infrastructure : k => v
+    if v.network.nat.mode != "route"
+  } : {}
+
+  name      = each.value.network.nat.name_network
+  mode      = each.value.network.nat.mode
+  bridge    = each.value.network.nat.name_bridge
   autostart = true
 
   ips = [
     {
-      address = var.libvirt_infrastructure.network.nat.ips.address
-      prefix  = var.libvirt_infrastructure.network.nat.ips.prefix
-      dhcp = var.libvirt_infrastructure.network.nat.ips.dhcp != null ? {
+      address = each.value.network.nat.ips.address
+      prefix  = each.value.network.nat.ips.prefix
+      dhcp = each.value.network.nat.ips.dhcp != null ? {
         ranges = [
           {
-            start = var.libvirt_infrastructure.network.nat.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.nat.ips.dhcp.end
+            start = each.value.network.nat.ips.dhcp.start
+            end   = each.value.network.nat.ips.dhcp.end
           }
         ]
       } : null
@@ -26,20 +32,27 @@ resource "libvirt_network" "nat_net" {
 }
 
 resource "libvirt_network" "hostonly_net" {
-  name      = var.libvirt_infrastructure.network.hostonly.name_network
-  mode      = var.libvirt_infrastructure.network.hostonly.mode
-  bridge    = var.libvirt_infrastructure.network.hostonly.name_bridge
+
+  for_each = var.create_networks ? {
+    for k, v in var.libvirt_infrastructure : k => v
+    if v.network.hostonly.mode != "route"
+  } : {}
+
+  name      = each.value.network.hostonly.name_network
+  mode      = each.value.network.hostonly.mode
+  bridge    = each.value.network.hostonly.name_bridge
   autostart = true
 
   ips = [
     {
-      address = var.libvirt_infrastructure.network.hostonly.ips.address
-      prefix  = var.libvirt_infrastructure.network.hostonly.ips.prefix
-      dhcp = var.libvirt_infrastructure.network.hostonly.ips.dhcp != null ? {
+      address = each.value.network.hostonly.ips.address
+      prefix  = each.value.network.hostonly.ips.prefix
+
+      dhcp = each.value.network.hostonly.ips.dhcp != null ? {
         ranges = [
           {
-            start = var.libvirt_infrastructure.network.hostonly.ips.dhcp.start
-            end   = var.libvirt_infrastructure.network.hostonly.ips.dhcp.end
+            start = each.value.network.hostonly.ips.dhcp.start
+            end   = each.value.network.hostonly.ips.dhcp.end
           }
         ]
       } : null
@@ -48,10 +61,17 @@ resource "libvirt_network" "hostonly_net" {
 }
 
 resource "libvirt_pool" "storage_pool" {
-  name = var.libvirt_infrastructure.storage_pool_name
+  name = values(var.libvirt_infrastructure)[0].storage_pool_name
   type = "dir"
   target = {
-    path = abspath("/var/lib/libvirt/images/${var.libvirt_infrastructure.storage_pool_name}")
+    path = abspath("/var/lib/libvirt/images/${values(var.libvirt_infrastructure)[0].storage_pool_name}")
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(distinct([for k, v in var.libvirt_infrastructure : v.storage_pool_name])) <= 1
+      error_message = "All network tiers must use the same storage_pool_name when using this module."
+    }
   }
 }
 
@@ -82,6 +102,9 @@ resource "libvirt_volume" "data_disk" {
 }
 
 resource "libvirt_cloudinit_disk" "cloud_init" {
+
+  depends_on = [libvirt_pool.storage_pool]
+
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-cloud-init.iso"
 
@@ -98,14 +121,13 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     nat_ip_cidr      = local.nodes_config[each.key].nat_ip_cidr
     hostonly_mac     = local.nodes_config[each.key].hostonly_mac
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
-    nat_gateway      = var.libvirt_infrastructure.network.nat.ips.address
-    hostonly_gateway = var.libvirt_infrastructure.network.hostonly.ips.address
+    nat_gateway      = var.libvirt_infrastructure[each.value.network_tier].network.nat.ips.address
+    hostonly_gateway = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.ips.address
   })
 }
 
 resource "libvirt_volume" "cloud_init_iso" {
-  depends_on = [libvirt_pool.storage_pool]
-  for_each   = var.vm_config.all_nodes_map
+  for_each = var.vm_config.all_nodes_map
 
   name   = "${each.key}-cloud-init.iso"
   pool   = libvirt_pool.storage_pool.name
@@ -121,8 +143,6 @@ resource "libvirt_volume" "cloud_init_iso" {
 resource "libvirt_domain" "nodes" {
 
   depends_on = [
-    libvirt_network.nat_net,
-    libvirt_network.hostonly_net,
     libvirt_pool.storage_pool,
     libvirt_volume.os_disk,
     libvirt_volume.data_disk,
@@ -132,26 +152,27 @@ resource "libvirt_domain" "nodes" {
 
   for_each = var.vm_config.all_nodes_map
 
-  name    = each.key
-  vcpu    = each.value.vcpu
-  memory  = each.value.ram
-  unit    = "MiB"
-  running = true
-  type    = "kvm"
+  # 1. Basic Configuration (Required)
+  name      = each.key
+  vcpu      = each.value.vcpu
+  memory    = each.value.ram
+  unit      = "MiB"
+  autostart = false
+  running   = true
 
+  # 2. OS Configuration
   os = {
-    type         = "hvm"
-    arch         = "x86_64"
-    boot_devices = ["hd", "cdrom"]
+    type = "hvm"
+    arch = "x86_64"
   }
 
+  # 3. Hardware Device Configuration (Attributes)
   devices = {
-    emulator = "/usr/bin/qemu-system-x86_64"
-
     # Sequence: OS(vda) -> Data(vdb...) -> CloudInit(sda)
     disks = concat(
       # 1. OS Disk (vda)
       [{
+        device = "disk"
         target = {
           dev = "vda"
           bus = "virtio"
@@ -164,6 +185,7 @@ resource "libvirt_domain" "nodes" {
 
       # 2. Data Disks (vdb, vdc...)
       [for idx, disk in each.value.data_disks : {
+        device = "disk"
         target = {
           # idx=0 -> vdb, idx=1 -> vdc
           dev = "vd${substr("bcdefghijklmnopqrstuvwxyz", idx, 1)}"
@@ -189,25 +211,27 @@ resource "libvirt_domain" "nodes" {
       }]
     )
 
+    # Network Interfaces search by network tier
     interfaces = [
+      # 1. NAT Interface
       {
-        type  = "network"
-        model = "virtio"
-        mac   = local.nodes_config[each.key].nat_mac
+        type = "network"
         source = {
-          network = libvirt_network.nat_net.name
+          network = var.libvirt_infrastructure[each.value.network_tier].network.nat.name_network
         }
+        mac = local.nodes_config[each.key].nat_mac
       },
+      # 2. HostOnly Interface
       {
-        type  = "network"
-        model = "virtio"
-        mac   = local.nodes_config[each.key].hostonly_mac
+        type = "network"
         source = {
-          network = libvirt_network.hostonly_net.name
+          network = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.name_network
         }
+        mac = local.nodes_config[each.key].hostonly_mac
       }
     ]
 
+    # Other Peripherals
     consoles = [
       {
         type        = "pty"
@@ -221,15 +245,15 @@ resource "libvirt_domain" "nodes" {
       }
     ]
 
-    video = {
-      type = "vga"
-    }
-
     graphics = {
       vnc = {
         listen   = "0.0.0.0"
         autoport = "yes"
       }
+    }
+
+    video = {
+      type = "vga"
     }
   }
 

@@ -14,3 +14,9 @@
   ansible.builtin.systemd:
     name: vault-agent
     state: restarted
+
+- name: Restart Route Service
+  ansible.builtin.systemd:
+    name: fix-vault-routes.service
+    state: restarted
+    daemon_reload: true

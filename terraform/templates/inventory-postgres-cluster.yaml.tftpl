@@ -3,7 +3,6 @@ all:
   vars:
     service_identifier: "${cluster_identity.name}-postgres-cluster"
     postgres_ha_virtual_ip: "${cluster_network.postgres_vip}"
-    postgres_nat_subnet_prefix: "${cluster_network.nat_prefix}"
     postgres_common_name: "${cluster_identity.common_name}"
     postgres_cluster_name: "${cluster_identity.name}"
     postgres_mtls_node_subnet: "${cluster_network.access_scope}"

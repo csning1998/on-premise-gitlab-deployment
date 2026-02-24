@@ -1,11 +1,9 @@
 
 module "build_gitlab_postgres_cluster" {
-  source = "../../middleware/ha-service-kvm/patroni-cluster"
+  source = "../../middleware/ha-service-kvm/ha-cluster"
 
   # Identity & Service Definitions
-  cluster_name   = local.cluster_name
-  service_vip    = local.service_vip
-  service_domain = local.service_fqdn
+  cluster_name = local.svc_cluster_name
 
   # Topology (Compute & Storage)
   topology_cluster = local.topology_cluster
@@ -14,21 +12,11 @@ module "build_gitlab_postgres_cluster" {
   network_bindings   = local.network_bindings
   network_parameters = local.network_parameters
 
-  # Credentials & Security
-  credentials_system   = local.credentials_system
-  credentials_postgres = local.credentials_postgres
+  # System Credentials
+  credentials_system = local.sec_system_creds
 
-  # Ansible Configuration
-  ansible_files = var.ansible_files
-
-  # Layer 00 Artifacts (Root CA) for Ansible trust store
-  security_pki_bundle = local.security_pki_bundle
-
-  # Vault Agent Identity Injection
-  credentials_vault_agent = merge(
-    local.vault_agent_identity,
-    {
-      secret_id = vault_approle_auth_backend_role_secret_id.patroni_agent.secret_id
-    }
-  )
+  # Generic Ansible Configuration
+  ansible_inventory_content = local.ansible_inventory_content
+  ansible_extra_vars        = local.ansible_extra_vars
+  ansible_playbook_file     = var.ansible_files.playbook_file
 }

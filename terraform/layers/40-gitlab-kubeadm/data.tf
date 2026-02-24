@@ -6,14 +6,14 @@ data "terraform_remote_state" "topology" {
   }
 }
 
-data "terraform_remote_state" "central_lb" {
+data "terraform_remote_state" "network" {
   backend = "local"
   config = {
     path = "${path.root}/../05-central-lb/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "vault_raft_config" {
+data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
     path = "${path.root}/../10-vault-raft/terraform.tfstate"

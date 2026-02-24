@@ -65,3 +65,5 @@ vault/keys/
 commit-message.md
 pull-request.md
 *.bak
+terraform/layers/**/*.output.json
+.gitignore

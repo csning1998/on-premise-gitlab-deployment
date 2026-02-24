@@ -96,4 +96,58 @@ locals {
     { for item in local.dependency_roles : item.key => item },
     { for item in local.component_roles : item.key => item }
   )
+
+  /**
+   * 3. SSoT MECE Flattened Outputs
+   *    Extract structural identity arrays directly into a consumable map
+   */
+  identities_from_dependencies = merge([
+    for s in var.service_catalog : {
+      for d_key, d_data in s.dependencies :
+      "${s.name}-${d_key}" => {
+        cluster_name      = "${s.project_code}-${s.name}-${d_data.component}"
+        storage_pool_name = "iac-${s.project_code}-${s.name}-${d_data.component}-pool"
+        bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-${d_data.component}"), 0, 8)}"
+        bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-${d_data.component}"), 0, 8)}-nat"
+        node_name_prefix  = "${s.project_code}-${s.name}-${d_data.component}-node"
+        ansible_inventory = "inv-${s.project_code}-${s.name}-${d_data.component}.ini"
+        ssh_config        = "ssh_${s.project_code}-${s.name}-${d_data.component}.conf"
+      }
+    }
+  ]...)
+
+  identities_from_components = merge([
+    for s in var.service_catalog : {
+      for c_key, c_data in s.components :
+      "${s.name}-${c_key}" => {
+        cluster_name      = "${s.project_code}-${s.name}-${c_key}"
+        storage_pool_name = "iac-${s.project_code}-${s.name}-${c_key}-pool"
+        bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-${c_key}"), 0, 8)}"
+        bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-${c_key}"), 0, 8)}-nat"
+        node_name_prefix  = "${s.project_code}-${s.name}-${c_key}-node"
+        ansible_inventory = "inv-${s.project_code}-${s.name}-${c_key}.ini"
+        ssh_config        = "ssh_${s.project_code}-${s.name}-${c_key}.conf"
+      }
+    }
+  ]...)
+
+  identities_from_services_without_components = {
+    for s in var.service_catalog :
+    "${s.name}-core" => {
+      cluster_name      = "${s.project_code}-${s.name}-core"
+      storage_pool_name = "iac-${s.project_code}-${s.name}-core-pool"
+      bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-core"), 0, 8)}"
+      bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-core"), 0, 8)}-nat"
+      node_name_prefix  = "${s.project_code}-${s.name}-core-node"
+      ansible_inventory = "inv-${s.project_code}-${s.name}-core.ini"
+      ssh_config        = "ssh_${s.project_code}-${s.name}-core.conf"
+    }
+    if length(s.components) == 0 && length(s.dependencies) == 0
+  }
+
+  identity_map = merge(
+    local.identities_from_dependencies,
+    local.identities_from_components,
+    local.identities_from_services_without_components
+  )
 }

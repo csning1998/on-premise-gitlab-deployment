@@ -21,7 +21,7 @@ tls-ca-cert-file /etc/redis/certs/ca.crt
 tls-replication yes
 
 # Monitor Configuration
-sentinel monitor {{ sentinel_master_name }} {{ redis_initial_master_ip }} {{ haproxy_stats_port }} {{ sentinel_quorum }}
+sentinel monitor {{ sentinel_master_name }} {{ redis_initial_master_ip }} {{ redis_tls_port }} {{ sentinel_quorum }}
 
 # Authentication
 requirepass {{ redis_requirepass }}

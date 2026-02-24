@@ -26,7 +26,7 @@ template {
   destination = "/etc/redis/certs/server.crt"
   contents = <<EOH
 {{ '{{- with secret "pki/prod/issue/' 
-~ vault_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
@@ -37,7 +37,7 @@ EOH
 template {
   destination = "/etc/redis/certs/server.key"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.private_key }}' }}
 {{ '{{- end -}}' }}
 EOH
@@ -48,7 +48,7 @@ EOH
 template {
   destination = "/etc/redis/certs/ca.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ redis_service_domain ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH
