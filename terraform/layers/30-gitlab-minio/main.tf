@@ -1,6 +1,6 @@
 
 module "minio_gitlab" {
-  source = "../../middleware/ha-service-kvm/ha-cluster"
+  source = "../../middleware/ha-service-kvm-general"
 
   use_minio_hypervisor = true
 

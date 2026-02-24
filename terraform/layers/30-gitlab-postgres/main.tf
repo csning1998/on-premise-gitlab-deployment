@@ -1,6 +1,6 @@
 
 module "build_gitlab_postgres_cluster" {
-  source = "../../middleware/ha-service-kvm/ha-cluster"
+  source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
   cluster_name = local.svc_cluster_name

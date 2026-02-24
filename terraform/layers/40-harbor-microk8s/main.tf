@@ -1,6 +1,6 @@
 
 module "microk8s_harbor" {
-  source = "../../middleware/ha-service-kvm/ha-cluster"
+  source = "../../middleware/ha-service-kvm-general"
 
   # Core Identifier & Topology
   cluster_name     = local.svc_cluster_name

@@ -1,20 +1,9 @@
 
 module "hypervisor_kvm" {
   count  = var.use_minio_hypervisor ? 0 : 1
-  source = "../../../modules/cluster-provision/hypervisor-kvm"
+  source = "../../modules/cluster-provision/hypervisor-kvm"
 
-  vm_config = {
-    all_nodes_map = {
-      for k, v in local.flat_node_map : k => {
-        ip              = v.ip
-        vcpu            = v.vcpu
-        ram             = v.ram
-        base_image_path = v.base_image_path
-        data_disks      = v.data_disks
-        network_tier    = v.network_tier
-      }
-    }
-  }
+  vm_config = local.vm_config
 
   create_networks        = false
   credentials            = local.vm_credentials_for_hypervisor
@@ -23,20 +12,9 @@ module "hypervisor_kvm" {
 
 module "hypervisor_kvm_minio" {
   count  = var.use_minio_hypervisor ? 1 : 0
-  source = "../../../modules/cluster-provision/hypervisor-kvm-minio"
+  source = "../../modules/cluster-provision/hypervisor-kvm-minio"
 
-  vm_config = {
-    all_nodes_map = {
-      for k, v in local.flat_node_map : k => {
-        ip              = v.ip
-        vcpu            = v.vcpu
-        ram             = v.ram
-        base_image_path = v.base_image_path
-        data_disks      = v.data_disks
-        network_tier    = v.network_tier
-      }
-    }
-  }
+  vm_config = local.vm_config
 
   create_networks        = false
   credentials            = local.vm_credentials_for_hypervisor
@@ -44,7 +22,7 @@ module "hypervisor_kvm_minio" {
 }
 
 module "ssh_manager" {
-  source         = "../../../modules/cluster-provision/ssh-manager"
+  source         = "../../modules/cluster-provision/ssh-manager"
   status_trigger = var.use_minio_hypervisor ? module.hypervisor_kvm_minio[0].vm_status_trigger : module.hypervisor_kvm[0].vm_status_trigger
 
   nodes = [
@@ -62,7 +40,7 @@ module "ssh_manager" {
 }
 
 module "ansible_runner" {
-  source         = "../../../modules/cluster-provision/ansible-runner"
+  source         = "../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_content = var.ansible_inventory_content

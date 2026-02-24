@@ -71,3 +71,70 @@ locals {
     components        = var.vault_config
   }
 }
+
+# Node Processing & Grouping
+locals {
+  flat_node_map = merge([
+    for comp_name, comp_data in local.topology_cluster.components : {
+      for node_suffix, node_data in comp_data.nodes :
+      "${local.svc_cluster_name}-${comp_name}-${node_suffix}" => {
+        ip         = cidrhost(local.network_parameters[comp_data.network_tier].network.hostonly.cidrv4, node_data.ip_suffix)
+        vcpu       = node_data.vcpu
+        ram        = node_data.ram
+        data_disks = node_data.data_disks
+
+        base_image_path = comp_data.base_image_path
+        role            = comp_data.role
+        network_tier    = comp_data.network_tier
+      }
+    }
+  ]...)
+
+  # Group nodes by role for Ansible Inventory
+  nodes_by_role = {
+    for role in distinct(values(local.flat_node_map).*.role) : role => {
+      for name, node in local.flat_node_map : name => node
+      if node.role == role
+    }
+  }
+}
+
+# Ansible Configuration (Dynamic Inventory)
+locals {
+  primary_tier_key   = contains(keys(local.network_bindings), "default") ? "default" : keys(local.network_bindings)[0]
+  primary_params     = local.network_parameters[local.primary_tier_key]
+  inventory_template = "${path.module}/../../templates/${var.ansible_files.inventory_template_file}"
+
+  ansible_inventory_content = templatefile(local.inventory_template, {
+
+    vault_nodes = local.flat_node_map
+
+    cluster_identity = {
+      name   = local.svc_cluster_name
+      domain = local.svc_fqdn
+    }
+
+    cluster_topology = {
+      nodes_by_role  = local.nodes_by_role
+      nodes          = local.flat_node_map
+      bootstrap_node = values(local.flat_node_map)[0]
+    }
+
+    cluster_network = {
+      vip          = local.net_service_vip
+      nat_prefix   = join(".", slice(split(".", local.primary_params.network.nat.gateway), 0, 3))
+      access_scope = local.primary_params.network_access_scope
+    }
+  })
+
+  ansible_extra_vars = merge(
+    {
+      ansible_user = local.sec_system_creds.username
+    },
+    local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
+      vault_server_cert = local.pki_global_ca.server_cert
+      vault_server_key  = local.pki_global_ca.server_key
+      vault_ca_cert     = local.pki_global_ca.ca_cert
+    } : {}
+  )
+}

@@ -1,7 +1,7 @@
 
 module "central_lb_cluster" {
 
-  source = "../../middleware/ha-service-kvm/central-load-balancer"
+  source = "../../middleware/ha-service-kvm-central-lb"
 
   topology_cluster = {
     cluster_name      = local.svc_cluster_name

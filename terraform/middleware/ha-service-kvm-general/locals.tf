@@ -19,65 +19,27 @@ locals {
     }
   ]...)
 
-  # Group nodes by role for Ansible Inventory
-  nodes_by_role = {
-    for role in distinct(values(local.flat_node_map).*.role) : role => {
-      for name, node in local.flat_node_map : name => node
-      if node.role == role
+  vm_config = {
+    all_nodes_map = {
+      for k, v in local.flat_node_map : k => {
+        ip              = v.ip
+        vcpu            = v.vcpu
+        ram             = v.ram
+        base_image_path = v.base_image_path
+        data_disks      = v.data_disks
+        network_tier    = v.network_tier
+      }
     }
   }
 }
 
-# Ansible Configuration (Dynamic Inventory)
+# Ansible Configuration
 locals {
-  inventory_template = "${path.module}/../../../templates/${var.ansible_files.inventory_template_file}"
-
   ansible = {
-    root_path      = abspath("${path.module}/../../../../ansible")
-    playbook_file  = "playbooks/${var.ansible_files.playbook_file}"
-    inventory_file = "inventory-${var.cluster_name}-kubeadm.yaml"
-
-    inventory_contents = templatefile(local.inventory_template, {
-
-      kubeadm_master_nodes = try(local.nodes_by_role["master"], {})
-      kubeadm_worker_nodes = try(local.nodes_by_role["worker"], {})
-
-      cluster_identity = {
-        name        = var.cluster_name
-        domain      = var.service_domain
-        common_name = var.credentials_vault_agent.common_name
-      }
-
-      cluster_network = {
-        vip          = var.service_vip
-        vault_vip    = regex("://([^:]+)", var.credentials_vault_agent.vault_address)[0]
-        access_scope = local.primary_params.network_access_scope
-        nat_prefix   = join(".", slice(split(".", local.primary_params.network.nat.gateway), 0, 3))
-
-        pod_subnet     = "10.244.0.0/16"
-        registry_host  = "harbor.${var.service_domain}"
-        http_nodeport  = "30080"
-        https_nodeport = "30443"
-      }
-    })
+    root_path      = abspath("${path.module}/../../../ansible")
+    playbook_file  = "playbooks/${var.ansible_playbook_file}"
+    inventory_file = "inventory-${var.cluster_name}.yaml"
   }
-
-  ansible_extra_vars = merge(
-    {
-      ansible_user = var.credentials_system.username
-
-      vault_ca_cert_b64     = var.credentials_vault_agent.ca_cert_b64
-      vault_agent_role_id   = var.credentials_vault_agent.role_id
-      vault_agent_secret_id = var.credentials_vault_agent.secret_id
-      vault_addr            = var.credentials_vault_agent.vault_address
-      vault_role_name       = var.credentials_vault_agent.role_name
-    },
-    var.security_pki_bundle != null ? {
-      vault_server_cert = var.security_pki_bundle.server_cert
-      vault_server_key  = var.security_pki_bundle.server_key
-      vault_ca_cert     = var.security_pki_bundle.ca_cert
-    } : {}
-  )
 }
 
 # Security Credentials
@@ -95,15 +57,12 @@ locals {
 }
 
 # Primary Tier Selection for KVM Module Undeclared local value
-# - Find the primary network tier for KVM module
-# - If 'default' is not found, find the first tier used
 locals {
   primary_tier_key = contains(keys(var.network_bindings), "default") ? "default" : keys(var.network_bindings)[0]
   primary_params   = var.network_parameters[local.primary_tier_key]
 }
 
 # KVM Module Adaptation (Interface Translation)
-# - Convert input bindings/params into KVM Module's expected Map structure
 locals {
   hypervisor_kvm_infrastructure = {
     for tier, binding in var.network_bindings : tier => {
