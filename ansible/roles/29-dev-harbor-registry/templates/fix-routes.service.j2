@@ -1,0 +1,18 @@
+[Unit]
+Description=Fix Asymmetric Routing for Vault VIP
+# Ensure network is fully up before running
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Force traffic to Vault VIP to go via Local LB VIP
+# This bypasses the Default Gateway to prevent stateful firewall drops
+{% for route in dev_harbor_static_routes %}
+ExecStart=/usr/sbin/ip route replace {{ route.to }} via {{ route.via }} dev {{ route.dev | default(ansible_default_ipv4.interface) }} metric {{ route.metric | default(100) }}
+{% endfor %}
+# RemainAfterExit ensures systemd considers this service "active" once run
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

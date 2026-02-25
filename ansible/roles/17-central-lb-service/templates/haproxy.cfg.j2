@@ -33,18 +33,14 @@ listen stats
 
 {# Service Port Mapping #}
 {% for segment in lb_service_segments %}
-# --- Service: {{ segment.name }} ---
+# Service: {{ segment.name }}
+{% if segment.ports %}
 {% for port_name, port_cfg in segment.ports.items() %}
 
 # Frontend for {{ port_name }}
 frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
-    {# If Vault then TCP Passthrough (no ssl crt), else if Health Check then HTTPS (check-ssl) #}
-    {% if port_cfg.frontend == 443 and vault_haproxy_bundle is defined and segment.name != 'vault' %}
-    bind {{ segment.vip }}:{{ port_cfg.frontend }} ssl crt /etc/haproxy/certs/vault.pem
-    {% else %}
-    {# Fix: Force MSS clamping to 1400 to prevent packet drops in Overlay Networks (e.g. TLS Server Hello) #}
+    {# TCP Passthrough for all services — TLS termination is the responsibility of each application #}
     bind {{ segment.vip }}:{{ port_cfg.frontend }} mss 1400
-    {% endif %}
     mode tcp
     option tcplog
     default_backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
@@ -71,5 +67,7 @@ backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
     {% endif %}
     {% endfor %}
 
+    {# close port loop #}
 {% endfor %}
+{% endif %}
 {% endfor %}

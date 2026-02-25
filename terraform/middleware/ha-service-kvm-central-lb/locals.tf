@@ -13,34 +13,27 @@ locals {
       ip = node.ip
     }
   }
-  inventory_template = "${path.module}/../../templates/inventory-load-balancer-cluster.yaml.tftpl"
 
   ansible = {
     root_path          = abspath("${path.module}/../../../ansible")
-    playbook_file      = "playbooks/10-provision-core-services.yaml"
-    inventory_file     = "inventory-${var.topology_cluster.cluster_name}.yaml"
-    inventory_template = local.inventory_template
+    playbook_file      = "playbooks/${var.ansible_playbook_file}"
+    inventory_file     = var.svc_identity.ansible_inventory
+    inventory_template = "${path.module}/../../templates/${var.ansible_inventory_template_file}"
 
-    inventory_contents = templatefile(local.inventory_template, {
+    inventory_contents = templatefile("${path.module}/../../templates/${var.ansible_inventory_template_file}", merge(var.ansible_template_vars, {
       load_balancer_nodes = local.nodes_map_for_template
-      ansible_ssh_user    = var.credentials_vm.username
-      service_name        = var.topology_cluster.cluster_name
-      service_domain      = var.service_fqdn
       service_segments    = var.network_service_segments
-      interface_name      = var.network_service_segments[0].interface_name
-      backend_servers     = var.network_service_segments[0].backend_servers
-    })
+    }))
   }
 }
 
 locals {
   ansible_extra_vars = merge(
+    var.ansible_extra_vars,
     {
-      terraform_runner_subnet = var.network_parameters.network.hostonly.cidrv4
-      haproxy_stats_pass      = local.credentials_haproxy_for_ansible.haproxy_stats_pass
-      keepalived_auth_pass    = local.credentials_haproxy_for_ansible.keepalived_auth_pass
+      haproxy_stats_pass   = local.credentials_haproxy_for_ansible.haproxy_stats_pass
+      keepalived_auth_pass = local.credentials_haproxy_for_ansible.keepalived_auth_pass
     },
-    # Inject PKI artifacts only if and only if Layer 00 has base64 encoded output.
     var.security_pki_bundle != null ? {
       vault_haproxy_bundle = var.security_pki_bundle.haproxy_bundle
       vault_ca_cert        = var.security_pki_bundle.ca_cert
@@ -73,25 +66,27 @@ locals {
     nodes             = var.topology_cluster.load_balancer_config.nodes
   }
 
+  net_my_segment = var.network_infrastructure_map[var.svc_identity.service_name]
+
   lb_cluster_network_config = {
     network = {
       nat = {
-        name_network = var.network_bindings.nat_net_name
-        name_bridge  = var.network_bindings.nat_bridge_name
+        name_network = local.net_my_segment.nat.name
+        name_bridge  = local.net_my_segment.nat.bridge_name
         mode         = "nat"
         ips = {
-          address = var.network_parameters.network.nat.gateway
-          prefix  = tonumber(split("/", var.network_parameters.network.nat.cidrv4)[1])
-          dhcp    = var.network_parameters.network.nat.dhcp
+          address = local.net_my_segment.nat.gateway
+          prefix  = local.net_my_segment.nat.prefix
+          dhcp    = local.net_my_segment.nat.dhcp
         }
       }
       hostonly = {
-        name_network = var.network_bindings.hostonly_net_name
-        name_bridge  = var.network_bindings.hostonly_bridge_name
+        name_network = local.net_my_segment.hostonly.name
+        name_bridge  = local.net_my_segment.hostonly.bridge_name
         mode         = "route"
         ips = {
-          address = var.network_parameters.network.hostonly.gateway
-          prefix  = tonumber(split("/", var.network_parameters.network.hostonly.cidrv4)[1])
+          address = local.net_my_segment.hostonly.gateway
+          prefix  = local.net_my_segment.hostonly.prefix
           dhcp    = null
         }
       }

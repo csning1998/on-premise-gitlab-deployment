@@ -56,7 +56,7 @@ locals {
 #    Key must correspond to service_catalog of "${service_name}-${component_name}"
 locals {
   workload_identity_extra_policies = {
-    "dev-harbor-frontend" = <<EOT
+    "bootstrap-harbor-frontend" = <<EOT
 # Allow reading Harbor related App Secrets (KV v2)
 path "secret/data/on-premise-gitlab-deployment/dev-harbor/*" {
   capabilities = ["read"]

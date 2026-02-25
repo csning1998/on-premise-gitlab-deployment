@@ -1,7 +1,7 @@
 ---
 # Global settings for the Patroni cluster
 scope: {{ postgres_cluster_name }}
-namespace: /service/{{ service_identifier }}/postgres/
+namespace: /service/{{ postgres_cluster_name }}/postgres/
 name: {{ inventory_hostname }}
 
 # REST API

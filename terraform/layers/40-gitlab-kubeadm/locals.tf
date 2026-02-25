@@ -11,47 +11,22 @@ locals {
 
 # Service Context
 locals {
-  svc_name = var.service_catalog_name
-  svc_fqdn = local.state.topology.domain_suffix
-
-  # Using the standardized keys logic from Layer 00 naming map
-  # gitlab frontend falls under `${ProjectCode}-${Service}-${Component}` -> `gitlab-frontend`
-  svc_kubeadm_identity = local.state.topology.identity_map["${local.svc_name}-frontend"]
+  svc_name             = var.service_catalog_name
+  svc_frontend_comp    = local.state.topology.service_structure[local.svc_name].components["frontend"]
+  svc_kubeadm_identity = local.svc_frontend_comp.identity
   svc_cluster_name     = local.svc_kubeadm_identity.cluster_name
-  svc_kubeadm_fqdn     = local.state.topology.pki_map["${local.svc_name}-frontend"].dns_san[0]
+  svc_kubeadm_fqdn     = local.svc_frontend_comp.role.dns_san[0]
 }
 
 # Network Context
 locals {
   # Lookups directly into Infrastructure Map from Layer 05
-  net_kubeadm     = local.state.network.infrastructure_map[local.svc_name]
+  net_kubeadm     = local.state.network.infrastructure_map[local.state.topology.service_structure[local.svc_name].network.segment_key]
   net_service_vip = local.net_kubeadm.lb_config.vip
 
-  # Network Bindings: L2 Physical Attachment of Network Bridge
-  network_bindings = {
-    "default" = {
-      nat_net_name         = local.net_kubeadm.network.nat.name
-      nat_bridge_name      = local.net_kubeadm.network.nat.bridge_name
-      hostonly_net_name    = local.net_kubeadm.network.hostonly.name
-      hostonly_bridge_name = local.net_kubeadm.network.hostonly.bridge_name
-    }
-  }
-
-  network_parameters = {
-    "default" = {
-      network = {
-        nat = {
-          gateway = local.net_kubeadm.network.nat.gateway
-          cidrv4  = local.net_kubeadm.network.nat.cidr
-          dhcp    = local.net_kubeadm.network.nat.dhcp
-        }
-        hostonly = {
-          gateway = local.net_kubeadm.network.hostonly.gateway
-          cidrv4  = local.net_kubeadm.network.hostonly.cidr
-        }
-      }
-      network_access_scope = local.net_kubeadm.network.hostonly.cidr
-    }
+  # Single map of raw infrastructures for KVM
+  network_infrastructure_map = {
+    default = local.net_kubeadm
   }
 }
 
@@ -69,7 +44,7 @@ locals {
   }
 
   # Vault Agent Identity Prep
-  sec_vault_identity_key = "${local.svc_name}-frontend"
+  sec_vault_identity_key = local.svc_frontend_comp.role.key
 
   sec_vault_agent_identity = {
     vault_address = local.sys_vault_addr
@@ -92,44 +67,16 @@ locals {
 
 # Ansible Configuration Rendering
 locals {
-  # Reconstruct nodes map for Ansible Inventory rendering
-  flat_node_map = merge([
-    for comp_name, comp_data in var.gitlab_kubeadm_config : {
-      for node_suffix, node_data in comp_data.nodes :
-      "${local.svc_cluster_name}-${comp_name}-${node_suffix}" => {
-        ip   = cidrhost(local.network_parameters[comp_data.network_tier].network.hostonly.cidrv4, node_data.ip_suffix)
-        role = comp_data.role
-      }
-    }
-  ]...)
-
-  nodes_by_role = {
-    for role in distinct(values(local.flat_node_map).*.role) : role => {
-      for name, node in local.flat_node_map : name => node
-      if node.role == role
-    }
+  ansible_template_vars = {
+    vip            = local.net_service_vip
+    pod_subnet     = var.kubernetes_cluster_configuration.pod_subnet
+    nat_prefix     = join(".", slice(split(".", local.net_kubeadm.network.nat.gateway), 0, 3))
+    registry_host  = local.state.topology.pki_map["harbor-frontend"].dns_san[0]
+    http_nodeport  = local.net_kubeadm.lb_config.ports["ingress-http"].backend_port
+    https_nodeport = local.net_kubeadm.lb_config.ports["ingress-https"].backend_port
   }
 
-  ansible_inventory_content = templatefile("${path.module}/../../templates/${var.ansible_files.inventory_template_file}", {
-    kubeadm_master_nodes = local.nodes_by_role["master"]
-    kubeadm_worker_nodes = local.nodes_by_role["worker"]
-
-    cluster_identity = {
-      name = local.svc_cluster_name
-    }
-
-    cluster_network = {
-      vip            = local.net_service_vip
-      pod_subnet     = var.kubernetes_cluster_configuration.pod_subnet
-      nat_prefix     = join(".", slice(split(".", local.network_parameters["default"].network.nat.gateway), 0, 3))
-      registry_host  = local.state.topology.pki_map["harbor-frontend"].dns_san[0]
-      http_nodeport  = local.net_kubeadm.lb_config.ports["ingress-http"].backend_port
-      https_nodeport = local.net_kubeadm.lb_config.ports["ingress-https"].backend_port
-    }
-  })
-
   ansible_extra_vars = {
-    ansible_user          = local.sec_system_creds.username
     vault_ca_cert_b64     = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id   = local.sec_vault_agent_identity.role_id
     vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id

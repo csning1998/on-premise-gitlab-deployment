@@ -100,6 +100,7 @@
         - { file: "role_id", content: "{{ vault_agent_role_id }}" }
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
+      notify: Restart Vault Agent
 
     - name: "Step D4. Deploy Vault CA Certificate"
       ansible.builtin.copy:
@@ -144,6 +145,9 @@
         state: started
         enabled: true
         daemon_reload: true
+
+    - name: "Step D8.1. Flush handlers to restart Vault Agent immediately if config changed"
+      ansible.builtin.meta: flush_handlers
 
     - name: "Step D9. Wait for Certificates"
       ansible.builtin.wait_for:

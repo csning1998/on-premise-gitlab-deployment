@@ -8,9 +8,10 @@ terraform {
 }
 
 locals {
-  cluster_name = var.config_name.cluster_name
+  cluster_name    = var.config_name.cluster_name
+  ssh_config_name = var.config_name.ssh_config_name
   # Dynamically construct file paths based on the provided config_name
-  ssh_config_path  = pathexpand("~/.ssh/config_iac-${local.cluster_name}")
+  ssh_config_path  = pathexpand("~/.ssh/${local.ssh_config_name}")
   known_hosts_path = pathexpand("~/.ssh/known_hosts_${local.cluster_name}")
 }
 

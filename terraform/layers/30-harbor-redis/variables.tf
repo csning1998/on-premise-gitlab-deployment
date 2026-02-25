@@ -1,52 +1,39 @@
 
-variable "harbor_redis_compute" {
-  description = "Compute topology for Harbor Redis service"
-  type = object({
-    cluster_identity = object({
-      layer_number = number
-      service_name = string
-      component    = string
-    })
-
-    redis_config = object({
-      nodes = map(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-      }))
-      base_image_path = string
-    })
-
-    haproxy_config = object({
-      stats_port = number
-      virtual_ip = string
-      nodes = map(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-      }))
-      base_image_path = string
-    })
-  })
+variable "service_catalog_name" {
+  description = "The unique service name defined in Layer 00 (e.g. 'harbor'). Used to lookup SSoT properties."
+  type        = string
 }
 
-variable "harbor_redis_infra" {
-  description = "Infrastructure config for Harbor Redis service"
+variable "vault_dev_addr" {
+  description = "The address of the Vault server"
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
+
+variable "harbor_redis_config" {
+  description = "Compute topology for Harbor Redis service."
+  type = map(object({
+    role            = string
+    network_tier    = string
+    base_image_path = string
+
+    nodes = map(object({
+      ip_suffix = number
+      vcpu      = number
+      ram       = number
+
+      data_disks = optional(list(object({
+        name_suffix = string
+        capacity    = number
+      })), [])
+    }))
+  }))
+}
+
+variable "ansible_files" {
+  description = "Meta configuration of Ansible inventory for Harbor Redis service."
   type = object({
-    network = object({
-      nat = object({
-        gateway = string
-        cidrv4  = string
-        dhcp = optional(object({
-          start = string
-          end   = string
-        }))
-      })
-      hostonly = object({
-        gateway = string
-        cidrv4  = string
-      })
-    })
-    allowed_subnet = string
+    playbook_file           = string
+    inventory_template_file = string
   })
 }

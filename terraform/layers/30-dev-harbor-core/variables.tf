@@ -1,42 +1,37 @@
 
-variable "dev_harbor_compute" {
-  description = "Compute topology for Dev Harbor service"
-  type = object({
-    cluster_identity = object({
-      layer_number = number
-      service_name = string
-      component    = string
-    })
+variable "service_catalog_name" {
+  description = "The unique service name defined in Layer 00 (e.g. 'vault'). Used to lookup SSoT properties."
+  type        = string
+}
 
-    # Dev Harbor Data Nodes
-    dev_harbor_system_config = object({
-      node = map(object({
-        ip   = string
-        vcpu = number
-        ram  = number
-      }))
-      base_image_path = string
+variable "vault_dev_addr" {
+  description = "The address of the Vault server"
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
+
+variable "bootstrap_harbor_config" {
+  description = "Compute topology for Bootstrap Harbor service (Single Node)"
+  type = object({
+    role            = string
+    base_image_path = string
+    node = object({
+      ip_suffix = number
+      vcpu      = number
+      ram       = number
+
+      data_disks = optional(list(object({
+        name_suffix = string
+        capacity    = number
+      })), [])
     })
   })
 }
 
-variable "dev_harbor_infra" {
-  description = "Infrastructure config for Dev Harbor service"
+variable "ansible_files" {
+  description = "Meta configuration of Ansible inventory for Bootstrap Harbor service."
   type = object({
-    network = object({
-      nat = object({
-        gateway = string
-        cidrv4  = string
-        dhcp = optional(object({
-          start = string
-          end   = string
-        }))
-      })
-      hostonly = object({
-        gateway = string
-        cidrv4  = string
-      })
-    })
-    allowed_subnet = string
+    playbook_file           = string
+    inventory_template_file = string
   })
 }

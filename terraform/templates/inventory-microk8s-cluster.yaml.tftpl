@@ -1,21 +1,21 @@
 ---
 all:
   vars:
-    ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
-    microk8s_cluster_name: "${service_name}-microk8s-cluster"
+    ansible_user: "${custom_vars.ansible_user}"
+    service_identifier: "${cluster_identity.cluster_name}"
+    microk8s_cluster_name: "${cluster_identity.cluster_name}-microk8s-cluster"
 
-    microk8s_cluster_ips: ${jsonencode([for node in microk8s_nodes : node.ip])}
-    microk8s_ingress_vip: "${microk8s_ingress_vip}"
-    microk8s_allowed_subnet: "${microk8s_allowed_subnet}"
-    microk8s_nat_subnet_prefix: "${microk8s_nat_subnet_prefix}"
+    microk8s_cluster_ips: ${jsonencode([for node in nodes_by_role["microk8s"] : node.ip])}
+    microk8s_ingress_vip: "${custom_vars.microk8s_ingress_vip}"
+    microk8s_allowed_subnet: "${custom_vars.microk8s_allowed_subnet}"
+    microk8s_nat_subnet_prefix: "${custom_vars.microk8s_nat_subnet_prefix}"
 
-    metallb_ip_range: "${microk8s_ingress_vip}-${microk8s_ingress_vip}"
+    metallb_ip_range: "${custom_vars.microk8s_ingress_vip}-${custom_vars.microk8s_ingress_vip}"
 
   children:
     nodes:
       hosts:
-%{ for key in keys(microk8s_nodes) ~}
+%{ for key in keys(nodes_by_role["microk8s"]) ~}
         ${key}:
-          advertise_ip: ${microk8s_nodes[key].ip}
+          advertise_ip: ${nodes_by_role["microk8s"][key].ip}
 %{ endfor ~}

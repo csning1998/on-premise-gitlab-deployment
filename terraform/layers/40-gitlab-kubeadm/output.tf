@@ -4,22 +4,10 @@ output "service_vip" {
   value       = local.net_service_vip
 }
 
-
-
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
   value       = local.sec_system_creds
   sensitive   = true
-}
-
-output "network_bindings" {
-  description = "L2 network identity mapping (Verified from KVM Module)."
-  value       = module.kubeadm_gitlab.network_bindings
-}
-
-output "network_parameters" {
-  description = "L3 network configurations (Verified from KVM Module)."
-  value       = module.kubeadm_gitlab.network_parameters
 }
 
 output "topology_cluster" {

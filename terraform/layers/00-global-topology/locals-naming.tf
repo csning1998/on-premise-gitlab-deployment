@@ -101,53 +101,64 @@ locals {
    * 3. SSoT MECE Flattened Outputs
    *    Extract structural identity arrays directly into a consumable map
    */
-  identities_from_dependencies = merge([
-    for s in var.service_catalog : {
-      for d_key, d_data in s.dependencies :
-      "${s.name}-${d_key}" => {
-        cluster_name      = "${s.project_code}-${s.name}-${d_data.component}"
-        storage_pool_name = "iac-${s.project_code}-${s.name}-${d_data.component}-pool"
-        bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-${d_data.component}"), 0, 8)}"
-        bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-${d_data.component}"), 0, 8)}-nat"
-        node_name_prefix  = "${s.project_code}-${s.name}-${d_data.component}-node"
-        ansible_inventory = "inv-${s.project_code}-${s.name}-${d_data.component}.ini"
-        ssh_config        = "ssh_${s.project_code}-${s.name}-${d_data.component}.conf"
+  _all_items = flatten([
+    for s in var.service_catalog : concat(
+      [for k, v in s.components : { svc = s, key = k, data = v }],
+      [for k, v in s.dependencies : { svc = s, key = k, data = v }]
+    )
+  ])
+
+  # 1. Establish intermediate variables, pre-calculate base_id and hash_prefix
+  _items_with_meta = [
+    for item in local._all_items : {
+      original    = item
+      base_id     = "${item.svc.project_code}-${item.svc.name}-${item.key}"
+      hash_prefix = substr(md5("${item.svc.project_code}-${item.svc.name}-${item.key}"), 0, 8)
+    }
+  ]
+
+  # 2. Replace existing identities_from_items, directly use pre-calculated values
+  identities_from_items = merge([
+    for item in local._items_with_meta : {
+      "${item.original.svc.name}-${item.original.key}" = {
+        cluster_name      = item.base_id
+        storage_pool_name = "iac-${item.base_id}-pool"
+        bridge_name_host  = "br-${item.hash_prefix}"
+        bridge_name_nat   = "br-${item.hash_prefix}-nat"
+        node_name_prefix  = "${item.base_id}-node"
+        ansible_inventory = "inventory-${item.base_id}.yaml"
+        ssh_config        = "ssh_${item.base_id}"
+
+        groups = {
+          for group in coalesce(item.original.data.node_groups, []) :
+          group => {
+            node_name_prefix = "${item.base_id}-${group}-node"
+          }
+        }
       }
     }
   ]...)
 
-  identities_from_components = merge([
-    for s in var.service_catalog : {
-      for c_key, c_data in s.components :
-      "${s.name}-${c_key}" => {
-        cluster_name      = "${s.project_code}-${s.name}-${c_key}"
-        storage_pool_name = "iac-${s.project_code}-${s.name}-${c_key}-pool"
-        bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-${c_key}"), 0, 8)}"
-        bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-${c_key}"), 0, 8)}-nat"
-        node_name_prefix  = "${s.project_code}-${s.name}-${c_key}-node"
-        ansible_inventory = "inv-${s.project_code}-${s.name}-${c_key}.ini"
-        ssh_config        = "ssh_${s.project_code}-${s.name}-${c_key}.conf"
-      }
-    }
-  ]...)
-
+  # 3. Use Single Element List for Services Without Components
   identities_from_services_without_components = {
     for s in var.service_catalog :
-    "${s.name}-core" => {
-      cluster_name      = "${s.project_code}-${s.name}-core"
-      storage_pool_name = "iac-${s.project_code}-${s.name}-core-pool"
-      bridge_name_host  = "br-${substr(md5("${s.project_code}-${s.name}-core"), 0, 8)}"
-      bridge_name_nat   = "br-${substr(md5("${s.project_code}-${s.name}-core"), 0, 8)}-nat"
-      node_name_prefix  = "${s.project_code}-${s.name}-core-node"
-      ansible_inventory = "inv-${s.project_code}-${s.name}-core.ini"
-      ssh_config        = "ssh_${s.project_code}-${s.name}-core.conf"
-    }
+    "${s.name}" => merge([
+      for hash_prefix in [substr(md5("${s.project_code}-${s.name}"), 0, 8)] : {
+        cluster_name      = "${s.project_code}-${s.name}"
+        storage_pool_name = "iac-${s.project_code}-${s.name}-pool"
+        bridge_name_host  = "br-${hash_prefix}"
+        bridge_name_nat   = "br-${hash_prefix}-nat"
+        node_name_prefix  = "${s.project_code}-${s.name}-node"
+        ansible_inventory = "inventory-${s.project_code}-${s.name}.yaml"
+        ssh_config        = "ssh_${s.project_code}-${s.name}"
+        groups            = {}
+      }
+    ]...)
     if length(s.components) == 0 && length(s.dependencies) == 0
   }
 
   identity_map = merge(
-    local.identities_from_dependencies,
-    local.identities_from_components,
+    local.identities_from_items,
     local.identities_from_services_without_components
   )
 }

@@ -79,6 +79,7 @@
         - { file: "role_id", content: "{{ vault_agent_role_id }}" }
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
+      notify: Restart Vault Agent
 
     - name: "Step D3. Deploy Vault CA Certificate"
       ansible.builtin.copy:

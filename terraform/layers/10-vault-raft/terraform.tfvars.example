@@ -6,13 +6,22 @@
 service_catalog_name = "vault"
 
 vault_config = {
-  nodes = {
-    # Single Mode
-    "00" = { ip_suffix = 200, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" }
-    # Uncomment the following lines for HA setup, abide by node % 2 != 0.
-    "01" = { ip_suffix = 201, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
-    "02" = { ip_suffix = 202, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
-    # ...
+  "vault" = {
+    role            = "vault"
+    network_tier    = "vault"
+    base_image_path = "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2"
+
+    nodes = {
+      # Single Mode
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" }
+      # Uncomment the following lines for HA setup, abide by node % 2 != 0.
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
+      # ...
+    }
   }
-  base_image_path = "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2"
+}
+ansible_files = {
+  playbook_file           = "10-provision-core-services.yaml"
+  inventory_template_file = "inventory-vault-cluster.yaml.tftpl"
 }

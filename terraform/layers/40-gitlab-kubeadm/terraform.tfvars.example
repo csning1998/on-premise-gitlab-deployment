@@ -1,51 +1,37 @@
 
-gitlab_kubeadm_compute = {
-  cluster_identity = {
-    service_name = "gitlab"
-    component    = "kubeadm"
-    cluster_name = "30-gitlab-kubeadm"
-  }
+service_catalog_name = "gitlab"
 
-  kubeadm_config = {
-    master_nodes = {
-      "gitlab-kubeadm-master-00" = { ip = "172.16.134.200", vcpu = 2, ram = 6144 }
-      "gitlab-kubeadm-master-01" = { ip = "172.16.134.201", vcpu = 2, ram = 6144 }
-      "gitlab-kubeadm-master-02" = { ip = "172.16.134.202", vcpu = 2, ram = 6144 }
-    }
-    worker_nodes = {
-      "gitlab-kubeadm-worker-00" = { ip = "172.16.134.210", vcpu = 4, ram = 8192 }
-      "gitlab-kubeadm-worker-01" = { ip = "172.16.134.211", vcpu = 4, ram = 8192 }
-      "gitlab-kubeadm-worker-02" = { ip = "172.16.134.212", vcpu = 4, ram = 8192 }
-    }
+gitlab_kubeadm_config = {
+  "master" = {
+    role            = "master"
+    network_tier    = "default"
     base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
+
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 2048 }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 2048 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 2048 }
+    }
   }
 
-  haproxy_config = {
-    virtual_ip      = "172.16.134.250"
-    nodes           = {} # Use external Keepalived by Defaults
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
-  }
+  "worker" = {
+    role            = "worker"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
 
-  pod_subnet     = "10.244.0.0/16"
-  registry_host  = "172.16.135.200:5000" # Harbor Registry Endpoint
-  http_nodeport  = 30080
-  https_nodeport = 30443
+    nodes = {
+      "00" = { ip_suffix = 210, vcpu = 2, ram = 2048 }
+      # "01" = { ip_suffix = 211, vcpu = 2, ram = 2048 }
+      # "02" = { ip_suffix = 212, vcpu = 2, ram = 2048 }
+    }
+  }
 }
 
-gitlab_kubeadm_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.86.1"
-      cidrv4  = "172.16.86.0/24"
-      dhcp = {
-        start = "172.16.86.2"
-        end   = "172.16.86.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.134.1"
-      cidrv4  = "172.16.134.0/24"
-    }
-  }
-  allowed_subnet = "172.16.134.0/24"
+kubernetes_cluster_configuration = {
+  pod_subnet = "10.244.0.0/16" # default
+}
+
+ansible_files = {
+  playbook_file           = "30-provision-kubeadm.yaml"
+  inventory_template_file = "inventory-kubeadm-cluster.yaml.tftpl"
 }

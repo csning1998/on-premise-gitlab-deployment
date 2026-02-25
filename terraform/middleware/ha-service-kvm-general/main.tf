@@ -33,7 +33,8 @@ module "ssh_manager" {
   ]
 
   config_name = {
-    cluster_name = var.cluster_name
+    cluster_name    = var.svc_identity.cluster_name
+    ssh_config_name = var.svc_identity.ssh_config
   }
 
   credentials_vm = local.vm_credentials_for_ssh
@@ -43,7 +44,7 @@ module "ansible_runner" {
   source         = "../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
-  inventory_content = var.ansible_inventory_content
+  inventory_content = local.ansible_inventory_content
   credentials_vm    = local.vm_credentials_for_ssh
 
   ansible_config = {
@@ -53,5 +54,5 @@ module "ansible_runner" {
     inventory_file  = local.ansible.inventory_file
   }
 
-  extra_vars = var.ansible_extra_vars
+  extra_vars = local.ansible_extra_vars
 }

@@ -1,21 +1,19 @@
 ---
 all:
   vars:
-    service_identifier: "${cluster_identity.name}-postgres-cluster"
-    postgres_ha_virtual_ip: "${cluster_network.postgres_vip}"
-    postgres_common_name: "${cluster_identity.common_name}"
-    postgres_cluster_name: "${cluster_identity.name}"
-    postgres_mtls_node_subnet: "${cluster_network.access_scope}"
+    postgres_ha_virtual_ip: "${custom_vars.postgres_vip}"
+    postgres_cluster_name: "${cluster_identity.cluster_name}"
+    postgres_mtls_node_subnet: "${custom_vars.access_scope}"
     postgres_static_routes:
-      - to: "${cluster_network.vault_vip}/32"
-        via: "${cluster_network.postgres_vip}"
+      - to: "${custom_vars.vault_vip}/32"
+        via: "${custom_vars.postgres_vip}"
         dev: "ens3"
         metric: 100
 
   children:
     postgres_etcd_nodes:
       hosts:
-%{ for key, node in etcd_nodes ~}
+%{ for key, node in nodes_by_role["etcd"] ~}
         ${key}:
           advertise_ip: ${node.ip}
           node_role: "etcd"
@@ -23,7 +21,7 @@ all:
 
     postgres_db_nodes:
       hosts:
-%{ for key, node in postgres_nodes ~}
+%{ for key, node in nodes_by_role["postgres"] ~}
         ${key}:
           advertise_ip: ${node.ip}
           node_role: "postgres"

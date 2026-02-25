@@ -1,7 +1,7 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_addr | default('https://172.16.136.250:443') }}"
+  address = "{{ vault_addr }}"
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 

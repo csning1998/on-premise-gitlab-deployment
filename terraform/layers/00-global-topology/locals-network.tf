@@ -53,6 +53,7 @@ locals {
   network_topology = {
     for seg in local.network_segments_list : seg.key => {
 
+      segment_key    = seg.key
       cidr_block     = cidrsubnet(local.network_baseline.cidr_block, 8, seg.cidr_index)
       nat_gateway    = cidrhost(cidrsubnet(local.network_baseline.cidr_block, 8, seg.cidr_index - 124), 1)
       nat_cidr_block = cidrsubnet(local.network_baseline.cidr_block, 8, seg.cidr_index - 124)

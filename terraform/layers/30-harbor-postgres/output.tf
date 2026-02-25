@@ -1,40 +1,22 @@
 
-output "harbor_postgres_cluster_name" {
-  description = "Harbor Postgres cluster name."
-  value       = local.cluster_name
+output "service_vip" {
+  description = "The virtual IP assigned to the Postgres service from Central LB topology."
+  value       = local.net_service_vip
 }
 
-output "harbor_postgres_db_ip_list" {
-  description = "List of Postgres node IPs for Harbor"
-  value       = [for node in var.harbor_postgres_compute.postgres_config.nodes : node.ip]
+output "credentials_system" {
+  description = "System-level access credentials (SSH) for the cluster nodes."
+  value       = local.sec_system_creds
+  sensitive   = true
 }
 
-output "harbor_postgres_etcd_ip_list" {
-  description = "List of Postgres etcd node IPs for Harbor"
-  value       = [for node in var.harbor_postgres_compute.etcd_config.nodes : node.ip]
+output "credentials_postgres" {
+  description = "Database-level credentials for Patroni and PostgreSQL replication."
+  value       = local.sec_postgres_creds
+  sensitive   = true
 }
 
-output "harbor_postgres_haproxy_ip_list" {
-  description = "List of Postgres HAProxy node IPs for Harbor"
-  value       = [for node in var.harbor_postgres_compute.haproxy_config.nodes : node.ip]
-}
-
-output "harbor_postgres_virtual_ip" {
-  description = "Postgres virtual IP for Harbor"
-  value       = var.harbor_postgres_compute.haproxy_config.virtual_ip
-}
-
-output "harbor_postgres_haproxy_stats_port" {
-  description = "Postgres HAProxy Stats Port for Harbor"
-  value       = var.harbor_postgres_compute.haproxy_config.stats_port
-}
-
-output "harbor_postgres_haproxy_rw_port" {
-  description = "Postgres HAProxy Read-Write Port for Harbor"
-  value       = var.harbor_postgres_compute.haproxy_config.rw_proxy
-}
-
-output "harbor_postgres_haproxy_ro_port" {
-  description = "Postgres HAProxy Read-Only Port for Harbor"
-  value       = var.harbor_postgres_compute.haproxy_config.ro_proxy
+output "topology_cluster" {
+  description = "The actual provisioned configuration for all Postgres and Etcd nodes."
+  value       = module.build_harbor_postgres_cluster.cluster_nodes
 }

@@ -1,18 +1,23 @@
 ---
 all:
   vars:
-    ansible_user: "${ansible_ssh_user}"
-    service_identifier: "${service_name}"
-
-    dev_harbor_cluster_ips: ${jsonencode(dev_harbor_ips)}
-    dev_harbor_mtls_node_subnet: "${dev_harbor_mtls_node_subnet}"
-    dev_harbor_nat_subnet_prefix: "${dev_harbor_nat_subnet_prefix}"
-    dev_harbor_service_domain: "${dev_harbor_service_domain}"
+    service_identifier: "${custom_vars.service_name}"
+    
+    dev_harbor_cluster_ips: ${jsonencode([for node in all_nodes : node.ip])}
+    dev_harbor_mtls_node_subnet: "${custom_vars.access_scope}"
+    dev_harbor_service_domain: "${cluster_identity.cluster_name}"
+    dev_harbor_tls_port: ${custom_vars.dev_harbor_tls_port}
+    
+    dev_harbor_static_routes:
+      - to: "${custom_vars.vault_vip}/32"
+        via: "${custom_vars.dev_harbor_vip}"
+        dev: "ens3"
+        metric: 100
 
   children:
     dev_harbor_nodes:
       hosts:
-%{ for key, node in dev_harbor_nodes ~}
+%{ for key, node in all_nodes ~}
         ${key}:
           advertise_ip: ${node.ip}
 %{ endfor ~}

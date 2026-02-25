@@ -1,46 +1,21 @@
 
-gitlab_redis_compute = {
+service_catalog_name = "gitlab"
 
-  cluster_identity = {
-    layer_number = 20
-    service_name = "gitlab"
-    component    = "redis"
-  }
-
-  redis_config = {
-    nodes = {
-      "gitlab-redis-node-db-00" = { ip = "172.16.141.200", vcpu = 1, ram = 2048 }
-      # Uncomment the following lines for HA setup, abide by node % 2 != 0.
-      # "gitlab-redis-node-db-01" = { ip = "172.16.141.201", vcpu = 1, ram = 2048 }
-      # "gitlab-redis-node-db-02" = { ip = "172.16.141.202", vcpu = 1, ram = 2048 }
-    }
+gitlab_redis_config = {
+  "redis" = {
+    role            = "redis"
+    network_tier    = "redis"
     base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
-  }
 
-  haproxy_config = {
-    stats_port = 6379
-    virtual_ip = "172.16.141.250"
     nodes = {
-      "gitlab-redis-haproxy-node-00" = { ip = "172.16.141.210", vcpu = 1, ram = 512 }
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 2048 }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 2048 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 2048 }
     }
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 }
 
-gitlab_redis_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.93.1"
-      cidrv4  = "172.16.93.0/24"
-      dhcp = {
-        start = "172.16.93.2"
-        end   = "172.16.93.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.141.1"
-      cidrv4  = "172.16.141.0/24"
-    }
-  }
-  allowed_subnet = "172.16.141.0/24"
+ansible_files = {
+  playbook_file           = "20-provision-data-services.yaml"
+  inventory_template_file = "inventory-redis-cluster.yaml.tftpl"
 }

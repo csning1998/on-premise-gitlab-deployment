@@ -1,29 +1,29 @@
 ---
 all:
   vars:
-    service_identifier: "${cluster_identity.name}-redis-cluster"
-    redis_cluster_ips: ${jsonencode([for node in redis_nodes : node.ip])}
-    redis_ha_virtual_ip: "${cluster_network.redis_vip}"
-    redis_tls_node_subnet: "${cluster_network.access_scope}"
-    redis_service_domain: "${cluster_identity.domain}"
-    redis_initial_master_ip: "${redis_nodes[keys(redis_nodes)[0]].ip}"
-    redis_tls_port: ${cluster_network.redis_tls_port}
-    sentinel_quorum: ${floor(length(redis_nodes)/2) + 1}
+    service_identifier: "${cluster_identity.cluster_name}"
+    redis_cluster_ips: ${jsonencode([for node in nodes_by_role["redis"] : node.ip])}
+    redis_ha_virtual_ip: "${custom_vars.redis_vip}"
+    redis_tls_node_subnet: "${custom_vars.access_scope}"
+    redis_service_domain: "${custom_vars.redis_service_domain}"
+    redis_initial_master_ip: "${nodes_by_role["redis"][keys(nodes_by_role["redis"])[0]].ip}"
+    redis_tls_port: ${custom_vars.redis_tls_port}
+    sentinel_quorum: ${floor(length(nodes_by_role["redis"])/2) + 1}
     redis_static_routes:
-      - to: "${cluster_network.vault_vip}/32"
-        via: "${cluster_network.redis_vip}"
+      - to: "${custom_vars.vault_vip}/32"
+        via: "${custom_vars.redis_vip}"
         dev: "ens3"
         metric: 100
 
   children:
     redis_db_master:
       hosts:
-        ${keys(redis_nodes)[0]}:
-          advertise_ip: ${redis_nodes[keys(redis_nodes)[0]].ip}
+        ${keys(nodes_by_role["redis"])[0]}:
+          advertise_ip: ${nodes_by_role["redis"][keys(nodes_by_role["redis"])[0]].ip}
 
     redis_db_replicas:
       hosts:
-%{ for key in slice(keys(redis_nodes), 1, length(keys(redis_nodes))) ~}
+%{ for key in slice(keys(nodes_by_role["redis"]), 1, length(keys(nodes_by_role["redis"]))) ~}
         ${key}:
-          advertise_ip: ${redis_nodes[key].ip}
+          advertise_ip: ${nodes_by_role["redis"][key].ip}
 %{ endfor ~}

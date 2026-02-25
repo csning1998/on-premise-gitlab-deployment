@@ -1,21 +1,21 @@
 ---
 all:
   vars:
-    vault_cluster_name: "${cluster_identity.name}-vault-cluster"
-    vault_ha_virtual_ip: "${cluster_network.vip}"
+    vault_cluster_name: "${cluster_identity.cluster_name}"
+    vault_ha_virtual_ip: "${custom_vars.vault_vip}"
 
   children:
     vault_leader:
       hosts:
-        ${keys(cluster_topology.nodes)[0]}:
-          advertise_ip: ${cluster_topology.nodes[keys(cluster_topology.nodes)[0]].ip}
-          node_id: "${keys(cluster_topology.nodes)[0]}"
+        ${keys(all_nodes)[0]}:
+          advertise_ip: ${all_nodes[keys(all_nodes)[0]].ip}
+          node_id: "${keys(all_nodes)[0]}"
 
     vault_follower:
       hosts:
-%{ for idx, key in slice(keys(cluster_topology.nodes), 1, length(keys(cluster_topology.nodes))) ~}
+%{ for idx, key in slice(keys(all_nodes), 1, length(keys(all_nodes))) ~}
         ${key}:
-          advertise_ip: ${cluster_topology.nodes[key].ip}
+          advertise_ip: ${all_nodes[key].ip}
           node_id: "${key}"
 %{ endfor ~}
 

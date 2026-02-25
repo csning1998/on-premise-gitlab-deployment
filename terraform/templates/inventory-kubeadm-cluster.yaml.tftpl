@@ -1,30 +1,30 @@
 ---
 all:
   vars:
-    service_identifier: "${cluster_identity.name}-kubeadm-cluster"
+    service_identifier: "${cluster_identity.cluster_name}-kubeadm-cluster"
 
-    kubeadm_master_nodes: ${jsonencode(kubeadm_master_nodes)}
-    kubeadm_worker_nodes: ${jsonencode(kubeadm_worker_nodes)}
+    kubeadm_master_nodes: ${jsonencode(nodes_by_role["master"])}
+    kubeadm_worker_nodes: ${jsonencode(nodes_by_role["worker"])}
 
-    kubeadm_master_ips: ${jsonencode([for node in values(kubeadm_master_nodes) : node.ip])}
-    kubeadm_ha_virtual_ip: "${cluster_network.vip}"
-    kubeadm_pod_subnet: "${cluster_network.pod_subnet}"
-    kubeadm_nat_subnet_prefix: "${cluster_network.nat_prefix}"
-    kubeadm_registry_host: "${cluster_network.registry_host}"
+    kubeadm_master_ips: ${jsonencode([for node in values(nodes_by_role["master"]) : node.ip])}
+    kubeadm_ha_virtual_ip: "${custom_vars.vip}"
+    kubeadm_pod_subnet: "${custom_vars.pod_subnet}"
+    kubeadm_nat_subnet_prefix: "${custom_vars.nat_prefix}"
+    kubeadm_registry_host: "${custom_vars.registry_host}"
 
-    kubeadm_http_nodeport: "${cluster_network.http_nodeport}"
-    kubeadm_https_nodeport: "${cluster_network.https_nodeport}"
+    kubeadm_http_nodeport: "${custom_vars.http_nodeport}"
+    kubeadm_https_nodeport: "${custom_vars.https_nodeport}"
 
   children:
     master:
       hosts:
-%{ for key, node in kubeadm_master_nodes ~}
+%{ for key, node in nodes_by_role["master"] ~}
         ${key}:
           kubeadm_advertise_ip: ${node.ip}
 %{ endfor ~}
     workers:
       hosts:
-%{ for key, node in kubeadm_worker_nodes ~}
+%{ for key, node in nodes_by_role["worker"] ~}
         ${key}:
           kubeadm_advertise_ip: ${node.ip}
 %{ endfor ~}

@@ -1,60 +1,34 @@
 
-gitlab_postgres_compute = {
-  cluster_identity = {
-    layer_number = 20
-    service_name = "gitlab"
-    component    = "postgres"
-  }
+service_catalog_name = "gitlab"
 
-  # Postgres Data Nodes
-  postgres_config = {
-    nodes = {
-      "gitlab-postgres-db-node-00" = { ip = "172.16.140.200", vcpu = 2, ram = 4096 }
-      # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
-      # "gitlab-postgres-db-node-01" = { ip = "172.16.140.201", vcpu = 2, ram = 4096 }
-      # "gitlab-postgres-db-node-02" = { ip = "172.16.140.202", vcpu = 2, ram = 4096 }
-    }
+gitlab_postgres_config = {
+  "patroni" = {
+    role            = "postgres"
+    network_tier    = "postgres"
     base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
+
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
+    }
   }
 
-  # Etcd Nodes (Odd number required)
-  etcd_config = {
-    nodes = {
-      "gitlab-postgres-etcd-node-00" = { ip = "172.16.140.210", vcpu = 1, ram = 1024 }
-      # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
-      # "gitlab-postgres-etcd-node-01" = { ip = "172.16.140.211", vcpu = 1, ram = 1024 }
-      # "gitlab-postgres-etcd-node-02" = { ip = "172.16.140.212", vcpu = 1, ram = 1024 }
-    }
+  # Component 2: Etcd
+  "etcd" = {
+    role            = "etcd"
+    network_tier    = "etcd"
     base_image_path = "../../../packer/output/09-base-etcd/ubuntu-server-24-09-base-etcd.qcow2"
-  }
 
-  # HAProxy Node
-  haproxy_config = {
-    virtual_ip = "172.16.140.250"
-    stats_port = 7000 # For HAProxy Stats
-    rw_proxy   = 5000 # For Primary
-    ro_proxy   = 5001 # For Replicas
     nodes = {
-      "gitlab-postgres-haproxy-node-00" = { ip = "172.16.140.220", vcpu = 1, ram = 512 }
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 4096 }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 4096 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 4096 }
     }
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 }
 
-gitlab_postgres_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.92.1"
-      cidrv4  = "172.16.92.0/24"
-      dhcp = {
-        start = "172.16.92.2"
-        end   = "172.16.92.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.140.1"
-      cidrv4  = "172.16.140.0/24"
-    }
-  }
-  allowed_subnet = "172.16.0.0/16"
+ansible_files = {
+  playbook_file           = "20-provision-data-services.yaml"
+  inventory_template_file = "inventory-postgres-cluster.yaml.tftpl"
 }

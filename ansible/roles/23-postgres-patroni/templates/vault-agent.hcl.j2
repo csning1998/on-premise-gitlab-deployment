@@ -2,7 +2,7 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_addr | default('https://172.16.136.250:443') }}"
+  address = "{{ vault_addr }}"
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 
@@ -30,7 +30,7 @@ auto_auth {
 template {
   destination = "/etc/postgresql/certs/server.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ postgres_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
@@ -43,7 +43,7 @@ EOH
 template {
   destination = "/etc/postgresql/certs/server.key"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ postgres_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.private_key }}' }}
 {{ '{{- end -}}' }}
 EOH
@@ -54,7 +54,7 @@ EOH
 template {
   destination = "/etc/postgresql/certs/ca.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ postgres_common_name ~ '" "ttl=24h" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.issuing_ca }}' }}
 {{ '{{- end -}}' }}
 EOH

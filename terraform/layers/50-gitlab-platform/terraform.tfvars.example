@@ -1,2 +1,11 @@
 
-# This file is intentionally left blank
+trust_engine_config = {
+  issuer_name           = "vault-issuer"
+  issuer_kind           = "ClusterIssuer"
+  authorized_namespaces = ["cert-manager", "gitlab", "default"]
+}
+
+cert_manager_config = {
+  version   = "v1.14.0"
+  namespace = "cert-manager"
+}

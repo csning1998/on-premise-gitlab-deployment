@@ -6,7 +6,7 @@ module "hypervisor_kvm" {
   lb_cluster_vm_config        = local.lb_cluster_vm_config
   lb_cluster_network_config   = local.lb_cluster_network_config
   lb_cluster_service_segments = var.network_service_segments
-  network_infrastructure      = var.network_infrastructure
+  network_infrastructure      = var.network_infrastructure_map
   create_networks             = false
 }
 
@@ -17,7 +17,8 @@ module "ssh_manager" {
   nodes          = local.nodes_list_for_ssh
   credentials_vm = local.credentials_vm_for_ssh
   config_name = {
-    cluster_name = var.topology_cluster.cluster_name
+    cluster_name    = var.svc_identity.cluster_name
+    ssh_config_name = var.svc_identity.ssh_config
   }
 }
 

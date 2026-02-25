@@ -1,2 +1,13 @@
 
-# This file is intentionally left blank
+harbor_helm_config = {
+  version         = "1.18.0"
+  namespace       = "harbor"
+  ingress_class   = "nginx"
+  tls_secret_name = "harbor-ingress-cert"
+  notary_prefix   = "notary"
+}
+
+object_storage_config = {
+  bucket_name = "harbor-registry"
+  region      = "us-east-1"
+}

@@ -10,42 +10,20 @@ locals {
 # Service Context
 locals {
   svc_name         = var.service_catalog_name
-  svc_identity     = local.state.topology.identity_map["${local.svc_name}-core"]
-  svc_fqdn         = local.state.topology.domain_suffix
+  svc_raft_comp    = local.state.topology.service_structure[local.svc_name].components["raft"]
+  svc_identity     = local.svc_raft_comp.identity
+  svc_fqdn         = local.svc_raft_comp.role.dns_san[0]
   svc_cluster_name = local.svc_identity.cluster_name
 }
 
 # Network Context
 locals {
-  net_vault_infra = local.state.network.infrastructure_map[local.svc_name]
+  net_vault_infra = local.state.network.infrastructure_map[local.state.topology.service_structure[local.svc_name].network.segment_key]
   net_service_vip = local.net_vault_infra.lb_config.vip
 
-  # Network Bindings: L2 Physical Attachment of Network Bridge
-  network_bindings = {
-    "vault" = {
-      nat_net_name         = local.net_vault_infra.network.nat.name
-      nat_bridge_name      = local.net_vault_infra.network.nat.bridge_name
-      hostonly_net_name    = local.net_vault_infra.network.hostonly.name
-      hostonly_bridge_name = local.net_vault_infra.network.hostonly.bridge_name
-    }
-  }
-
-  # Network Parameters: L3 Routing & Configuration
-  network_parameters = {
-    "vault" = {
-      network = {
-        nat = {
-          gateway = local.net_vault_infra.network.nat.gateway
-          cidrv4  = local.net_vault_infra.network.nat.cidr
-          dhcp    = local.net_vault_infra.network.nat.dhcp
-        }
-        hostonly = {
-          gateway = local.net_vault_infra.network.hostonly.gateway
-          cidrv4  = local.net_vault_infra.network.hostonly.cidr
-        }
-      }
-      network_access_scope = local.net_vault_infra.network.hostonly.cidr
-    }
+  # Single map of raw infrastructures for KVM
+  network_infrastructure_map = {
+    vault = local.net_vault_infra
   }
 }
 
@@ -70,6 +48,10 @@ locals {
     storage_pool_name = local.storage_pool_name
     components        = var.vault_config
   }
+
+  node_identities = {
+    "vault" = local.svc_identity
+  }
 }
 
 # Node Processing & Grouping
@@ -77,8 +59,8 @@ locals {
   flat_node_map = merge([
     for comp_name, comp_data in local.topology_cluster.components : {
       for node_suffix, node_data in comp_data.nodes :
-      "${local.svc_cluster_name}-${comp_name}-${node_suffix}" => {
-        ip         = cidrhost(local.network_parameters[comp_data.network_tier].network.hostonly.cidrv4, node_data.ip_suffix)
+      "${local.svc_identity.node_name_prefix}-${node_suffix}" => {
+        ip         = cidrhost(local.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
         vcpu       = node_data.vcpu
         ram        = node_data.ram
         data_disks = node_data.data_disks
@@ -101,31 +83,9 @@ locals {
 
 # Ansible Configuration (Dynamic Inventory)
 locals {
-  primary_tier_key   = contains(keys(local.network_bindings), "default") ? "default" : keys(local.network_bindings)[0]
-  primary_params     = local.network_parameters[local.primary_tier_key]
-  inventory_template = "${path.module}/../../templates/${var.ansible_files.inventory_template_file}"
-
-  ansible_inventory_content = templatefile(local.inventory_template, {
-
-    vault_nodes = local.flat_node_map
-
-    cluster_identity = {
-      name   = local.svc_cluster_name
-      domain = local.svc_fqdn
-    }
-
-    cluster_topology = {
-      nodes_by_role  = local.nodes_by_role
-      nodes          = local.flat_node_map
-      bootstrap_node = values(local.flat_node_map)[0]
-    }
-
-    cluster_network = {
-      vip          = local.net_service_vip
-      nat_prefix   = join(".", slice(split(".", local.primary_params.network.nat.gateway), 0, 3))
-      access_scope = local.primary_params.network_access_scope
-    }
-  })
+  ansible_template_vars = {
+    vault_vip = local.net_service_vip
+  }
 
   ansible_extra_vars = merge(
     {

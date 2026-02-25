@@ -96,6 +96,7 @@ variable "network_infrastructure" {
       prefix      = number
       dhcp        = optional(any)
     })
+    access_scope = optional(string)
   }))
 }
 

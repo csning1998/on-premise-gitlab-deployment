@@ -72,15 +72,17 @@ variable "service_catalog" {
     })), {})
 
     components = map(object({
-      subdomains = list(string)
+      subdomains  = list(string)
+      node_groups = optional(list(string), [])
     }))
 
     dependencies = optional(map(object({
-      component  = string
-      provider   = string
-      runtime    = string
-      cidr_index = number
-      tags       = optional(list(string), [])
+      component   = string
+      provider    = string
+      runtime     = string
+      cidr_index  = number
+      tags        = optional(list(string), [])
+      node_groups = optional(list(string), [])
 
       ip_range = optional(object({
         start_ip = number

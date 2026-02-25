@@ -38,13 +38,19 @@ output "service_structure" {
       network = local.network_topology[s.name]
 
       components = {
-        for c_key, c_val in s.components : c_key => local.naming_map["${s.name}-${c_key}"]
+        for c_key, c_val in s.components : c_key => {
+          role     = local.naming_map["${s.name}-${c_key}"]
+          identity = local.identity_map["${s.name}-${c_key}"]
+        }
       }
 
       dependencies = {
         for d_key, d_val in s.dependencies : d_key => merge(
           local.network_topology["${s.name}-${d_key}"],
-          { role = local.naming_map["${s.name}-${d_key}-dep"] }
+          {
+            role     = local.naming_map["${s.name}-${d_key}-dep"]
+            identity = local.identity_map["${s.name}-${d_key}"]
+          }
         )
       }
     }

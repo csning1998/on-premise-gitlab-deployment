@@ -1,41 +1,20 @@
 
-harbor_microk8s_compute = {
-  cluster_identity = {
-    service_name = "harbor"
-    component    = "microk8s"
-    cluster_name = "30-harbor-microk8s"
-  }
+service_catalog_name = "harbor"
 
-  microk8s_config = {
-    nodes = {
-      "harbor-microk8s-node-00" = { ip = "172.16.135.200", vcpu = 4, ram = 6144 }
-      "harbor-microk8s-node-01" = { ip = "172.16.135.201", vcpu = 4, ram = 6144 }
-      "harbor-microk8s-node-02" = { ip = "172.16.135.202", vcpu = 4, ram = 6144 }
-    }
+harbor_microk8s_config = {
+  "frontend" = {
+    role            = "microk8s"
+    network_tier    = "default"
     base_image_path = "../../../packer/output/03-base-microk8s/ubuntu-server-24-03-base-microk8s.qcow2"
-  }
-
-  haproxy_config = {
-    virtual_ip = "172.16.135.250"
-    nodes = {}
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 4, ram = 4096 }
+      # "01" = { ip_suffix = 201, vcpu = 4, ram = 4096 }
+      # "02" = { ip_suffix = 202, vcpu = 4, ram = 4096 }
+    }
   }
 }
 
-harbor_microk8s_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.87.1"
-      cidrv4  = "172.16.87.0/24"
-      dhcp = {
-        start = "172.16.87.2"
-        end   = "172.16.87.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.135.1"
-      cidrv4  = "172.16.135.0/24"
-    }
-  }
-  allowed_subnet = "172.16.135.0/24"
+ansible_files = {
+  inventory_template_file = "inventory-microk8s-cluster.yaml.tftpl"
+  playbook_file           = "30-provision-microk8s.yaml"
 }

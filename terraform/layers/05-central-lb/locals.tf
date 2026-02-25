@@ -3,6 +3,7 @@
 locals {
   state = {
     topology = data.terraform_remote_state.topology.outputs
+    network  = data.terraform_remote_state.network.outputs
   }
 }
 
@@ -10,29 +11,16 @@ locals {
 locals {
   svc_name         = var.service_catalog_name
   svc_network_map  = local.state.topology.network_map
-  svc_identity     = local.state.topology.identity_map["${local.svc_name}-core"]
+  svc_identity     = local.state.topology.identity_map[local.svc_name]
   svc_fqdn         = local.state.topology.domain_suffix
   svc_cluster_name = local.svc_identity.cluster_name
   svc_node_prefix  = local.svc_identity.node_name_prefix
 }
 
-# 2. Network Context
+# 2. Network Context (delegated to 04-network-topology)
 locals {
   # Deterministic Ordering
   net_sorted_node_keys = sort(keys(var.node_config))
-
-  net_sorted_segment_keys = sort([
-    for k, v in local.svc_network_map : k
-    if k != local.svc_name
-  ])
-
-  # Centralized Bridge Naming Logic (Internal to Layer 05)
-  net_bridge_naming = {
-    for seg_key, seg_data in local.svc_network_map : seg_key => {
-      host = "br-${substr(md5("${local.svc_name}-${seg_key}"), 0, 8)}"
-      nat  = "br-${substr(md5("${local.svc_name}-${seg_key}"), 0, 8)}-nat"
-    }
-  }
 
   net_node_naming_map = {
     for idx, key in local.net_sorted_node_keys :
@@ -40,74 +28,24 @@ locals {
   }
 
   # MAC Address Derivation Base (From Layer 00 "central-lb")
-  # Example: 52:54:00:0a:a4:f5 (where 0a is VRID 10)
   net_lb_base_mac_parts = split(":", local.svc_network_map[local.svc_name].mac_address)
 
-  # Infrastructure Network Config
-  net_my_segment = local.svc_network_map[local.svc_name]
+  # Delegated from 04-network-topology
+  net_infrastructure = local.state.network.infrastructure_map
+  net_lb_config      = local.state.network.central_lb_info
+  net_access_scope   = local.net_lb_config.hostonly.cidr
+  net_my_segment     = local.svc_network_map[local.svc_name]
 }
 
 locals {
-  # Infrastructure Network Config
-  net_infrastructure = {
-    for seg_key, seg_data in local.svc_network_map : seg_key => {
-
-      # 1. HostOnly Network (Internal)
-      hostonly = {
-        name        = seg_key
-        bridge_name = local.net_bridge_naming[seg_key].host
-        gateway     = cidrhost(seg_data.cidr_block, 1)
-        cidr        = seg_data.cidr_block
-        prefix      = tonumber(split("/", seg_data.cidr_block)[1])
-      }
-
-      # 2. Dedicated NAT Network (External)
-      nat = {
-        name        = "iac-${seg_key}-nat"
-        bridge_name = local.net_bridge_naming[seg_key].nat
-        gateway     = seg_data.nat_gateway
-        cidr        = seg_data.nat_cidr_block
-        prefix      = 24
-        dhcp        = seg_data.nat_dhcp
-      }
-    }
-  }
-  net_access_scope = local.net_my_segment.cidr_block
-  net_lb_config    = local.net_infrastructure[local.svc_name]
-}
-
-locals {
-  # Service Segments List (Infrastructure Creation)
+  # Service Segments: augment from 04 with node_ips computed here (depends on var.node_config)
   net_service_segments = [
-    for seg_key in local.net_sorted_segment_keys : {
-      name           = seg_key
-      bridge_name    = local.net_bridge_naming[seg_key].host
-      cidr           = local.svc_network_map[seg_key].cidr_block
-      nat_cidr       = local.svc_network_map[seg_key].nat_cidr_block
-      nat_gateway    = local.svc_network_map[seg_key].nat_gateway
-      vrid           = local.svc_network_map[seg_key].vrid
-      vip            = local.svc_network_map[seg_key].vip
-      interface_name = local.svc_network_map[seg_key].interface_alias
-      ports          = local.svc_network_map[seg_key].ports
-      tags           = local.svc_network_map[seg_key].tags
-
+    for seg in local.state.network.service_segments : merge(seg, {
       node_ips = {
         for node_name, node_spec in var.node_config : local.net_node_naming_map[node_name] =>
-        cidrhost(local.svc_network_map[seg_key].cidr_block, node_spec.ip_suffix)
+        cidrhost(local.svc_network_map[seg.name].cidr_block, node_spec.ip_suffix)
       }
-      backend_servers = [
-        for i in range(
-          local.svc_network_map[seg_key].ip_range.end_ip - local.svc_network_map[seg_key].ip_range.start_ip + 1
-          ) : {
-          # Name: service-slot-200, service-slot-201...
-          name = "${seg_key}-slot-${local.svc_network_map[seg_key].ip_range.start_ip + i}"
-          ip = cidrhost(
-            local.svc_network_map[seg_key].cidr_block,
-            local.svc_network_map[seg_key].ip_range.start_ip + i
-          )
-        }
-      ]
-    }
+    })
   ]
 }
 
@@ -126,6 +64,16 @@ locals {
     haproxy_stats_pass   = data.vault_generic_secret.infra_vars.data["haproxy_stats_pass"]
     keepalived_auth_pass = data.vault_generic_secret.infra_vars.data["keepalived_auth_pass"]
   }
+
+  ansible_template_vars = {
+    ansible_ssh_user = local.sec_vm_creds.username
+    service_domain   = local.svc_fqdn
+    service_name     = local.svc_cluster_name
+  }
+
+  ansible_extra_vars = {
+    terraform_runner_subnet = local.net_lb_config.hostonly.cidr
+  }
 }
 
 # Topology Component Construction
@@ -143,7 +91,7 @@ locals {
         # Interface 1: NAT (Management) [ens3]
         # Logic: Use Layer 00 Base MAC, but force 4th octet (VRID) to '00' for Management differentiation
         [{
-          network_name = local.net_infrastructure[local.svc_name].nat.name
+          network_name = local.net_lb_config.nat.name
           mac = format("%s:%s:%s:00:%s:%02x",
             local.net_lb_base_mac_parts[0], # 52
             local.net_lb_base_mac_parts[1], # 54
@@ -158,7 +106,7 @@ locals {
         # Interface 2: HostOnly (Internal) [ens4]
         # Logic: Inherit Layer 00 Base MAC (VRID=10) directly + Node Index
         [{
-          network_name = local.net_infrastructure[local.svc_name].hostonly.name
+          network_name = local.net_lb_config.hostonly.name
           mac = format("%s:%s:%s:%s:%s:%02x",
             local.net_lb_base_mac_parts[0],
             local.net_lb_base_mac_parts[1],
@@ -178,7 +126,7 @@ locals {
         # Interface 3..N: Service Segments [ens5...]
         # Logic: Use each Segment's Layer 00 MAC + Node Index
         [
-          for seg_key in local.net_sorted_segment_keys : {
+          for seg_key in [for seg in local.state.network.service_segments : seg.name] : {
             network_name = seg_key
             alias        = local.svc_network_map[seg_key].interface_alias
             mac = format("%s:%02x",

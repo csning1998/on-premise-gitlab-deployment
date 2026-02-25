@@ -1,10 +1,22 @@
 
-output "dev_harbor_cluster_name" {
-  description = "Dev Harbor cluster name."
-  value       = local.cluster_name
+output "service_vip" {
+  description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
+  value       = local.net_config.lb_config.vip
 }
 
-output "dev_harbor_ip" {
-  description = "Dev Harbor IP."
-  value       = [for node in var.dev_harbor_compute.dev_harbor_system_config.node : node.ip]
+output "credentials_system" {
+  description = "System-level access credentials for the cluster nodes."
+  value       = local.sec_system_creds
+  sensitive   = true
+}
+
+output "credentials_app" {
+  description = "Application-level credentials for Harbor."
+  value       = local.sec_app_creds
+  sensitive   = true
+}
+
+output "topology_node" {
+  description = "The actual provisioned configuration for Bootstrap Harbor node."
+  value       = module.bootstrap_harbor.cluster_nodes
 }

@@ -20,12 +20,14 @@ variable "credentials_vm" {
     username             = string
     ssh_private_key_path = string
   })
+  sensitive = true
 }
 
 variable "extra_vars" {
   description = "Map of sensitive/extra variables to pass to Ansible CLI (-e)"
   type        = map(string)
   default     = {}
+  sensitive   = true
 }
 
 variable "pre_run_commands" {

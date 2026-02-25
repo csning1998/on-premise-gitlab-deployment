@@ -2,6 +2,9 @@
 module "central_lb_cluster" {
 
   source = "../../middleware/ha-service-kvm-central-lb"
+  svc_identity = merge(local.svc_identity, {
+    service_name = local.svc_name
+  })
 
   topology_cluster = {
     cluster_name      = local.svc_cluster_name
@@ -12,32 +15,20 @@ module "central_lb_cluster" {
     }
   }
 
-  network_parameters = {
-    network = {
-      nat = {
-        gateway = local.net_lb_config.nat.gateway
-        cidrv4  = local.net_lb_config.nat.cidr
-        dhcp    = local.net_lb_config.nat.dhcp
-      }
-      hostonly = {
-        gateway = local.net_lb_config.hostonly.gateway
-        cidrv4  = local.net_lb_config.hostonly.cidr
-      }
-    }
-    access_scope = local.net_access_scope
-  }
+  # Secrets & PKI
+  security_pki_bundle     = local.pki_global_ca
+  credentials_vm          = local.sec_vm_creds
+  credentials_application = local.sec_haproxy_creds
 
-  security_pki_bundle      = local.pki_global_ca
+  # Infrastructure Setup (Networks are managed by 04-network-topology layer)
+  network_infrastructure_map = {
+    (local.svc_name) = local.net_lb_config
+  }
   network_service_segments = local.net_service_segments
-  service_fqdn             = local.svc_fqdn
-  credentials_vm           = local.sec_vm_creds
-  credentials_application  = local.sec_haproxy_creds
-  network_infrastructure   = local.net_infrastructure
 
-  network_bindings = {
-    nat_net_name         = local.net_lb_config.nat.name
-    nat_bridge_name      = local.net_lb_config.nat.bridge_name
-    hostonly_net_name    = local.net_lb_config.hostonly.name
-    hostonly_bridge_name = local.net_lb_config.hostonly.bridge_name
-  }
+  # Embedded Ansible Configurations
+  ansible_inventory_template_file = "inventory-load-balancer-cluster.yaml.tftpl"
+  ansible_playbook_file           = "10-provision-core-services.yaml"
+  ansible_template_vars           = local.ansible_template_vars
+  ansible_extra_vars              = local.ansible_extra_vars
 }

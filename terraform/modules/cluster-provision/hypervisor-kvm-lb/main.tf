@@ -5,7 +5,7 @@ data "local_file" "ssh_public_key" {
 
 resource "libvirt_network" "nat_networks" {
 
-  for_each = var.network_infrastructure
+  for_each = var.create_networks ? var.network_infrastructure : {}
 
   name      = each.value.nat.name
   bridge    = each.value.nat.bridge_name
@@ -28,7 +28,7 @@ resource "libvirt_network" "nat_networks" {
 
 resource "libvirt_network" "hostonly_networks" {
 
-  for_each = var.network_infrastructure
+  for_each = var.create_networks ? var.network_infrastructure : {}
 
   name      = each.value.hostonly.name
   bridge    = each.value.hostonly.bridge_name

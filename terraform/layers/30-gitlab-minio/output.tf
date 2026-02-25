@@ -1,9 +1,8 @@
+
 output "service_vip" {
   description = "The virtual IP assigned to the MinIO service from Central LB topology."
   value       = local.net_service_vip
 }
-
-
 
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."

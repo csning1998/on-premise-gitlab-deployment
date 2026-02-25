@@ -1,4 +1,15 @@
 
+variable "svc_identity" {
+  description = "The SSoT identity object for this load balancer cluster."
+  type = object({
+    service_name      = string
+    cluster_name      = string
+    node_name_prefix  = string
+    ansible_inventory = string
+    ssh_config        = string
+  })
+}
+
 variable "topology_cluster" {
   description = "Standardized compute topology configuration for Load Balancer HA Cluster."
   type = object({
@@ -37,11 +48,6 @@ variable "topology_cluster" {
   }
 }
 
-variable "service_fqdn" {
-  description = "The FQDN for the Load Balancer service"
-  type        = string
-}
-
 variable "network_service_segments" {
   description = "List of network segments (Infrastructure creation only)."
   type = list(object({
@@ -76,65 +82,56 @@ variable "security_pki_bundle" {
   default     = null
 }
 
-variable "network_parameters" {
+variable "network_infrastructure_map" {
   description = "Standardized infrastructure network configuration."
-  type = object({
-    network = object({
-      nat = object({
-        gateway = string
-        cidrv4  = string
-        dhcp = optional(object({
-          start = string
-          end   = string
-        }))
-      })
-      hostonly = object({
-        gateway = string
-        cidrv4  = string
-      })
-    })
-    access_scope = string
-  })
-
-  # Network CIDR validation
-  validation {
-    condition = alltrue([
-      can(cidrnetmask(var.network_parameters.network.nat.cidrv4)),
-      can(cidrnetmask(var.network_parameters.network.hostonly.cidrv4)),
-      can(cidrnetmask(var.network_parameters.access_scope))
-    ])
-    error_message = "All network CIDRs must be valid."
-  }
-}
-
-variable "network_infrastructure" {
-  description = "Map of all networks to be passed to KVM module."
   type = map(object({
+    nat = object({
+      name        = string
+      bridge_name = string
+      gateway     = string
+      prefix      = number
+      dhcp = optional(object({
+        start = string
+        end   = string
+      }))
+    })
     hostonly = object({
       name        = string
       bridge_name = string
       gateway     = string
       prefix      = number
     })
-    nat = object({
-      name        = string
-      bridge_name = string
-      gateway     = string
-      prefix      = number
-      dhcp        = optional(any)
-    })
+    access_scope = optional(string)
   }))
+
+  validation {
+    condition = alltrue([
+      for k, v in var.network_infrastructure_map :
+      can(cidrhost("${v.nat.gateway}/${v.nat.prefix}", 0)) &&
+      can(cidrhost("${v.hostonly.gateway}/${v.hostonly.prefix}", 0))
+    ])
+    error_message = "All network CIDRs must be valid."
+  }
 }
 
-# Network Identity for Naming Policy
-variable "network_bindings" {
-  description = "Pre-calculated network and bridge names passed from Layer"
-  type = object({
-    nat_net_name         = string
-    nat_bridge_name      = string
-    hostonly_net_name    = string
-    hostonly_bridge_name = string
-  })
+variable "ansible_inventory_template_file" {
+  description = "Template filename for the Ansible inventory"
+  type        = string
+}
+
+variable "ansible_template_vars" {
+  description = "Template variables mapping for Ansible inventory generation"
+  type        = any
+}
+
+variable "ansible_playbook_file" {
+  description = "Playbook filename for the Ansible orchestration"
+  type        = string
+}
+
+variable "ansible_extra_vars" {
+  description = "Extra variables mapping for the Ansible execution"
+  type        = any
 }
 
 # Credentials Injection

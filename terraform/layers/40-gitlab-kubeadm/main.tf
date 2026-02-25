@@ -3,20 +3,24 @@ module "kubeadm_gitlab" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
-  cluster_name = local.svc_cluster_name
+  svc_identity = local.svc_kubeadm_identity
+  node_identities = {
+    "master" = local.svc_kubeadm_identity.groups["master"]
+    "worker" = local.svc_kubeadm_identity.groups["worker"]
+  }
 
   # Topology (Compute & Storage)
   topology_cluster = local.topology_cluster
 
   # Network Infrastructure with Dual-Tier
-  network_bindings   = local.network_bindings
-  network_parameters = local.network_parameters
+  network_infrastructure_map = local.network_infrastructure_map
 
   # System Credentials
   credentials_system = local.sec_system_creds
 
   # Generic Ansible Configuration
-  ansible_inventory_content = local.ansible_inventory_content
-  ansible_extra_vars        = local.ansible_extra_vars
-  ansible_playbook_file     = var.ansible_files.playbook_file
+  ansible_inventory_template_file = var.ansible_files.inventory_template_file
+  ansible_template_vars           = local.ansible_template_vars
+  ansible_extra_vars              = local.ansible_extra_vars
+  ansible_playbook_file           = var.ansible_files.playbook_file
 }

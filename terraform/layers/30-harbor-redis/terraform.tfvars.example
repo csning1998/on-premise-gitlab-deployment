@@ -1,45 +1,21 @@
 
-harbor_redis_compute = {
-  cluster_identity = {
-    layer_number = 20
-    service_name = "harbor"
-    component    = "redis"
-  }
+service_catalog_name = "harbor"
 
-  redis_config = {
-    nodes = {
-      "harbor-redis-node-db-00" = { ip = "172.16.138.200", vcpu = 1, ram = 1024 }
-      # Uncomment the following lines for HA setup, abide by nodes % 2 != 0
-      # "harbor-redis-node-db-01" = { ip = "172.16.138.201", vcpu = 1, ram = 1024 }
-      # "harbor-redis-node-db-02" = { ip = "172.16.138.202", vcpu = 1, ram = 1024 }
-    }
+harbor_redis_config = {
+  "redis" = {
+    role            = "redis"
+    network_tier    = "redis"
     base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
-  }
 
-  haproxy_config = {
-    stats_port = 6379
-    virtual_ip = "172.16.138.250"
     nodes = {
-      "harbor-redis-haproxy-node-00" = { ip = "172.16.138.210", vcpu = 1, ram = 512 }
+      "00" = { ip_suffix = 200, vcpu = 2, ram = 2048 }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram = 2048 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram = 2048 }
     }
-    base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
   }
 }
 
-harbor_redis_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.90.1"
-      cidrv4  = "172.16.90.0/24"
-      dhcp = {
-        start = "172.16.90.2"
-        end   = "172.16.90.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.138.1"
-      cidrv4  = "172.16.138.0/24"
-    }
-  }
-  allowed_subnet = "172.16.138.0/24"
+ansible_files = {
+  playbook_file           = "20-provision-data-services.yaml"
+  inventory_template_file = "inventory-redis-cluster.yaml.tftpl"
 }

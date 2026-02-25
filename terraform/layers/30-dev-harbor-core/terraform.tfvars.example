@@ -1,34 +1,20 @@
 
-dev_harbor_compute = {
-  cluster_identity = {
-    service_name = "dev-harbor"
-    component    = "core"
-    cluster_name = "20-dev-harbor-core"
-  }
+service_catalog_name = "bootstrap-harbor"
 
-  # Postgres Data Nodes
-  dev_harbor_system_config = {
-    node = {
-      "dev-harbor-node-00" = { ip = "172.16.143.250", vcpu = 2, ram = 4096 }
-    }
+bootstrap_harbor_config = {
+  role            = "core"
+  network_tier    = "default"
+  base_image_path = "../../../packer/output/01A-docker-harbor/ubuntu-server-24-01A-docker-harbor.qcow2"
+
+  node = {
+    ip_suffix       = 200
+    vcpu            = 2
+    ram             = 4096
     base_image_path = "../../../packer/output/01A-docker-harbor/ubuntu-server-24-01A-docker-harbor.qcow2"
   }
 }
 
-dev_harbor_infra = {
-  network = {
-    nat = {
-      gateway = "172.16.95.1"
-      cidrv4  = "172.16.95.0/24"
-      dhcp = {
-        start = "172.16.95.2"
-        end   = "172.16.95.254"
-      }
-    }
-    hostonly = {
-      gateway = "172.16.143.1"
-      cidrv4  = "172.16.143.0/24"
-    }
-  }
-  allowed_subnet = "172.16.0.0/16"
+ansible_files = {
+  playbook_file           = "20-provision-data-services.yaml"
+  inventory_template_file = "inventory-dev-harbor-docker.yaml.tftpl"
 }

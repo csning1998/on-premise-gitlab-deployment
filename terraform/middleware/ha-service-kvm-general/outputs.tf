@@ -36,7 +36,7 @@ output "network_parameters" {
         }
       }
       # Access Scope belongs to logic layer and this is not passed to KVM module.
-      network_access_scope = var.network_parameters[tier].network_access_scope
+      network_access_scope = var.network_infrastructure_map[tier].network.hostonly.cidr
     }
   }
 }

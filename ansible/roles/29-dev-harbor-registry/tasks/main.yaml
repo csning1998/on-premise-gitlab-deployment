@@ -1,4 +1,24 @@
 ---
+- name: "Section X: Configure Network Routing"
+  become: true
+  when: dev_harbor_static_routes is defined and dev_harbor_static_routes | length > 0
+  block:
+    - name: "Step X1. Deploy Routing Fix Service"
+      ansible.builtin.template:
+        src: fix-routes.service.j2
+        dest: /etc/systemd/system/fix-vault-routes.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Route Service
+
+    - name: "Step X2. Enable and Start Routing Fix"
+      ansible.builtin.systemd:
+        name: fix-vault-routes.service
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
 - name: "Section A: Configure Vault Agent for PKI Rotation"
   become: true
   block:
@@ -33,6 +53,7 @@
         - { file: "role_id", content: "{{ vault_agent_role_id }}" }
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
+      notify: Restart Vault Agent
 
     - name: "Step A4. Deploy Vault CA Certificate"
       ansible.builtin.copy:
@@ -75,6 +96,9 @@
         enabled: true
         daemon_reload: true
 
+    - name: "Step A8.1. Flush handlers to restart Vault Agent immediately if config changed"
+      ansible.builtin.meta: flush_handlers
+
     - name: "Step A9. Wait for Certificate Generation"
       ansible.builtin.wait_for:
         path: "{{ harbor_cert_path }}"
@@ -86,7 +110,7 @@
   block:
     - name: "Step B1. Retrieve Harbor Credentials"
       community.hashi_vault.vault_kv2_get:
-        url: "{{ vault_server_address }}"
+        url: "{{ vault_addr }}"
         path: "on-premise-gitlab-deployment/dev-harbor/app"
         engine_mount_point: "secret"
         auth_method: approle

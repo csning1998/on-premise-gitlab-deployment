@@ -5,22 +5,25 @@ module "minio_gitlab" {
   use_minio_hypervisor = true
 
   # Identity & Service Definitions
-  cluster_name = local.svc_cluster_name
+  svc_identity = local.svc_minio_identity
+  node_identities = {
+    "minio" = local.svc_minio_identity
+  }
 
   # Topology (Compute & Storage)
   topology_cluster = local.topology_cluster
 
   # Network Infrastructure
-  network_bindings   = local.network_bindings
-  network_parameters = local.network_parameters
+  network_infrastructure_map = local.network_infrastructure_map
 
   # System Credentials
   credentials_system = local.sec_system_creds
 
   # Generic Ansible Configuration
-  ansible_inventory_content = local.ansible_inventory_content
-  ansible_extra_vars        = local.ansible_extra_vars
-  ansible_playbook_file     = "20-provision-data-services.yaml"
+  ansible_inventory_template_file = "inventory-minio-cluster.yaml.tftpl"
+  ansible_template_vars           = local.ansible_template_vars
+  ansible_extra_vars              = local.ansible_extra_vars
+  ansible_playbook_file           = "20-provision-data-services.yaml"
 }
 
 # This timer is to wait for MinIO Cluster to initialize the storage.
