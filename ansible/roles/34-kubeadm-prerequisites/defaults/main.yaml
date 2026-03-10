@@ -1,0 +1,4 @@
+---
+# kubeadm_registry_host is injected from inventory template (kubeadm_registry_host: custom_vars.registry_host)
+# It resolves to Harbor's FQDN e.g. harbor.iac.local
+kubeadm_registry_host: ""

@@ -29,20 +29,20 @@
 - name: "Section B: Remove running Kubernetes containers"
   block:
     - name: "Step 1. Get list of all running containers"
-      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/crio/crio.sock ps -q
+      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock ps -q
       register: crictl_ps_result
       changed_when: false
       failed_when: false
 
     - name: "Step 2. Stop all running containers"
-      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/crio/crio.sock stop {{ item }}
+      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock stop {{ item }}
       loop: "{{ crictl_ps_result.stdout_lines }}"
       when: crictl_ps_result.stdout | length > 0
       changed_when: true
       failed_when: false
 
     - name: "Step 3. Remove all containers"
-      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/crio/crio.sock rm -f {{ item }}
+      ansible.builtin.command: crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock rm -f {{ item }}
       loop: "{{ crictl_ps_result.stdout_lines }}"
       when: crictl_ps_result.stdout | length > 0
       changed_when: true

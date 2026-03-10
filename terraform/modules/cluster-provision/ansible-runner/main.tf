@@ -37,11 +37,11 @@ resource "null_resource" "run_playbook" {
       echo ">>> Running Ansible Playbook: ${var.ansible_config.playbook_file}"
       ansible-playbook \
         -i ${local_file.inventory.filename} \
-        --private-key ${var.credentials_vm.ssh_private_key_path} \
+        --private-key ${nonsensitive(var.credentials_vm.ssh_private_key_path)} \
         --ssh-common-args='-F ${var.ansible_config.ssh_config_path}' \
-        --extra-vars "ansible_ssh_user=${var.credentials_vm.username}" \
+        --extra-vars "ansible_ssh_user=${nonsensitive(var.credentials_vm.username)}" \
 %{for k, v in var.extra_vars~}
-        --extra-vars "${k}=${v}" \
+        --extra-vars "${k}=${nonsensitive(v)}" \
 %{endfor~}
         -v \
         ${var.ansible_config.root_path}/${var.ansible_config.playbook_file}
@@ -50,3 +50,4 @@ resource "null_resource" "run_playbook" {
     interpreter = ["/bin/bash", "-c"]
   }
 }
+# Note: Use `nonsensitive()` if and only if in development. It must be disabled for production.

@@ -20,6 +20,13 @@
         dest: "/tmp/kubeadm-join-config.yaml"
         mode: "0644"
 
+    - name: "Step 0.5. Wait for API Server VIP to be reachable before joining"
+      ansible.builtin.wait_for:
+        host: "{{ kubeadm_ha_virtual_ip }}"
+        port: 6443
+        state: started
+        timeout: 30
+
     - name: "Step 1. Execute the control-plane join command"
       ansible.builtin.command: >-
         kubeadm join
@@ -28,6 +35,7 @@
       args:
         creates: "/etc/kubernetes/kubelet.conf"
       register: kubeadm_join_result
+      no_log: true
 
     - name: "Step 2. Fail if kubeadm join command failed"
       ansible.builtin.fail:

@@ -8,6 +8,10 @@ global
     group haproxy
     daemon
 
+    # Tuning
+    maxconn 50000
+    tune.ssl.default-dh-param 2048
+
     # Default SSL material locations
     ca-base /etc/ssl/certs
     crt-base /etc/ssl/private
@@ -17,6 +21,7 @@ defaults
     mode    tcp
     option  tcplog
     option  dontlognull
+    maxconn 10000
     timeout connect 5000
     timeout client  50000
     timeout server  50000

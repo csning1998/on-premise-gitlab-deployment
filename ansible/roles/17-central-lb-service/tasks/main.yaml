@@ -70,3 +70,28 @@
         state: started
         enabled: true
         daemon_reload: true
+
+- name: "Section D: Configure Policy-Based Routing for VIPs"
+  block:
+    - name: "Step D1. Ensure custom routing tables exist"
+      ansible.builtin.lineinfile:
+        path: /etc/iproute2/rt_tables
+        line: "{{ item.vrid }} rt_{{ item.name | replace('-', '_') }}"
+        regexp: "^{{ item.vrid }} "
+      loop: "{{ lb_service_segments }}"
+
+    - name: "Step D2. Add ip rules for VIPs"
+      ansible.builtin.command:
+        cmd: "ip rule add from {{ item.vip }} table rt_{{ item.name | replace('-', '_') }}"
+      register: ip_rule_out
+      failed_when: "ip_rule_out.rc != 0 and 'File exists' not in ip_rule_out.stderr"
+      changed_when: ip_rule_out.rc == 0
+      loop: "{{ lb_service_segments }}"
+
+    - name: "Step D3. Add ip routes for VIPs"
+      ansible.builtin.command:
+        cmd: "ip route replace default via {{ item.cidr | regex_replace('\\.0/24$', '.1') }} dev {{ item.interface_alias }} table rt_{{ item.name | replace('-', '_') }}"
+      register: ip_route_out
+      failed_when: ip_route_out.rc != 0
+      changed_when: ip_route_out.rc == 0
+      loop: "{{ lb_service_segments }}"

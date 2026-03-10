@@ -1,0 +1,59 @@
+---
+- name: "Block A: Establish Certificate Trust for Containerd & OS"
+  become: true
+  block:
+    - name: "Step A1. Ensure ca-certificates package is installed"
+      ansible.builtin.apt:
+        name: ca-certificates
+        state: present
+        update_cache: true
+
+    - name: "Step A2. Distribute Vault PKI Service CA to OS trust store"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: /usr/local/share/ca-certificates/vault-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+      notify: Update CA Certificates
+
+    - name: "Step A2.5. Download Vault PKI Issuing CA directly from Vault API"
+      ansible.builtin.get_url:
+        url: "{{ vault_addr }}/v1/pki/prod/ca/pem"
+        dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+        validate_certs: false
+      notify: Update CA Certificates
+
+    - name: "Step A3. Force update of CA certificates"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+      notify: Restart containerd service
+
+- name: "Block B: Configure Containerd Registry endpoint"
+  become: true
+  block:
+    - name: "Step B1. Ensure /etc/containerd/certs.d directories exist"
+      ansible.builtin.file:
+        path: "/etc/containerd/certs.d/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ kubeadm_registry_host }}"
+        - "{{ kubeadm_registry_vip }}"
+
+    - name: "Step B2. Deploy hosts.toml for Harbor Registry"
+      ansible.builtin.template:
+        src: hosts.toml.j2
+        dest: "/etc/containerd/certs.d/{{ item }}/hosts.toml"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart containerd service
+      loop:
+        - "{{ kubeadm_registry_host }}"
+        - "{{ kubeadm_registry_vip }}"

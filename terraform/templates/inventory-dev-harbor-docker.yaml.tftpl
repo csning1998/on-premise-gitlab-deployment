@@ -7,12 +7,7 @@ all:
     dev_harbor_mtls_node_subnet: "${custom_vars.access_scope}"
     dev_harbor_service_domain: "${cluster_identity.cluster_name}"
     dev_harbor_tls_port: ${custom_vars.dev_harbor_tls_port}
-    
-    dev_harbor_static_routes:
-      - to: "${custom_vars.vault_vip}/32"
-        via: "${custom_vars.dev_harbor_vip}"
-        dev: "ens3"
-        metric: 100
+    dev_harbor_vip: "${custom_vars.dev_harbor_vip}"
 
   children:
     dev_harbor_nodes:

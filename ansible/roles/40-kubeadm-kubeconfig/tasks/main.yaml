@@ -6,6 +6,7 @@
       ansible.builtin.slurp:
         src: "/etc/kubernetes/admin.conf"
       register: remote_kubeconfig
+      no_log: true
 
     - name: "Step A2. Upload Kubeconfig to Vault KV"
       delegate_to: localhost

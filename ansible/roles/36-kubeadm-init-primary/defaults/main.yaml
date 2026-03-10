@@ -1,7 +1,7 @@
 ---
 # Kubernetes Version & CRI
 kubeadm_version: "v1.32.0"
-kubeadm_cri_socket: "unix:///var/run/crio/crio.sock"
+kubeadm_cri_socket: "unix:///var/run/containerd/containerd.sock"
 kubeadm_cgroup_driver: "systemd"
 
 # Networking Defaults

@@ -1,4 +1,13 @@
 
+# Write the Bootstrap CA cert to the tls/ directory.
+# This ensures downstream layers (e.g. 20-vault-pki) can reference it
+# as ca_cert_file without a chicken-and-egg provider init issue.
+resource "local_file" "bootstrap_ca" {
+  content         = base64decode(local.pki_global_ca.ca_cert)
+  filename        = "${path.root}/tls/bootstrap-ca.crt"
+  file_permission = "0644"
+}
+
 module "vault_cluster" {
   source = "../../middleware/ha-service-kvm-general"
 

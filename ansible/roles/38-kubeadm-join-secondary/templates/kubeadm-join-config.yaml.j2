@@ -17,3 +17,6 @@ controlPlane:
   localAPIEndpoint:
     advertiseAddress: "{{ kubeadm_advertise_ip }}"
   certificateKey: "{{ hostvars[groups['master'][0]]['kubeadm_cert_key'] }}"
+  imageRepository: "{{ kubeadm_image_repository }}"
+  dns:
+    imageRepository: "{{ kubeadm_dns_image_repository }}"

@@ -30,6 +30,7 @@ pki_settings = {
  *      (e.g. 172.16.X.0/24)
  * 7. tags: define the tags of the service for better governance. 
  *      (e.g. ["with-128-etcd", "with-127-postgres"])
+ *     * Note: Services tagged `self-managed-lb` run their own HA stack. Refer to Central LB Layer for more details.
  * 8. ip_range: define the IP range of the service. 
  *      (e.g. { start_ip = 200, end_ip = 220 })
  * 9. component: define the component of the service. 
@@ -72,7 +73,7 @@ service_catalog = [
     runtime      = "kubeadm"
     stage        = "production"
     cidr_index   = 126
-    tags         = []
+    tags         = ["self-managed-lb"]
 
     ip_range = { start_ip = 200, end_ip = 220 }
     ports = {

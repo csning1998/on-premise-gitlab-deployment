@@ -2,10 +2,11 @@
 # State Object
 locals {
   state = {
-    topology  = data.terraform_remote_state.topology.outputs
-    network   = data.terraform_remote_state.network.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
+    topology        = data.terraform_remote_state.topology.outputs
+    network         = data.terraform_remote_state.network.outputs
+    vault_sys       = data.terraform_remote_state.vault_sys.outputs
+    vault_pki       = data.terraform_remote_state.vault_pki.outputs
+    dev_harbor_core = data.terraform_remote_state.dev_harbor_core.outputs
   }
 }
 
@@ -68,12 +69,15 @@ locals {
 # Ansible Configuration Rendering
 locals {
   ansible_template_vars = {
-    vip            = local.net_service_vip
-    pod_subnet     = var.kubernetes_cluster_configuration.pod_subnet
-    nat_prefix     = join(".", slice(split(".", local.net_kubeadm.network.nat.gateway), 0, 3))
-    registry_host  = local.state.topology.pki_map["harbor-frontend"].dns_san[0]
-    http_nodeport  = local.net_kubeadm.lb_config.ports["ingress-http"].backend_port
-    https_nodeport = local.net_kubeadm.lb_config.ports["ingress-https"].backend_port
+    vip              = local.net_service_vip
+    pod_subnet       = var.kubernetes_cluster_configuration.pod_subnet
+    nat_prefix       = join(".", slice(split(".", local.net_kubeadm.network.nat.gateway), 0, 3))
+    registry_host    = local.state.topology.pki_map["bootstrap-harbor-frontend"].dns_san[0]
+    registry_vip     = local.state.dev_harbor_core.service_vip
+    image_repository = "${local.state.dev_harbor_core.service_vip}/k8s-proxy"
+    hostonly_gateway = local.net_kubeadm.network.hostonly.gateway
+    http_nodeport    = local.net_kubeadm.lb_config.ports["ingress-http"].backend_port
+    https_nodeport   = local.net_kubeadm.lb_config.ports["ingress-https"].backend_port
   }
 
   ansible_extra_vars = {

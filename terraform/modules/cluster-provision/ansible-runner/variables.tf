@@ -20,14 +20,16 @@ variable "credentials_vm" {
     username             = string
     ssh_private_key_path = string
   })
-  sensitive = true
+  # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
+  # sensitive = true
 }
 
 variable "extra_vars" {
   description = "Map of sensitive/extra variables to pass to Ansible CLI (-e)"
   type        = map(string)
   default     = {}
-  sensitive   = true
+  # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
+  # sensitive   = true
 }
 
 variable "pre_run_commands" {

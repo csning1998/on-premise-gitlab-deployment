@@ -1,15 +1,12 @@
 
 # 1. Global Topology and Bootstrap CA.
+# Note: The bootstrap-ca.crt file is written by Layer 10 (10-vault-raft).
+# Layer 20 references it via the path below for the Vault provider's ca_cert_file.
 locals {
   global_topology     = data.terraform_remote_state.topology.outputs
   root_domain         = local.global_topology.domain_suffix
   root_ca_common_name = local.global_topology.pki_settings.root_ca_common_name
-  root_ca_pem         = base64decode(data.terraform_remote_state.topology.outputs.vault_pki.ca_cert)
-}
-
-resource "local_file" "bootstrap_ca" {
-  content  = local.root_ca_pem
-  filename = "${path.root}/../10-vault-raft/tls/bootstrap-ca.crt"
+  bootstrap_ca_path   = abspath("${path.root}/../10-vault-raft/tls/bootstrap-ca.crt")
 }
 
 # 2. TTL Policy for different environments

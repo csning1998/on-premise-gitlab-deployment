@@ -20,9 +20,9 @@ gitlab_kubeadm_config = {
     base_image_path = "../../../packer/output/02-base-kubeadm/ubuntu-server-24-02-base-kubeadm.qcow2"
 
     nodes = {
-      "00" = { ip_suffix = 210, vcpu = 2, ram = 2048 }
-      # "01" = { ip_suffix = 211, vcpu = 2, ram = 2048 }
-      # "02" = { ip_suffix = 212, vcpu = 2, ram = 2048 }
+      "10" = { ip_suffix = 210, vcpu = 2, ram = 2048 }
+      # "11" = { ip_suffix = 211, vcpu = 2, ram = 2048 }
+      # "12" = { ip_suffix = 212, vcpu = 2, ram = 2048 }
     }
   }
 }

@@ -2,7 +2,7 @@
 service_catalog_name = "harbor"
 
 harbor_postgres_config = {
-  "patroni" = {
+  "db" = {
     role            = "postgres"
     network_tier    = "postgres"
     base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"

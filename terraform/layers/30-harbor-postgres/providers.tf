@@ -20,7 +20,7 @@ provider "vault" {
   alias           = "bootstrapper"
   address         = var.vault_dev_addr
   token           = trimspace(file(abspath("${path.root}/../../../vault/keys/root-token.txt")))
-  skip_tls_verify = true
+  ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
 }
 
 # Production Provider (Layer 10 Vault)

@@ -41,6 +41,6 @@ output "auth_backend_paths" {
 }
 
 output "bootstrap_ca_path" {
-  description = "Path to the bootstrap CA certificate"
-  value       = abspath(local_file.bootstrap_ca.filename)
+  description = "Path to the bootstrap CA certificate (written by Layer 10)"
+  value       = local.bootstrap_ca_path
 }

@@ -11,6 +11,9 @@ all:
     kubeadm_pod_subnet: "${custom_vars.pod_subnet}"
     kubeadm_nat_subnet_prefix: "${custom_vars.nat_prefix}"
     kubeadm_registry_host: "${custom_vars.registry_host}"
+    kubeadm_registry_vip: "${custom_vars.registry_vip}"
+    kubeadm_image_repository: "${custom_vars.image_repository}"
+    kubeadm_dns_image_repository: "${custom_vars.image_repository}/coredns"
 
     kubeadm_http_nodeport: "${custom_vars.http_nodeport}"
     kubeadm_https_nodeport: "${custom_vars.https_nodeport}"

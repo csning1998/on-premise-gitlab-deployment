@@ -9,6 +9,7 @@ all:
 %{ for seg in service_segments ~}
       - name: "${seg.name}"
         vip: "${seg.vip}"
+        cidr: "${seg.cidr}"
         vrid: ${seg.vrid}
         interface_alias: "${seg.interface_name}"
         ports:

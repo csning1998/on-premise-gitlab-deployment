@@ -1,18 +1,4 @@
 
-data "terraform_remote_state" "topology" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-global-topology/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "network" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../05-central-lb/terraform.tfstate"
-  }
-}
-
 data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
@@ -27,7 +13,7 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
-data "terraform_remote_state" "dev_harbor_core" {
+data "terraform_remote_state" "harbor_core" {
   backend = "local"
   config = {
     path = "${path.root}/../30-dev-harbor-core/terraform.tfstate"
@@ -39,6 +25,6 @@ data "vault_generic_secret" "prod_credential" {
   path     = "secret/on-premise-gitlab-deployment/infrastructure"
 }
 
-data "vault_generic_secret" "iac_vars" {
-  path = "secret/on-premise-gitlab-deployment/variables"
+data "vault_generic_secret" "dev_harbor_app" {
+  path = "secret/on-premise-gitlab-deployment/dev-harbor/app"
 }

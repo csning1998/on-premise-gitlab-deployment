@@ -155,7 +155,7 @@
         url: "https://127.0.0.1/api/v2.0/health"
         validate_certs: false
         status_code: 200
-        return_content: yes
+        return_content: true
       register: result
       until: result.status == 200
       retries: 30

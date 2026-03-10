@@ -15,7 +15,9 @@ localAPIEndpoint:
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{{ kubeadm_version }}"
-{# imageRepository: "{{ registry_host }}" #}
+imageRepository: "{{ kubeadm_registry_vip }}/k8s-proxy"
+dns:
+  imageRepository: "{{ kubeadm_registry_vip }}/k8s-proxy/coredns"
 controlPlaneEndpoint: "{{ kubeadm_ha_virtual_ip }}:6443"
 apiServer:
   certSANs:

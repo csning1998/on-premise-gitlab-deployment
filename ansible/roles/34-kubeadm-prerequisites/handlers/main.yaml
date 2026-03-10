@@ -1,0 +1,9 @@
+---
+- name: Update CA Certificates
+  ansible.builtin.command: update-ca-certificates
+  changed_when: false
+
+- name: Restart containerd service
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted

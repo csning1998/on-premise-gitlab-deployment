@@ -39,6 +39,8 @@ locals {
 
 locals {
   # Service Segments: augment from 04 with node_ips computed here (depends on var.node_config)
+  # Services tagged "self-managed-lb" run their own HA stack (e.g. Kubeadm Stacked Control Plane)
+  # and must NOT appear here, as they own their VIP independently.
   net_service_segments = [
     for seg in local.state.network.service_segments : merge(seg, {
       node_ips = {
@@ -46,6 +48,7 @@ locals {
         cidrhost(local.svc_network_map[seg.name].cidr_block, node_spec.ip_suffix)
       }
     })
+    if !contains(seg.tags, "self-managed-lb")
   ]
 }
 
@@ -125,8 +128,10 @@ locals {
 
         # Interface 3..N: Service Segments [ens5...]
         # Logic: Use each Segment's Layer 00 MAC + Node Index
+        # Note: net_service_segments already excludes "self-managed-lb" services,
+        # so we re-use it here to stay consistent with the HAProxy configuration.
         [
-          for seg_key in [for seg in local.state.network.service_segments : seg.name] : {
+          for seg_key in [for seg in local.net_service_segments : seg.name] : {
             network_name = seg_key
             alias        = local.svc_network_map[seg_key].interface_alias
             mac = format("%s:%02x",

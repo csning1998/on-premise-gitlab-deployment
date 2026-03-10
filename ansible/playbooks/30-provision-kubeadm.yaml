@@ -3,6 +3,7 @@
   hosts: master
   become: true
   roles:
+    - 34-kubeadm-prerequisites
     - 35-kubeadm-ha-haproxy
 
 - name: "Play 2: Initialize the primary master node"
@@ -20,13 +21,16 @@
 - name: "Play 4: Join secondary master nodes to the cluster"
   hosts: "{{ groups['master'] | default([]) | difference([ (groups['master'] | default(['placeholder']))[0] ]) }}"
   become: true
+  serial: 1
   roles:
     - 38-kubeadm-join-secondary
 
 - name: "Play 5: Join worker nodes to the cluster"
   hosts: workers
   become: true
+  serial: 5 # ~30MiB/worker; 5 workers ≈ 1 master (175MiB) in pull bandwidth
   roles:
+    - 34-kubeadm-prerequisites
     - 39-kubeadm-join-workers
 
 - name: "Play 6: Setup Kubeconfig Vault Storage"

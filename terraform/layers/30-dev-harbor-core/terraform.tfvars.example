@@ -5,13 +5,7 @@ bootstrap_harbor_config = {
   role            = "core"
   network_tier    = "default"
   base_image_path = "../../../packer/output/01A-docker-harbor/ubuntu-server-24-01A-docker-harbor.qcow2"
-
-  node = {
-    ip_suffix       = 200
-    vcpu            = 2
-    ram             = 4096
-    base_image_path = "../../../packer/output/01A-docker-harbor/ubuntu-server-24-01A-docker-harbor.qcow2"
-  }
+  node            = { ip_suffix = 200, vcpu = 2, ram = 4096 }
 }
 
 ansible_files = {
