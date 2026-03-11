@@ -3,11 +3,13 @@ output "provisioned_nodes" {
   description = "Map of provisioned KVM nodes with their actual state."
   value = {
     for key, domain in libvirt_domain.nodes : key => {
-      ip   = var.vm_config.all_nodes_map[key].ip
-      id   = domain.id
-      name = domain.name
-      vcpu = domain.vcpu
-      ram  = domain.memory
+      ip                   = var.vm_config.all_nodes_map[key].ip
+      id                   = domain.id
+      name                 = domain.name
+      vcpu                 = domain.vcpu
+      ram_size_mib         = domain.memory
+      os_disk_capacity_gib = var.vm_config.all_nodes_map[key].os_disk_capacity_gib
+      data_disks           = var.vm_config.all_nodes_map[key].data_disks
     }
   }
 }

@@ -60,10 +60,11 @@ locals {
     for comp_name, comp_data in local.topology_cluster.components : {
       for node_suffix, node_data in comp_data.nodes :
       "${local.svc_identity.node_name_prefix}-${node_suffix}" => {
-        ip         = cidrhost(local.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
-        vcpu       = node_data.vcpu
-        ram        = node_data.ram
-        data_disks = node_data.data_disks
+        ip                   = cidrhost(local.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
+        vcpu                 = node_data.vcpu
+        ram_size             = node_data.ram_size
+        os_disk_capacity_gib = node_data.os_disk_capacity_gib
+        data_disks           = node_data.data_disks
 
         base_image_path = comp_data.base_image_path
         role            = comp_data.role

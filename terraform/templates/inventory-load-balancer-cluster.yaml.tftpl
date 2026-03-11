@@ -4,7 +4,7 @@ all:
     ansible_user: "${ansible_ssh_user}"
     service_identifier: "${service_name}"
     service_domain: "${service_domain}"
-    
+
     lb_service_segments:
 %{ for seg in service_segments ~}
       - name: "${seg.name}"

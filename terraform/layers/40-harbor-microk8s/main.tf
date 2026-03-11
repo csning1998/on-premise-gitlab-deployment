@@ -17,7 +17,7 @@ module "microk8s_harbor" {
 
   # Generic Ansible Configuration
   ansible_inventory_template_file = var.ansible_files.inventory_template_file
+  ansible_playbook_file           = var.ansible_files.playbook_file
   ansible_template_vars           = local.ansible_template_vars
   ansible_extra_vars              = local.ansible_extra_vars
-  ansible_playbook_file           = var.ansible_files.playbook_file
 }

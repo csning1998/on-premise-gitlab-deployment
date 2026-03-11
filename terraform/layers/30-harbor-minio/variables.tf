@@ -18,15 +18,24 @@ variable "harbor_minio_config" {
     base_image_path = string
     network_tier    = optional(string, "default")
     nodes = map(object({
-      ip_suffix = number
-      vcpu      = number
-      ram       = number
+      ip_suffix            = number
+      vcpu                 = number
+      ram_size             = number
+      os_disk_capacity_gib = number
       data_disks = optional(list(object({
-        name_suffix = string
-        capacity    = number
+        name_suffix  = string
+        capacity_gib = number
       })), [])
     }))
   }))
+}
+
+variable "ansible_files" {
+  description = "Meta configuration of Ansible inventory for Bootstrap Harbor service."
+  type = object({
+    playbook_file           = string
+    inventory_template_file = string
+  })
 }
 
 variable "harbor_minio_tenants" {

@@ -1,17 +1,13 @@
 
-locals {
-  kvm_module_ref = var.use_minio_hypervisor ? module.hypervisor_kvm_minio[0] : module.hypervisor_kvm[0]
-}
-
 output "cluster_nodes" {
   description = "The physical KVM nodes provisioned for this cluster."
-  value       = local.kvm_module_ref.provisioned_nodes
+  value       = module.hypervisor_kvm.provisioned_nodes
 }
 
 output "network_bindings" {
   description = "L2 network identity mapping (Sourced from KVM)."
   value = {
-    for tier, config in local.kvm_module_ref.infrastructure_config : tier => {
+    for tier, config in module.hypervisor_kvm.infrastructure_config : tier => {
       nat_net_name         = config.network.nat.name_network
       nat_bridge_name      = config.network.nat.name_bridge
       hostonly_net_name    = config.network.hostonly.name_network
@@ -23,7 +19,7 @@ output "network_bindings" {
 output "network_parameters" {
   description = "L3 network configurations (Sourced from KVM)."
   value = {
-    for tier, config in local.kvm_module_ref.infrastructure_config : tier => {
+    for tier, config in module.hypervisor_kvm.infrastructure_config : tier => {
       network = {
         nat = {
           cidrv4  = "${config.network.nat.ips.address}/${config.network.nat.ips.prefix}"

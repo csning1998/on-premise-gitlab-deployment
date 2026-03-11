@@ -8,9 +8,16 @@ gitlab_postgres_config = {
     base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
 
     nodes = {
-      "00" = { ip_suffix = 200, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
-      # "01" = { ip_suffix = 201, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
-      # "02" = { ip_suffix = 202, vcpu = 2, ram = 4096, data_disks = [{ name_suffix = "data", capacity = 100 }] }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40,
+        data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      }
+      # Uncomment the following lines for HA setup, abide by node % 2 != 0.
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40,
+      #   data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      # }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40,
+      #   data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      # }
     }
   }
 
@@ -21,9 +28,10 @@ gitlab_postgres_config = {
     base_image_path = "../../../packer/output/09-base-etcd/ubuntu-server-24-09-base-etcd.qcow2"
 
     nodes = {
-      "00" = { ip_suffix = 200, vcpu = 2, ram = 4096 }
-      # "01" = { ip_suffix = 201, vcpu = 2, ram = 4096 }
-      # "02" = { ip_suffix = 202, vcpu = 2, ram = 4096 }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }
+      # Uncomment the following lines for HA setup, abide by node % 2 != 0.
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }
     }
   }
 }

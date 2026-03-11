@@ -13,14 +13,22 @@ vault_config = {
 
     nodes = {
       # Single Mode
-      "00" = { ip_suffix = 200, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40, role = "vault", network_tier = "default",
+        data_disks = [{ name_suffix = "raft-data", capacity_gib = 20 }]
+      }
       # Uncomment the following lines for HA setup, abide by node % 2 != 0.
-      # "01" = { ip_suffix = 201, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
-      # "02" = { ip_suffix = 202, vcpu = 2, ram = 1024, role = "vault", network_tier = "default" },
-      # ...
+      # "01" = {
+      #   ip_suffix  = 201, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40, role = "vault", network_tier = "default"
+      #   data_disks = [{ name_suffix = "raft-data", capacity_gib = 20 }]
+      # },
+      # "02" = {
+      #   ip_suffix  = 202, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40, role = "vault", network_tier = "default"
+      #   data_disks = [{ name_suffix = "raft-data", capacity_gib = 20 }]
+      # },
     }
   }
 }
+
 ansible_files = {
   playbook_file           = "10-provision-core-services.yaml"
   inventory_template_file = "inventory-vault-cluster.yaml.tftpl"

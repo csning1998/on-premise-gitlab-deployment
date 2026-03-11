@@ -30,13 +30,14 @@ variable "topology_cluster" {
       network_tier    = optional(string, "default")
 
       nodes = map(object({
-        ip_suffix = number
-        vcpu      = number
-        ram       = number
+        ip_suffix            = number
+        vcpu                 = number
+        ram_size             = number
+        os_disk_capacity_gib = number
 
         data_disks = optional(list(object({
-          name_suffix = string
-          capacity    = number
+          name_suffix  = string
+          capacity_gib = number
         })), [])
       }))
     }))
@@ -96,13 +97,6 @@ variable "ansible_extra_vars" {
 variable "ansible_playbook_file" {
   description = "The name of the Ansible playbook file to execute."
   type        = string
-}
-
-# Extensibility Flags
-variable "use_minio_hypervisor" {
-  description = "Flag to determine if the specific hypervisor-kvm-minio module should be used (handles raw block devices for MinIO)"
-  type        = bool
-  default     = false
 }
 
 # System Credentials

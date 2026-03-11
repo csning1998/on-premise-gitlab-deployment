@@ -73,10 +73,11 @@ locals {
 
         nodes = {
           "00" = {
-            ip_suffix  = var.bootstrap_harbor_config.node.ip_suffix
-            vcpu       = var.bootstrap_harbor_config.node.vcpu
-            ram        = var.bootstrap_harbor_config.node.ram
-            data_disks = var.bootstrap_harbor_config.node.data_disks
+            ip_suffix            = var.bootstrap_harbor_config.node.ip_suffix
+            vcpu                 = var.bootstrap_harbor_config.node.vcpu
+            ram_size             = var.bootstrap_harbor_config.node.ram_size
+            os_disk_capacity_gib = var.bootstrap_harbor_config.node.os_disk_capacity_gib
+            data_disks           = var.bootstrap_harbor_config.node.data_disks
           }
         }
       }

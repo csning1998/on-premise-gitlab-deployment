@@ -8,35 +8,41 @@ harbor_minio_config = {
     base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
     nodes = {
       "00" = {
-        ip_suffix = 200, vcpu = 2, ram = 1536
+        ip_suffix = 200, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
         data_disks = [
-          { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-          { name_suffix = "drive2", capacity = 10737418240 }
+          { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
+          { name_suffix = "drive2", capacity_gib = 10 }
         ]
       }
+      # Uncomment the following lines for HA setup, abide by node % 4 != 0.
       # "01" = {
-      #   ip_suffix = 201, vcpu = 2, ram = 1536
+      #   ip_suffix = 201, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
       #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
+      #     { name_suffix = "drive2", capacity_gib = 10 }
       #   ]
       # },
       # "02" = {
-      #   ip_suffix = 202, vcpu = 2, ram = 1536
+      #   ip_suffix = 202, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
       #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
+      #     { name_suffix = "drive2", capacity_gib = 10 }
       #   ]
       # },
       # "03" = {
-      #   ip_suffix = 203, vcpu = 2, ram = 1536
+      #   ip_suffix = 203, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
       #   data_disks = [
-      #     { name_suffix = "drive1", capacity = 10737418240 }, # 10GB
-      #     { name_suffix = "drive2", capacity = 10737418240 }
+      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
+      #     { name_suffix = "drive2", capacity_gib = 10 }
       #   ]
       # }
     }
   }
+}
+
+ansible_files = {
+  playbook_file           = "20-provision-data-services.yaml"
+  inventory_template_file = "inventory-minio-cluster.yaml.tftpl"
 }
 
 harbor_minio_tenants = {

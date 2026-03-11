@@ -2,8 +2,6 @@
 module "minio_harbor" {
   source = "../../middleware/ha-service-kvm-general"
 
-  use_minio_hypervisor = true
-
   # Identity & Service Definitions
   svc_identity = local.svc_minio_identity
   node_identities = {
@@ -20,10 +18,10 @@ module "minio_harbor" {
   credentials_system = local.sec_system_creds
 
   # Generic Ansible Configuration
-  ansible_inventory_template_file = "inventory-minio-cluster.yaml.tftpl"
+  ansible_inventory_template_file = var.ansible_files.inventory_template_file
+  ansible_playbook_file           = var.ansible_files.playbook_file
   ansible_template_vars           = local.ansible_template_vars
   ansible_extra_vars              = local.ansible_extra_vars
-  ansible_playbook_file           = "20-provision-data-services.yaml"
 }
 
 # This timer is to wait for MinIO Cluster to initialize the storage.

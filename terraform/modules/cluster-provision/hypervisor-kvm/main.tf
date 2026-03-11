@@ -75,20 +75,54 @@ resource "libvirt_pool" "storage_pool" {
   }
 }
 
-resource "libvirt_volume" "os_disk" {
+locals {
+  # Extract a map of unique base images to avoid creating duplicate base volumes (Copy-on-Write)
+  unique_base_images = toset([for k, v in var.vm_config.all_nodes_map : abspath(v.base_image_path)])
 
+  base_image_map = {
+    for path in local.unique_base_images : basename(path) => path
+  }
+}
+
+resource "libvirt_volume" "base_image" {
   depends_on = [libvirt_pool.storage_pool]
+  for_each   = local.base_image_map
+
+  name   = "base-${each.key}"
+  pool   = libvirt_pool.storage_pool.name
+  format = "qcow2"
+
+  create = {
+    content = {
+      url = each.value
+    }
+  }
+}
+
+resource "libvirt_volume" "os_disk" {
+  depends_on = [libvirt_pool.storage_pool, libvirt_volume.base_image]
 
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
   pool     = libvirt_pool.storage_pool.name
   format   = "qcow2"
+  capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
 
-  create = {
-    content = {
-      url = abspath(each.value.base_image_path)
-    }
+  # Use Copy-on-Write
+  backing_store = {
+    path   = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
+    format = "qcow2"
   }
+}
+
+resource "libvirt_volume" "data_disk" {
+  depends_on = [libvirt_pool.storage_pool]
+  for_each   = local.data_disks_flat
+
+  name     = "${each.key}.qcow2"
+  pool     = libvirt_pool.storage_pool.name
+  format   = "qcow2"
+  capacity = each.value.capacity_gib * 1024 * 1024 * 1024 # Libvirt requires volume capacity to be declared in Bytes.
 }
 
 resource "libvirt_cloudinit_disk" "cloud_init" {
@@ -144,7 +178,7 @@ resource "libvirt_domain" "nodes" {
   # 1. Basic Configuration (Required)
   name      = each.key
   vcpu      = each.value.vcpu
-  memory    = each.value.ram
+  memory    = each.value.ram_size
   unit      = "MiB"
   autostart = false
   running   = true
@@ -157,9 +191,9 @@ resource "libvirt_domain" "nodes" {
 
   # 3. Hardware Device Configuration (Attributes)
   devices = {
-    disks = [
-      # First Disk: Operating System
-      {
+    disks = concat(
+      # 1. OS Disk (vda)
+      [{
         device = "disk"
         target = {
           dev = "vda"
@@ -169,9 +203,24 @@ resource "libvirt_domain" "nodes" {
           pool   = libvirt_pool.storage_pool.name
           volume = libvirt_volume.os_disk[each.key].name
         }
-      },
-      # Second Disk: Cloud-Init ISO
-      {
+      }],
+
+      # 2. Data Disks (vdb, vdc...)
+      [for idx, disk in each.value.data_disks : {
+        device = "disk"
+        target = {
+          # idx=0 -> vdb, idx=1 -> vdc
+          dev = "vd${substr("bcdefghijklmnopqrstuvwxyz", idx, 1)}"
+          bus = "virtio"
+        }
+        source = {
+          pool   = libvirt_pool.storage_pool.name
+          volume = libvirt_volume.data_disk["${each.key}-${disk.name_suffix}"].name
+        }
+      }],
+
+      # 3. Cloud-Init (sda)
+      [{
         device = "cdrom"
         target = {
           dev = "sda"
@@ -181,8 +230,8 @@ resource "libvirt_domain" "nodes" {
           pool   = libvirt_pool.storage_pool.name
           volume = libvirt_volume.cloud_init_iso[each.key].name
         }
-      }
-    ]
+      }]
+    )
 
     # Network Interfaces search by network tier
     interfaces = [

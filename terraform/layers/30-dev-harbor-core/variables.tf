@@ -16,13 +16,14 @@ variable "bootstrap_harbor_config" {
     role            = string
     base_image_path = string
     node = object({
-      ip_suffix = number
-      vcpu      = number
-      ram       = number
+      ip_suffix            = number
+      vcpu                 = number
+      ram_size             = number
+      os_disk_capacity_gib = number
 
       data_disks = optional(list(object({
-        name_suffix = string
-        capacity    = number
+        name_suffix  = string
+        capacity_gib = number
       })), [])
     })
   })

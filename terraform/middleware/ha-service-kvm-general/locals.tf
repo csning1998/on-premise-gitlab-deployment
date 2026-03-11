@@ -6,10 +6,11 @@ locals {
       for node_suffix, node_data in comp_data.nodes :
       "${var.node_identities[comp_name].node_name_prefix}-${node_suffix}" => {
         # The Fundamental Specifications are Inherited from Node.
-        ip         = cidrhost(var.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
-        vcpu       = node_data.vcpu
-        ram        = node_data.ram
-        data_disks = node_data.data_disks
+        ip                   = cidrhost(var.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
+        vcpu                 = node_data.vcpu
+        ram_size             = node_data.ram_size
+        os_disk_capacity_gib = node_data.os_disk_capacity_gib
+        data_disks           = node_data.data_disks
 
         # The Component Level Specifications are Inherited from Component.
         base_image_path = comp_data.base_image_path
@@ -29,12 +30,13 @@ locals {
   vm_config = {
     all_nodes_map = {
       for k, v in local.flat_node_map : k => {
-        ip              = v.ip
-        vcpu            = v.vcpu
-        ram             = v.ram
-        base_image_path = v.base_image_path
-        data_disks      = v.data_disks
-        network_tier    = v.network_tier
+        ip                   = v.ip
+        vcpu                 = v.vcpu
+        ram_size             = v.ram_size
+        os_disk_capacity_gib = v.os_disk_capacity_gib
+        base_image_path      = v.base_image_path
+        data_disks           = v.data_disks
+        network_tier         = v.network_tier
       }
     }
   }

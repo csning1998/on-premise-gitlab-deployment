@@ -2,12 +2,17 @@
 all:
   vars:
     service_identifier: "${custom_vars.service_name}"
-    
+
     dev_harbor_cluster_ips: ${jsonencode([for node in all_nodes : node.ip])}
     dev_harbor_mtls_node_subnet: "${custom_vars.access_scope}"
     dev_harbor_service_domain: "${cluster_identity.cluster_name}"
     dev_harbor_tls_port: ${custom_vars.dev_harbor_tls_port}
     dev_harbor_vip: "${custom_vars.dev_harbor_vip}"
+    dev_harbor_static_routes:
+      - to: "${custom_vars.vault_vip}/32"
+        via: "${custom_vars.dev_harbor_vip}"
+        dev: "ens3"
+        metric: 100
 
   children:
     dev_harbor_nodes:

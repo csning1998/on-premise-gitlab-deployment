@@ -4,6 +4,17 @@ locals {
     for k, v in var.libvirt_infrastructure : k => join(".", slice(split(".", v.network.nat.ips.address), 0, 3))
   }
 
+  data_disks_flat = merge([
+    for vm_key, vm_conf in var.vm_config.all_nodes_map : {
+      for disk in vm_conf.data_disks :
+      "${vm_key}-${disk.name_suffix}" => {
+        vm_key       = vm_key
+        capacity_gib = disk.capacity_gib
+        name_suffix  = disk.name_suffix
+      }
+    }
+  ]...)
+
   nodes_config = {
     for node_name, node_config in var.vm_config.all_nodes_map :
     node_name => {

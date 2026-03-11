@@ -1,18 +1,6 @@
 
 module "hypervisor_kvm" {
-  count  = var.use_minio_hypervisor ? 0 : 1
   source = "../../modules/cluster-provision/hypervisor-kvm"
-
-  vm_config = local.vm_config
-
-  create_networks        = false
-  credentials            = local.vm_credentials_for_hypervisor
-  libvirt_infrastructure = local.hypervisor_kvm_infrastructure
-}
-
-module "hypervisor_kvm_minio" {
-  count  = var.use_minio_hypervisor ? 1 : 0
-  source = "../../modules/cluster-provision/hypervisor-kvm-minio"
 
   vm_config = local.vm_config
 
@@ -23,7 +11,7 @@ module "hypervisor_kvm_minio" {
 
 module "ssh_manager" {
   source         = "../../modules/cluster-provision/ssh-manager"
-  status_trigger = var.use_minio_hypervisor ? module.hypervisor_kvm_minio[0].vm_status_trigger : module.hypervisor_kvm[0].vm_status_trigger
+  status_trigger = module.hypervisor_kvm.vm_status_trigger
 
   nodes = [
     for k, v in local.flat_node_map : {
