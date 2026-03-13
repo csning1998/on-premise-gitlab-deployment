@@ -4,7 +4,7 @@ service_catalog_name = "harbor-bootstrapper"
 bootstrap_harbor_config = {
   role            = "core"
   network_tier    = "default"
-  base_image_path = "../../../packer/output/01A-docker-harbor/ubuntu-server-24-01A-docker-harbor.qcow2"
+  base_image_path = "../../../packer/output/docker-harbor/ubuntu-24-docker-harbor.qcow2"
   node            = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }
 }
 

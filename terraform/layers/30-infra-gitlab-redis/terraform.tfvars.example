@@ -5,7 +5,7 @@ gitlab_redis_config = {
   "redis" = {
     role            = "redis"
     network_tier    = "redis"
-    base_image_path = "../../../packer/output/05-base-redis/ubuntu-server-24-05-base-redis.qcow2"
+    base_image_path = "../../../packer/output/base-redis/ubuntu-24-base-redis.qcow2"
 
     nodes = {
       "00" = { ip_suffix = 200, vcpu = 2, ram_size = 2048, os_disk_capacity_gib = 40 }

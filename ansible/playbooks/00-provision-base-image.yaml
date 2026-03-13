@@ -6,7 +6,7 @@
     - 00-base-common
 
 - name: "Play: Provision Docker Base Image for Bootstrapper Harbor"
-  hosts: "01A-docker-harbor"
+  hosts: "docker-harbor"
   become: true
   roles:
     - 01-base-docker
@@ -14,54 +14,54 @@
     - 01A-docker-harbor
 
 - name: "Play: Provision Kubernetes (Kubeadm) Base Image"
-  hosts: "02-base-kubeadm"
+  hosts: "base-kubeadm"
   become: true
   roles:
     - 02-base-kubeadm
     - 07-base-vault
 
 - name: "Play: Provision MicroK8s Base Image"
-  hosts: "03-base-microk8s"
+  hosts: "base-microk8s"
   become: true
   roles:
     - 03-base-microk8s
     - 07-base-vault
 
 - name: "Play: Provision Postgres (Singular) Base Image"
-  hosts: "04-base-postgres"
+  hosts: "base-postgres"
   become: true
   roles:
     - 04-base-postgres
     - 07-base-vault
 
 - name: "Play: Provision Redis (Singular) Base Image"
-  hosts: "05-base-redis"
+  hosts: "base-redis"
   become: true
   roles:
     - 05-base-redis
     - 07-base-vault
 
 - name: "Play: Provision MinIO (Singular) Base Image"
-  hosts: "06-base-minio"
+  hosts: "base-minio"
   become: true
   roles:
     - 06-base-minio
     - 07-base-vault
 
 - name: "Play: Provision Vault (Singular) Base Image"
-  hosts: "07-base-vault"
+  hosts: "base-vault"
   become: true
   roles:
     - 07-base-vault
 
 - name: "Play: Provision HAProxy (Base) Image"
-  hosts: "08-base-haproxy"
+  hosts: "base-haproxy"
   become: true
   roles:
     - 08-base-haproxy
 
 - name: "Play: Provision Etcd (Base) Image"
-  hosts: "09-base-etcd"
+  hosts: "base-etcd"
   become: true
   roles:
     - 09-base-etcd

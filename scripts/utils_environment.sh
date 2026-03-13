@@ -8,7 +8,7 @@ iac_layer_discoverer() {
   # Discover Packer Layers
   local packer_layers_str=""
   if [ -d "${PACKER_DIR}" ]; then
-    packer_layers_str=$(find "${PACKER_DIR}" -maxdepth 1 -name "*.pkrvars.hcl" ! -name "values.pkrvars.hcl" -printf '%f\n' | \
+    packer_layers_str=$(find "${PACKER_DIR}" -mindepth 2 -maxdepth 2 -name "*.pkrvars.hcl" ! -name "values.pkrvars.hcl" -printf '%f\n' | \
       sed 's/\.pkrvars\.hcl//g' | \
       sort | \
       tr '\n' ' ')

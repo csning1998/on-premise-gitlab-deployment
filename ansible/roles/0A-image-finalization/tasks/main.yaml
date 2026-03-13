@@ -1,11 +1,9 @@
 ---
 - name: Section E. Finalize image and clean up
   block:
-    - name: "Step 1. Verify hostname"
-      ansible.builtin.command: hostname
-      register: hostname_result
-      changed_when: false
-      failed_when: hostname_result.stdout != expected_hostname
+    - name: "Step 1. Ensure hostname is correct"
+      ansible.builtin.hostname:
+        name: "{{ expected_hostname }}"
 
     - name: "Step 2. Ensure .ssh directory exists with correct permissions"
       ansible.builtin.file:

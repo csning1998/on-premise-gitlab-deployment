@@ -9,7 +9,7 @@ vault_config = {
   "vault" = {
     role            = "vault"
     network_tier    = "vault"
-    base_image_path = "../../../packer/output/07-base-vault/ubuntu-server-24-07-base-vault.qcow2"
+    base_image_path = "../../../packer/output/base-vault/ubuntu-24-base-vault.qcow2"
 
     nodes = {
       # Single Mode

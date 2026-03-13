@@ -9,4 +9,4 @@ node_config = {
   # "lb-node-02" = { ip_suffix = 12, vcpu = 2, ram = 1024 }
 }
 
-base_image_path = "../../../packer/output/08-base-haproxy/ubuntu-server-24-08-base-haproxy.qcow2"
+base_image_path = "../../../packer/output/base-haproxy/ubuntu-24-base-haproxy.qcow2"

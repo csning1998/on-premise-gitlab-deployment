@@ -5,7 +5,7 @@ harbor_postgres_config = {
   "db" = {
     role            = "postgres"
     network_tier    = "postgres"
-    base_image_path = "../../../packer/output/04-base-postgres/ubuntu-server-24-04-base-postgres.qcow2"
+    base_image_path = "../../../packer/output/base-postgres/ubuntu-24-base-postgres.qcow2"
 
     nodes = {
       "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40,
@@ -25,7 +25,7 @@ harbor_postgres_config = {
   "etcd" = {
     role            = "etcd"
     network_tier    = "etcd"
-    base_image_path = "../../../packer/output/09-base-etcd/ubuntu-server-24-09-base-etcd.qcow2"
+    base_image_path = "../../../packer/output/base-etcd/ubuntu-24-base-etcd.qcow2"
 
     nodes = {
       "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }

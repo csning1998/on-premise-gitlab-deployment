@@ -5,7 +5,7 @@ harbor_minio_config = {
   "minio" = {
     role            = "minio"
     network_tier    = "minio"
-    base_image_path = "../../../packer/output/06-base-minio/ubuntu-server-24-06-base-minio.qcow2"
+    base_image_path = "../../../packer/output/base-minio/ubuntu-24-base-minio.qcow2"
     nodes = {
       "00" = {
         ip_suffix = 200, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
