@@ -173,6 +173,8 @@ select opt in "${options[@]}"; do
       ;;
     "Purge All Packer and Terraform Resources")
       if manual_confirmation_prompter "Packer images/Terraform states"; then
+        libvirt_service_manager
+        libvirt_resource_purger "all"
         packer_artifact_cleaner "all"
         terraform_artifact_cleaner "all"
         execution_time_reporter

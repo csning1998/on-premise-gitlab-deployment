@@ -11,7 +11,7 @@ iac_layer_discoverer() {
     packer_layers_str=$(find "${PACKER_DIR}" -maxdepth 1 -name "*.pkrvars.hcl" ! -name "values.pkrvars.hcl" -printf '%f\n' | \
       sed 's/\.pkrvars\.hcl//g' | \
       sort | \
-      tr '\n' ' ') 
+      tr '\n' ' ')
   fi
   # Remove trailing space
   env_var_mutator "ALL_PACKER_BASES" "${packer_layers_str% }"
@@ -24,7 +24,7 @@ iac_layer_discoverer() {
       tr '\n' ' ')
   fi
   env_var_mutator "ALL_TERRAFORM_LAYERS" "${terraform_layers_str% }"
-  
+
   log_print "INFO" "Layer discovery complete and .env updated."
 }
 
@@ -32,9 +32,9 @@ iac_layer_discoverer() {
 host_os_detail_handler() {
   if [ -f /etc/os-release ]; then
     . /etc/os-release
-    if [[ "$ID_LIKE" == *"fedora"* || "$ID" == "fedora" || "$ID" == "rhel" || "$ID" == "centos" ]]; then
+    if [[ "$ID" == *"fedora"* || "$ID" == "fedora" || "$ID" == "rhel" || "$ID" == "centos" ]]; then
       export HOST_OS_FAMILY="rhel"
-    elif [[ "$ID_LIKE" == *"debian"* || "$ID" == "ubuntu" || "$ID" == "debian" ]]; then
+    elif [[ "$ID" == *"debian"* || "$ID" == "ubuntu" || "$ID" == "debian" ]]; then
       export HOST_OS_FAMILY="debian"
     else
       export HOST_OS_FAMILY="unknown"
@@ -86,7 +86,7 @@ env_file_bootstrapper() {
   local current_gid=$(id -g)
   local current_uname=$(whoami)
   local current_libvirt_gid
-  
+
   if getent group libvirt > /dev/null 2>&1; then
     current_libvirt_gid=$(getent group libvirt | cut -d: -f3)
   else
@@ -98,7 +98,7 @@ env_file_bootstrapper() {
 	# 2.1. If .env does not exist, create a new one.
   if [[ ! -f "$env_path" ]]; then
     log_print "INFO" "Creating new .env file at ${env_path}..."
-    
+
     cat > "$env_path" <<EOF
 # Project Root (Auto-detected)
 PROJECT_ROOT="${detected_root}"
@@ -153,7 +153,7 @@ EOF
     env_var_mutator "HOST_UID" "${current_uid}"
     env_var_mutator "HOST_GID" "${current_gid}"
     env_var_mutator "LIBVIRT_GID" "${current_libvirt_gid}"
-    
+
     # 2.4 Ensure DEV_VAULT_CACERT uses the new variable format. Force it to use the ${PROJECT_ROOT} variable format.
     if grep -q "DEV_VAULT_CACERT=" "$env_path"; then
         sed -i "s|^DEV_VAULT_CACERT=.*|DEV_VAULT_CACERT=\"\${PROJECT_ROOT}/vault/tls/ca.pem\"|" "$env_path"
@@ -182,7 +182,7 @@ env_var_mutator() {
 switch_strategy() {
   local var_name="$1"
   local new_value="$2"
-  
+
   env_var_mutator "$var_name" "$new_value"
   log_print "INFO" "Strategy '${var_name}' in .env updated to '${new_value}'."
   cd "${SCRIPT_DIR}" && exec ./entry.sh
@@ -192,8 +192,8 @@ strategy_switch_handler() {
   echo
   log_print "INFO" "Switching strategy..."
   log_print "INFO" "Cleaning Terraform plugins/cache (keeping state)..."
-  (cd "${TERRAFORM_DIR}" && rm -rf .terraform .terraform.lock.hcl) 
-  
+  (cd "${TERRAFORM_DIR}" && rm -rf .terraform .terraform.lock.hcl)
+
 	log_divider
 
   local new_strategy

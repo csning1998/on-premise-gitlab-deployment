@@ -15,5 +15,5 @@ harbor_ca_path: "{{ harbor_pki_dir }}/ca.crt"
 vault_agent_config_dir: "/etc/vault.d"
 
 # Database and Harbor Admin Password from Vault
-dev_harbor_admin_password: "{{ harbor_vault_secrets.secret.dev_harbor_admin_password }}"
-dev_harbor_db_password: "{{ harbor_vault_secrets.secret.dev_harbor_pg_db_password }}"
+harbor_bootstrapper_admin_password: "{{ harbor_vault_secrets.secret.harbor_bootstrapper_admin_password }}"
+harbor_bootstrapper_pg_db_password: "{{ harbor_vault_secrets.secret.harbor_bootstrapper_pg_db_password }}"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Development Vault Variables 
+# Development Vault Variables
 
 # Prior to read the setting from .env, if not found, use default value
 readonly DEV_VAULT_ADDR="${DEV_VAULT_ADDR:-https://127.0.0.1:8200}"
@@ -19,7 +19,7 @@ readonly DEV_ROOT_TOKEN_FILE="${DEV_KEYS_DIR}/root-token.txt"
 
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
-readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/10-vault-raft/tls/bootstrap-ca.crt"
+readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/15-shared-vault/tls/bootstrap-ca.crt"
 
 vault_context_handler() {
   local target="$1"
@@ -36,16 +36,16 @@ vault_context_handler() {
     if [[ -f "$DEV_ROOT_TOKEN_FILE" ]]; then
       local dev_token
       dev_token=$(cat "$DEV_ROOT_TOKEN_FILE")
-      
+
       # Use curl to fetch the secret from Bootstrap Vault
       # Path: secret/data/on-premise-gitlab-deployment/infrastructure
       local response
       response=$(curl -s --cacert "${DEV_CA}" --header "X-Vault-Token: ${dev_token}" \
         "${DEV_VAULT_ADDR}/v1/secret/data/on-premise-gitlab-deployment/infrastructure")
-      
+
       local prod_token
       prod_token=$(echo "$response" | jq -r '.data.data.prod_vault_root_token // empty')
-      
+
       if [[ -n "$prod_token" ]]; then
 				export VAULT_TOKEN="$prod_token"
 				log_print "INFO" "    - Prod Token retrieved from Bootstrap Vault."
@@ -58,7 +58,7 @@ vault_context_handler() {
 
   else
     log_print "INFO" "[Vault Context] Switching to DEVELOPMENT (Layer <20 / Packer)..."
-    
+
     export VAULT_ADDR="$DEV_VAULT_ADDR"
     export VAULT_TOKEN="${DEV_VAULT_TOKEN}"
 
@@ -85,7 +85,7 @@ vault_status_reporter() {
 
 		local dev_status_json
 		dev_status_json=$(curl -s --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health")
-    
+
 		if [[ -n "$dev_status_json" ]]; then
       local sealed
       sealed=$(echo "$dev_status_json" | jq .sealed 2>/dev/null)
@@ -125,10 +125,10 @@ vault_dev_tls_generator() {
   log_print "WARN" "#############################################################################"
   log_print "WARN" "### Proceeding will DESTROY ALL existing files in vault/tls.              ###"
   log_print "WARN" "#############################################################################"
-  
+
   log_print "INPUT" "Type 'yes' to confirm: "
   read -r confirmation
-  
+
   if [[ "$confirmation" != "yes" ]]; then
     log_print "INFO" "Cancelled."
     return 1
@@ -154,22 +154,22 @@ vault_dev_tls_generator() {
   rm -f "${DEV_TLS_DIR}/vault.csr" "${DEV_TLS_DIR}/extfile.cnf"
   chmod 600 "${DEV_TLS_DIR}/"*key.pem
   chmod 644 "${DEV_TLS_DIR}/"*.pem
-  
+
   log_print "OK" "Dev Vault TLS Certificates generated."
 }
 
 # Function: Ensure KV Engine is enabled (Dev Vault)
 vault_dev_engine_enforcer() {
   log_print "TASK" "[Development Vault] Ensuring KV secrets engine is enabled at 'secret/'..."
-  
+
   if [ ! -f "$DEV_ROOT_TOKEN_FILE" ]; then
 		log_print "ERROR" "Root token not found. Cannot configure engine."
 		return 1
   fi
-  
+
   local token
   token=$(cat "$DEV_ROOT_TOKEN_FILE")
-  
+
   if ! VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="$token" vault secrets list -ca-cert="${DEV_CA}" -format=json | jq -e '."secret/"' > /dev/null; then
     log_print "TASK" "'secret/' path not found, enabling kv-v2..."
     VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="$token" vault secrets enable -ca-cert="${DEV_CA}" -path=secret kv-v2
@@ -221,14 +221,14 @@ vault_dev_init_handler() {
 # Function: Unseal Dev Vault
 vault_dev_unseal_handler() {
   log_print "STEP" "[Dev Vault] Unsealing..."
-  
+
   if [ ! -f "$DEV_UNSEAL_KEY_FILE" ]; then
     log_print "ERROR" "Unseal keys not found. Run '[DEV] Initialize' first."
     return 1
   fi
 
   local status_json
-	status_json=$(vault status -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json 2>/dev/null || true)  
+	status_json=$(vault status -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json 2>/dev/null || true)
   if [[ $(echo "$status_json" | jq .sealed 2>/dev/null) == "false" ]]; then
     log_print "INFO" "Development Vault is already unsealed."
     return 0
@@ -240,7 +240,7 @@ vault_dev_unseal_handler() {
   done < "$DEV_UNSEAL_KEY_FILE"
 
   log_print "OK" "Dev Vault Unsealed."
-  
+
   # Export for current session
   if [ -f "$DEV_ROOT_TOKEN_FILE" ]; then
 		DEV_VAULT_TOKEN=$(cat "$DEV_ROOT_TOKEN_FILE")
@@ -254,7 +254,7 @@ vault_dev_unseal_handler() {
 # Function: Trigger Ansible to Unseal Prod Vault
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
-  
+
   local inventory_file="${ANSIBLE_DIR}/inventory-core-vault-raft.yaml"
   local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-vault-unseal.yaml"
 
@@ -262,7 +262,7 @@ vault_prod_unseal_trigger() {
     log_print "ERROR" "Inventory file not found at: $inventory_file"
     return 1
   fi
-  
+
   if [[ ! -f "$playbook_file" ]]; then
     log_print "ERROR" "Playbook file not found at: $playbook_file"
     return 1
@@ -280,7 +280,7 @@ vault_prod_unseal_trigger() {
     "$playbook_file" \
     --extra-vars "dev_vault_url=${DEV_VAULT_ADDR}" \
     --extra-vars "dev_root_token_path=${DEV_ROOT_TOKEN_FILE}"; then
-    
+
     log_print "OK" "[Prod Vault] Unseal Playbook execution completed."
   else
     log_print "ERROR" "[Prod Vault] Unseal Playbook failed."

@@ -5,7 +5,7 @@ vault_secret_extractor() {
   local playbook_file="$1"
   local extra_vars_string=""
   local secrets_json
-  
+
   # Define an array to store configurations, format: "VAULT_PATH|KEY1 KEY2 KEY3"
   local vault_clusters=()
 
@@ -30,7 +30,7 @@ vault_secret_extractor() {
       )
       # Path 3: Dev Harbor App
       vault_clusters+=(
-        "secret/on-premise-gitlab-deployment/dev-harbor/app|dev_harbor_admin_password dev_harbor_pg_db_password"
+        "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app|harbor_bootstrapper_admin_password harbor_bootstrapper_pg_db_password"
       )
       ;;
     "30-provision-microk8s.yaml")
@@ -79,7 +79,7 @@ vault_secret_extractor() {
   done
 
   log_print "OK" "Credentials fetched successfully." >&2
-  
+
   echo "${extra_vars_string}"
   return 0
 }
@@ -142,7 +142,7 @@ ansible_playbook_executor() {
 # Function: Display a sub-menu to select and run a Playbook based on Inventory.
 ansible_menu_handler() {
   local inventory_options=()
-  local inventory_dir="${ANSIBLE_DIR}" 
+  local inventory_dir="${ANSIBLE_DIR}"
 
   # [Fix] Updated glob pattern to match new naming convention (e.g., inventory-redis-gitlab.yaml)
   for f in "${inventory_dir}/inventory-"*.yaml; do
@@ -154,13 +154,13 @@ ansible_menu_handler() {
 
   PS3=$'\n\033[1;34m[INPUT] Select a Cluster Inventory to run its Playbook: \033[0m'
   select inventory in "${inventory_options[@]}"; do
-    
+
     if [ "$inventory" == "Back to Main Menu" ]; then
       log_print "INFO" "Returning to main menu..."
       break
-    
+
     elif [ -n "$inventory" ]; then
-      
+
       # Logic to parse 'inventory-<component>-<platform>-<service>.yaml' by removing prefix and suffix
       local filename_base=${inventory#inventory-}
       filename_base=${filename_base%.yaml}         # e.g. 30-gitlab-kubeadm
@@ -196,13 +196,13 @@ ansible_menu_handler() {
           playbook="10-provision-${target_service}.yaml"  # fallback
           ;;
       esac
-      
+
       log_divider
       log_print "INFO" "Selected Inventory: ${inventory}"
       log_print "INFO" "Derived Service:    ${target_service}"
       log_print "INFO" "Mapped Playbook:    ${playbook}"
       log_divider
-      
+
       if [ ! -f "${ANSIBLE_DIR}/playbooks/${playbook}" ]; then
         log_print "FATAL" "Mapped playbook '${playbook}' does not exist at ${ANSIBLE_DIR}/playbooks/${playbook}"
         continue

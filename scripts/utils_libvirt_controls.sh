@@ -4,48 +4,54 @@
 
 # Resources Mapping
 declare -A DOMAIN_MAP=(
-	["10-vault-raft"]="vault-raft"
+	["15-shared-vault"]="core-vault-raft-node"
+	["10-shared-load-balancer"]="core-central-lb-node"
 
-	["30-dev-harbor-core"]="dev-harbor"
-	["30-gitlab-postgres"]="gitlab-postgres-"
-	["30-gitlab-redis"]="gitlab-redis-"
-	["30-gitlab-minio"]="gitlab-minio-"
-	["40-gitlab-kubeadm"]="gitlab-kubeadm-"
+	["30-infra-gitlab-postgres"]="core-gitlab-postgres-node core-gitlab-etcd-node"
+	["30-infra-gitlab-redis"]="core-gitlab-redis-node"
+	["30-infra-gitlab-minio"]="core-gitlab-minio-node"
+	["30-infra-gitlab-kubeadm"]="core-gitlab-frontend"
 
-	["30-harbor-postgres"]="harbor-postgres-"
-	["30-harbor-redis"]="harbor-redis-"
-	["30-harbor-minio"]="harbor-minio-"
-	["40-harbor-microk8s"]="harbor-microk8s-"
+  ["30-infra-harbor-bootstrapper"]="core-harbor-bootstrapper-frontend-node"
+	["30-infra-harbor-microk8s"]="core-harbor-frontend-node"
+	["30-infra-harbor-postgres"]="core-harbor-postgres-node core-harbor-etcd-node"
+	["30-infra-harbor-redis"]="core-harbor-redis-node"
+	["30-infra-harbor-minio"]="core-harbor-minio-node"
 )
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-	["10-vault-raft"]="iac-vault-raft"
-	["30-dev-harbor-core"]="iac-dev-harbor-frontend"
-	["30-gitlab-postgres"]="iac-gitlab-postgres"
-	["30-gitlab-redis"]="iac-gitlab-redis"
-	["30-gitlab-minio"]="iac-gitlab-minio"
-	["40-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+	["15-shared-vault"]="iac-core-vault-raft-pool"
+	["10-shared-load-balancer"]="iac-core-central-lb-pool"
 
-	["30-harbor-postgres"]="iac-harbor-postgres"
-	["30-harbor-redis"]="iac-harbor-redis"
-	["30-harbor-minio"]="iac-harbor-minio"
-	["40-harbor-microk8s"]="iac-harbor-microk8s"
+	["30-infra-gitlab-postgres"]="iac-core-gitlab-postgres-pool iac-core-gitlab-etcd-pool"
+	["30-infra-gitlab-redis"]="iac-core-gitlab-redis-pool"
+	["30-infra-gitlab-minio"]="iac-core-gitlab-minio-pool"
+	["30-infra-gitlab-kubeadm"]="iac-core-gitlab-frontend-pool"
+
+  ["30-infra-harbor-bootstrapper"]="iac-core-harbor-bootstrapper-frontend-pool"
+	["30-infra-harbor-microk8s"]="iac-core-harbor-frontend-pool"
+	["30-infra-harbor-postgres"]="iac-core-harbor-postgres-pool iac-core-harbor-etcd-pool"
+	["30-infra-harbor-redis"]="iac-core-harbor-redis-pool"
+	["30-infra-harbor-minio"]="iac-core-harbor-minio-pool"
 )
 
-# Network prefixes.
+# Network prefixes (Segment Keys).
 declare -A NET_MAP=(
-	["10-vault-raft"]="iac-vault-raft"
-	["30-dev-harbor-core"]="iac-dev-harbor-frontend"
-	["30-gitlab-postgres"]="iac-gitlab-postgres"
-	["30-gitlab-redis"]="iac-gitlab-redis"
-	["30-gitlab-minio"]="iac-gitlab-minio"
-	["40-gitlab-kubeadm"]="iac-gitlab-kubeadm"
+	["15-shared-vault"]="vault"
+	["10-shared-load-balancer"]="central-lb"
 
-	["30-harbor-postgres"]="iac-harbor-postgres"
-	["30-harbor-redis"]="iac-harbor-redis"
-	["30-harbor-minio"]="iac-harbor-minio"
-	["40-harbor-microk8s"]="iac-harbor-microk8s"
+
+	["30-infra-gitlab-postgres"]="gitlab-postgres gitlab-etcd"
+	["30-infra-gitlab-redis"]="gitlab-redis"
+	["30-infra-gitlab-minio"]="gitlab-minio"
+	["30-infra-gitlab-kubeadm"]="gitlab"
+
+  ["30-infra-harbor-bootstrapper"]="harbor-bootstrapper"
+	["30-infra-harbor-microk8s"]="harbor"
+  ["30-infra-harbor-postgres"]="harbor-postgres harbor-etcd"
+	["30-infra-harbor-redis"]="harbor-redis"
+	["30-infra-harbor-minio"]="harbor-minio"
 )
 
 # Function: Ensure libvirt service is running before executing a command.
@@ -55,7 +61,7 @@ libvirt_service_manager() {
   # Use 'is-active' for a clean check without parsing text.
   if ! sudo systemctl is-active --quiet libvirtd; then
     log_print "WARN" "libvirt service is not running. Attempting to start it..."
-    
+
     # Use 'sudo' as this is a system-level service.
     if sudo systemctl start libvirtd; then
       log_print "OK" "libvirt service started successfully."
@@ -108,10 +114,10 @@ libvirt_resource_purger() {
   # 2. Deduplicate the resource lists
   local unique_domain_prefixes
 	unique_domain_prefixes="$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-  
+
 	local unique_pool_names
 	unique_pool_names="$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-  
+
 	local unique_net_prefixes
 	unique_net_prefixes="$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 
@@ -149,9 +155,8 @@ libvirt_resource_purger() {
 
   # 5. Purge Networks
   log_print "STEP" "Purging Networks..."
-  for prefix in ${unique_net_prefixes}; do
-    for suffix in "nat" "nat-net" "hostonly" "hostonly-net"; do
-      local net_name="${prefix}-${suffix}"
+  for seg_key in ${unique_net_prefixes}; do
+    for net_name in "${seg_key}" "iac-${seg_key}-nat"; do
       if sudo virsh net-info "$net_name" >/dev/null 2>&1; then
         log_print "TASK" "Destroying and undefining network: $net_name"
         sudo virsh net-destroy "$net_name" >/dev/null 2>&1 || true

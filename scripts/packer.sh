@@ -16,10 +16,11 @@ packer_artifact_cleaner() {
 
   if [[ "$target_layer" == "all" ]]; then
     log_print "INFO" "Preparing to clean all Packer output directories..."
-    if [ ${#ALL_PACKER_BASES[@]} -eq 0 ]; then
-      log_print "WARN" "ALL_PACKER_BASES array is not defined. Cannot clean 'all'."
+    if [ -z "${ALL_PACKER_BASES}" ]; then
+      log_print "WARN" "ALL_PACKER_BASES is empty. Cannot clean 'all'."
     else
-      layers_to_clean=("${ALL_PACKER_BASES[@]}")
+      # Convert space-separated string from .env into an array
+      read -r -a layers_to_clean <<< "${ALL_PACKER_BASES}"
     fi
   else
     layers_to_clean=("$target_layer")

@@ -1,0 +1,43 @@
+
+data "terraform_remote_state" "metadata" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "load_balancer" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../10-shared-load-balancer/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vault_sys" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../15-shared-vault/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vault_pki" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../20-security-pki/terraform.tfstate"
+  }
+}
+
+data "vault_generic_secret" "prod_credential" {
+  provider = vault.bootstrapper
+  path     = "secret/on-premise-gitlab-deployment/infrastructure"
+}
+
+data "vault_generic_secret" "iac_vars" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/variables"
+}
+
+data "vault_generic_secret" "db_vars" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/gitlab/databases"
+}

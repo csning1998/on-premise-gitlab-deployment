@@ -111,7 +111,7 @@
     - name: "Step B1. Retrieve Harbor Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ vault_addr }}"
-        path: "on-premise-gitlab-deployment/dev-harbor/app"
+        path: "on-premise-gitlab-deployment/harbor-bootstrapper/app"
         engine_mount_point: "secret"
         auth_method: approle
         role_id: "{{ vault_agent_role_id }}"

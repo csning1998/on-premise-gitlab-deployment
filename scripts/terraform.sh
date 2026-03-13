@@ -15,7 +15,8 @@ terraform_artifact_cleaner() {
   local layers_to_clean=()
   if [[ "$target_layer" == "all" ]]; then
     log_print "STEP" "Preparing to clean all Terraform layers..."
-    layers_to_clean=("${ALL_LAYERS[@]}")
+    # Convert space-separated string from .env into an array
+    read -r -a layers_to_clean <<< "${ALL_TERRAFORM_LAYERS}"
   else
     layers_to_clean=("$target_layer")
   fi

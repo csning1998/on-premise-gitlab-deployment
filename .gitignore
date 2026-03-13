@@ -67,3 +67,4 @@ pull-request.md
 *.bak
 terraform/layers/**/*.output.json
 .gitignore
+note.md
