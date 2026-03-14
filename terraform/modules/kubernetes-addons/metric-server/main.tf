@@ -1,20 +1,23 @@
 
 resource "helm_release" "metrics_server" {
+  count = var.helm_config.install ? 1 : 0
 
-  # Ref: https://artifacthub.io/packages/helm/metrics-server/metrics-server
+  name             = "metrics-server"
+  repository       = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart            = "metrics-server"
+  namespace        = var.helm_config.namespace
+  version          = var.helm_config.version
+  create_namespace = var.helm_config.create_namespace
+  cleanup_on_fail  = true
 
-  name            = "metrics-server"
-  repository      = "https://kubernetes-sigs.github.io/metrics-server/"
-  chart           = "metrics-server"
-  namespace       = "kube-system"
-  version         = "3.13.0"
-  cleanup_on_fail = true
-
-  values = [
-    # Allow the chart metrics-server to connect to the kubelet's metrics endpoint
-    yamlencode({
-      # Will be fixed soon
-      args = ["--kubelet-insecure-tls"]
-    })
+  set = [
+    {
+      name  = "image.repository"
+      value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/metrics-server"
+    },
+    {
+      name  = "args[0]"
+      value = "--kubelet-insecure-tls"
+    }
   ]
 }

@@ -1,5 +1,5 @@
 
-variable "k8s_connection" {
+variable "api_server_connection" {
   description = "Connection information of Kubernetes API Server, used for Vault authentication callback"
   type = object({
     host    = string
@@ -52,11 +52,15 @@ variable "helm_config" {
     version          = string
     namespace        = string
     create_namespace = bool
+    image_registry   = string
+    image_repository = string
   })
   default = {
     install          = true
     version          = "v1.14.0"
     namespace        = "cert-manager"
     create_namespace = true
+    image_registry   = "quay.io"
+    image_repository = "jetstack"
   }
 }

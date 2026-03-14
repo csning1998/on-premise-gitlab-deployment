@@ -29,5 +29,5 @@ provider "vault" {
   alias        = "production"
   address      = local.sys_vault_addr
   token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
-  ca_cert_file = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_path
+  ca_cert_file = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca.path
 }

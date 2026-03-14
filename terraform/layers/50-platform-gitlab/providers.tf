@@ -15,38 +15,46 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "5.3.0"
+      version = "5.5.0"
     }
   }
 }
 
 provider "vault" {
+  alias        = "bootstrapper"
+  address      = var.vault_dev_addr
+  token        = trimspace(file(abspath("${path.root}/../../../vault/keys/root-token.txt")))
+  ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
+}
+
+provider "vault" {
+  alias        = "production"
   address      = local.vault_address
-  ca_cert_file = abspath("${path.root}/../10-vault-raft/tls/vault-ca.crt")
-  token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
+  ca_cert_file = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca.path
+  token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
 }
 
 # Configure the Kubernetes provider using details from the remote state
 provider "kubernetes" {
-  host                   = local.k8s_provider_auth.host
-  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-  client_certificate     = local.k8s_provider_auth.client_certificate
-  client_key             = local.k8s_provider_auth.client_key
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
 }
 
 provider "kubectl" {
   load_config_file       = false
-  host                   = local.k8s_provider_auth.host
-  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-  client_certificate     = local.k8s_provider_auth.client_certificate
-  client_key             = local.k8s_provider_auth.client_key
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.k8s_provider_auth.host
-    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-    client_certificate     = local.k8s_provider_auth.client_certificate
-    client_key             = local.k8s_provider_auth.client_key
+    host                   = local.api_server_connection.host
+    cluster_ca_certificate = local.api_server_connection.ca_cert
+    client_certificate     = local.api_server_connection.client_certificate
+    client_key             = local.api_server_connection.client_key
   }
 }

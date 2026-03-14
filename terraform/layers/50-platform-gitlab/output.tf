@@ -8,11 +8,18 @@ output "trust_context" {
 }
 
 output "ingress_context" {
-  description = "Ingress controller details"
+  description = "Ingress controller details formatted for SSoT consumption"
   value = {
-    class_name       = var.ingress_class_name
-    load_balancer_ip = data.terraform_remote_state.kubeadm_provision.outputs.gitlab_kubeadm_virtual_ip
-    http_node_ports  = data.terraform_remote_state.kubeadm_provision.outputs.gitlab_http_nodeport
-    https_node_ports = data.terraform_remote_state.kubeadm_provision.outputs.gitlab_https_nodeport
+    load_balancer_ip = local.state.kubeadm.service_vip
+    http_node_port   = local.ssot_gitlab.meta.ports["ingress-http"].backend_port
+    https_node_port  = local.ssot_gitlab.meta.ports["ingress-https"].backend_port
+  }
+}
+
+output "cert_manager_info" {
+  description = "Summary of Cert-Manager and Issuer installation"
+  value = {
+    namespace   = var.cert_manager_config.namespace
+    issuer_name = module.platform_trust_engine.issuer_name
   }
 }

@@ -39,8 +39,8 @@ resource "kubernetes_secret" "vault_reviewer_token" {
 # Configure Vault's Kubernetes Auth Method that K8s Host, CA and Reviewer Token are injected into Vault
 resource "vault_kubernetes_auth_backend_config" "config" {
   backend                = var.vault_config.auth_path
-  kubernetes_host        = var.k8s_connection.host
-  kubernetes_ca_cert     = var.k8s_connection.ca_cert
+  kubernetes_host        = var.api_server_connection.host
+  kubernetes_ca_cert     = var.api_server_connection.ca_cert
   token_reviewer_jwt     = kubernetes_secret.vault_reviewer_token.data["token"]
   disable_iss_validation = true
 }
@@ -59,6 +59,22 @@ resource "helm_release" "cert_manager" {
     {
       name  = "installCRDs"
       value = "true"
+    },
+    {
+      name  = "image.repository"
+      value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/cert-manager-controller"
+    },
+    {
+      name  = "webhook.image.repository"
+      value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/cert-manager-webhook"
+    },
+    {
+      name  = "cainjector.image.repository"
+      value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/cert-manager-cainjector"
+    },
+    {
+      name  = "startupapicheck.image.repository"
+      value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/cert-manager-startupapicheck"
     }
   ]
 }

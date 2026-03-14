@@ -1,9 +1,9 @@
 
-# Kubeadm Cluster State
-data "terraform_remote_state" "kubeadm_provision" {
+# Foundation Metadata State (SSoT)
+data "terraform_remote_state" "metadata" {
   backend = "local"
   config = {
-    path = "../40-gitlab-kubeadm/terraform.tfstate"
+    path = "../00-foundation-metadata/terraform.tfstate"
   }
 }
 
@@ -11,7 +11,7 @@ data "terraform_remote_state" "kubeadm_provision" {
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-vault-pki/terraform.tfstate"
+    path = "../20-security-pki/terraform.tfstate"
   }
 }
 
@@ -19,27 +19,50 @@ data "terraform_remote_state" "vault_pki" {
 data "terraform_remote_state" "redis" {
   backend = "local"
   config = {
-    path = "../30-gitlab-redis/terraform.tfstate"
+    path = "../30-infra-gitlab-redis/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "postgres" {
   backend = "local"
   config = {
-    path = "../30-gitlab-postgres/terraform.tfstate"
+    path = "../30-infra-gitlab-postgres/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
-    path = "../30-gitlab-minio/terraform.tfstate"
+    path = "../30-infra-gitlab-minio/terraform.tfstate"
   }
 }
 
-# Vault Secrets for reading database and service passwords.
-data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/gitlab/databases"
+# Kubeadm Cluster State
+data "terraform_remote_state" "kubeadm" {
+  backend = "local"
+  config = {
+    path = "../30-infra-gitlab-kubeadm/terraform.tfstate"
+  }
+}
+
+# Harbor Bootstrapper State
+data "terraform_remote_state" "harbor_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "../40-provision-harbor-bootstrapper/terraform.tfstate"
+  }
+}
+
+# 1. Fetch Production Credential from Bootstrapper Vault
+data "vault_generic_secret" "prod_credential" {
+  provider = vault.bootstrapper
+  path     = "secret/on-premise-gitlab-deployment/infrastructure"
+}
+
+# 2. Fetch Kubeconfig from Production Vault
+data "vault_generic_secret" "kubeconfig" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
 }
 
 # Fetch the Cluster CA

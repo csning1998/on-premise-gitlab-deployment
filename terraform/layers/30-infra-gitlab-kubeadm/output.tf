@@ -1,7 +1,12 @@
 
 output "service_vip" {
-  description = "The virtual IP assigned to the Vault service from Central LB topology."
+  description = "The virtual IP assigned to the GitLab Kubeadm service from Central LB topology."
   value       = local.net_service_vip
+}
+
+output "pod_subnet" {
+  description = "The pod subnet CIDR used for the Kubernetes cluster."
+  value       = var.kubernetes_cluster_configuration.pod_subnet
 }
 
 output "credentials_system" {
