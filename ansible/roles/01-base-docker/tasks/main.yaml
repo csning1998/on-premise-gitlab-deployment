@@ -34,7 +34,13 @@
     groups: "{{ docker_base.group_name }}"
     append: true
 
-- name: "Step 7. Verify Docker installation"
+- name: "Step 7. Enable and Start Docker service"
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: "Step 8. Verify Docker installation"
   ansible.builtin.command:
     cmd: "docker info"
   become: true

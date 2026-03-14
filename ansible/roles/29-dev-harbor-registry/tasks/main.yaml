@@ -137,16 +137,39 @@
       args:
         creates: "{{ harbor_install_dir }}/docker-compose.yml"
 
-    - name: "Step C3. Reconfigure Harbor (If Config Changed)"
+    - name: "Step C2.1. Find docker executable"
+      ansible.builtin.command: which docker
+      register: docker_exec
+      changed_when: false
+      check_mode: false
+
+    - name: "Step C3. Deploy Harbor Systemd Service"
+      ansible.builtin.template:
+        src: harbor.service.j2
+        dest: /etc/systemd/system/harbor.service
+        owner: root
+        group: root
+        mode: "0644"
+      vars:
+        docker_executable: "{{ docker_exec.stdout }}"
+      notify: Restart Harbor Service
+
+    - name: "Step C4. Enable and Start Harbor Service"
+      ansible.builtin.systemd:
+        name: harbor
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: "Step C5. Reconfigure Harbor (If Config Changed)"
       ansible.builtin.shell:
         cmd: |
-          docker compose down -v
           ./prepare
-          docker compose up -d
         chdir: "{{ harbor_install_dir }}"
       when:
         - harbor_system_config_status.changed
         - not (ansible_check_mode | bool)
+      notify: Restart Harbor Service
 
 - name: "Section D: Verification"
   block:

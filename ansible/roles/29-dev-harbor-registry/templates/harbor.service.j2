@@ -1,0 +1,15 @@
+[Unit]
+Description=Harbor Bootstrapper Service
+After=docker.service vault-agent.service
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory={{ harbor_install_dir }}
+ExecStart={{ docker_executable | default('/usr/bin/docker') }} compose up
+ExecStop={{ docker_executable | default('/usr/bin/docker') }} compose down
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

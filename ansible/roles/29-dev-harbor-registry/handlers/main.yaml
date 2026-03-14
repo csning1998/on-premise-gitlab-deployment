@@ -11,3 +11,10 @@
     name: fix-vault-routes.service
     state: restarted
     daemon_reload: true
+
+- name: Restart Harbor Service
+  listen: "Restart Harbor Service"
+  ansible.builtin.systemd:
+    name: harbor
+    state: restarted
+    daemon_reload: true
