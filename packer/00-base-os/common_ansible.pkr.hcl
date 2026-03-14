@@ -1,1 +1,0 @@
-../common_ansible.pkr.hcl

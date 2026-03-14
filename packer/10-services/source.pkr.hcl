@@ -56,7 +56,7 @@ source "qemu" "ubuntu" {
   cd_label = "cidata"
 
   # Boot & SSH
-  boot_wait = "0s"
+  boot_wait = "5s"
 
   ssh_username     = local.ssh_username
   ssh_password     = local.ssh_password
