@@ -35,6 +35,13 @@
 - name: "Block B: Configure Containerd Registry endpoint"
   become: true
   block:
+    - name: "Step B0. Ensure local DNS override for Harbor Bootstrapper Registry in /etc/hosts"
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^.*\s+{{ kubeadm_registry_host | regex_escape() }}$'
+        line: "{{ kubeadm_registry_vip }} {{ kubeadm_registry_host }}"
+        state: present
+
     - name: "Step B1. Ensure /etc/containerd/certs.d directories exist"
       ansible.builtin.file:
         path: "/etc/containerd/certs.d/{{ item }}"

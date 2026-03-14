@@ -105,7 +105,7 @@ libvirt_resource_purger() {
       log_print "INFO" "Adding resources for target: $target"
       domain_prefixes_to_purge+=("${DOMAIN_MAP[$target]}")
       pool_names_to_purge+=("${POOL_MAP[$target]}")
-      net_prefixes_to_purge+=("${NET_MAP[$target]}")
+      # Note: Individual layer networks are preserved. Use 'all' target to purge networks.
     else
       log_print "WARN" "Unknown target '$target'. Skipping."
     fi

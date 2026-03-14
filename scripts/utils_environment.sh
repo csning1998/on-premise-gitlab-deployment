@@ -129,7 +129,7 @@ UHOME=\${HOME}
 PKR_VAR_NET_BRIDGE=""
 PKR_VAR_NET_DEVICE="virtio-net"
 
-# For Podman on Ubuntu/RHEL to get the GID of the libvirt group
+# For Podman on Ubuntu/Fedora/RHEL to get the GID of the libvirt group
 LIBVIRT_GID=${current_libvirt_gid}
 EOF
     log_print "OK" ".env file created successfully."

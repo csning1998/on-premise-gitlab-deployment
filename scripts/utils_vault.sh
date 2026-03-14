@@ -15,7 +15,7 @@ readonly DEV_KEYS_DIR="${SCRIPT_DIR}/vault/keys"
 readonly DEV_TLS_DIR="${SCRIPT_DIR}/vault/tls"
 readonly DEV_INIT_FILE="${DEV_KEYS_DIR}/init-output.json"
 readonly DEV_UNSEAL_KEY_FILE="${DEV_KEYS_DIR}/unseal.key"
-readonly DEV_ROOT_TOKEN_FILE="${DEV_KEYS_DIR}/root-token.txt"
+readonly DEV_ROOT_TOKEN_FILE="$HOME/.vault-token"
 
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
@@ -158,21 +158,38 @@ vault_dev_tls_generator() {
   log_print "OK" "Dev Vault TLS Certificates generated."
 }
 
+# Function: Sync ~/.vault-token to .env
+vault_token_sync_handler() {
+  if [ ! -f "$DEV_ROOT_TOKEN_FILE" ]; then
+    log_print "WARN" "Token file $DEV_ROOT_TOKEN_FILE not found. Skipping sync."
+    return 0
+  fi
+
+  log_print "TASK" "Syncing DEV_VAULT_TOKEN in .env from $DEV_ROOT_TOKEN_FILE..."
+  local token
+  token=$(cat "$DEV_ROOT_TOKEN_FILE")
+  env_var_mutator "DEV_VAULT_TOKEN" "${token}"
+  
+  # Also set for current session
+  export DEV_VAULT_TOKEN="${token}"
+  export VAULT_TOKEN="${token}"
+}
+
 # Function: Ensure KV Engine is enabled (Dev Vault)
 vault_dev_engine_enforcer() {
   log_print "TASK" "[Development Vault] Ensuring KV secrets engine is enabled at 'secret/'..."
 
   if [ ! -f "$DEV_ROOT_TOKEN_FILE" ]; then
-		log_print "ERROR" "Root token not found. Cannot configure engine."
-		return 1
+    log_print "ERROR" "Root token not found. Cannot configure engine."
+    return 1
   fi
 
-  local token
-  token=$(cat "$DEV_ROOT_TOKEN_FILE")
+  local root_token
+  root_token=$(cat "$DEV_ROOT_TOKEN_FILE")
 
-  if ! VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="$token" vault secrets list -ca-cert="${DEV_CA}" -format=json | jq -e '."secret/"' > /dev/null; then
+  if ! VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="${root_token}" vault secrets list -ca-cert="${DEV_CA}" -format=json | jq -e '."secret/"' > /dev/null; then
     log_print "TASK" "'secret/' path not found, enabling kv-v2..."
-    VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="$token" vault secrets enable -ca-cert="${DEV_CA}" -path=secret kv-v2
+    VAULT_ADDR="$DEV_VAULT_ADDR" VAULT_TOKEN="${root_token}" vault secrets enable -ca-cert="${DEV_CA}" -path=secret kv-v2
   else
     log_print "INFO" "kv-v2 secrets engine is already enabled."
   fi
@@ -197,20 +214,23 @@ vault_dev_init_handler() {
 
   # Extract Keys
   jq -r .unseal_keys_b64[] "$DEV_INIT_FILE" > "$DEV_UNSEAL_KEY_FILE"
+
+  # Save Root Token directly to User Home for Vault Native Fallback
   jq -r .root_token "$DEV_INIT_FILE" > "$DEV_ROOT_TOKEN_FILE"
+  chmod 600 "$DEV_ROOT_TOKEN_FILE"
+  log_print "INFO" "Vault root token saved to $DEV_ROOT_TOKEN_FILE"
+
   chmod 600 "$DEV_KEYS_DIR"/*
 
-	log_print "TASK" "Automatically updating DEV_VAULT_TOKEN in .env file..."
-  local new_token
-  new_token=$(cat "$DEV_ROOT_TOKEN_FILE")
-  env_var_mutator "DEV_VAULT_TOKEN" "${new_token}"
+  # Sync to .env
+  vault_token_sync_handler
 
-	log_print "INFO" "Keys saved to ${DEV_KEYS_DIR}"
+  log_print "INFO" "Keys saved to ${DEV_KEYS_DIR}"
 
   # Auto Unseal
   vault_dev_unseal_handler
 
-	vault login -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_VAULT_CACERT}" "${new_token}"
+	vault login -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_VAULT_CACERT}" "${VAULT_TOKEN}"
 
   # Auto Configure Engine
   vault_dev_engine_enforcer
@@ -241,13 +261,13 @@ vault_dev_unseal_handler() {
 
   log_print "OK" "Dev Vault Unsealed."
 
-  # Export for current session
+  # Export and Sync
   if [ -f "$DEV_ROOT_TOKEN_FILE" ]; then
-		DEV_VAULT_TOKEN=$(cat "$DEV_ROOT_TOKEN_FILE")
-		export DEV_VAULT_TOKEN
-		export VAULT_ADDR="${DEV_VAULT_ADDR}"
-		export VAULT_CACERT="${DEV_CA}"
-		log_print "INFO" "Exported DEV_VAULT_TOKEN and set VAULT_ADDR to Dev Vault for this session."
+    vault_token_sync_handler
+    export VAULT_ADDR="${DEV_VAULT_ADDR}"
+    export VAULT_CACERT="${DEV_CA}"
+    # Note: VAULT_TOKEN is exported by vault_token_sync_handler.
+    log_print "INFO" "Vault environment variables set for this session (Synced from ~/.vault-token)."
   fi
 }
 

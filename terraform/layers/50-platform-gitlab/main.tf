@@ -29,10 +29,10 @@ module "platform_trust_engine" {
   # 3. Issuer Configuration (The "Contract" between K8s and Vault)
   issuer_config = {
     name             = var.trust_engine_config.issuer_name
+    bound_namespaces = var.trust_engine_config.authorized_namespaces
     issue_path       = "sign"
     vault_role_name  = local.vault_role_name
     pki_mount_path   = local.vault_pki_path
-    bound_namespaces = var.trust_engine_config.authorized_namespaces
     token_policies   = [local.vault_policy_name]
   }
 

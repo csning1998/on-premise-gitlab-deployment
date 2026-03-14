@@ -1,7 +1,7 @@
 
-server = "https://{{ kubeadm_registry_vip }}" # Refactor Needed: Change to {{ kubeadm_registry_host }} once DNS is stable
+server = "https://{{ kubeadm_registry_host }}"
 
-[host."https://{{ kubeadm_registry_vip }}"] # Refactor Needed: Change to {{ kubeadm_registry_host }} once DNS is stable
+[host."https://{{ kubeadm_registry_host }}"]
     capabilities = ["pull", "resolve", "push"]
     skip_verify = false
     override_path = true
