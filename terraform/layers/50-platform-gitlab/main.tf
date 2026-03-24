@@ -1,7 +1,7 @@
 
 module "tigera_calico" {
   source         = "../../modules/kubernetes-addons/tigera-calico"
-  pod_subnet     = local.state.kubeadm.pod_subnet
+  pod_subnet     = local.state.kubeadm.kubernetes_config.pod_subnet
   image_registry = local.harbor_registry
   image_path     = local.harbor_quay_proxy
 }

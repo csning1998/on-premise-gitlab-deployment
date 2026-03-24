@@ -3,41 +3,23 @@ module "minio_harbor" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
-  svc_identity = local.svc_minio_identity
-  node_identities = {
-    "minio" = local.svc_minio_identity
-  }
+  svc_identity    = local.svc_identity
+  node_identities = local.node_identities
 
   # Topology (Compute & Storage)
-  topology_cluster = local.topology_cluster
+  topology_cluster           = local.topology_cluster
+  storage_infrastructure_map = local.state.volume.storage_infrastructure_map
 
   # Network Infrastructure
   network_infrastructure_map = local.network_infrastructure_map
 
-  # System Credentials
-  credentials_system = local.sec_system_creds
+  # Security & Credentials
+  credentials_system            = local.sec_system_creds
+  security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Generic Ansible Configuration
   ansible_inventory_template_file = var.ansible_files.inventory_template_file
   ansible_playbook_file           = var.ansible_files.playbook_file
   ansible_template_vars           = local.ansible_template_vars
   ansible_extra_vars              = local.ansible_extra_vars
-}
-
-# This timer is to wait for MinIO Cluster to initialize the storage.
-resource "time_sleep" "wait_for_minio_storage" {
-  depends_on      = [module.minio_harbor]
-  create_duration = "30s"
-}
-
-module "minio_harbor_config" {
-  source     = "../../modules/configuration/minio-bucket-setup"
-  providers = {
-    vault = vault.production
-  }
-  depends_on = [time_sleep.wait_for_minio_storage]
-
-  minio_tenants            = var.harbor_minio_tenants
-  vault_secret_path_prefix = "secret/on-premise-gitlab-deployment/harbor/s3_credentials"
-  minio_server_url         = "https://${local.net_service_vip}:${local.net_minio.lb_config.ports["api"].frontend_port}"
 }

@@ -1,5 +1,5 @@
 
-/** 
+/**
  * Virtual Machine Configuration
  * Variables defining the specifications and credentials for the VMs.
 */
@@ -17,19 +17,17 @@ variable "lb_cluster_vm_config" {
   type = object({
     storage_pool_name = string
     nodes = map(object({
-      vcpu            = number
-      ram             = number
-      base_image_path = string
+      vcpu                 = number
+      ram                  = number
+      base_image_path      = string
+      os_disk_capacity_gib = optional(number, 40)
+
       interfaces = list(object({
         network_name = string
         mac          = string
         alias        = optional(string)
         addresses    = optional(list(string), [])
       }))
-      data_disks = optional(list(object({
-        name_suffix = string
-        capacity    = number
-      })), [])
     }))
   })
 }
@@ -108,4 +106,3 @@ variable "credentials_vm" {
     ssh_public_key_path = string
   })
 }
-

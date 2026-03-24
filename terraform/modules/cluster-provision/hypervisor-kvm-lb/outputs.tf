@@ -4,11 +4,7 @@ output "all_nodes_map" {
   value = [
     for key, node in libvirt_domain.nodes : {
       key = key
-      ip = try(
-        var.lb_cluster_vm_config.nodes[key].interfaces[1].addresses[0], # HostOnly
-        var.lb_cluster_vm_config.nodes[key].interfaces[0].addresses[0], # NAT
-        ""
-      )
+      ip = var.lb_cluster_vm_config.nodes[key].interfaces[1].addresses[0]
 
       ram  = var.lb_cluster_vm_config.nodes[key].ram
       vcpu = var.lb_cluster_vm_config.nodes[key].vcpu

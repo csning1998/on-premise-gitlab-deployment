@@ -8,7 +8,7 @@ output "pki_configuration" {
   description = "PKI Configuration Summary"
   value = {
     path             = module.vault_pki_setup.vault_pki_path
-    ca_cert          = module.vault_pki_setup.pki_root_ca_certificate
+    ca_cert          = base64encode(module.vault_pki_setup.pki_root_ca_certificate)
     dependency_roles = module.vault_pki_setup.dependency_roles
     component_roles  = module.vault_pki_setup.component_roles
   }
@@ -45,6 +45,6 @@ output "bootstrap_ca" {
   description = "Bootstrap CA certificate details"
   value = {
     path    = local.bootstrap_ca_path
-    content = file(local.bootstrap_ca_path)
+    content = base64encode(file(local.bootstrap_ca_path))
   }
 }

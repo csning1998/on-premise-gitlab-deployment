@@ -1,6 +1,6 @@
 
-variable "service_catalog_name" {
-  description = "The name of the service catalog. This should match the name in the service catalog."
+variable "target_cluster_name" {
+  description = "The physical cluster name target to deploy the service on, retrieved directly from the SSoT mapping."
   type        = string
 }
 

@@ -11,6 +11,7 @@ global
     # Tuning
     maxconn 50000
     tune.ssl.default-dh-param 2048
+    tune.bufsize 32768
 
     # Default SSL material locations
     ca-base /etc/ssl/certs
@@ -23,8 +24,9 @@ defaults
     option  dontlognull
     maxconn 10000
     timeout connect 5000
-    timeout client  50000
-    timeout server  50000
+    timeout client  150000
+    timeout server  150000
+    timeout http-keep-alive 10000
 
 # Stats Interface, only bind to management IP
 listen stats
@@ -42,10 +44,10 @@ listen stats
 {% if segment.ports %}
 {% for port_name, port_cfg in segment.ports.items() %}
 
-# Frontend for {{ port_name }}
+    # Frontend for {{ port_name }}
 frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
     {# TCP Passthrough for all services — TLS termination is the responsibility of each application #}
-    bind {{ segment.vip }}:{{ port_cfg.frontend }} mss 1400
+    bind {{ segment.vip }}:{{ port_cfg.frontend }}
     mode tcp
     option tcplog
     default_backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
@@ -65,10 +67,10 @@ backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
 
     {% for server in segment.backend_servers %}
     {# If Vault then TCP Passthrough (no ssl), else if Health Check then HTTPS (check-ssl) #}
-    {% if segment.name == 'vault' %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter 3s fall 3 rise 2 check-ssl verify none
+    {% if 'vault' in segment.name %}
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }} check-ssl verify none
     {% else %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter 3s fall 3 rise 2{{ ' ssl verify none' if port_cfg.health_check_ssl | default(false) else '' }}
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{{ ' check-ssl verify none' if port_cfg.health_check_ssl | default(false) else '' }}
     {% endif %}
     {% endfor %}
 

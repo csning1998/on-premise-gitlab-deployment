@@ -1,6 +1,6 @@
 
-variable "service_catalog_name" {
-  description = "The unique service name defined in Layer 00 (e.g. 'vault'). Used to lookup SSoT properties."
+variable "target_cluster_name" {
+  description = "The physical cluster name target to deploy the service on, retrieved directly from the SSoT mapping."
   type        = string
 }
 
@@ -10,27 +10,24 @@ variable "vault_dev_addr" {
   default     = "https://127.0.0.1:8200"
 }
 
-variable "bootstrap_harbor_config" {
-  description = "Compute topology for Bootstrap Harbor service (Single Node)"
-  type = object({
+variable "harbor_bootstrapper_config" {
+  description = "Compute topology for Harbor Bootstrapper service components."
+  type = map(object({
     role            = string
+    network_tier    = optional(string, "default")
     base_image_path = string
-    node = object({
+
+    nodes = map(object({
       ip_suffix            = number
       vcpu                 = number
       ram_size             = number
-      os_disk_capacity_gib = number
-
-      data_disks = optional(list(object({
-        name_suffix  = string
-        capacity_gib = number
-      })), [])
-    })
-  })
+      os_disk_capacity_gib = optional(number)
+    }))
+  }))
 }
 
 variable "ansible_files" {
-  description = "Meta configuration of Ansible inventory for Bootstrap Harbor service."
+  description = "Meta configuration of Ansible inventory for Harbor Bootstrapper service."
   type = object({
     playbook_file           = string
     inventory_template_file = string

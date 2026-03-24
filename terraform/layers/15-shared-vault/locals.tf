@@ -2,37 +2,57 @@
 # State Object
 locals {
   state = {
-    metadata = data.terraform_remote_state.metadata.outputs      # Source from `00-foundation-metadata`
-    network  = data.terraform_remote_state.load_balancer.outputs # Source from `10-shared-load-balancer`
+    metadata = data.terraform_remote_state.metadata.outputs
+    volume   = data.terraform_remote_state.volume.outputs
+    network  = data.terraform_remote_state.network.outputs # Handover through Layer 10
   }
 }
 
-# Service Context
+# 1. Unified SSoT Alignment
 locals {
-  svc_name         = var.service_catalog_name
-  svc_raft_comp    = local.state.metadata.global_service_structure[local.svc_name].components["raft"]
-  svc_identity     = local.svc_raft_comp.identity
-  svc_fqdn         = local.svc_raft_comp.role.dns_san[0]
-  svc_cluster_name = local.svc_identity.cluster_name
+  # Zip Identity and Network properties into a single O(1) lookup map.
+  segments_map = merge([
+    for s_name, components in local.state.metadata.global_topology_identity : {
+      for c_name, identity in components : identity.cluster_name => {
+        identity = identity
+        network  = local.state.metadata.global_topology_network[s_name][c_name]
+        pki_key  = "${s_name}-${c_name}"
+        s_name   = s_name
+        c_name   = c_name
+      }
+    }
+  ]...)
+
+  # Target the cluster using the unified SSoT key passed via tfvars
+  svc_cluster_name = var.target_cluster_name
+  svc_context      = local.segments_map[local.svc_cluster_name]
+
+  svc_identity = local.svc_context.identity
+  svc_network  = local.svc_context.network
+
+  # Fetch DNS from PKI metadata (mapped by s_name-c_name)
+  svc_pki_role = local.state.metadata.global_pki_map[local.svc_context.pki_key]
+  svc_fqdn     = local.svc_pki_role.dns_san[0]
 }
 
-# Network Context
+# 2. Network Context (Inherit from Load Balancer Handover)
 locals {
-  net_vault_infra = local.state.network.infrastructure_map[local.state.metadata.global_service_structure[local.svc_name].network.segment_key]
-  net_service_vip = local.net_vault_infra.lb_config.vip
+  # Layer 10 (network state) provides infrastructure_map keyed by cluster_name
+  net_physical_infra = local.state.network.infrastructure_map[local.svc_cluster_name]
 
-  # Single map of raw infrastructures for KVM
+  # Single map of raw infrastructures for KVM (module consumption)
+  # Act as an adapter, mapping the true physical network to the generic "default" tier.
   network_infrastructure_map = {
-    vault = local.net_vault_infra
+    "default" = local.net_physical_infra
   }
 }
 
-# Security Context
+# 3. Security & Credentials Context (sec_ / pki_)
 locals {
   pki_global_ca = local.state.metadata.global_vault_pki # PKI Artifacts
 
   # System Level Credentials (OS/SSH)
-  sec_system_creds = {
+  sec_vm_creds = {
     username             = data.vault_generic_secret.iac_vars.data["vm_username"]
     password             = data.vault_generic_secret.iac_vars.data["vm_password"]
     ssh_public_key_path  = data.vault_generic_secret.iac_vars.data["ssh_public_key_path"]
@@ -40,57 +60,30 @@ locals {
   }
 }
 
-# Topology Component Construction
+# 4. Topology & Construction
 locals {
   storage_pool_name = local.svc_identity.storage_pool_name
 
   topology_cluster = {
-    storage_pool_name = local.storage_pool_name
     components        = var.vault_config
+    storage_pool_name = local.storage_pool_name
   }
 
+  # Map dynamic component names back to their single physical identity
   node_identities = {
-    "vault" = local.svc_identity
+    for comp_name, comp_config in var.vault_config : comp_name => local.svc_identity
   }
 }
 
-# Node Processing & Grouping
-locals {
-  flat_node_map = merge([
-    for comp_name, comp_data in local.topology_cluster.components : {
-      for node_suffix, node_data in comp_data.nodes :
-      "${local.svc_identity.node_name_prefix}-${node_suffix}" => {
-        ip                   = cidrhost(local.network_infrastructure_map[comp_data.network_tier].network.hostonly.cidr, node_data.ip_suffix)
-        vcpu                 = node_data.vcpu
-        ram_size             = node_data.ram_size
-        os_disk_capacity_gib = node_data.os_disk_capacity_gib
-        data_disks           = node_data.data_disks
-
-        base_image_path = comp_data.base_image_path
-        role            = comp_data.role
-        network_tier    = comp_data.network_tier
-      }
-    }
-  ]...)
-
-  # Group nodes by role for Ansible Inventory
-  nodes_by_role = {
-    for role in distinct(values(local.flat_node_map).*.role) : role => {
-      for name, node in local.flat_node_map : name => node
-      if node.role == role
-    }
-  }
-}
-
-# Ansible Configuration (Dynamic Inventory)
+# 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
-    vault_vip = local.net_service_vip
+    vault_vip = local.net_physical_infra.lb_config.vip
   }
 
   ansible_extra_vars = merge(
     {
-      ansible_user = local.sec_system_creds.username
+      ansible_user = local.sec_vm_creds.username
     },
     local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
       vault_server_cert = local.pki_global_ca.server_cert

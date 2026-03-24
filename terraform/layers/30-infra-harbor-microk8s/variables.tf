@@ -1,16 +1,21 @@
 
-variable "service_catalog_name" {
-  description = "The unique service name defined in Layer 00 (e.g. 'harbor'). Used to lookup SSoT properties."
-  type        = string
-}
-
 variable "vault_dev_addr" {
   description = "The address of the Vault server"
   type        = string
   default     = "https://127.0.0.1:8200"
 }
 
-variable "harbor_microk8s_config" {
+variable "primary_role" {
+  description = "The primary role for this layer (e.g. 'microk8s')."
+  type        = string
+}
+
+variable "target_clusters" {
+  description = "A map that matches roles to the cluster name defined in Layer 00."
+  type        = map(string)
+}
+
+variable "service_config" {
   description = "Compute topology for Harbor Microk8s cluster"
   type = map(object({
     role            = string
@@ -21,12 +26,7 @@ variable "harbor_microk8s_config" {
       ip_suffix            = number
       vcpu                 = number
       ram_size             = number
-      os_disk_capacity_gib = number
-
-      data_disks = optional(list(object({
-        name_suffix  = string
-        capacity_gib = number
-      })), [])
+      os_disk_capacity_gib = optional(number)
     }))
   }))
 }

@@ -6,6 +6,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "volume" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../05-foundation-volume/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "load_balancer" {
   backend = "local"
   config = {

@@ -17,13 +17,14 @@ module "vault_cluster" {
   node_identities = local.node_identities
 
   # Topology (Compute & Storage)
-  topology_cluster = local.topology_cluster
+  topology_cluster           = local.topology_cluster
+  storage_infrastructure_map = local.state.volume.storage_infrastructure_map
 
   # Network Infrastructure (L2/L3)
   network_infrastructure_map = local.network_infrastructure_map
 
   # Security & Credentials
-  credentials_system = local.sec_system_creds
+  credentials_system = local.sec_vm_creds
 
   # Ansible Configuration
   ansible_inventory_template_file = var.ansible_files.inventory_template_file

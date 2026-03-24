@@ -7,10 +7,10 @@ harbor_microk8s_config = {
     network_tier    = "default"
     base_image_path = "../../../packer/output/base-microk8s/ubuntu-24-base-microk8s.qcow2"
     nodes = {
-      "00" = { ip_suffix = 200, vcpu = 4, ram_size = 4096, os_disk_capacity_gib = 40 }
+      "00" = { ip_suffix = 200, vcpu = 4, ram_size = 4096 }
       # Uncomment the following lines for HA setup, abide by node % 2 != 0.
-      # "01" = { ip_suffix = 201, vcpu = 4, ram_size = 4096, os_disk_capacity_gib = 40 }
-      # "02" = { ip_suffix = 202, vcpu = 4, ram_size = 4096, os_disk_capacity_gib = 40 }
+      # "01" = { ip_suffix = 201, vcpu = 4, ram_size = 4096 }
+      # "02" = { ip_suffix = 202, vcpu = 4, ram_size = 4096 }
     }
   }
 }

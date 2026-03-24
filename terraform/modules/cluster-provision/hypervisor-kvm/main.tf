@@ -60,36 +60,11 @@ resource "libvirt_network" "hostonly_net" {
   ]
 }
 
-resource "libvirt_pool" "storage_pool" {
-  name = values(var.libvirt_infrastructure)[0].storage_pool_name
-  type = "dir"
-  target = {
-    path = abspath("/var/lib/libvirt/images/${values(var.libvirt_infrastructure)[0].storage_pool_name}")
-  }
-
-  lifecycle {
-    precondition {
-      condition     = length(distinct([for k, v in var.libvirt_infrastructure : v.storage_pool_name])) <= 1
-      error_message = "All network tiers must use the same storage_pool_name when using this module."
-    }
-  }
-}
-
-locals {
-  # Extract a map of unique base images to avoid creating duplicate base volumes (Copy-on-Write)
-  unique_base_images = toset([for k, v in var.vm_config.all_nodes_map : abspath(v.base_image_path)])
-
-  base_image_map = {
-    for path in local.unique_base_images : basename(path) => path
-  }
-}
-
 resource "libvirt_volume" "base_image" {
-  depends_on = [libvirt_pool.storage_pool]
-  for_each   = local.base_image_map
+  for_each = local.base_image_map
 
   name   = "base-${each.key}"
-  pool   = libvirt_pool.storage_pool.name
+  pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
   format = "qcow2"
 
   create = {
@@ -100,11 +75,11 @@ resource "libvirt_volume" "base_image" {
 }
 
 resource "libvirt_volume" "os_disk" {
-  depends_on = [libvirt_pool.storage_pool, libvirt_volume.base_image]
+  depends_on = [libvirt_volume.base_image]
 
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
-  pool     = libvirt_pool.storage_pool.name
+  pool     = values(var.libvirt_infrastructure)[0].storage_pool_name
   format   = "qcow2"
   capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
 
@@ -115,19 +90,7 @@ resource "libvirt_volume" "os_disk" {
   }
 }
 
-resource "libvirt_volume" "data_disk" {
-  depends_on = [libvirt_pool.storage_pool]
-  for_each   = local.data_disks_flat
-
-  name     = "${each.key}.qcow2"
-  pool     = libvirt_pool.storage_pool.name
-  format   = "qcow2"
-  capacity = each.value.capacity_gib * 1024 * 1024 * 1024 # Libvirt requires volume capacity to be declared in Bytes.
-}
-
 resource "libvirt_cloudinit_disk" "cloud_init" {
-
-  depends_on = [libvirt_pool.storage_pool]
 
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-cloud-init.iso"
@@ -154,7 +117,7 @@ resource "libvirt_volume" "cloud_init_iso" {
   for_each = var.vm_config.all_nodes_map
 
   name   = "${each.key}-cloud-init.iso"
-  pool   = libvirt_pool.storage_pool.name
+  pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
   format = "iso"
 
   create = {
@@ -167,7 +130,6 @@ resource "libvirt_volume" "cloud_init_iso" {
 resource "libvirt_domain" "nodes" {
 
   depends_on = [
-    libvirt_pool.storage_pool,
     libvirt_volume.os_disk,
     libvirt_cloudinit_disk.cloud_init,
     libvirt_volume.cloud_init_iso
@@ -200,22 +162,21 @@ resource "libvirt_domain" "nodes" {
           bus = "virtio"
         }
         source = {
-          pool   = libvirt_pool.storage_pool.name
+          pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
           volume = libvirt_volume.os_disk[each.key].name
         }
       }],
 
-      # 2. Data Disks (vdb, vdc...)
-      [for idx, disk in each.value.data_disks : {
+      # 2. Attached Data Volumes (vdb, vdc...)
+      [for vol in each.value.attached_volumes : {
         device = "disk"
         target = {
-          # idx=0 -> vdb, idx=1 -> vdc
-          dev = "vd${substr("bcdefghijklmnopqrstuvwxyz", idx, 1)}"
+          dev = trimprefix(vol.device_name, "/dev/")
           bus = "virtio"
         }
         source = {
-          pool   = libvirt_pool.storage_pool.name
-          volume = libvirt_volume.data_disk["${each.key}-${disk.name_suffix}"].name
+          pool   = vol.pool
+          volume = vol.volume
         }
       }],
 
@@ -227,7 +188,7 @@ resource "libvirt_domain" "nodes" {
           bus = "sata"
         }
         source = {
-          pool   = libvirt_pool.storage_pool.name
+          pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
           volume = libvirt_volume.cloud_init_iso[each.key].name
         }
       }]

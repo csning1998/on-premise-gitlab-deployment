@@ -20,4 +20,5 @@ all:
 %{ for key, node in all_nodes ~}
         ${key}:
           advertise_ip: ${node.ip}
+          attached_volumes: ${jsonencode(node.attached_volumes)}
 %{ endfor ~}

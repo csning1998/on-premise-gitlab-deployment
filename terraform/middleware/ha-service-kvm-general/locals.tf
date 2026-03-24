@@ -10,7 +10,27 @@ locals {
         vcpu                 = node_data.vcpu
         ram_size             = node_data.ram_size
         os_disk_capacity_gib = node_data.os_disk_capacity_gib
-        data_disks           = node_data.data_disks
+
+        # Auto-Discovery of Attached Volumes from SSoT Volume Map
+        attached_volumes = [
+          for idx, vol in distinct(
+            concat(
+              node_data.attached_volumes, # Keep manually defined volumes if any
+              [
+                for vol_key, vol_data in var.storage_infrastructure_map : {
+                  pool   = vol_data.pool_name
+                  volume = vol_data.volume_name
+                }
+                if startswith(vol_key, "${var.node_identities[comp_name].node_name_prefix}-node-${node_data.ip_suffix}-")
+              ]
+            )
+          ) : merge(
+            # Fallback: assign sequential device name based on index
+            { device_name = "/dev/vd${substr("bcdefghijklmnopqrstuvwxyz", idx, 1)}" },
+            # Override: preserve manually defined device_name if present
+            vol
+          )
+        ]
 
         # The Component Level Specifications are Inherited from Component.
         base_image_path = comp_data.base_image_path
@@ -35,7 +55,7 @@ locals {
         ram_size             = v.ram_size
         os_disk_capacity_gib = v.os_disk_capacity_gib
         base_image_path      = v.base_image_path
-        data_disks           = v.data_disks
+        attached_volumes     = v.attached_volumes
         network_tier         = v.network_tier
       }
     }

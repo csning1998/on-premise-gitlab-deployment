@@ -1,6 +1,6 @@
 
-variable "service_catalog_name" {
-  description = "The unique service name defined in Layer 00 (e.g. 'vault'). Used to lookup SSoT properties."
+variable "target_cluster_name" {
+  description = "The physical cluster name target to deploy the service on, retrieved directly from the SSoT mapping."
   type        = string
 }
 
@@ -14,19 +14,14 @@ variable "vault_config" {
   description = "Compute topology for Vault Core service."
   type = map(object({
     role            = string
-    network_tier    = string
+    network_tier    = optional(string, "default")
     base_image_path = string
 
     nodes = map(object({
       ip_suffix            = number
       vcpu                 = number
       ram_size             = number
-      os_disk_capacity_gib = number
-
-      data_disks = optional(list(object({
-        name_suffix  = string
-        capacity_gib = number
-      })), [])
+      os_disk_capacity_gib = optional(number)
     }))
   }))
 }

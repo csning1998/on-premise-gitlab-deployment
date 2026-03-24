@@ -1,11 +1,15 @@
 
-service_catalog_name = "harbor-bootstrapper"
+target_cluster_name = "core-harbor-bootstrapper-frontend"
 
-bootstrap_harbor_config = {
-  role            = "core"
-  network_tier    = "default"
-  base_image_path = "../../../packer/output/docker-harbor/ubuntu-24-docker-harbor.qcow2"
-  node            = { ip_suffix = 200, vcpu = 2, ram_size = 4096, os_disk_capacity_gib = 40 }
+harbor_bootstrapper_config = {
+  "bootstrapper" = {
+    role            = "core"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/docker-harbor/ubuntu-24-docker-harbor.qcow2"
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096 }
+    }
+  }
 }
 
 ansible_files = {

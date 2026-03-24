@@ -3,7 +3,7 @@ module "central_lb_cluster" {
 
   source = "../../middleware/ha-service-kvm-central-lb"
   svc_identity = merge(local.svc_identity, {
-    service_name = local.svc_name
+    service_name = local.svc_cluster_name
   })
 
   topology_cluster = {
@@ -15,6 +15,8 @@ module "central_lb_cluster" {
     }
   }
 
+  svc_network_map = local.network_map
+
   # Secrets & PKI
   security_pki_bundle     = local.pki_global_ca
   credentials_vm          = local.sec_vm_creds
@@ -22,7 +24,7 @@ module "central_lb_cluster" {
 
   # Infrastructure Setup (Networks are managed by 04-network-topology layer)
   network_infrastructure_map = {
-    (local.svc_name) = local.net_lb_config
+    (local.svc_cluster_name) = local.net_lb_config
   }
   network_service_segments = local.net_service_segments
 

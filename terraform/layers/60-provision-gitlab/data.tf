@@ -1,14 +1,4 @@
 
-
-# Kubeadm Cluster State
-
-data "terraform_remote_state" "kubeadm_provision" {
-  backend = "local"
-  config = {
-    path = "../40-gitlab-kubeadm/terraform.tfstate"
-  }
-}
-
 data "terraform_remote_state" "gitlab_platform" {
   backend = "local"
   config = {
@@ -43,6 +33,14 @@ data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
     path = "../30-gitlab-minio/terraform.tfstate"
+  }
+}
+
+# Kubeadm Cluster State
+data "terraform_remote_state" "kubeadm_provision" {
+  backend = "local"
+  config = {
+    path = "../40-gitlab-kubeadm/terraform.tfstate"
   }
 }
 

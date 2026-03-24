@@ -1,4 +1,17 @@
 
+/**
+ * Layer 00: Foundation Metadata - Variables
+ * 
+ * This file defines the Input Schema for the entire infrastructure's 
+ * Single Source of Truth (SSoT). All downstream layers consume the 
+ * outputs generated based on these variables.
+ *
+ * Requirements:
+ * 1. domain_suffix: Root DNS zone (e.g. iac.local).
+ * 2. network_baseline: Base CIDR and IP allocation strategy.
+ * 3. service_catalog: Mapping of all services and their components.
+ */
+
 variable "domain_suffix" {
   description = "Root Domain across all services."
   type        = string
@@ -46,104 +59,64 @@ variable "network_baseline" {
 }
 
 variable "service_catalog" {
-  description = "The Single Source of Truth (SSoT) for all services, components, and dependencies."
-  type = list(object({
-    name         = string # Must be Unique.
+  description = "The Single Source of Truth (SSoT) for all services, component, ingress, and dependencies."
+  type = map(object({
     owner        = string
     project_code = string
-    provider     = string
-    runtime      = string
     stage        = string
-    cidr_index   = number
-    tags         = optional(list(string), [])
-
-    ip_range = object({
-      start_ip = number
-      end_ip   = number
-    })
-
-    ports = optional(map(object({
-      frontend_port            = number
-      backend_port             = number
-      health_check_type        = optional(string, "tcp")
-      health_check_http_path   = optional(string, "/")
-      health_check_http_expect = optional(string, "status 200")
-      health_check_ssl         = optional(bool, false)
-    })), {})
 
     components = map(object({
-      subdomains  = list(string)
-      node_groups = optional(list(string), [])
-    }))
-
-    dependencies = optional(map(object({
-      component   = string
       provider    = string
       runtime     = string
       cidr_index  = number
       tags        = optional(list(string), [])
       node_groups = optional(list(string), [])
-
-      ip_range = optional(object({
+      ip_range = object({
         start_ip = number
         end_ip   = number
-      }))
-
+      })
       ports = optional(map(object({
-        frontend_port = number
-        backend_port  = number
+        frontend_port            = number
+        backend_port             = number
+        health_check_type        = optional(string, "tcp")
+        health_check_http_path   = optional(string, "/")
+        health_check_http_expect = optional(string, "status 200")
+        health_check_ssl         = optional(bool, false)
       })), {})
-    })), {})
+      data_disks = optional(list(object({
+        name_suffix  = string
+        capacity_gib = optional(number, 20)
+      })), [])
+      ingress = optional(map(object({
+        subdomains  = list(string)
+        node_groups = optional(list(string), [])
+      })), {})
+    }))
   }))
 
-  # Validate Service Name Uniqueness
-  validation {
-    condition     = length(var.service_catalog.*.name) == length(distinct(var.service_catalog.*.name))
-    error_message = "Duplicate 'name' detected in service_catalog! Each service must have a unique identity."
-  }
-
-  # Validate Runtime Enum for Main Service
-  validation {
-    condition = alltrue([
-      for k, v in var.service_catalog : contains(["kubeadm", "microk8s", "baremetal", "docker", "podman", "minikube"], v.runtime)
-    ])
-    error_message = "Service runtime must be one of: kubeadm, microk8s, baremetal, docker, podman, minikube."
-  }
-
-  # Validate Runtime Enum for Dependency
+  # Validate Runtime Enum
   validation {
     condition = alltrue(flatten([
-      for s_key, s_val in var.service_catalog : [
-        for d_key, d_val in s_val.dependencies : contains([
-          "baremetal",           # Dedicated VM
-          "docker", "podman",    # Container
-          "microk8s", "kubeadm", # Orchestrator
-          "external"             # External Service (e.g. cloud database, PAAS)
-        ], d_val.runtime)
+      for s in var.service_catalog : [
+        for c in s.components : contains([
+          "baremetal", "docker", "podman", "microk8s", "kubeadm", "minikube", "external"
+        ], c.runtime)
       ]
     ]))
-    error_message = "Dependency runtime contains invalid values. Refer to the documentation for details."
+    error_message = "Component runtime contains invalid values."
   }
 
-  # Validate Provider Enum for Main Service.
-  validation {
-    condition = alltrue([
-      for k, v in var.service_catalog : contains(["kvm", "aws", "gcp", "azure", "vmware"], v.provider)
-    ])
-    error_message = "Service provider must be one of: kvm, aws, gcp, azure, vmware."
-  }
-
-  # Validate Provider Enum for Dependency
+  # Validate Provider Enum
   validation {
     condition = alltrue(flatten([
-      for s_key, s_val in var.service_catalog : [
-        for d_key, d_val in s_val.dependencies : contains(["kvm", "aws", "gcp", "azure", "vmware"], d_val.provider)
+      for s in var.service_catalog : [
+        for c in s.components : contains(["kvm", "aws", "gcp", "azure", "vmware"], c.provider)
       ]
     ]))
-    error_message = "Dependency provider must be one of: kvm, aws, gcp, azure, vmware."
+    error_message = "Component provider must be one of: kvm, aws, gcp, azure, vmware."
   }
 
-  # Validate Stage Enum for Main Service
+  # Validate Stage Enum
   validation {
     condition = alltrue([
       for k, v in var.service_catalog : contains(["production", "staging", "development"], v.stage)
@@ -151,36 +124,35 @@ variable "service_catalog" {
     error_message = "Service stage must be one of: production, staging, development."
   }
 
-  # Validate CIDR Index for Main Service
+  # Validate CIDR Index Requirements
   validation {
-    condition = alltrue([
-      for k, v in var.service_catalog : v.cidr_index > 124 && v.cidr_index < 255
-    ])
-    error_message = "Service cidr_index must be in range [125, 254]."
+    condition = alltrue(flatten([
+      for s in var.service_catalog : [
+        for c in s.components : c.cidr_index > 124 && c.cidr_index < 255
+      ]
+    ]))
+    error_message = "Component cidr_index must be in range [125, 254]."
   }
 
   # Validate Global CIDR Index Uniqueness
   validation {
     condition = length(flatten([
-      for k, v in var.service_catalog : concat(
-        [v.cidr_index],
-        [for d in values(v.dependencies) : d.cidr_index]
-      )
-      ])) == length(distinct(flatten([
-        for k, v in var.service_catalog : concat(
-          [v.cidr_index],
-          [for d in values(v.dependencies) : d.cidr_index]
-        )
+      for s in var.service_catalog : [
+        for c in s.components : c.cidr_index
+      ]
+    ])) == length(distinct(flatten([
+      for s in var.service_catalog : [
+        for c in s.components : c.cidr_index
+      ]
     ])))
-    error_message = "Duplicate 'cidr_index' detected! Every service and dependency must have a unique CIDR index to avoid network collision."
+    error_message = "Duplicate 'cidr_index' detected! Every component must have a unique CIDR index to avoid network collision."
   }
 
   # Validate Start IP < End IP
   validation {
     condition = alltrue(flatten([
       for s in var.service_catalog : [
-        s.ip_range.end_ip >= s.ip_range.start_ip,
-        [for d in values(s.dependencies) : d.ip_range.end_ip >= d.ip_range.start_ip]
+        for c in s.components : c.ip_range.end_ip >= c.ip_range.start_ip
       ]
     ]))
     error_message = "Invalid reservation: 'end_ip' must be greater than or equal to 'start_ip'."
@@ -190,8 +162,7 @@ variable "service_catalog" {
   validation {
     condition = alltrue(flatten([
       for s in var.service_catalog : [
-        s.ip_range.start_ip > 0 && s.ip_range.end_ip < 255,
-        [for d in values(s.dependencies) : d.ip_range.start_ip > 0 && d.ip_range.end_ip < 255]
+        for c in s.components : c.ip_range.start_ip > 0 && c.ip_range.end_ip < 255
       ]
     ]))
     error_message = "Reservation out of bounds: IPs must be between 1 and 254."
@@ -213,29 +184,16 @@ variable "service_catalog" {
     error_message = "Project code must only contain lowercase letters and numbers."
   }
 
-  # Validate Component Subdomains Non-Empty
+  # Validate Ingress Subdomains Non-Empty
+  # Every ingress entry must have at least one valid subdomain to ensure DNS generation.
   validation {
     condition = alltrue(flatten([
-      for k, v in var.service_catalog : [
-        for c_k, c_v in v.components : length(c_v.subdomains) > 0
+      for k, s in var.service_catalog : [
+        for c_k, c in s.components : [
+          for i_k, i_v in coalesce(c.ingress, {}) : length(i_v.subdomains) > 0
+        ]
       ]
     ]))
-    error_message = "Every component must define at least one subdomain."
-  }
-
-  # Validate Global Segment Key Uniqueness (Service vs. Service-Dependency)
-  validation {
-    condition = length(flatten([
-      for k, v in var.service_catalog : concat(
-        [k],
-        [for d_k, d_v in v.dependencies : "${k}-${d_k}"]
-      )
-      ])) == length(distinct(flatten([
-        for k, v in var.service_catalog : concat(
-          [k],
-          [for d_k, d_v in v.dependencies : "${k}-${d_k}"]
-        )
-    ])))
-    error_message = "Naming collision detected in service keys! A Service name or Service-Dependency combination results in a duplicate segment key, which will cause network configuration failure."
+    error_message = "Every ingress entry must define at least one subdomain."
   }
 }

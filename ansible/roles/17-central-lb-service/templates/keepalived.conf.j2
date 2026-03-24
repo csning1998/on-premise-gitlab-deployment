@@ -17,8 +17,16 @@ vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
 
     {# Priority setting: Node-00 (Master) = 100, Node-01 (Backup) = 90 #}
     priority {{ 100 if 'node-00' in inventory_hostname else 90 }}
-
     advert_int 1
+
+    unicast_src_ip {{ hostvars[inventory_hostname].ansible_host }}
+    unicast_peer {
+{% for host in groups['load_balancer'] %}
+{% if host != inventory_hostname %}
+        {{ hostvars[host].ansible_host }}
+{% endif %}
+{% endfor %}
+    }
 
     authentication {
         auth_type PASS

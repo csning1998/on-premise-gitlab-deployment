@@ -29,6 +29,7 @@
         - inventory_hostname in groups['vault_follower']
         - vault_status_check.rc == 2
         - (vault_status_check.stdout | from_json).initialized == false
+      no_log: true
 
     - name: "F3. Fetch Unseal Keys from Bootstrap Vault"
       community.hashi_vault.vault_kv2_get:
@@ -43,6 +44,7 @@
       when:
         - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
           (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed == true)
+      no_log: true
 
     - name: "F4. Parse Unseal Keys"
       ansible.builtin.set_fact:

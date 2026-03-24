@@ -1,9 +1,9 @@
 ---
-- name: "Section X: Configure Network Routing"
+- name: "Section A: Configure Network Routing"
   become: true
   when: dev_harbor_static_routes is defined and dev_harbor_static_routes | length > 0
   block:
-    - name: "Step X1. Deploy Routing Fix Service"
+    - name: "Step A1. Deploy Routing Fix Service"
       ansible.builtin.template:
         src: fix-routes.service.j2
         dest: /etc/systemd/system/fix-vault-routes.service
@@ -12,29 +12,55 @@
         mode: "0644"
       notify: Restart Route Service
 
-    - name: "Step X2. Enable and Start Routing Fix"
+    - name: "Step A2. Enable and Start Routing Fix"
       ansible.builtin.systemd:
         name: fix-vault-routes.service
         state: restarted
         enabled: true
         daemon_reload: true
 
-- name: "Section A: Configure Vault Agent for PKI Rotation"
+- name: "Section B: Configure Data Storage Volume"
+  become: true
+  vars:
+    data_device: "{{ hostvars[inventory_hostname].attached_volumes[0].device_name }}"
+  block:
+    - name: "Step B1. Format to ext4: {{ data_device }}"
+      community.general.filesystem:
+        fstype: ext4
+        dev: "{{ data_device }}"
+
+    - name: "Step B2. Ensure Harbor Data Directory Exists"
+      ansible.builtin.file:
+        path: "{{ harbor_data_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "Step B3. Mount to Harbor Data Directory: {{ data_device }}"
+      ansible.posix.mount:
+        path: "{{ harbor_data_dir }}"
+        src: "{{ data_device }}"
+        fstype: ext4
+        opts: defaults,noatime,nodiratime
+        state: mounted
+
+- name: "Section C: Configure Vault Agent for PKI Rotation"
   become: true
   block:
-    - name: "Step A0. Ensure Vault Binary is installed"
+    - name: "Step C1. Ensure Vault Binary is installed"
       ansible.builtin.include_role:
         name: 07-base-vault
       vars:
         vault_install_only: true
 
-    - name: "Step A1. Ensure Service Domain resolves to Localhost"
+    - name: "Step C2. Ensure Service Domain resolves to Localhost"
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "127.0.0.1 {{ dev_harbor_service_domain }}"
         state: present
 
-    - name: "Step A2. Create Vault Agent Config Directory"
+    - name: "Step C3. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "{{ vault_agent_config_dir }}/approle"
         state: directory
@@ -42,7 +68,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step A3. Write AppRole Credentials"
+    - name: "Step C4. Write AppRole Credentials"
       ansible.builtin.copy:
         content: "{{ item.content }}"
         dest: "{{ vault_agent_config_dir }}/approle/{{ item.file }}"
@@ -55,7 +81,7 @@
       no_log: true
       notify: Restart Vault Agent
 
-    - name: "Step A4. Deploy Vault CA Certificate"
+    - name: "Step C5. Deploy Vault CA Certificate"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "{{ vault_agent_config_dir }}/vault-ca.crt"
@@ -63,7 +89,7 @@
         group: vault
         mode: "0644"
 
-    - name: "Step A5. Ensure Harbor PKI Directory Exists"
+    - name: "Step C6. Ensure Harbor PKI Directory Exists"
       ansible.builtin.file:
         path: "{{ harbor_pki_dir }}"
         state: directory
@@ -71,7 +97,7 @@
         group: root
         mode: "0755"
 
-    - name: "Step A6. Configure Vault Agent (vault-agent.hcl)"
+    - name: "Step C7. Configure Vault Agent (vault-agent.hcl)"
       ansible.builtin.template:
         src: vault-agent.hcl.j2
         dest: "{{ vault_agent_config_dir }}/vault-agent.hcl"
@@ -80,7 +106,7 @@
         mode: "0640"
       notify: Restart Vault Agent
 
-    - name: "Step A7. Configure Vault Agent Service"
+    - name: "Step C8. Configure Vault Agent Service"
       ansible.builtin.template:
         src: vault-agent.service.j2
         dest: /etc/systemd/system/vault-agent.service
@@ -89,26 +115,26 @@
         mode: "0644"
       notify: Restart Vault Agent
 
-    - name: "Step A8. Start Vault Agent and Wait for Certs"
+    - name: "Step C9. Start Vault Agent and Wait for Certs"
       ansible.builtin.systemd:
         name: vault-agent
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step A8.1. Flush handlers to restart Vault Agent immediately if config changed"
+    - name: "Step C10. Flush handlers to restart Vault Agent immediately if config changed"
       ansible.builtin.meta: flush_handlers
 
-    - name: "Step A9. Wait for Certificate Generation"
+    - name: "Step C11. Wait for Certificate Generation"
       ansible.builtin.wait_for:
         path: "{{ harbor_cert_path }}"
         timeout: 60
         msg: "Timeout waiting for Vault Agent to generate Harbor certificates."
 
-- name: "Section B: Fetch Secrets from Vault"
+- name: "Section D: Fetch Secrets from Vault"
   become: true
   block:
-    - name: "Step B1. Retrieve Harbor Credentials"
+    - name: "Step D1. Retrieve Harbor Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ vault_addr }}"
         path: "on-premise-gitlab-deployment/harbor-bootstrapper/app"
@@ -120,30 +146,30 @@
       register: harbor_vault_secrets
       no_log: true
 
-- name: "Section C: Configure Harbor"
+- name: "Section E: Configure Harbor"
   become: true
   block:
-    - name: "Step C1. Render harbor.yml"
+    - name: "Step E1. Render harbor.yml"
       ansible.builtin.template:
         src: harbor.yml.j2
         dest: "{{ harbor_install_dir }}/harbor.yml"
         mode: "0644"
       register: harbor_system_config_status
 
-    - name: "Step C2. Run Install Script (First Time Only)"
+    - name: "Step E2. Run Install Script (First Time Only)"
       ansible.builtin.command:
         cmd: "./install.sh --with-trivy"
         chdir: "{{ harbor_install_dir }}"
       args:
         creates: "{{ harbor_install_dir }}/docker-compose.yml"
 
-    - name: "Step C2.1. Find docker executable"
+    - name: "Step E3. Find docker executable"
       ansible.builtin.command: which docker
       register: docker_exec
       changed_when: false
       check_mode: false
 
-    - name: "Step C3. Deploy Harbor Systemd Service"
+    - name: "Step E4. Deploy Harbor Systemd Service"
       ansible.builtin.template:
         src: harbor.service.j2
         dest: /etc/systemd/system/harbor.service
@@ -154,14 +180,14 @@
         docker_executable: "{{ docker_exec.stdout }}"
       notify: Restart Harbor Service
 
-    - name: "Step C4. Enable and Start Harbor Service"
+    - name: "Step E5. Enable and Start Harbor Service"
       ansible.builtin.systemd:
         name: harbor
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step C5. Reconfigure Harbor (If Config Changed)"
+    - name: "Step E6. Reconfigure Harbor (If Config Changed)"
       ansible.builtin.shell:
         cmd: |
           ./prepare
@@ -169,11 +195,12 @@
       when:
         - harbor_system_config_status.changed
         - not (ansible_check_mode | bool)
+      changed_when: true
       notify: Restart Harbor Service
 
-- name: "Section D: Verification"
+- name: "Section F: Verification"
   block:
-    - name: "Step D1. Wait for Harbor Health (HTTPS)"
+    - name: "Step F1. Wait for Harbor Health (HTTPS)"
       ansible.builtin.uri:
         url: "https://127.0.0.1/api/v2.0/health"
         validate_certs: false

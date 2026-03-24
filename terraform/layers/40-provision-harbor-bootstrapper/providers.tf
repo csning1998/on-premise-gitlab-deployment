@@ -22,6 +22,7 @@ provider "vault" {
 
 # Production Provider (Layer 10 Vault)
 provider "vault" {
+  alias        = "production"
   address      = local.sys_vault_addr
   token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
   ca_cert_file = local.state.vault_pki.bootstrap_ca.path

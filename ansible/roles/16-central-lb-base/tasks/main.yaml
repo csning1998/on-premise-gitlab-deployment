@@ -35,6 +35,14 @@
         state: present
         reload: true
 
+    - name: "Step A5. Harden Network Stack for High Concurrency (SYN Backlog)"
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: true
+      loop: "{{ central_lb_sysctl_hardening }}"
+
     - name: "Step A5. Disable Systemd Socket Activation for SSH (Ubuntu specific)"
       ansible.builtin.systemd:
         name: ssh.socket

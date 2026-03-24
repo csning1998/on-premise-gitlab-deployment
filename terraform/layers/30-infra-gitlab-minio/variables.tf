@@ -1,8 +1,12 @@
 
-variable "service_catalog_name" {
-  description = "The name of the service mapped in the Layer 00 Single Source of Truth"
+variable "primary_role" {
+  description = "The primary role for this layer (e.g. 'minio')."
   type        = string
-  default     = "gitlab"
+}
+
+variable "target_clusters" {
+  description = "Map of role to physical cluster names."
+  type        = map(string)
 }
 
 variable "vault_dev_addr" {
@@ -11,38 +15,25 @@ variable "vault_dev_addr" {
   default     = "https://127.0.0.1:8200"
 }
 
-variable "gitlab_minio_config" {
-  description = "Compute configuration for Gitlab MinIO service"
+variable "service_config" {
+  description = "Compute topology for MinIO service"
   type = map(object({
     role            = string
+    network_tier    = string
     base_image_path = string
-    network_tier    = optional(string, "default")
     nodes = map(object({
       ip_suffix            = number
       vcpu                 = number
       ram_size             = number
-      os_disk_capacity_gib = number
-      data_disks = optional(list(object({
-        name_suffix  = string
-        capacity_gib = number
-      })), [])
+      os_disk_capacity_gib = optional(number)
     }))
   }))
 }
 
 variable "ansible_files" {
-  description = "Meta configuration of Ansible inventory for Bootstrap Harbor service."
+  description = "Meta configuration of Ansible inventory for MinIO service."
   type = object({
     playbook_file           = string
     inventory_template_file = string
   })
-}
-
-variable "gitlab_minio_tenants" {
-  description = "Map of buckets and users to create for GitLab"
-  type = map(object({
-    user_name      = string
-    enable_version = bool
-    policy_rw      = bool
-  }))
 }

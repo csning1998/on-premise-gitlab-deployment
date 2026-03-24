@@ -58,33 +58,35 @@ resource "libvirt_network" "service_networks" {
   ]
 }
 
-resource "libvirt_pool" "storage_pool" {
-  name = var.lb_cluster_vm_config.storage_pool_name
-  type = "dir"
-  target = {
-    path = abspath("/var/lib/libvirt/images/${var.lb_cluster_vm_config.storage_pool_name}")
-  }
-}
+resource "libvirt_volume" "base_image" {
+  for_each = local.base_image_map
 
-resource "libvirt_volume" "os_disk" {
-
-  depends_on = [libvirt_pool.storage_pool]
-
-  for_each = var.lb_cluster_vm_config.nodes
-  name     = "${each.key}-os.qcow2"
-  pool     = libvirt_pool.storage_pool.name
-  format   = "qcow2"
+  name   = "base-${each.key}"
+  pool   = var.lb_cluster_vm_config.storage_pool_name
+  format = "qcow2"
 
   create = {
     content = {
-      url = abspath(each.value.base_image_path)
+      url = each.value
     }
   }
 }
 
-resource "libvirt_cloudinit_disk" "cloud_init" {
+resource "libvirt_volume" "os_disk" {
+  for_each = var.lb_cluster_vm_config.nodes
 
-  depends_on = [libvirt_pool.storage_pool]
+  pool     = var.lb_cluster_vm_config.storage_pool_name
+  name     = "${each.key}-os.qcow2"
+  format   = "qcow2"
+  capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
+
+  backing_store = {
+    path   = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
+    format = "qcow2"
+  }
+}
+
+resource "libvirt_cloudinit_disk" "cloud_init" {
 
   for_each = var.lb_cluster_vm_config.nodes
   name     = "${each.key}-cloud-init.iso"
@@ -104,7 +106,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
       nat_gateway = var.lb_cluster_network_config.network.nat.ips.address
 
       hostonly_mac     = each.value.interfaces[1].mac
-      hostonly_ip_cidr = try(each.value.interfaces[1].addresses[0], "")
+      hostonly_ip_cidr = each.value.interfaces[1].addresses[0]
       hostonly_gateway = var.lb_cluster_network_config.network.hostonly.ips.address
 
       service_interfaces = [
@@ -112,7 +114,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
           index       = idx
           os_dev_name = "ens${5 + idx}" # ens3=NAT, ens4=HostOnly, Service start from ens5
           mac_address = iface.mac
-          ip_cidr     = try(iface.addresses[0], "")
+          ip_cidr     = iface.addresses[0]
           alias       = iface.alias
         }
       ]
@@ -122,10 +124,9 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 
 resource "libvirt_volume" "cloud_init_iso" {
   for_each = var.lb_cluster_vm_config.nodes
-
-  name   = "${each.key}-cloud-init.iso"
-  pool   = libvirt_pool.storage_pool.name
-  format = "iso"
+  pool     = var.lb_cluster_vm_config.storage_pool_name
+  name     = "${each.key}-cloud-init.iso"
+  format   = "iso"
 
   create = {
     content = {
@@ -140,10 +141,8 @@ resource "libvirt_domain" "nodes" {
     libvirt_network.service_networks,
     libvirt_network.nat_networks,
     libvirt_network.hostonly_networks,
-    libvirt_volume.cloud_init_iso,
     libvirt_volume.os_disk,
-    libvirt_cloudinit_disk.cloud_init,
-    libvirt_pool.storage_pool
+    libvirt_cloudinit_disk.cloud_init
   ]
 
   for_each = var.lb_cluster_vm_config.nodes
@@ -173,7 +172,7 @@ resource "libvirt_domain" "nodes" {
           bus = "virtio"
         }
         source = {
-          pool   = libvirt_pool.storage_pool.name
+          pool   = var.lb_cluster_vm_config.storage_pool_name
           volume = libvirt_volume.os_disk[each.key].name
         }
       },
@@ -185,7 +184,7 @@ resource "libvirt_domain" "nodes" {
           bus = "sata"
         }
         source = {
-          pool   = libvirt_pool.storage_pool.name
+          pool   = var.lb_cluster_vm_config.storage_pool_name
           volume = libvirt_volume.cloud_init_iso[each.key].name
         }
       }

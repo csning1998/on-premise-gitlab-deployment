@@ -1,25 +1,40 @@
 
-# Rotation Trigger if pki_force_rotate is true
+/**
+ * Layer 00: Foundation Metadata - PKI Bootstrap
+ *
+ * This file initializes the Self-Signed Root Authority and generates the
+ * initial server certificates required for the Vault Bootstrap service.
+ *
+ * Security Note:
+ * This layer generates Private Keys and Self-Signed Certificates. These
+ * are exported as sensitive outputs and should be managed with care.
+ */
+
+# Rotation Trigger: Recalculated if pki_force_rotate is manually enabled.
 resource "terraform_data" "pki_rotate" {
   input = var.pki_force_rotate ? timestamp() : "static"
 }
 
 locals {
-  # 1. Locate Vault Service Definition from Catalog
-  vault_svc = [for s in var.service_catalog : s if s.name == "vault"][0]
+  # 1. Locate Vault API Component (frontend) Definition from Catalog
+  # This follows the absolute path in the Map SSoT.
+  vault_svc = var.service_catalog["vault"].components["frontend"]
 
   # 2. Calculate Network Details for Vault
+  # Derives the specific /24 subnet and VIP host.
   vault_cidr = cidrsubnet(var.network_baseline.cidr_block, 8, local.vault_svc.cidr_index)
   vault_vip  = cidrhost(local.vault_cidr, var.network_baseline.vip_offset)
 
   # 3. Calculate All Potential Node IPs in the Range
+  # Required to inject all possible node IPs into the SAN list of the certificate.
   vault_node_ips = [
     for i in range(local.vault_svc.ip_range.end_ip - local.vault_svc.ip_range.start_ip + 1) :
     cidrhost(local.vault_cidr, local.vault_svc.ip_range.start_ip + i)
   ]
 }
 
-# Self-Signed Root CA
+# Root Authority Management
+
 resource "tls_private_key" "root_ca" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -46,7 +61,8 @@ resource "tls_self_signed_cert" "root_ca" {
   }
 }
 
-# Vault Server Certificate
+# Vault Server Certificate Management
+
 resource "tls_private_key" "vault_server" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -66,6 +82,7 @@ resource "tls_cert_request" "vault_server" {
     "localhost"
   ]
 
+  # Inject VIP and all reserved node IPs to avoid TLS validation failures locally.
   ip_addresses = concat(
     ["127.0.0.1", local.vault_vip],
     local.vault_node_ips
@@ -86,7 +103,7 @@ resource "tls_locally_signed_cert" "vault_server" {
     "client_auth",
   ]
 
-  # Rotate if the Root CA rotates OR if the trigger fires
+  # Rotate if the Root CA rotates OR if the force-rotation trigger fires.
   lifecycle {
     replace_triggered_by = [
       tls_self_signed_cert.root_ca,

@@ -1,0 +1,8 @@
+---
+# Default HAProxy health check timings calibrated for high-latency environments.
+# To tighten for production with fast SSDs, override in group_vars or host_vars:
+# haproxy_health_check_inter: "3s"
+# haproxy_health_check_fall: "2"
+haproxy_health_check_inter: "10s"
+haproxy_health_check_fall: "5"
+haproxy_health_check_rise: "3"

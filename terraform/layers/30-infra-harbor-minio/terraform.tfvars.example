@@ -1,41 +1,21 @@
 
-service_catalog_name = "harbor"
+target_clusters = {
+  minio = "core-harbor-minio"
+}
 
-harbor_minio_config = {
+primary_role = "minio"
+
+service_config = {
   "minio" = {
     role            = "minio"
     network_tier    = "minio"
     base_image_path = "../../../packer/output/base-minio/ubuntu-24-base-minio.qcow2"
     nodes = {
-      "00" = {
-        ip_suffix = 200, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
-        data_disks = [
-          { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
-          { name_suffix = "drive2", capacity_gib = 10 }
-        ]
-      }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1536 }
       # Uncomment the following lines for HA setup, abide by node % 4 != 0.
-      # "01" = {
-      #   ip_suffix = 201, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
-      #     { name_suffix = "drive2", capacity_gib = 10 }
-      #   ]
-      # },
-      # "02" = {
-      #   ip_suffix = 202, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
-      #     { name_suffix = "drive2", capacity_gib = 10 }
-      #   ]
-      # },
-      # "03" = {
-      #   ip_suffix = 203, vcpu = 2, ram_size = 1536, os_disk_capacity_gib = 40
-      #   data_disks = [
-      #     { name_suffix = "drive1", capacity_gib = 10 }, # 10GB
-      #     { name_suffix = "drive2", capacity_gib = 10 }
-      #   ]
-      # }
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 1536 },
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 1536 },
+      # "03" = { ip_suffix = 203, vcpu = 2, ram_size = 1536 }
     }
   }
 }
@@ -43,12 +23,4 @@ harbor_minio_config = {
 ansible_files = {
   playbook_file           = "20-provision-data-services.yaml"
   inventory_template_file = "inventory-minio-cluster.yaml.tftpl"
-}
-
-harbor_minio_tenants = {
-  "harbor-registry" = {
-    user_name      = "harbor-user"
-    enable_version = false
-    policy_rw      = true
-  }
 }

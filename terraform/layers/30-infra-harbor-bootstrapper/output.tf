@@ -1,12 +1,12 @@
 
 output "service_vip" {
   description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
-  value       = local.net_config.lb_config.vip
+  value       = local.net_physical_infra.lb_config.vip
 }
 
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
-  value       = local.sec_system_creds
+  value       = local.sec_vm_creds
   sensitive   = true
 }
 
@@ -19,4 +19,9 @@ output "credentials_app" {
 output "topology_node" {
   description = "The actual provisioned configuration for Bootstrap Harbor node."
   value       = module.bootstrap_harbor.cluster_nodes
+}
+
+output "pki_key" {
+  description = "The physical SSoT PKI key associated with the Harbor Bootstrapper service."
+  value       = local.svc_context.pki_key
 }

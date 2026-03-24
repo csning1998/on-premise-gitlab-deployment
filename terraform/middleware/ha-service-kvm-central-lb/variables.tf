@@ -22,12 +22,7 @@ variable "topology_cluster" {
         base_image_path = string
         vcpu            = number
         ram             = number
-        interfaces = list(object({
-          network_name = string
-          mac          = string
-          alias        = optional(string)
-          addresses    = list(string)
-        }))
+        ip_suffix       = number
       }))
     })
   })
@@ -46,6 +41,11 @@ variable "topology_cluster" {
     ])
     error_message = "Load Balancer nodes require at least 2 vCPUs and 1024MB RAM."
   }
+}
+
+variable "svc_network_map" {
+  description = "Pure MECE mapping of calculated network attributes (from 00-foundation-metadata)."
+  type        = any
 }
 
 variable "network_service_segments" {

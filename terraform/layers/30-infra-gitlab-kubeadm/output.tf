@@ -1,21 +1,22 @@
 
 output "service_vip" {
-  description = "The virtual IP assigned to the GitLab Kubeadm service from Central LB topology."
-  value       = local.net_service_vip
-}
-
-output "pod_subnet" {
-  description = "The pod subnet CIDR used for the Kubernetes cluster."
-  value       = var.kubernetes_cluster_configuration.pod_subnet
+  description = "The virtual IP assigned to the Kubeadm entrypoint."
+  value       = local.p_net_config.lb_config.vip
 }
 
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
-  value       = local.sec_system_creds
+  value       = local.sec_vm_creds
+  sensitive   = true
+}
+
+output "kubernetes_config" {
+  description = "Kubernetes cluster connection parameters."
+  value       = local.ansible_template_vars
   sensitive   = true
 }
 
 output "topology_cluster" {
-  description = "The actual provisioned configuration for Vault nodes."
+  description = "The full provisioned compute topology."
   value       = module.kubeadm_gitlab.cluster_nodes
 }

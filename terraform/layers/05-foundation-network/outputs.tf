@@ -24,7 +24,7 @@ output "infrastructure_map" {
 
 output "central_lb_info" {
   description = "Physical network configuration for the Central LB's own segment."
-  value       = local.net_infrastructure[var.service_catalog_name]
+  value       = local.net_infrastructure[local.central_lb_key]
 }
 
 output "service_segments" {

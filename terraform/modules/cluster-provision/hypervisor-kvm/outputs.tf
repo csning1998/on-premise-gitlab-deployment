@@ -9,7 +9,7 @@ output "provisioned_nodes" {
       vcpu                 = domain.vcpu
       ram_size_mib         = domain.memory
       os_disk_capacity_gib = var.vm_config.all_nodes_map[key].os_disk_capacity_gib
-      data_disks           = var.vm_config.all_nodes_map[key].data_disks
+      attached_volumes     = var.vm_config.all_nodes_map[key].attached_volumes
     }
   }
 }

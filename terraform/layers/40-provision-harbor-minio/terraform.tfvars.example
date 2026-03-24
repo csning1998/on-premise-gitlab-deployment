@@ -1,0 +1,8 @@
+
+harbor_minio_tenants = {
+  "harbor-registry" = {
+    user_name      = "harbor-user"
+    enable_version = false
+    policy_rw      = true
+  }
+}

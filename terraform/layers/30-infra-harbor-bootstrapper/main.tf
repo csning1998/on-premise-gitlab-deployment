@@ -3,19 +3,18 @@ module "bootstrap_harbor" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
-  svc_identity = local.svc_identity
-  node_identities = {
-    (var.bootstrap_harbor_config.role) = local.svc_identity
-  }
+  svc_identity    = local.svc_identity
+  node_identities = local.node_identities
 
-  # Topology (Compute & Storage) — single node wrapped in HA-compatible structure
-  topology_cluster = local.topology_cluster
+  # Topology (Compute & Storage)
+  topology_cluster           = local.topology_cluster
+  storage_infrastructure_map = local.state.volume.storage_infrastructure_map
 
   # Network Infrastructure
   network_infrastructure_map = local.network_infrastructure_map
 
   # Security & Credentials
-  credentials_system            = local.sec_system_creds
+  credentials_system            = local.sec_vm_creds
   security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Ansible Configuration

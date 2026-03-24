@@ -26,5 +26,6 @@ data "vault_generic_secret" "prod_credential" {
 }
 
 data "vault_generic_secret" "harbor_bootstrapper" {
-  path = "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app"
 }

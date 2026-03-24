@@ -1,13 +1,4 @@
 
-# MicroK8s Cluster State
-
-data "terraform_remote_state" "microk8s_provision" {
-  backend = "local"
-  config = {
-    path = "../40-harbor-microk8s/terraform.tfstate"
-  }
-}
-
 data "terraform_remote_state" "harbor_platform" {
   backend = "local"
   config = {
@@ -42,6 +33,14 @@ data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
     path = "../30-harbor-minio/terraform.tfstate"
+  }
+}
+
+# MicroK8s Cluster State
+data "terraform_remote_state" "microk8s_provision" {
+  backend = "local"
+  config = {
+    path = "../40-harbor-microk8s/terraform.tfstate"
   }
 }
 

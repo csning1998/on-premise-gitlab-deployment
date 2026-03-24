@@ -6,76 +6,74 @@ locals {
   }
 }
 
-# Network Map Reference
+# Network Map Reference: Zip Network Attributes with Identity Naming SSoT
 locals {
-  svc_name        = var.service_catalog_name
-  svc_network_map = local.state.metadata.global_network_map
-}
-
-# Deterministic Bridge Naming (identical logic to 05-central-lb)
-locals {
-  net_bridge_naming = {
-    for seg_key, seg_data in local.svc_network_map : seg_key => {
-      host = "br-${substr(md5("${local.svc_name}-${seg_key}"), 0, 8)}"
-      nat  = "br-${substr(md5("${local.svc_name}-${seg_key}"), 0, 8)}-nat"
+  # 1. Zip the topological maps into a single manageable structure
+  # Identity Map provides naming (Bridge, Pool, etc.), Network Map provides IPv4 attributes.
+  # Use identity.cluster_name as the primary O(1) key for downstream realization.
+  segments = merge([
+    for s_name, components in local.state.metadata.global_topology_identity : {
+      for c_name, identity in components : identity.cluster_name => {
+        identity = identity
+        network  = local.state.metadata.global_topology_network[s_name][c_name]
+      }
     }
-  }
+  ]...)
+
+  # SSoT Naming: Directly use the cluster_name of the Central Load Balancer frontend.
+  central_lb_key = "core-central-lb-frontend"
 }
 
-# Full Infrastructure Map (All Segments: CLB own + all service segments)
+# Full Infrastructure Map (All Segments: Consumed by libvirt_network resources)
 locals {
   net_infrastructure = {
-    for seg_key, seg_data in local.svc_network_map : seg_key => {
+    for key, data in local.segments : key => {
       hostonly = {
-        name        = seg_key
-        bridge_name = local.net_bridge_naming[seg_key].host
-        gateway     = cidrhost(seg_data.cidr_block, 1)
-        cidr        = seg_data.cidr_block
-        prefix      = tonumber(split("/", seg_data.cidr_block)[1])
+        name        = data.identity.cluster_name
+        bridge_name = data.identity.bridge_name_host
+        gateway     = cidrhost(data.network.cidr_block, 1)
+        cidr        = data.network.cidr_block
+        prefix      = 24
       }
       nat = {
-        name        = "iac-${seg_key}-nat"
-        bridge_name = local.net_bridge_naming[seg_key].nat
-        gateway     = seg_data.nat_gateway
-        cidr        = seg_data.nat_cidr_block
+        name        = "${data.identity.cluster_name}-nat"
+        bridge_name = data.identity.bridge_name_nat
+        gateway     = data.network.nat_gateway
+        cidr        = data.network.nat_cidr_block
         prefix      = 24
-        dhcp        = seg_data.nat_dhcp
+        dhcp        = data.network.nat_dhcp
       }
     }
   }
 }
 
-# Service Segments (non-CLB) — for outputs consumed by 05-central-lb
+# Service Segments (non-CLB) — for HAProxy/Keepalived/Identity outputs
 locals {
   net_sorted_segment_keys = sort([
-    for k, v in local.svc_network_map : k
-    if k != local.svc_name
+    for k, v in local.segments : k
+    if k != local.central_lb_key && length(v.network.ports) > 0
   ])
 
   net_service_segments = [
-    for seg_key in local.net_sorted_segment_keys : {
-      name           = seg_key
-      bridge_name    = local.net_bridge_naming[seg_key].host
-      cidr           = local.svc_network_map[seg_key].cidr_block
-      nat_cidr       = local.svc_network_map[seg_key].nat_cidr_block
-      nat_gateway    = local.svc_network_map[seg_key].nat_gateway
-      vrid           = local.svc_network_map[seg_key].vrid
-      vip            = local.svc_network_map[seg_key].vip
-      interface_name = local.svc_network_map[seg_key].interface_alias
-      ports          = local.svc_network_map[seg_key].ports
-      tags           = local.svc_network_map[seg_key].tags
+    for key in local.net_sorted_segment_keys : {
+      name           = key
+      bridge_name    = local.segments[key].identity.bridge_name_host
+      cidr           = local.segments[key].network.cidr_block
+      nat_cidr       = local.segments[key].network.nat_cidr_block
+      nat_gateway    = local.segments[key].network.nat_gateway
+      vrid           = local.segments[key].network.vrid
+      vip            = local.segments[key].network.vip
+      interface_name = local.segments[key].network.interface_alias
+      ports          = local.segments[key].network.ports
+      tags           = local.segments[key].network.tags
 
-      ip_range = local.svc_network_map[seg_key].ip_range
+      ip_range = local.segments[key].network.ip_range
 
+      # Use node_ips derived from Layer 00 directly to avoid re-calculation
       backend_servers = [
-        for i in range(
-          local.svc_network_map[seg_key].ip_range.end_ip - local.svc_network_map[seg_key].ip_range.start_ip + 1
-          ) : {
-          name = "${seg_key}-slot-${local.svc_network_map[seg_key].ip_range.start_ip + i}"
-          ip = cidrhost(
-            local.svc_network_map[seg_key].cidr_block,
-            local.svc_network_map[seg_key].ip_range.start_ip + i
-          )
+        for idx, ip in local.segments[key].network.node_ips : {
+          name = "${local.segments[key].identity.node_name_prefix}-${local.segments[key].network.ip_range.start_ip + idx}"
+          ip   = ip
         }
       ]
     }

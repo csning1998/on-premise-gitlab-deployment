@@ -11,8 +11,8 @@ output "ingress_context" {
   description = "Ingress controller details formatted for SSoT consumption"
   value = {
     load_balancer_ip = local.state.kubeadm.service_vip
-    http_node_port   = local.ssot_gitlab.meta.ports["ingress-http"].backend_port
-    https_node_port  = local.ssot_gitlab.meta.ports["ingress-https"].backend_port
+    http_node_port   = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["ingress-http"].backend_port
+    https_node_port  = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["ingress-https"].backend_port
   }
 }
 

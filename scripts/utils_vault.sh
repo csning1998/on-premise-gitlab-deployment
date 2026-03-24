@@ -169,7 +169,7 @@ vault_token_sync_handler() {
   local token
   token=$(cat "$DEV_ROOT_TOKEN_FILE")
   env_var_mutator "DEV_VAULT_TOKEN" "${token}"
-  
+
   # Also set for current session
   export DEV_VAULT_TOKEN="${token}"
   export VAULT_TOKEN="${token}"
@@ -275,7 +275,7 @@ vault_dev_unseal_handler() {
 vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
 
-  local inventory_file="${ANSIBLE_DIR}/inventory-core-vault-raft.yaml"
+  local inventory_file="${ANSIBLE_DIR}/inventory-core-vault-frontend.yaml"
   local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-vault-unseal.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
