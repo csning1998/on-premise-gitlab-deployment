@@ -1,5 +1,9 @@
 
-# terraform/layers/60-gitlab-service/variables.tf
+variable "vault_dev_addr" {
+  description = "The address of the Bootstrapper Vault (Podman Vault)"
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
 
 variable "gitlab_helm_config" {
   description = "Configuration for GitLab Helm Chart Deployment"

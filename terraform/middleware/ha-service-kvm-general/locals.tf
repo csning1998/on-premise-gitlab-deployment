@@ -21,10 +21,10 @@ locals {
                   pool   = vol_data.pool_name
                   volume = vol_data.volume_name
                 }
-                if startswith(vol_key, "${var.node_identities[comp_name].node_name_prefix}-node-${node_data.ip_suffix}-")
+                if startswith(vol_key, "${var.node_identities[comp_name].node_name_prefix}-${node_data.ip_suffix}-")
               ]
             )
-          ) : merge(
+            ) : merge(
             # Fallback: assign sequential device name based on index
             { device_name = "/dev/vd${substr("bcdefghijklmnopqrstuvwxyz", idx, 1)}" },
             # Override: preserve manually defined device_name if present

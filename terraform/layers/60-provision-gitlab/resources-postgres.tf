@@ -35,7 +35,8 @@ resource "postgresql_extension" "btree_gist" {
 # SoC: Write generated password back to Vault
 # Use subpath to avoid overwriting the manually created gitlab/app (which contains the root password)
 resource "vault_generic_secret" "gitlab_db_keys" {
-  path = "secret/on-premise-gitlab-deployment/gitlab/app/database"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/gitlab/app/database"
 
   data_json = jsonencode({
     username = postgresql_role.gitlab.name

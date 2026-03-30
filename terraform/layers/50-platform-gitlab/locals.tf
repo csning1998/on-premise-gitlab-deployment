@@ -1,3 +1,4 @@
+
 # 1. External State Context
 locals {
   state = {
@@ -27,8 +28,6 @@ locals {
 
 # 3. Addons & Trust Engine Context
 locals {
-  # SSoT Discovery (Direct PKI/Network Mappings)
-  
   # FQDNs
   gitlab_fqdn = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
   vault_fqdn  = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
@@ -48,11 +47,11 @@ locals {
   cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
 
   # Vault Connection (Standardized)
-  vault_api_port    = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
-  vault_address     = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_ca_cert     = local.state.vault_pki.bootstrap_ca.content
-  vault_pki_path    = local.state.vault_pki.pki_configuration.path
-  
+  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_ca_cert  = local.state.vault_pki.bootstrap_ca.content
+  vault_pki_path = local.state.vault_pki.pki_configuration.path
+
   # Map to the specific component identity in Vault PKI
   vault_role_name   = local.state.vault_pki.pki_configuration.component_roles["gitlab-frontend"].name
   vault_auth_path   = local.state.vault_pki.auth_backend_paths["kubernetes"]
@@ -62,7 +61,7 @@ locals {
 # 4. DNS Configuration (Standardized)
 locals {
   dns_hosts = {
-    "${local.state.kubeadm.service_vip}"   = local.gitlab_fqdn
+    "${local.state.kubeadm.service_vip}"         = local.gitlab_fqdn
     "${local.state.vault_pki.vault_service_vip}" = local.vault_fqdn
 
     # Dependency Roles

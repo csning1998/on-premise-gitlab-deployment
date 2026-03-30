@@ -11,5 +11,6 @@ variable "gitlab_minio_tenants" {
     user_name      = string
     enable_version = bool
     policy_rw      = bool
+    function       = string
   }))
 }

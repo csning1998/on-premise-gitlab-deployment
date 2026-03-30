@@ -1,10 +1,4 @@
-
-# Generic Namespace
-resource "kubernetes_namespace" "gitlab_ns" {
-  metadata {
-    name = var.helm_config.namespace
-  }
-}
+# Generic Namespace is provided by the caller
 
 # Certificate CR (Delegated to Trust Engine / Cert-Manager)
 resource "kubernetes_manifest" "gitlab_certificate" {

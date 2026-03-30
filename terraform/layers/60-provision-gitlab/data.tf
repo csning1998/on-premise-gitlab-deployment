@@ -1,8 +1,15 @@
 
-data "terraform_remote_state" "gitlab_platform" {
+data "terraform_remote_state" "metadata" {
   backend = "local"
   config = {
-    path = "../50-gitlab-platform/terraform.tfstate"
+    path = "../00-foundation-metadata/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "network" {
+  backend = "local"
+  config = {
+    path = "../05-foundation-network/terraform.tfstate"
   }
 }
 
@@ -10,7 +17,7 @@ data "terraform_remote_state" "gitlab_platform" {
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-vault-pki/terraform.tfstate"
+    path = "../20-security-pki/terraform.tfstate"
   }
 }
 
@@ -18,50 +25,90 @@ data "terraform_remote_state" "vault_pki" {
 data "terraform_remote_state" "redis" {
   backend = "local"
   config = {
-    path = "../30-gitlab-redis/terraform.tfstate"
+    path = "../30-infra-gitlab-redis/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "postgres" {
   backend = "local"
   config = {
-    path = "../30-gitlab-postgres/terraform.tfstate"
+    path = "../30-infra-gitlab-postgres/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
-    path = "../30-gitlab-minio/terraform.tfstate"
+    path = "../30-infra-gitlab-minio/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "minio_provision" {
+  backend = "local"
+  config = {
+    path = "../40-provision-gitlab-minio/terraform.tfstate"
   }
 }
 
 # Kubeadm Cluster State
-data "terraform_remote_state" "kubeadm_provision" {
+data "terraform_remote_state" "kubeadm" {
   backend = "local"
   config = {
-    path = "../40-gitlab-kubeadm/terraform.tfstate"
+    path = "../30-infra-gitlab-kubeadm/terraform.tfstate"
   }
 }
 
+data "terraform_remote_state" "platform_gitlab" {
+  backend = "local"
+  config = {
+    path = "../50-platform-gitlab/terraform.tfstate"
+  }
+}
+
+# Harbor Bootstrapper State
+data "terraform_remote_state" "harbor_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "../40-provision-harbor-bootstrapper/terraform.tfstate"
+  }
+}
+
+# 1. Fetch Production Credential from Bootstrapper Vault
+data "vault_generic_secret" "prod_credential" {
+  provider = vault.bootstrapper
+  path     = "secret/on-premise-gitlab-deployment/infrastructure"
+}
+
+# 2. Fetch Kubeconfig from Production Vault
+data "vault_generic_secret" "kubeconfig" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
+}
+
 data "vault_generic_secret" "variables" {
-  path = "secret/on-premise-gitlab-deployment/variables"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/variables"
 }
 
 # Vault Secrets for reading database and service passwords.
 data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/gitlab/databases"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/gitlab/databases"
 }
 
 # path: secret/on-premise-gitlab-deployment/gitlab/s3_credentials/[bucket_name]
 
 data "vault_generic_secret" "s3_credentials" {
+  provider = vault.production
   for_each = local.minio_function_map
   path     = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/${each.value}"
 }
 
-# Get PKI CA from Vault
-data "http" "vault_pki_ca" {
-  url         = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443/v1/pki/prod/ca/pem"
-  ca_cert_pem = data.terraform_remote_state.vault_pki.outputs.vault_certificates.ca_cert.ca_cert
+
+# Fetch the Cluster CA
+data "kubernetes_config_map" "kube_root_ca" {
+  metadata {
+    name      = "kube-root-ca.crt"
+    namespace = "kube-system"
+  }
 }

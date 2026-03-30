@@ -3,7 +3,7 @@ resource "helm_release" "gitlab" {
   name             = "gitlab"
   chart            = "gitlab"
   repository       = "https://charts.gitlab.io/"
-  namespace        = kubernetes_namespace.gitlab_ns.metadata[0].name
+  namespace        = var.helm_config.namespace
   version          = var.helm_config.version
   timeout          = var.helm_config.timeout
   create_namespace = true

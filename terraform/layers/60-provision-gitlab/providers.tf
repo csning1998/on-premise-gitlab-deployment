@@ -17,6 +17,10 @@ terraform {
       source  = "cyrilgdn/postgresql"
       version = "1.25.0"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "1.19.0"
+    }
     # gitlab = {
     #   source  = "gitlabhq/gitlab"
     #   version = "17.8.0"
@@ -25,25 +29,40 @@ terraform {
 }
 
 provider "vault" {
-  address      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443"
-  ca_cert_file = abspath("${path.root}/../10-vault-raft/tls/vault-ca.crt")
-  token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
+  alias        = "bootstrapper"
+  address      = var.vault_dev_addr
+  ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
 }
 
+provider "vault" {
+  alias        = "production"
+  address      = local.vault_address
+  ca_cert_file = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca.path
+  token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
+}
 
+# Configure the Kubernetes provider using details from the remote state
 provider "kubernetes" {
-  host                   = local.k8s_provider_auth.host
-  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-  client_certificate     = local.k8s_provider_auth.client_certificate
-  client_key             = local.k8s_provider_auth.client_key
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
+}
+
+provider "kubectl" {
+  load_config_file       = false
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.k8s_provider_auth.host
-    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-    client_certificate     = local.k8s_provider_auth.client_certificate
-    client_key             = local.k8s_provider_auth.client_key
+    host                   = local.api_server_connection.host
+    cluster_ca_certificate = local.api_server_connection.ca_cert
+    client_certificate     = local.api_server_connection.client_certificate
+    client_key             = local.api_server_connection.client_key
   }
 }
 
@@ -56,4 +75,10 @@ provider "postgresql" {
 
   sslmode         = "require"
   connect_timeout = 15
+
+  clientcert {
+    cert      = vault_pki_secret_backend_cert.gitlab_db_client.certificate
+    key       = vault_pki_secret_backend_cert.gitlab_db_client.private_key
+    sslinline = true
+  }
 }

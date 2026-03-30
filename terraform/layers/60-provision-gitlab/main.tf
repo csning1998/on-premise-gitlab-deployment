@@ -1,5 +1,10 @@
-
 # terraform/layers/60-gitlab-service/main.tf
+
+resource "kubernetes_namespace" "gitlab_ns" {
+  metadata {
+    name = var.gitlab_helm_config.namespace
+  }
+}
 
 module "gitlab_core" {
   source = "../../modules/kubernetes-addons/helm-chart-gitlab"
@@ -7,13 +12,13 @@ module "gitlab_core" {
   # Helm Deployment Configuration
   helm_config = {
     version   = var.gitlab_helm_config.version
-    namespace = var.gitlab_helm_config.namespace
+    namespace = kubernetes_namespace.gitlab_ns.metadata[0].name
     timeout   = 600
   }
 
   # GitLab Application Configuration
   gitlab_config = {
-    hostname = local.gitlab_hostname
+    hostname = local.fqdn_gitlab
     edition  = "ce"
     # Root Password
   }
@@ -51,7 +56,7 @@ module "gitlab_core" {
     }
     minio = {
       ip         = local.minio_vip
-      hostname   = local.minio_hostname
+      hostname   = local.fqdn_minio
       endpoint   = local.minio_address
       access_key = ""
       secret_key = ""
@@ -87,4 +92,11 @@ module "gitlab_core" {
   }
 
   ca_bundle = local.ca_bundle_config
+
+  depends_on = [
+    kubernetes_secret.gitlab_postgres_tls,
+    # Standardize: wait for external roles to be created
+    postgresql_role.gitlab,
+    postgresql_database.gitlabhq_production,
+  ]
 }
