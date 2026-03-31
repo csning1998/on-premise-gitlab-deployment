@@ -38,10 +38,10 @@ vault_context_handler() {
       dev_token=$(cat "$DEV_ROOT_TOKEN_FILE")
 
       # Use curl to fetch the secret from Bootstrap Vault
-      # Path: secret/data/on-premise-gitlab-deployment/infrastructure
+      # Path: secret/data/on-premise-gitlab-deployment/credentials
       local response
       response=$(curl -s --cacert "${DEV_CA}" --header "X-Vault-Token: ${dev_token}" \
-        "${DEV_VAULT_ADDR}/v1/secret/data/on-premise-gitlab-deployment/infrastructure")
+        "${DEV_VAULT_ADDR}/v1/secret/data/on-premise-gitlab-deployment/credentials")
 
       local prod_token
       prod_token=$(echo "$response" | jq -r '.data.data.prod_vault_root_token // empty')

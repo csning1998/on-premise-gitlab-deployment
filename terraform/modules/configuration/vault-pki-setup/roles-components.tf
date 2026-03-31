@@ -36,18 +36,17 @@ resource "vault_policy" "component_roles_pki" {
   # 1. Allow the path pki/prod/sign/<service>-ingress-role to sign certificate
   # 2. Allow to sign and issue certificate for Ingress
   # 3. Allow to read CRL
-
-  policy = <<EOT
-path "${vault_mount.pki_prod.path}/sign/${each.value.name}" {
-  capabilities = ["create", "update"]
-}
-
-path "${vault_mount.pki_prod.path}/issue/${each.value.name}" {
-  capabilities = ["create", "update"]
-}
-
-path "${vault_mount.pki_prod.path}/crl" {
-  capabilities = ["read"]
-}
-EOT
+  policy = jsonencode({
+    path = {
+      "${vault_mount.pki_prod.path}/sign/${each.value.name}" = {
+        capabilities = ["create", "update"]
+      }
+      "${vault_mount.pki_prod.path}/issue/${each.value.name}" = {
+        capabilities = ["create", "update"]
+      }
+      "${vault_mount.pki_prod.path}/crl" = {
+        capabilities = ["read"]
+      }
+    }
+  })
 }

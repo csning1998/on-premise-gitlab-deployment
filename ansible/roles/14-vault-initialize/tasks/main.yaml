@@ -18,35 +18,38 @@
         VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
         VAULT_SKIP_VERIFY: "true"
       register: init_result
+      changed_when: init_result.rc == 0
       ignore_errors: true
 
-    - name: "E3. Read existing Infrastructure Secrets"
+    - name: "E3. Fetch Administrative AppRole Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        token: "{{ lookup('file', dev_root_token_path) }}"
         validate_certs: false
-      register: existing_secrets
+      register: bootstrapper_creds
       delegate_to: localhost
       become: false
-      ignore_errors: true
 
-    - name: "E4. Write Merged Secrets back to Vault"
+    - name: "E4. Set AppRole Credentials"
+      ansible.builtin.set_fact:
+        vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
+        vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
+
+    - name: "E5. Write Merged Secrets back to Vault"
       community.hashi_vault.vault_kv2_write:
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        token: "{{ lookup('file', dev_root_token_path) }}"
+        auth_method: "approle"
+        role_id: "{{ vault_approle_role_id }}"
+        secret_id: "{{ vault_approle_secret_id }}"
         validate_certs: false
-        data: >-
-          {{ 
-            (existing_secrets.secret | default({})) 
-            | combine({
-                'prod_vault_root_token': (init_result.stdout | from_json).root_token,
-                'prod_vault_unseal_keys': (init_result.stdout | from_json).unseal_keys_b64
-              }) 
-          }}
+        data:
+          role_id: "{{ vault_approle_role_id }}"
+          secret_id: "{{ vault_approle_secret_id }}"
+          prod_vault_root_token: "{{ (init_result.stdout | from_json).root_token }}"
+          prod_vault_unseal_keys: "{{ (init_result.stdout | from_json).unseal_keys_b64 }}"
       delegate_to: localhost
       become: false
       when: init_result.rc == 0

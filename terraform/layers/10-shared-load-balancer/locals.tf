@@ -5,6 +5,11 @@ locals {
     metadata = data.terraform_remote_state.metadata.outputs
     network  = data.terraform_remote_state.network.outputs
   }
+  secrets = {
+    credentials    = data.vault_kv_secret_v2.credentials.data # AppRole
+    guest_vm       = data.vault_kv_secret_v2.guest_vm.data
+    infrastructure = data.vault_kv_secret_v2.infrastructure.data
+  }
 }
 
 # 1. Unified SSoT Alignment (Flatten nested Layer 00 outputs into a single map)
@@ -71,15 +76,15 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_generic_secret.iac_vars.data["vm_username"]
-    password             = data.vault_generic_secret.iac_vars.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.iac_vars.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
+    username             = local.secrets.guest_vm["vm_username"]
+    password             = local.secrets.guest_vm["vm_password"]
+    ssh_public_key_path  = local.secrets.guest_vm["ssh_public_key_path"]
+    ssh_private_key_path = local.secrets.guest_vm["ssh_private_key_path"]
   }
 
   sec_haproxy_creds = {
-    haproxy_stats_pass   = data.vault_generic_secret.infra_vars.data["haproxy_stats_pass"]
-    keepalived_auth_pass = data.vault_generic_secret.infra_vars.data["keepalived_auth_pass"]
+    haproxy_stats_pass   = local.secrets.infrastructure["haproxy_stats_pass"]
+    keepalived_auth_pass = local.secrets.infrastructure["keepalived_auth_pass"]
   }
 
   ansible_template_vars = {

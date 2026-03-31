@@ -2,7 +2,7 @@
 vault_auth_backends = {
   "approle" = {
     type = "approle"
-    path = "approle"
+    path = "workload-approle"
   }
   "kubernetes" = {
     type = "kubernetes"

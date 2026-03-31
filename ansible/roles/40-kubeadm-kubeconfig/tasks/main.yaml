@@ -30,6 +30,7 @@
             path: "on-premise-gitlab-deployment/infrastructure/kubeconfig/{{ service_name }}"
             engine_mount_point: "secret"
             auth_method: approle
+            mount_point: "{{ vault_auth_path }}"
             role_id: "{{ vault_agent_role_id }}"
             secret_id: "{{ vault_agent_secret_id }}"
             validate_certs: true

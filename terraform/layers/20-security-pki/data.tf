@@ -6,6 +6,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "vault_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../00-foundation-vault-bootstrapper/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
@@ -13,7 +20,9 @@ data "terraform_remote_state" "vault_sys" {
   }
 }
 
-data "vault_generic_secret" "prod_credential" {
-  provider = vault.bootstrapper
-  path     = "secret/on-premise-gitlab-deployment/infrastructure"
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../16-foundation-vault-production-bootstrap/terraform.tfstate"
+  }
 }

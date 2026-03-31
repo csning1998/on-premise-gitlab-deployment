@@ -59,10 +59,10 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_generic_secret.iac_vars.data["vm_username"]
-    password             = data.vault_generic_secret.iac_vars.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.iac_vars.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Service Specific Credentials (DB/PG)
@@ -75,12 +75,13 @@ locals {
   # Component Specific Vault Identities
   sec_vault_role_key = local.svc_pki_role.key
   sec_vault_agent_identity = {
-    ca_cert_b64   = local.state.vault_sys.security_pki_bundle.ca_cert
-    common_name   = local.svc_fqdn
+    vault_address = local.sys_vault_addr
+    auth_path     = local.state.vault_pki.workload_identities_components[local.sec_vault_role_key].auth_path
     role_id       = local.state.vault_pki.workload_identities_components[local.sec_vault_role_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.component_roles[local.sec_vault_role_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.postgres_agent.secret_id
-    vault_address = local.sys_vault_addr
+    ca_cert_b64   = local.state.metadata.global_vault_pki.ca_cert
+    common_name   = local.svc_fqdn
   }
 }
 

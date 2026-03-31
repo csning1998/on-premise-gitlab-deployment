@@ -13,6 +13,13 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../16-foundation-vault-production-bootstrap/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "minio_infra" {
   backend = "local"
   config = {
@@ -20,10 +27,6 @@ data "terraform_remote_state" "minio_infra" {
   }
 }
 
-data "vault_generic_secret" "prod_credential" {
-  provider = vault.bootstrapper
-  path     = "secret/on-premise-gitlab-deployment/infrastructure"
-}
 
 data "vault_generic_secret" "db_vars" {
   provider = vault.production

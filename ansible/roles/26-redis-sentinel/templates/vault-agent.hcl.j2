@@ -7,7 +7,7 @@ vault {
 
 auto_auth {
   method "approle" {
-    mount_path = "auth/approle"
+    mount_path = "auth/{{ vault_auth_path }}"
     config = {
       role_id_file_path = "/etc/vault.d/approle/role_id"
       secret_id_file_path = "/etc/vault.d/approle/secret_id"

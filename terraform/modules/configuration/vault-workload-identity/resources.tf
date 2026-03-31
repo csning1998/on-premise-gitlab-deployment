@@ -2,21 +2,14 @@
 # 1. Define Policy: Standard PKI access + Optional Extras
 resource "vault_policy" "this" {
   name = "${var.name}-policy"
-
-  policy = <<EOT
-# Allow requesting certificates from the specific PKI Role
-path "${var.pki_mount_path}/issue/${var.vault_role_name}" {
-  capabilities = ["create", "update"]
-}
-
-# Allow token renewal (Standard requirement for Vault Agent/Consul Template)
-path "auth/token/renew-self" {
-  capabilities = ["update"]
-}
-
-# Inject extra policies (e.g., for Harbor secret reading)
-${var.extra_policy_hcl}
-EOT
+  policy = jsonencode({
+    path = merge(
+      {
+        "${var.pki_mount_path}/issue/${var.vault_role_name}" = { capabilities = ["create", "update"] }
+      },
+      var.extra_policy_hcl
+    )
+  })
 }
 
 # 2. Create AppRole

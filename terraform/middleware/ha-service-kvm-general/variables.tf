@@ -120,6 +120,7 @@ variable "security_vault_agent_identity" {
     role_name     = string
     ca_cert_b64   = string
     common_name   = string
+    auth_path     = string
   })
   sensitive = true
   default   = null

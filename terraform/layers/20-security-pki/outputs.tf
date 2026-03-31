@@ -25,17 +25,6 @@ output "workload_identities_components" {
   }
 }
 
-output "workload_identities_dependencies" {
-  description = "AppRole credentials for Dependency services"
-  value = {
-    for service_name, mod in module.vault_workload_identity_dependencies : service_name => {
-      role_id   = mod.approle_role_id
-      role_name = mod.approle_name
-      auth_path = mod.approle_path
-    }
-  }
-}
-
 output "auth_backend_paths" {
   description = "Map of enabled Auth Backend paths"
   value       = module.vault_pki_setup.auth_backend_paths

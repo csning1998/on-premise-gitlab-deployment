@@ -7,17 +7,18 @@ terraform {
   }
 }
 
-# Bootstrap Provider (Podman Vault)
-provider "vault" {
-  alias        = "bootstrapper"
-  address      = var.vault_dev_addr
-  ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
-}
-
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
   address      = local.sys_vault_addr
-  token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
-  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
+  ca_cert_file = local.state.vault_sys.ca_cert_path
+
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
+      secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
+    }
+  }
+  skip_child_token = true
 }

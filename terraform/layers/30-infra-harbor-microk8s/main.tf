@@ -12,7 +12,8 @@ module "microk8s_harbor" {
   network_infrastructure_map = local.network_infrastructure_map
 
   # System Credentials
-  credentials_system = local.sec_system_creds
+  credentials_system            = local.sec_system_creds
+  security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Generic Ansible Configuration
   ansible_inventory_template_file = var.ansible_files.inventory_template_file

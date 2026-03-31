@@ -53,11 +53,13 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
-# 1. Fetch Production Credential from Bootstrapper Vault
-data "vault_generic_secret" "prod_credential" {
-  provider = vault.bootstrapper
-  path     = "secret/on-premise-gitlab-deployment/infrastructure"
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "../16-foundation-vault-production-bootstrap/terraform.tfstate"
+  }
 }
+
 
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_generic_secret" "kubeconfig" {

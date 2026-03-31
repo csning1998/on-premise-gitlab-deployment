@@ -11,7 +11,7 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "5.3.0"
+      version = "5.5.0"
     }
     tls = {
       source  = "hashicorp/tls"

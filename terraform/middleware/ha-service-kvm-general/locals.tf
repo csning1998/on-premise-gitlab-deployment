@@ -88,6 +88,7 @@ locals {
     vault_agent_secret_id   = var.security_vault_agent_identity.secret_id
     vault_role_name         = var.security_vault_agent_identity.role_name
     vault_agent_common_name = var.security_vault_agent_identity.common_name
+    vault_auth_path         = var.security_vault_agent_identity.auth_path
   } : {}
 
   ansible_extra_vars_pki = var.security_pki_bundle != null && length(keys(var.security_pki_bundle)) > 0 ? {

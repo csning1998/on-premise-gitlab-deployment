@@ -20,7 +20,7 @@
       register: vault_init_check
       until:
         - vault_init_check.rc == 2
-        - (vault_init_check.stdout | from_json).initialized == true
+        - (vault_init_check.stdout | from_json).initialized
       retries: "{{ vault_unseal_retries }}"
       delay: "{{ vault_unseal_delay_seconds }}"
       changed_when: false
@@ -28,30 +28,53 @@
       when:
         - inventory_hostname in groups['vault_follower']
         - vault_status_check.rc == 2
-        - (vault_status_check.stdout | from_json).initialized == false
+        - not (vault_status_check.stdout | from_json).initialized
       no_log: true
 
-    - name: "F3. Fetch Unseal Keys from Bootstrap Vault"
+    - name: "F3. Fetch Administrative AppRole Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        token: "{{ lookup('file', dev_root_token_path) }}"
         validate_certs: false
-      register: bootstrap_secrets
+      register: bootstrapper_creds
       delegate_to: localhost
       become: false
       when:
         - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
-          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed == true)
+          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed)
       no_log: true
 
-    - name: "F4. Parse Unseal Keys"
+    - name: "F4. Set AppRole Credentials"
       ansible.builtin.set_fact:
-        vault_unseal_keys: "{{ bootstrap_secrets.secret.prod_vault_unseal_keys }}"
-      when: bootstrap_secrets is not skipped
+        vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
+        vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
+      when: bootstrapper_creds is not skipped
+      no_log: true
 
-    - name: "F5 Execute Unseal"
+    - name: "F5. Fetch Unseal Keys from Bootstrap Vault"
+      community.hashi_vault.vault_kv2_get:
+        url: "{{ dev_vault_url }}"
+        engine_mount_point: "secret"
+        path: "{{ dev_vault_api_path }}"
+        auth_method: "approle"
+        role_id: "{{ vault_approle_role_id }}"
+        secret_id: "{{ vault_approle_secret_id }}"
+        validate_certs: false
+      register: unseal_secrets
+      delegate_to: localhost
+      become: false
+      when:
+        - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
+          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed)
+      no_log: true
+
+    - name: "F6. Parse Unseal Keys"
+      ansible.builtin.set_fact:
+        vault_unseal_keys: "{{ unseal_secrets.secret.prod_vault_unseal_keys }}"
+      when: unseal_secrets is not skipped
+
+    - name: "F7. Execute Unseal"
       ansible.builtin.command: "vault operator unseal {{ vault_unseal_keys[0] }}"
       environment:
         VAULT_ADDR: "https://127.0.0.1:{{ vault_port_api }}"
@@ -60,16 +83,16 @@
       changed_when: "'Sealed: false' in unseal_result.stdout"
       when: vault_unseal_keys is defined
 
-    - name: "F6. Verify Unseal Status"
+    - name: "F8. Verify Unseal Status"
       ansible.builtin.debug:
         msg: "Vault node {{ inventory_hostname }} is successfully Unsealed."
-      when: unseal_result is changed
+      when: (unseal_result.changed is defined and unseal_result.changed) or (unseal_result is changed)
 
 - name: "Block G: Verify Vault Cluster Availability"
   become: true
   when: inventory_hostname in groups['vault_leader']
   block:
-    - name: "Wait for Vault VIP to be Active (200 OK)"
+    - name: "G1. Wait for Vault VIP to be Active (200 OK)"
       ansible.builtin.uri:
         url: "https://{{ vault_ha_virtual_ip }}:443/v1/sys/health"
         validate_certs: false

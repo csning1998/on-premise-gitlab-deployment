@@ -15,3 +15,8 @@ output "security_pki_bundle" {
   value       = local.pki_global_ca
   sensitive   = true
 }
+
+output "ca_cert_path" {
+  description = "The absolute path to the local Bootstrap CA certificate."
+  value       = abspath(local_file.bootstrap_ca.filename)
+}

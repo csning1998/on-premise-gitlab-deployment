@@ -4,8 +4,9 @@
 # Layer 20 references it via the path below for the Vault provider's ca_cert_file.
 locals {
   state = {
-    metadata  = data.terraform_remote_state.metadata.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
+    metadata             = data.terraform_remote_state.metadata.outputs
+    vault_sys            = data.terraform_remote_state.vault_sys.outputs
+    vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
   }
 }
 
@@ -13,7 +14,7 @@ locals {
   sys_vault_addr      = "https://${local.state.vault_sys.service_vip}:443"
   root_domain         = local.state.metadata.global_domain_suffix
   root_ca_common_name = local.state.metadata.global_pki_settings.root_ca_common_name
-  bootstrap_ca_path   = abspath("${path.root}/../15-shared-vault/tls/bootstrap-ca.crt")
+  bootstrap_ca_path   = local.state.vault_sys.ca_cert_path
 }
 
 # 2. TTL Policy for different environments
@@ -59,26 +60,15 @@ locals {
 # 6. Specific Vault Policy for some Workload Identity:
 #    Key must correspond to service_catalog of "${service_name}-${component_name}"
 locals {
-  workload_identity_extra_policies = {
-    "harbor-bootstrapper-frontend" = <<EOT
-# Allow reading Harbor related App Secrets (KV v2)
-path "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" {
-  capabilities = ["read"]
-}
-EOT
-
-    "harbor-frontend" = <<EOT
-# Allow uploading Harbor MicroK8s Kubeconfig to Vault (KV v2)
-path "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" {
-  capabilities = ["create", "update", "read"]
-}
-EOT
-
-    "gitlab-frontend" = <<EOT
-# Allow uploading GitLab Kubeadm Kubeconfig to Vault (KV v2)
-path "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" {
-  capabilities = ["create", "update", "read"]
-}
-EOT
+  workload_identity_extra_rules = {
+    "harbor-bootstrapper-frontend" = {
+      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" = { capabilities = ["read"] }
+    }
+    "harbor-frontend" = {
+      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }
+    }
+    "gitlab-frontend" = {
+      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
+    }
   }
 }

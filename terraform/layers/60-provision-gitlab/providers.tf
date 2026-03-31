@@ -11,7 +11,7 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "5.3.0"
+      version = "5.5.0"
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"
@@ -28,17 +28,20 @@ terraform {
   }
 }
 
-provider "vault" {
-  alias        = "bootstrapper"
-  address      = var.vault_dev_addr
-  ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
-}
-
+# Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
   address      = local.vault_address
-  ca_cert_file = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca.path
-  token        = data.vault_generic_secret.prod_credential.data["prod_vault_root_token"]
+  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
+
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = local.state.vault_prod_bootstrap.production_role_id
+      secret_id = local.state.vault_prod_bootstrap.production_secret_id
+    }
+  }
+  skip_child_token = true
 }
 
 # Configure the Kubernetes provider using details from the remote state

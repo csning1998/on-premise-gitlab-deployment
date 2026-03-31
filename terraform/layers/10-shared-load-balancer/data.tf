@@ -6,6 +6,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "vault_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../00-foundation-vault-bootstrapper/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "network" {
   backend = "local"
   config = {
@@ -13,10 +20,17 @@ data "terraform_remote_state" "network" {
   }
 }
 
-data "vault_generic_secret" "iac_vars" {
-  path = "secret/on-premise-gitlab-deployment/variables"
+data "vault_kv_secret_v2" "guest_vm" {
+  mount = "secret"
+  name  = "on-premise-gitlab-deployment/guest_vm"
 }
 
-data "vault_generic_secret" "infra_vars" {
-  path = "secret/on-premise-gitlab-deployment/infrastructure"
+data "vault_kv_secret_v2" "infrastructure" {
+  mount = "secret"
+  name  = "on-premise-gitlab-deployment/infrastructure"
+}
+
+data "vault_kv_secret_v2" "credentials" {
+  mount = "secret"
+  name  = "on-premise-gitlab-deployment/credentials"
 }

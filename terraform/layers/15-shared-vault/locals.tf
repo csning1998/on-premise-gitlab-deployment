@@ -53,10 +53,10 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_generic_secret.iac_vars.data["vm_username"]
-    password             = data.vault_generic_secret.iac_vars.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.iac_vars.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.iac_vars.data["ssh_private_key_path"]
+    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
   }
 }
 
@@ -83,7 +83,9 @@ locals {
 
   ansible_extra_vars = merge(
     {
-      ansible_user = local.sec_vm_creds.username
+      ansible_user       = local.sec_vm_creds.username
+      dev_vault_url      = var.vault_dev_addr
+      dev_vault_api_path = "on-premise-gitlab-deployment/credentials"
     },
     local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
       vault_server_cert = local.pki_global_ca.server_cert

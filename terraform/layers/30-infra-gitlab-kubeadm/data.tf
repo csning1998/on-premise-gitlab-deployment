@@ -34,6 +34,13 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../16-foundation-vault-production-bootstrap/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
   config = {
@@ -48,12 +55,12 @@ data "terraform_remote_state" "harbor_proxy" {
   }
 }
 
-data "vault_generic_secret" "prod_credential" {
-  provider = vault.bootstrapper
+data "vault_generic_secret" "infrastructure" {
+  provider = vault.production
   path     = "secret/on-premise-gitlab-deployment/infrastructure"
 }
 
-data "vault_generic_secret" "iac_vars" {
+data "vault_generic_secret" "guest_vm" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/variables"
+  path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }

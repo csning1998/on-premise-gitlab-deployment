@@ -33,6 +33,8 @@ variable "token_max_ttl" {
 
 variable "extra_policy_hcl" {
   description = "Additional Vault Policy HCL to append (e.g., for secret reading capabilities)"
-  type        = string
-  default     = ""
+  type = map(object({
+    capabilities = list(string)
+  }))
+  default = {}
 }

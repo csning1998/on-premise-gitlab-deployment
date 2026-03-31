@@ -140,6 +140,7 @@
         path: "on-premise-gitlab-deployment/harbor-bootstrapper/app"
         engine_mount_point: "secret"
         auth_method: approle
+        mount_point: "{{ vault_auth_path }}"
         role_id: "{{ vault_agent_role_id }}"
         secret_id: "{{ vault_agent_secret_id }}"
         ca_cert: "{{ vault_agent_config_dir }}/vault-ca.crt"

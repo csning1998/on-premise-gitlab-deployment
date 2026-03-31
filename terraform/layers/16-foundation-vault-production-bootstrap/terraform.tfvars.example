@@ -1,0 +1,9 @@
+
+custom_vault_policies = {
+  "secret/data/on-premise-gitlab-deployment/*" = {
+    capabilities = ["create", "read", "update", "delete"]
+  }
+  "secret/metadata/on-premise-gitlab-deployment/*" = {
+    capabilities = ["read", "list", "delete"]
+  }
+}
