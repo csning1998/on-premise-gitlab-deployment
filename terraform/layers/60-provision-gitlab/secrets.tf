@@ -17,16 +17,6 @@ resource "vault_generic_secret" "gitlab_internal_keys" {
   })
 }
 
-resource "vault_pki_secret_backend_cert" "gitlab_db_client" {
-  provider = vault.production
-  backend  = data.terraform_remote_state.vault_pki.outputs.pki_configuration.path
-  name     = data.terraform_remote_state.vault_pki.outputs.pki_configuration.component_roles["gitlab-frontend"].name
-
-  common_name = data.terraform_remote_state.vault_pki.outputs.pki_configuration.component_roles["gitlab-frontend"].allowed_domains[0]
-
-  ttl = "2160h" # 90 Days
-}
-
 resource "kubernetes_secret" "gitlab_postgres_tls" {
   metadata {
     name      = "gitlab-postgres-tls"
@@ -34,9 +24,9 @@ resource "kubernetes_secret" "gitlab_postgres_tls" {
   }
 
   data = {
-    "tls.crt" = vault_pki_secret_backend_cert.gitlab_db_client.certificate
-    "tls.key" = vault_pki_secret_backend_cert.gitlab_db_client.private_key
-    "ca.crt"  = vault_pki_secret_backend_cert.gitlab_db_client.ca_chain
+    "tls.crt" = local.gitlab_db.tls.crt
+    "tls.key" = local.gitlab_db.tls.key
+    "ca.crt"  = local.gitlab_db.tls.ca
   }
 }
 
@@ -53,4 +43,3 @@ resource "vault_generic_secret" "gitlab_redis_keys" {
     scheme   = "rediss"
   })
 }
-

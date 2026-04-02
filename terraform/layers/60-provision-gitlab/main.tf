@@ -36,11 +36,11 @@ module "gitlab_core" {
   # External Services Connection
   external_services = {
     postgres = {
-      host     = local.postgres_vip
-      port     = local.postgres_rw_port
-      password = random_password.gitlab_db_password.result
-      username = "gitlab"
-      database = "gitlabhq_production"
+      host     = local.gitlab_db.host
+      port     = local.gitlab_db.port
+      password = local.gitlab_db.password
+      username = local.gitlab_db.username
+      database = local.gitlab_db.database
 
       ssl = {
         mode = "verify-ca"
@@ -95,8 +95,5 @@ module "gitlab_core" {
 
   depends_on = [
     kubernetes_secret.gitlab_postgres_tls,
-    # Standardize: wait for external roles to be created
-    postgresql_role.gitlab,
-    postgresql_database.gitlabhq_production,
   ]
 }

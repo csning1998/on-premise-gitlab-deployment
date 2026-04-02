@@ -7,6 +7,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "../16-security-vault-approle/terraform.tfstate"
+  }
+}
+
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
@@ -52,14 +59,6 @@ data "terraform_remote_state" "harbor_bootstrapper" {
     path = "../40-provision-harbor-bootstrapper/terraform.tfstate"
   }
 }
-
-data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "../16-foundation-vault-production-bootstrap/terraform.tfstate"
-  }
-}
-
 
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_generic_secret" "kubeconfig" {

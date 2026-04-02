@@ -13,6 +13,13 @@ data "terraform_remote_state" "network" {
   }
 }
 
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "../16-security-vault-approle/terraform.tfstate"
+  }
+}
+
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
@@ -73,14 +80,6 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
-data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "../16-foundation-vault-production-bootstrap/terraform.tfstate"
-  }
-}
-
-
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_generic_secret" "kubeconfig" {
   provider = vault.production
@@ -104,6 +103,12 @@ data "vault_generic_secret" "s3_credentials" {
   provider = vault.production
   for_each = local.minio_function_map
   path     = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/${each.value}"
+}
+
+# GitLab DB Credentials from Layer 40
+data "vault_generic_secret" "gitlab_db_keys" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/gitlab/app/database"
 }
 
 

@@ -23,6 +23,6 @@ data "terraform_remote_state" "vault_sys" {
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "local"
   config = {
-    path = "${path.root}/../16-foundation-vault-production-bootstrap/terraform.tfstate"
+    path = "${path.root}/../16-security-vault-approle/terraform.tfstate"
   }
 }

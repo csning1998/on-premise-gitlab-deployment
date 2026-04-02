@@ -2,16 +2,16 @@
 # 1. External State Context
 locals {
   state = {
-    metadata            = data.terraform_remote_state.metadata.outputs
-    vault_pki           = data.terraform_remote_state.vault_pki.outputs
-    redis               = data.terraform_remote_state.redis.outputs
-    postgres            = data.terraform_remote_state.postgres.outputs
-    minio               = data.terraform_remote_state.minio.outputs
-    minio_provision     = data.terraform_remote_state.minio_provision.outputs
-    network             = data.terraform_remote_state.network.outputs.infrastructure_map
-    kubeadm             = data.terraform_remote_state.kubeadm.outputs
-    harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
-    platform            = data.terraform_remote_state.platform_gitlab.outputs
+    metadata             = data.terraform_remote_state.metadata.outputs
+    vault_pki            = data.terraform_remote_state.vault_pki.outputs
+    redis                = data.terraform_remote_state.redis.outputs
+    postgres             = data.terraform_remote_state.postgres.outputs
+    minio                = data.terraform_remote_state.minio.outputs
+    minio_provision      = data.terraform_remote_state.minio_provision.outputs
+    network              = data.terraform_remote_state.network.outputs.infrastructure_map
+    kubeadm              = data.terraform_remote_state.kubeadm.outputs
+    harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
+    platform             = data.terraform_remote_state.platform_gitlab.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
   }
 }
@@ -70,10 +70,11 @@ locals {
   vault_address = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 }
 
-# Vault Generic Secrets
+# Vault Generic Secrets (Infrastructure Level)
 locals {
-  postgres_password = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
-  redis_password    = data.vault_generic_secret.db_vars.data["redis_requirepass"]
+  # These are used for administrative discovery if needed,
+  # though application-level logic should use gitlab_db_keys.
+  redis_password = data.vault_generic_secret.db_vars.data["redis_requirepass"]
 }
 
 # External Service Address & Ports
@@ -88,6 +89,21 @@ locals {
   redis_vip     = local.state.network["core-gitlab-redis"].lb_config.vip
   minio_vip     = local.state.network["core-gitlab-minio"].lb_config.vip
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
+
+  # GitLab Application Database Context
+  gitlab_db = {
+    username = data.vault_generic_secret.gitlab_db_keys.data["username"]
+    password = data.vault_generic_secret.gitlab_db_keys.data["password"]
+    database = data.vault_generic_secret.gitlab_db_keys.data["database"]
+    host     = data.vault_generic_secret.gitlab_db_keys.data["host"]
+    port     = data.vault_generic_secret.gitlab_db_keys.data["port"]
+
+    tls = {
+      crt = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["crt"])
+      key = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["key"])
+      ca  = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["ca"])
+    }
+  }
 }
 
 # 5. DNS Configuration (Standardized)
