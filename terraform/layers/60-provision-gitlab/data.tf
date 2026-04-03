@@ -61,7 +61,7 @@ data "terraform_remote_state" "provision_databases" {
 data "terraform_remote_state" "kubeadm" {
   backend = "local"
   config = {
-    path = "../30-infra-gitlab-kubeadm/terraform.tfstate"
+    path = "../30-infra-gitlab-frontend/terraform.tfstate"
   }
 }
 

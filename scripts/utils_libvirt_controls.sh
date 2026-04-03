@@ -10,7 +10,7 @@ declare -A DOMAIN_MAP=(
 	["30-infra-gitlab-postgres"]="core-gitlab-postgres-node core-gitlab-etcd-node"
 	["30-infra-gitlab-redis"]="core-gitlab-redis-node"
 	["30-infra-gitlab-minio"]="core-gitlab-minio-node"
-	["30-infra-gitlab-kubeadm"]="core-gitlab-frontend"
+	["30-infra-gitlab-frontend"]="core-gitlab-frontend"
 
   ["30-infra-harbor-bootstrapper"]="core-harbor-bootstrapper-frontend-node"
 	["30-infra-harbor-microk8s"]="core-harbor-frontend-node"
@@ -27,7 +27,7 @@ declare -A POOL_MAP=(
 	["30-infra-gitlab-postgres"]="iac-core-gitlab-postgres-pool iac-core-gitlab-etcd-pool"
 	["30-infra-gitlab-redis"]="iac-core-gitlab-redis-pool"
 	["30-infra-gitlab-minio"]="iac-core-gitlab-minio-pool"
-	["30-infra-gitlab-kubeadm"]="iac-core-gitlab-frontend-pool"
+	["30-infra-gitlab-frontend"]="iac-core-gitlab-frontend-pool"
 
   ["30-infra-harbor-bootstrapper"]="iac-core-harbor-bootstrapper-frontend-pool"
 	["30-infra-harbor-microk8s"]="iac-core-harbor-frontend-pool"
@@ -45,7 +45,7 @@ declare -A NET_MAP=(
 	["30-infra-gitlab-postgres"]="gitlab-postgres gitlab-etcd"
 	["30-infra-gitlab-redis"]="gitlab-redis"
 	["30-infra-gitlab-minio"]="gitlab-minio"
-	["30-infra-gitlab-kubeadm"]="gitlab"
+	["30-infra-gitlab-frontend"]="gitlab"
 
   ["30-infra-harbor-bootstrapper"]="harbor-bootstrapper"
 	["30-infra-harbor-microk8s"]="harbor"

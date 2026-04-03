@@ -7,6 +7,6 @@ resource "vault_approle_auth_backend_role_secret_id" "kubeadm_agent" {
 
   # Metadata for Vault Audit Log
   metadata = jsonencode({
-    "source" = "terraform-layer-30-infra-gitlab-kubeadm"
+    "source" = "terraform-layer-30-infra-gitlab-frontend"
   })
 }
