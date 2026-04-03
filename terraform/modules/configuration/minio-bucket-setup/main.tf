@@ -60,10 +60,11 @@ resource "minio_iam_user_policy_attachment" "attachments" {
 }
 
 # 6. Write credentials back to Vault
-resource "vault_generic_secret" "s3_credentials" {
+resource "vault_kv_secret_v2" "s3_credentials" {
   for_each = var.minio_tenants
 
-  path = "${var.vault_secret_path_prefix}/${each.key}"
+  mount = "secret"
+  name  = "${var.vault_secret_path_prefix}/${each.key}"
 
   data_json = jsonencode({
     bucket = each.key

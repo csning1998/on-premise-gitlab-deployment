@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.5.0"
     }
+    minio = {
+      source  = "aminueza/minio"
+      version = "3.12.0"
+    }
     postgresql = {
       source  = "cyrilgdn/postgresql"
       version = "1.25.0"
@@ -16,16 +20,25 @@ terraform {
 provider "vault" {
   alias        = "production"
   address      = local.vault_address
-  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
+  ca_cert_file = local.state.vault_sys.ca_cert_path
 
   auth_login {
     path = "auth/approle/login"
     parameters = {
-      role_id   = local.state.vault_prod_bootstrap.production_role_id
-      secret_id = local.state.vault_prod_bootstrap.production_secret_id
+      role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
+      secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
     }
   }
   skip_child_token = true
+}
+
+provider "minio" {
+  minio_server      = "${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
+  minio_user        = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
+  minio_password    = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
+  minio_ssl         = true
+  minio_insecure    = false
+  minio_cacert_file = "${path.root}/tls/minio-ca-bundle.crt"
 }
 
 provider "postgresql" {

@@ -4,35 +4,42 @@ gitlab_minio_tenants = {
     user_name      = "gitlab-artifacts-user"
     enable_version = false
     policy_rw      = true
+    function       = "artifacts"
   }
   "gitlab-lfs" = {
     user_name      = "gitlab-lfs-user"
     enable_version = false
     policy_rw      = true
+    function       = "lfs"
   }
   "gitlab-uploads" = {
     user_name      = "gitlab-uploads-user"
     enable_version = false
     policy_rw      = true
+    function       = "uploads"
   }
   "gitlab-packages" = {
     user_name      = "gitlab-packages-user"
     enable_version = false
     policy_rw      = true
+    function       = "packages"
   }
   "gitlab-terraform-state" = {
-    user_name      = "gitlab-tf-state-user"
+    user_name      = "gitlab-terraform-state-user"
     enable_version = true
     policy_rw      = true
+    function       = "terraform-state"
   }
   "gitlab-backups" = {
     user_name      = "gitlab-backup-user"
     enable_version = false
     policy_rw      = true
+    function       = "backups"
   }
   "gitlab-tmp-backups" = {
     user_name      = "gitlab-tmp-backup-user"
     enable_version = false
     policy_rw      = true
+    function       = "tmp"
   }
 }

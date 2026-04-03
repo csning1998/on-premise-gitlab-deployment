@@ -60,6 +60,14 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# 1. Database Provisioning State
+data "terraform_remote_state" "provision_databases" {
+  backend = "local"
+  config = {
+    path = "../40-provision-gitlab-databases/terraform.tfstate"
+  }
+}
+
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_generic_secret" "kubeconfig" {
   provider = vault.production

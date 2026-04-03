@@ -50,10 +50,10 @@ data "terraform_remote_state" "minio" {
   }
 }
 
-data "terraform_remote_state" "minio_provision" {
+data "terraform_remote_state" "provision_databases" {
   backend = "local"
   config = {
-    path = "../40-provision-gitlab-minio/terraform.tfstate"
+    path = "../40-provision-gitlab-databases/terraform.tfstate"
   }
 }
 
@@ -81,36 +81,17 @@ data "terraform_remote_state" "harbor_bootstrapper" {
 }
 
 # 2. Fetch Kubeconfig from Production Vault
-data "vault_generic_secret" "kubeconfig" {
+data "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
 }
 
-data "vault_generic_secret" "variables" {
+data "vault_kv_secret_v2" "variables" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/guest_vm"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/guest_vm"
 }
-
-# Vault Secrets for reading database and service passwords.
-data "vault_generic_secret" "db_vars" {
-  provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/gitlab/databases"
-}
-
-# path: secret/on-premise-gitlab-deployment/gitlab/s3_credentials/[bucket_name]
-
-data "vault_generic_secret" "s3_credentials" {
-  provider = vault.production
-  for_each = local.minio_function_map
-  path     = "secret/on-premise-gitlab-deployment/gitlab/s3_credentials/${each.value}"
-}
-
-# GitLab DB Credentials from Layer 40
-data "vault_generic_secret" "gitlab_db_keys" {
-  provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/gitlab/app/database"
-}
-
 
 # Fetch the Cluster CA
 data "kubernetes_config_map" "kube_root_ca" {
@@ -118,4 +99,29 @@ data "kubernetes_config_map" "kube_root_ca" {
     name      = "kube-root-ca.crt"
     namespace = "kube-system"
   }
+}
+
+data "vault_kv_secret_v2" "gitlab_db" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/database"
+}
+
+data "vault_kv_secret_v2" "gitlab_redis" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/redis"
+}
+
+data "vault_kv_secret_v2" "gitlab_s3" {
+  provider = vault.production
+  for_each = local.minio_function_map
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/s3_credentials/${each.value}"
+}
+
+data "vault_kv_secret_v2" "gitlab_internal" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
 }

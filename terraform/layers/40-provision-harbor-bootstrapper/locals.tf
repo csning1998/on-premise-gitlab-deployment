@@ -29,6 +29,12 @@ locals {
       provider_name = "docker-registry"
       project_name  = "quay-proxy"
     }
+    gitlab_com = {
+      registry_name = "registry.gitlab.com"
+      endpoint_url  = "https://registry.gitlab.com"
+      provider_name = "docker-registry"
+      project_name  = "gitlab-proxy"
+    }
     gcr_io = {
       registry_name = "gcr.io"
       endpoint_url  = "https://gcr.io"

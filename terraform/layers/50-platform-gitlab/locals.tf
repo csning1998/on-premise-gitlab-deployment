@@ -10,6 +10,7 @@ locals {
     kubeadm             = data.terraform_remote_state.kubeadm.outputs
     harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
+    provision_databases  = data.terraform_remote_state.provision_databases.outputs
   }
 }
 

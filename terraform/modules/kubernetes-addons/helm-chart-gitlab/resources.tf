@@ -21,6 +21,13 @@ resource "kubernetes_manifest" "gitlab_certificate" {
       renewBefore = var.certificate_config.renew_before
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      manifest.metadata.labels,
+      manifest.metadata.annotations,
+    ]
+  }
 }
 
 # CA Bundle Secret (Trust Anchor)
@@ -31,6 +38,14 @@ resource "kubernetes_secret" "gitlab_ca_bundle" {
   }
   data = {
     "ca.crt" = var.ca_bundle.content
+  }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
   }
 }
 
@@ -43,6 +58,14 @@ resource "kubernetes_secret" "gitlab_postgres_password" {
   data = {
     password = var.external_services.postgres.password
   }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
+  }
 }
 
 resource "kubernetes_secret" "gitlab_redis_password" {
@@ -52,6 +75,14 @@ resource "kubernetes_secret" "gitlab_redis_password" {
   }
   data = {
     password = var.external_services.redis.password
+  }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
   }
 }
 
@@ -74,6 +105,14 @@ resource "kubernetes_secret" "gitlab_minio_secrets" {
       path_style            = true
     })
   }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
+  }
 }
 
 resource "kubernetes_secret" "gitlab_internal_secrets" {
@@ -88,5 +127,13 @@ resource "kubernetes_secret" "gitlab_internal_secrets" {
 
   data = {
     (each.value.key) = each.value.value
+  }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
   }
 }

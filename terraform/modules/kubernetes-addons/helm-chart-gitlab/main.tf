@@ -23,12 +23,34 @@ resource "helm_release" "gitlab" {
 
       global = {
         edition = var.gitlab_config.edition
+
+        # Registry override: redirect all GitLab CNG images via Harbor proxy when set
+        image = var.image_registry != null ? {
+          registry   = var.image_registry.registry
+          repository = var.image_registry.repository
+        } : null
+
         certificates = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-certificates"
+          } : null
           customCAs = [
             {
               secret = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
             }
           ]
+        }
+
+        kubectl = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/kubectl"
+          } : null
+        }
+
+        gitlabBase = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-base"
+          } : null
         }
 
         # Domain & Ingress
@@ -178,6 +200,9 @@ resource "helm_release" "gitlab" {
         webservice = {
           minReplicas = 1
           maxReplicas = 2
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-webservice-${var.gitlab_config.edition}"
+          } : null
           deployment = {
             hostAliases = var.external_services.minio.ip != null ? [
               {
@@ -190,6 +215,9 @@ resource "helm_release" "gitlab" {
         sidekiq = {
           minReplicas = 1
           maxReplicas = 2
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-sidekiq-${var.gitlab_config.edition}"
+          } : null
           deployment = {
             hostAliases = var.external_services.minio.ip != null ? [
               {
@@ -199,7 +227,35 @@ resource "helm_release" "gitlab" {
             ] : []
           }
         }
+        gitaly = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitaly"
+          } : null
+        }
+        gitlab-shell = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-shell"
+          } : null
+        }
+        migrations = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-toolbox-${var.gitlab_config.edition}"
+          } : null
+        }
+        kas = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-kas"
+          } : null
+        }
+        gitlab-exporter = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-exporter"
+          } : null
+        }
         toolbox = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-toolbox-${var.gitlab_config.edition}"
+          } : null
           deployment = {
             hostAliases = var.external_services.minio.ip != null ? [
               {

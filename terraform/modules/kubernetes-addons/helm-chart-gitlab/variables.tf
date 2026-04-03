@@ -39,7 +39,7 @@ variable "external_services" {
   type = object({
     postgres = object({
       host       = string
-      port       = string
+      port       = number
       password   = string
       username   = string
       database   = string
@@ -49,6 +49,7 @@ variable "external_services" {
       host     = string
       port     = string
       password = string
+      scheme   = string
     })
     minio = object({
       hostname   = optional(string)
@@ -81,4 +82,13 @@ variable "ca_bundle" {
     content     = string
     secret_name = string
   })
+}
+
+variable "image_registry" {
+  description = "Optional override for the container image repository. When set, all GitLab component images are redirected through the specified registry and repository prefix (e.g. Harbor proxy)."
+  type = object({
+    registry   = string
+    repository = string
+  })
+  default = null
 }

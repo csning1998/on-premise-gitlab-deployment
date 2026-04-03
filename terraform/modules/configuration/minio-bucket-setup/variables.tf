@@ -9,7 +9,7 @@ variable "minio_tenants" {
 }
 
 variable "vault_secret_path_prefix" {
-  description = "Vault path prefix to store generated credentials (e.g., secret/on-premise-gitlab-deployment/harbor)"
+  description = "Vault path prefix to store generated credentials (e.g., on-premise-gitlab-deployment/harbor)"
   type        = string
 }
 

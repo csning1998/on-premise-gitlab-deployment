@@ -7,7 +7,7 @@ locals {
     redis                = data.terraform_remote_state.redis.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
     minio                = data.terraform_remote_state.minio.outputs
-    minio_provision      = data.terraform_remote_state.minio_provision.outputs
+    provision_databases  = data.terraform_remote_state.provision_databases.outputs
     network              = data.terraform_remote_state.network.outputs.infrastructure_map
     kubeadm              = data.terraform_remote_state.kubeadm.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
@@ -18,7 +18,7 @@ locals {
 
 # Kubeadm Configuration & Auth Object
 locals {
-  kubeconfig   = yamldecode(base64decode(data.vault_generic_secret.kubeconfig.data["content_b64"]))
+  kubeconfig   = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info = local.kubeconfig.clusters[0].cluster
   user_info    = local.kubeconfig.users[0].user
 
@@ -51,6 +51,11 @@ locals {
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
+  harbor_gitlab_proxy = local.state.harbor_bootstrapper.proxy_caches.gitlab_com.project_name
+
+  # GitLab CNG image registry and repository routed through Harbor Bootstrapper proxy
+  gitlab_image_registry   = local.fqdn_harbor_bootstrapper
+  gitlab_image_repository = "${local.harbor_gitlab_proxy}/gitlab-org/build/cng"
 
   # K8s API Endpoint for Vault Callback (Standardized)
   api_port     = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["api-server"].frontend_port
@@ -70,13 +75,6 @@ locals {
   vault_address = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 }
 
-# Vault Generic Secrets (Infrastructure Level)
-locals {
-  # These are used for administrative discovery if needed,
-  # though application-level logic should use gitlab_db_keys.
-  redis_password = data.vault_generic_secret.db_vars.data["redis_requirepass"]
-}
-
 # External Service Address & Ports
 locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
@@ -92,16 +90,16 @@ locals {
 
   # GitLab Application Database Context
   gitlab_db = {
-    username = data.vault_generic_secret.gitlab_db_keys.data["username"]
-    password = data.vault_generic_secret.gitlab_db_keys.data["password"]
-    database = data.vault_generic_secret.gitlab_db_keys.data["database"]
-    host     = data.vault_generic_secret.gitlab_db_keys.data["host"]
-    port     = data.vault_generic_secret.gitlab_db_keys.data["port"]
+    username = data.vault_kv_secret_v2.gitlab_db.data["username"]
+    password = data.vault_kv_secret_v2.gitlab_db.data["password"]
+    database = data.vault_kv_secret_v2.gitlab_db.data["database"]
+    host     = data.vault_kv_secret_v2.gitlab_db.data["host"]
+    port     = data.vault_kv_secret_v2.gitlab_db.data["port"]
 
     tls = {
-      crt = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["crt"])
-      key = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["key"])
-      ca  = base64decode(jsondecode(data.vault_generic_secret.gitlab_db_keys.data_json)["tls"]["ca"])
+      crt = base64decode(jsondecode(data.vault_kv_secret_v2.gitlab_db.data_json)["tls"]["crt"])
+      key = base64decode(jsondecode(data.vault_kv_secret_v2.gitlab_db.data_json)["tls"]["key"])
+      ca  = base64decode(jsondecode(data.vault_kv_secret_v2.gitlab_db.data_json)["tls"]["ca"])
     }
   }
 }
@@ -135,5 +133,5 @@ locals {
 # 7. Object Storage Mappings
 locals {
   s3_region          = "us-east-1"
-  minio_function_map = local.state.minio_provision.minio_function_map
+  minio_function_map = local.state.provision_databases.minio_function_map
 }
