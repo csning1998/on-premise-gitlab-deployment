@@ -17,7 +17,7 @@ terraform {
 provider "vault" {
   alias        = "production"
   address      = local.sys_vault_addr
-  ca_cert_file = abspath("${path.root}/../15-shared-vault-frontend/tls/bootstrap-ca.crt")
+  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
 
   auth_login {
     path = "auth/approle/login"
