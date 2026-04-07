@@ -44,14 +44,14 @@ data "terraform_remote_state" "vault_pki" {
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
   config = {
-    path = "${path.root}/../30-infra-harbor-bootstrapper/terraform.tfstate"
+    path = "${path.root}/../30-infra-harbor-bootstrapper-frontend/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "harbor_proxy" {
   backend = "local"
   config = {
-    path = "${path.root}/../40-provision-harbor-bootstrapper/terraform.tfstate"
+    path = "${path.root}/../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
   }
 }
 

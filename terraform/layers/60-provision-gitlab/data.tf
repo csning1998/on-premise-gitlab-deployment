@@ -76,7 +76,7 @@ data "terraform_remote_state" "platform_gitlab" {
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
   config = {
-    path = "../40-provision-harbor-bootstrapper/terraform.tfstate"
+    path = "../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
   }
 }
 
