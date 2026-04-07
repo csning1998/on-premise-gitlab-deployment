@@ -20,32 +20,42 @@ terraform {
   }
 }
 
+# Production Provider (Layer 10 Vault)
 provider "vault" {
+  alias        = "production"
   address      = local.vault_address
-  ca_cert_file = abspath("${path.root}/../10-vault-raft/tls/vault-ca.crt")
-  token        = jsondecode(file(abspath("${path.root}/../../../ansible/fetched/vault/vault_init_output.json"))).root_token
+  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
+
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = local.state.vault_prod_bootstrap.production_role_id
+      secret_id = local.state.vault_prod_bootstrap.production_secret_id
+    }
+  }
+  skip_child_token = true
 }
 
 provider "kubernetes" {
-  host                   = local.k8s_provider_auth.host
-  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-  client_certificate     = local.k8s_provider_auth.client_certificate
-  client_key             = local.k8s_provider_auth.client_key
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
 }
 
 provider "kubectl" {
   load_config_file       = false
-  host                   = local.k8s_provider_auth.host
-  cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-  client_certificate     = local.k8s_provider_auth.client_certificate
-  client_key             = local.k8s_provider_auth.client_key
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = local.k8s_provider_auth.host
-    cluster_ca_certificate = local.k8s_provider_auth.cluster_ca_certificate
-    client_certificate     = local.k8s_provider_auth.client_certificate
-    client_key             = local.k8s_provider_auth.client_key
+    host                   = local.api_server_connection.host
+    cluster_ca_certificate = local.api_server_connection.ca_cert
+    client_certificate     = local.api_server_connection.client_certificate
+    client_key             = local.api_server_connection.client_key
   }
 }

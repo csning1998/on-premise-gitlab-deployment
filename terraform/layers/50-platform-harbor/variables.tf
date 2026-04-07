@@ -6,6 +6,11 @@ variable "trust_engine_config" {
     issuer_kind           = string       # e.g., "ClusterIssuer"
     authorized_namespaces = list(string) # e.g., ["cert-manager", "harbor"]
   })
+  default = {
+    issuer_name           = "vault-issuer"
+    issuer_kind           = "ClusterIssuer"
+    authorized_namespaces = ["cert-manager", "harbor"]
+  }
 }
 
 variable "cert_manager_config" {
@@ -14,6 +19,10 @@ variable "cert_manager_config" {
     version   = string # e.g., "v1.14.0"
     namespace = string # e.g., "cert-manager"
   })
+  default = {
+    version   = "v1.14.0"
+    namespace = "cert-manager"
+  }
 }
 
 variable "db_init_config" {
@@ -22,12 +31,6 @@ variable "db_init_config" {
     db_name = string # e.g., "registry"
     db_user = string # e.g., "harbor"
   })
-}
-
-variable "microk8s_api_port" {
-  description = "MicroK8s API Port"
-  type        = string
-  default     = "16443"
 }
 
 variable "ingress_class_name" {
