@@ -24,7 +24,7 @@ data "terraform_remote_state" "vault_prod_bootstrap" {
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-security-pki/terraform.tfstate"
+    path = "../25-security-pki/terraform.tfstate"
   }
 }
 
