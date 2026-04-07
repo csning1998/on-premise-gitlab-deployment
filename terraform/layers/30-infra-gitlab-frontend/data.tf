@@ -16,14 +16,14 @@ data "terraform_remote_state" "volume" {
 data "terraform_remote_state" "network" {
   backend = "local"
   config = {
-    path = "${path.root}/../10-shared-load-balancer/terraform.tfstate"
+    path = "${path.root}/../10-shared-load-balancer-frontend/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
-    path = "${path.root}/../15-shared-vault/terraform.tfstate"
+    path = "${path.root}/../15-shared-vault-frontend/terraform.tfstate"
   }
 }
 

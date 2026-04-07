@@ -4,8 +4,8 @@
 
 # Resources Mapping
 declare -A DOMAIN_MAP=(
-	["15-shared-vault"]="core-vault-raft-node"
-	["10-shared-load-balancer"]="core-central-lb-node"
+	["15-shared-vault-frontend"]="core-vault-raft-node"
+	["10-shared-load-balancer-frontend"]="core-central-lb-node"
 
 	["30-infra-gitlab-postgres"]="core-gitlab-postgres-node core-gitlab-etcd-node"
 	["30-infra-gitlab-redis"]="core-gitlab-redis-node"
@@ -21,8 +21,8 @@ declare -A DOMAIN_MAP=(
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-	["15-shared-vault"]="iac-core-vault-raft-pool"
-	["10-shared-load-balancer"]="iac-core-central-lb-pool"
+	["15-shared-vault-frontend"]="iac-core-vault-raft-pool"
+	["10-shared-load-balancer-frontend"]="iac-core-central-lb-pool"
 
 	["30-infra-gitlab-postgres"]="iac-core-gitlab-postgres-pool iac-core-gitlab-etcd-pool"
 	["30-infra-gitlab-redis"]="iac-core-gitlab-redis-pool"
@@ -38,8 +38,8 @@ declare -A POOL_MAP=(
 
 # Network prefixes (Segment Keys).
 declare -A NET_MAP=(
-	["15-shared-vault"]="vault"
-	["10-shared-load-balancer"]="central-lb"
+	["15-shared-vault-frontend"]="vault"
+	["10-shared-load-balancer-frontend"]="central-lb"
 
 
 	["30-infra-gitlab-postgres"]="gitlab-postgres gitlab-etcd"
