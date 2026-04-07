@@ -1,6 +1,6 @@
 
 # 1. Global Topology and Bootstrap CA.
-# Note: The bootstrap-ca.crt file is written by Layer 10 (15-shared-vault).
+# Note: The bootstrap-ca.crt file is written by Layer 15 (15-shared-vault-frontend).
 # Layer 20 references it via the path below for the Vault provider's ca_cert_file.
 locals {
   state = {
@@ -62,7 +62,7 @@ locals {
 locals {
   workload_identity_extra_rules = {
     "harbor-bootstrapper-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" = { capabilities = ["read"] }
+      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper-frontend/*" = { capabilities = ["read"] }
     }
     "harbor-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }

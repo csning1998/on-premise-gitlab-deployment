@@ -4,16 +4,16 @@
 
 # Resources Mapping
 declare -A DOMAIN_MAP=(
-	["15-shared-vault"]="core-vault-raft-node"
-	["10-shared-load-balancer"]="core-central-lb-node"
+	["15-shared-vault-frontend"]="core-vault-raft-node"
+	["10-shared-load-balancer-frontend"]="core-central-lb-node"
 
 	["30-infra-gitlab-postgres"]="core-gitlab-postgres-node core-gitlab-etcd-node"
 	["30-infra-gitlab-redis"]="core-gitlab-redis-node"
 	["30-infra-gitlab-minio"]="core-gitlab-minio-node"
-	["30-infra-gitlab-kubeadm"]="core-gitlab-frontend"
+	["30-infra-gitlab-frontend"]="core-gitlab-frontend"
 
-  ["30-infra-harbor-bootstrapper"]="core-harbor-bootstrapper-frontend-node"
-	["30-infra-harbor-microk8s"]="core-harbor-frontend-node"
+  ["30-infra-harbor-bootstrapper-frontend"]="core-harbor-bootstrapper-frontend-node"
+	["30-infra-harbor-frontend"]="core-harbor-frontend-node"
 	["30-infra-harbor-postgres"]="core-harbor-postgres-node core-harbor-etcd-node"
 	["30-infra-harbor-redis"]="core-harbor-redis-node"
 	["30-infra-harbor-minio"]="core-harbor-minio-node"
@@ -21,16 +21,16 @@ declare -A DOMAIN_MAP=(
 
 # Storage Pool names.
 declare -A POOL_MAP=(
-	["15-shared-vault"]="iac-core-vault-raft-pool"
-	["10-shared-load-balancer"]="iac-core-central-lb-pool"
+	["15-shared-vault-frontend"]="iac-core-vault-raft-pool"
+	["10-shared-load-balancer-frontend"]="iac-core-central-lb-pool"
 
 	["30-infra-gitlab-postgres"]="iac-core-gitlab-postgres-pool iac-core-gitlab-etcd-pool"
 	["30-infra-gitlab-redis"]="iac-core-gitlab-redis-pool"
 	["30-infra-gitlab-minio"]="iac-core-gitlab-minio-pool"
-	["30-infra-gitlab-kubeadm"]="iac-core-gitlab-frontend-pool"
+	["30-infra-gitlab-frontend"]="iac-core-gitlab-frontend-pool"
 
-  ["30-infra-harbor-bootstrapper"]="iac-core-harbor-bootstrapper-frontend-pool"
-	["30-infra-harbor-microk8s"]="iac-core-harbor-frontend-pool"
+  ["30-infra-harbor-bootstrapper-frontend"]="iac-core-harbor-bootstrapper-frontend-pool"
+	["30-infra-harbor-frontend"]="iac-core-harbor-frontend-pool"
 	["30-infra-harbor-postgres"]="iac-core-harbor-postgres-pool iac-core-harbor-etcd-pool"
 	["30-infra-harbor-redis"]="iac-core-harbor-redis-pool"
 	["30-infra-harbor-minio"]="iac-core-harbor-minio-pool"
@@ -38,17 +38,17 @@ declare -A POOL_MAP=(
 
 # Network prefixes (Segment Keys).
 declare -A NET_MAP=(
-	["15-shared-vault"]="vault"
-	["10-shared-load-balancer"]="central-lb"
+	["15-shared-vault-frontend"]="vault"
+	["10-shared-load-balancer-frontend"]="central-lb"
 
 
 	["30-infra-gitlab-postgres"]="gitlab-postgres gitlab-etcd"
 	["30-infra-gitlab-redis"]="gitlab-redis"
 	["30-infra-gitlab-minio"]="gitlab-minio"
-	["30-infra-gitlab-kubeadm"]="gitlab"
+	["30-infra-gitlab-frontend"]="gitlab"
 
-  ["30-infra-harbor-bootstrapper"]="harbor-bootstrapper"
-	["30-infra-harbor-microk8s"]="harbor"
+  ["30-infra-harbor-bootstrapper-frontend"]="harbor-bootstrapper"
+	["30-infra-harbor-frontend"]="harbor"
   ["30-infra-harbor-postgres"]="harbor-postgres harbor-etcd"
 	["30-infra-harbor-redis"]="harbor-redis"
 	["30-infra-harbor-minio"]="harbor-minio"

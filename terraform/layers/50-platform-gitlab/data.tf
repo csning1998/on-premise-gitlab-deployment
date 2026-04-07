@@ -10,7 +10,7 @@ data "terraform_remote_state" "metadata" {
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "local"
   config = {
-    path = "../16-security-vault-approle/terraform.tfstate"
+    path = "../20-security-vault-approle/terraform.tfstate"
   }
 }
 
@@ -18,7 +18,7 @@ data "terraform_remote_state" "vault_prod_bootstrap" {
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-security-pki/terraform.tfstate"
+    path = "../25-security-pki/terraform.tfstate"
   }
 }
 
@@ -48,7 +48,7 @@ data "terraform_remote_state" "minio" {
 data "terraform_remote_state" "kubeadm" {
   backend = "local"
   config = {
-    path = "../30-infra-gitlab-kubeadm/terraform.tfstate"
+    path = "../30-infra-gitlab-frontend/terraform.tfstate"
   }
 }
 
@@ -56,7 +56,7 @@ data "terraform_remote_state" "kubeadm" {
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
   config = {
-    path = "../40-provision-harbor-bootstrapper/terraform.tfstate"
+    path = "../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
   }
 }
 
