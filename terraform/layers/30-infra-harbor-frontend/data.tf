@@ -46,3 +46,17 @@ data "vault_generic_secret" "guest_vm" {
   provider = vault.production
   path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }
+
+data "terraform_remote_state" "harbor_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../30-infra-harbor-bootstrapper-frontend/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "harbor_proxy" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
+  }
+}

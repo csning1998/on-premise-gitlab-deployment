@@ -1,4 +1,10 @@
 ---
+- name: "Play 0: Setup Infrastructure Prerequisites & Trust Store"
+  hosts: "{{ (groups['nodes'] | default([])) }}"
+  become: true
+  roles:
+    - 30-microk8s-prerequisites
+
 - name: "Play 1: Clean up stale nodes from base image"
   hosts: "{{ (groups['nodes'] | default([])) }}"
   become: true

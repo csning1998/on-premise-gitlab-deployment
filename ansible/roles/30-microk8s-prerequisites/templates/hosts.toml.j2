@@ -1,0 +1,9 @@
+
+server = "https://{{ item.upstream_server }}"
+
+[host."https://{{ registry_host }}{{ '/v2/' ~ item.proxy if item.proxy is defined else '' }}"]
+    capabilities = ["pull", "resolve", "push"]
+    skip_verify = false
+{% if item.proxy is defined %}
+    override_path = true
+{% endif %}
