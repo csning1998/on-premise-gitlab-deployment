@@ -5,19 +5,22 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.5.0"
     }
-    harbor = {
-      source  = "goharbor/harbor"
-      version = "3.10.1"
+    libvirt = {
+      source  = "dmacvicar/libvirt"
+      version = "0.9.0"
     }
   }
 }
 
+provider "libvirt" {
+  uri = "qemu:///system"
+}
 
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
   address      = local.sys_vault_addr
-  ca_cert_file = local.state.vault_sys.ca_cert_path
+  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
 
   auth_login {
     path = "auth/approle/login"
@@ -27,10 +30,4 @@ provider "vault" {
     }
   }
   skip_child_token = true
-}
-
-provider "harbor" {
-  url      = "https://${data.terraform_remote_state.harbor_bootstrapper.outputs.service_vip}"
-  username = "admin"
-  password = data.vault_generic_secret.harbor_bootstrapper.data["harbor_bootstrapper_admin_password"]
 }

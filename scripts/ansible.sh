@@ -30,7 +30,7 @@ vault_secret_extractor() {
       )
       # Path 3: Dev Harbor App
       vault_clusters+=(
-        "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app|harbor_bootstrapper_admin_password harbor_bootstrapper_pg_db_password"
+        "secret/on-premise-gitlab-deployment/harbor-bootstrapper-frontend/app|harbor_bootstrapper_admin_password harbor_bootstrapper_pg_db_password"
       )
       ;;
     "30-provision-microk8s.yaml")

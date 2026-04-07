@@ -4,7 +4,7 @@ locals {
   state = {
     metadata  = data.terraform_remote_state.metadata.outputs # Source from `00-foundation-metadata`
     volume    = data.terraform_remote_state.volume.outputs   # Source from `05-foundation-volume`
-    network   = data.terraform_remote_state.network.outputs  # Source from `10-shared-load-balancer`
+    network   = data.terraform_remote_state.network.outputs  # Source from `10-shared-load-balancer-frontend`
     vault_sys = data.terraform_remote_state.vault_sys.outputs
     vault_pki = data.terraform_remote_state.vault_pki.outputs
   }

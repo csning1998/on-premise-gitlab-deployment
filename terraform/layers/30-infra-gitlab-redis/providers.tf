@@ -20,7 +20,7 @@ provider "libvirt" {
 provider "vault" {
   alias        = "production"
   address      = local.sys_vault_addr
-  ca_cert_file = local.state.vault_sys.ca_cert_path
+  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
 
   auth_login {
     path = "auth/approle/login"

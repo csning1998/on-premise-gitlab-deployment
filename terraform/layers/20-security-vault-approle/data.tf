@@ -16,7 +16,7 @@ data "terraform_remote_state" "vault_bootstrapper" {
 data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
-    path = "${path.root}/../15-shared-vault/terraform.tfstate"
+    path = "${path.root}/../15-shared-vault-frontend/terraform.tfstate"
   }
 }
 
