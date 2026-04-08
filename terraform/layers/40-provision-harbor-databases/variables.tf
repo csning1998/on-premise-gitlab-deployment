@@ -13,3 +13,11 @@ variable "harbor_minio_tenants" {
     policy_rw      = bool
   }))
 }
+
+variable "db_init_config" {
+  description = "Configuration for Harbor Database Initialization"
+  type = object({
+    db_name = string # e.g., "registry"
+    db_user = string # e.g., "harbor"
+  })
+}
