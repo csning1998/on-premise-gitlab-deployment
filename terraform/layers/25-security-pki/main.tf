@@ -1,4 +1,10 @@
 
+# Persist the PKI CA Certificate for Dependent Layers (e.g. Minio Provider)
+resource "local_file" "pki_root_ca" {
+  content  = module.vault_pki_setup.pki_root_ca_certificate
+  filename = abspath("${path.module}/tls/pki-root-ca.crt")
+}
+
 module "vault_pki_setup" {
   source = "../../modules/configuration/vault-pki-setup"
   providers = {

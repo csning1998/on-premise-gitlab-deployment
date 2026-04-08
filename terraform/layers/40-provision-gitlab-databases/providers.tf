@@ -38,7 +38,7 @@ provider "minio" {
   minio_password    = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
   minio_ssl         = true
   minio_insecure    = false
-  minio_cacert_file = "${path.root}/tls/minio-ca-bundle.crt"
+  minio_cacert_file = local.state.vault_pki.pki_ca.path
 }
 
 provider "postgresql" {
