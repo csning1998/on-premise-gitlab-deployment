@@ -17,6 +17,11 @@
         group: root
       notify: Update CA Certificates
 
+    - name: "Step A2.4.1. Force update CA certificates to validate Vault API"
+      ansible.builtin.command: update-ca-certificates
+      register: ca_update_result
+      changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
+
     - name: "Step A2.5. Download Vault PKI Issuing CA directly from Vault API"
       ansible.builtin.get_url:
         url: "{{ vault_addr }}/v1/pki/prod/ca/pem"
@@ -24,7 +29,7 @@
         mode: "0644"
         owner: root
         group: root
-        validate_certs: false
+        validate_certs: true
       notify: Update CA Certificates
 
     - name: "Step A3. Force update of CA certificates"
