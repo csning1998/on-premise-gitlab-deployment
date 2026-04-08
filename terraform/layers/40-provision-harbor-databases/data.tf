@@ -41,10 +41,17 @@ data "terraform_remote_state" "postgres" {
   }
 }
 
-data "terraform_remote_state" "minio_infra" {
+data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
     path = "${path.root}/../30-infra-harbor-minio/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "redis" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../30-infra-harbor-redis/terraform.tfstate"
   }
 }
 

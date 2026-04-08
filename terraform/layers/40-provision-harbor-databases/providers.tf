@@ -19,25 +19,26 @@ terraform {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.vault_address
   ca_cert_file = local.state.vault_pki.bootstrap_ca.path
 
   auth_login {
     path = "auth/approle/login"
     parameters = {
-      role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
-      secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
+      role_id   = local.state.vault_prod_bootstrap.production_role_id
+      secret_id = local.state.vault_prod_bootstrap.production_secret_id
     }
   }
   skip_child_token = true
 }
 
 provider "minio" {
-  minio_server   = "${data.terraform_remote_state.minio_infra.outputs.service_vip}:${data.terraform_remote_state.minio_infra.outputs.minio_api_port}"
-  minio_user     = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
-  minio_password = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
-  minio_ssl      = true
-  minio_insecure = true
+  minio_server      = "${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
+  minio_user        = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
+  minio_password    = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
+  minio_ssl         = true
+  minio_insecure    = false
+  minio_cacert_file = local.state.vault_pki.pki_ca.path
 }
 
 provider "postgresql" {
