@@ -2,7 +2,7 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_addr }}"
+  address = "{{ vault_addr | trim('/') }}"
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 

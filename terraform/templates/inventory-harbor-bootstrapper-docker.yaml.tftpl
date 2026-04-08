@@ -5,6 +5,7 @@ all:
 
     dev_harbor_cluster_ips: ${jsonencode([for node in all_nodes : node.ip])}
     dev_harbor_mtls_node_subnet: "${custom_vars.access_scope}"
+    dev_harbor_fqdn: "${custom_vars.dev_harbor_fqdn}"
     dev_harbor_service_domain: "${cluster_identity.cluster_name}"
     dev_harbor_tls_port: ${custom_vars.dev_harbor_tls_port}
     dev_harbor_vip: "${custom_vars.dev_harbor_vip}"

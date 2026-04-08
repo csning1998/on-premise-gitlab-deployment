@@ -54,10 +54,10 @@
       vars:
         vault_install_only: true
 
-    - name: "Step C2. Ensure Service Domain resolves to Localhost"
+    - name: "Step C2. Ensure Service Domain and FQDN resolve to Localhost"
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        line: "127.0.0.1 {{ dev_harbor_service_domain }}"
+        line: "127.0.0.1 {{ dev_harbor_service_domain }} {{ dev_harbor_fqdn }}"
         state: present
 
     - name: "Step C3. Create Vault Agent Config Directory"
@@ -81,13 +81,36 @@
       no_log: true
       notify: Restart Vault Agent
 
-    - name: "Step C5. Deploy Vault CA Certificate"
+    - name: "Step C5. Distribute Vault PKI Service CA to OS trust store"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: /usr/local/share/ca-certificates/vault-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+      notify: Update CA Certificates
+
+    - name: "Step C5.1. Copy Vault CA Certificate for Vault Agent"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "{{ vault_agent_config_dir }}/vault-ca.crt"
         owner: vault
         group: vault
         mode: "0644"
+
+    - name: "Step C5.1.1. Force update CA certificates to validate Vault API"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+
+    - name: "Step C5.2. Download Vault PKI Issuing CA to OS trust store"
+      ansible.builtin.get_url:
+        url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
+        dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+        validate_certs: true
+      notify: Update CA Certificates
 
     - name: "Step C6. Ensure Harbor PKI Directory Exists"
       ansible.builtin.file:
@@ -145,7 +168,7 @@
         secret_id: "{{ vault_agent_secret_id }}"
         ca_cert: "{{ vault_agent_config_dir }}/vault-ca.crt"
       register: harbor_vault_secrets
-      no_log: true
+      # no_log: true
 
 - name: "Section E: Configure Harbor"
   become: true
@@ -201,10 +224,14 @@
 
 - name: "Section F: Verification"
   block:
+    - name: "Step F0. Force update of CA certificates"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+
     - name: "Step F1. Wait for Harbor Health (HTTPS)"
       ansible.builtin.uri:
-        url: "https://127.0.0.1/api/v2.0/health"
-        validate_certs: false
+        url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
+        validate_certs: true
         status_code: 200
         return_content: true
       register: result

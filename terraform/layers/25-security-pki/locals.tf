@@ -62,7 +62,7 @@ locals {
 locals {
   workload_identity_extra_rules = {
     "harbor-bootstrapper-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper-frontend/*" = { capabilities = ["read"] }
+      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" = { capabilities = ["read"] }
     }
     "harbor-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }

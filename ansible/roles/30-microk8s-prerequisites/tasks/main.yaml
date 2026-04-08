@@ -1,0 +1,90 @@
+---
+- name: "Block A: Establish Certificate Trust for Containerd & OS"
+  become: true
+  block:
+    - name: "Step A1. Ensure ca-certificates package is installed"
+      ansible.builtin.apt:
+        name: ca-certificates
+        state: present
+        update_cache: true
+
+    - name: "Step A2. Distribute Vault PKI Service CA to OS trust store"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: /usr/local/share/ca-certificates/vault-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+      notify: Update CA Certificates
+
+    - name: "Step A2.4. Inject routing optimization for Infrastructure VIPs (Vault & Harbor MTU bypass)"
+      # Fix: MicroK8s (Calico) VXLAN overhead reduces MTU to 1450.
+      # This causes SSL handshake timeouts to external VIPs (MTU 1500) due to PMTU discovery failures.
+      community.general.ip_route:
+        prefix: "{{ item }}"
+        gateway: "{{ ansible_default_ipv4.gateway }}"
+        dev: "{{ ansible_default_ipv4.interface }}"
+        advmss: 1300
+        state: present
+      loop:
+        - "{{ vault_addr | regex_replace('^https://', '') | regex_replace(':.*$', '') }}"
+        - "{{ registry_vip }}"
+
+    - name: "Step A2.4.1. Force update CA certificates to validate Vault API"
+      ansible.builtin.command: update-ca-certificates
+      register: ca_update_result
+      changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
+
+    - name: "Step A2.5. Download Vault PKI Issuing CA directly from Vault API"
+      ansible.builtin.get_url:
+        url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
+        dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
+        mode: "0644"
+        owner: root
+        group: root
+        validate_certs: true
+      notify: Update CA Certificates
+
+    - name: "Step A3. Force update of CA certificates"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+      notify: Restart MicroK8s Containerd
+
+- name: "Block B: Configure Containerd Registry endpoint (MicroK8s Snap)"
+  become: true
+  block:
+    - name: "Step B0. Ensure local DNS override for Harbor Bootstrapper Registry in /etc/hosts"
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^.*\s+{{ registry_host | regex_escape() }}(\s+|$)'
+        line: "{{ registry_vip }} {{ registry_host }}"
+        state: present
+
+    - name: "Step B1. Ensure Mirror Directories Exist"
+      ansible.builtin.file:
+        path: "/var/snap/microk8s/current/args/certs.d/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ registry_host }}"
+        - "{{ registry_vip }}"
+        - "docker.io"
+        - "registry.k8s.io"
+        - "quay.io"
+
+    - name: "Step B2. Deploy hosts.toml (Standard Registry & Inception redirection)"
+      ansible.builtin.template:
+        src: hosts.toml.j2
+        dest: "/var/snap/microk8s/current/args/certs.d/{{ item.domain }}/hosts.toml"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart MicroK8s Containerd
+      loop:
+        - { domain: "{{ registry_host }}", upstream_server: "{{ registry_host }}" }
+        - { domain: "{{ registry_vip }}", upstream_server: "{{ registry_host }}" }
+        - { domain: "docker.io", upstream_server: "registry-1.docker.io", proxy: "{{ harbor_docker_proxy }}" }
+        - { domain: "registry.k8s.io", upstream_server: "registry.k8s.io", proxy: "{{ harbor_k8s_proxy }}" }
+        - { domain: "quay.io", upstream_server: "quay.io", proxy: "{{ harbor_quay_proxy }}" }
