@@ -204,9 +204,9 @@ service_catalog = {
         tags       = []
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "k8s-api" = { frontend_port = 16443, backend_port = 16443 }
-          "http"    = { frontend_port = 80, backend_port = 80 }
-          "https"   = { frontend_port = 443, backend_port = 443 }
+          "api-server"    = { frontend_port = 16443, backend_port = 16443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 80 }
+          "ingress-https" = { frontend_port = 443, backend_port = 443 }
         }
         ingress = {
           "frontend" = { subdomains = ["harbor", "notary.harbor"] }

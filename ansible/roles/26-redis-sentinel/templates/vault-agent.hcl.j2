@@ -1,7 +1,7 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_addr }}"
+  address = "{{ vault_addr | trim('/') }}"
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 
@@ -25,7 +25,7 @@ auto_auth {
 template {
   destination = "/etc/redis/certs/server.crt"
   contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' 
+{{ '{{- with secret "pki/prod/issue/'
 ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
 {{ '{{ .Data.certificate }}' }}
 {{ '{{ .Data.issuing_ca }}' }}

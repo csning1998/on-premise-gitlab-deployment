@@ -2,11 +2,13 @@
 # State Object
 locals {
   state = {
-    metadata  = data.terraform_remote_state.metadata.outputs
-    volume    = data.terraform_remote_state.volume.outputs
-    network   = data.terraform_remote_state.load_balancer.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
+    metadata        = data.terraform_remote_state.metadata.outputs
+    volume          = data.terraform_remote_state.volume.outputs
+    network         = data.terraform_remote_state.load_balancer.outputs
+    vault_sys       = data.terraform_remote_state.vault_sys.outputs
+    vault_pki       = data.terraform_remote_state.vault_pki.outputs
+    harbor_registry = data.terraform_remote_state.harbor_bootstrapper.outputs
+    harbor_proxy    = data.terraform_remote_state.harbor_proxy.outputs
   }
 }
 
@@ -73,13 +75,24 @@ locals {
   }
 }
 
-# Ansible Configuration Rendering
+# Ansible Infrastructure Template Variables
 locals {
+  # Dependency discovery: Use the physical SSoT key for the Harbor registry.
+  registry_pki_key = local.state.harbor_registry.pki_key
+
   ansible_template_vars = {
     ansible_user               = local.sec_system_creds.username
     microk8s_ingress_vip       = local.net_service_vip
     microk8s_allowed_subnet    = local.p_net_config.network.hostonly.cidr
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
+
+    registry_host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
+    registry_vip  = local.state.harbor_registry.service_vip
+
+    # Mirroring Paths
+    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
+    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
+    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
   }
 
   ansible_extra_vars = {

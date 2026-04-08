@@ -12,6 +12,13 @@ all:
 
     metallb_ip_range: "${custom_vars.microk8s_ingress_vip}-${custom_vars.microk8s_ingress_vip}"
 
+    registry_host: "${custom_vars.registry_host}"
+    registry_vip:  "${custom_vars.registry_vip}"
+
+    harbor_docker_proxy: "${custom_vars.harbor_docker_proxy}"
+    harbor_quay_proxy:   "${custom_vars.harbor_quay_proxy}"
+    harbor_k8s_proxy:    "${custom_vars.harbor_k8s_proxy}"
+
   children:
     nodes:
       hosts:

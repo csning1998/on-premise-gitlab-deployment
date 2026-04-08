@@ -5,39 +5,50 @@ resource "kubernetes_namespace" "harbor" {
   }
 }
 
+# [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
   source = "../../modules/kubernetes-addons/platform-trust-engine"
-
-  k8s_connection = {
-    host    = local.k8s_api_endpoint
-    ca_cert = local.k8s_cluster_ca
+  providers = {
+    vault = vault.production
   }
 
+  # 1. K8s Cluster Connection (for Vault to call back)
+  api_server_connection = {
+    host    = local.api_endpoint
+    ca_cert = local.cluster_ca
+  }
+
+  # 2. Vault Connection (for Cert-Manager to authenticate)
   vault_config = {
     address   = local.vault_address
     ca_cert   = local.vault_ca_cert
     auth_path = local.vault_auth_path
   }
 
+  # 3. Issuer Configuration (The "Contract" between K8s and Vault)
   issuer_config = {
-    name             = "vault-issuer"                                # The ClusterIssuer name in Microk8s
-    issue_path       = "sign"                                        # or "issue", depends on Vault PKI setup
-    vault_role_name  = local.vault_role_name                         # The Role name in Vault
-    pki_mount_path   = local.vault_pki_path                          # Adjust based on Vault PKI mount
-    bound_namespaces = var.trust_engine_config.authorized_namespaces # Whitelist namespaces
-    token_policies   = [local.vault_policy_name]                     # The policy created in Layer 20
+    name             = var.trust_engine_config.issuer_name
+    bound_namespaces = var.trust_engine_config.authorized_namespaces
+    issue_path       = "sign"
+    vault_role_name  = local.vault_role_name
+    pki_mount_path   = local.vault_pki_path
+    token_policies   = [local.vault_policy_name]
   }
 
+  # 4. Reviewer Identity (The entity that validates tokens)
   reviewer_service_account = {
     name      = "vault-reviewer"
     namespace = "default"
   }
 
+  # 5. Helm Chart Installation
   helm_config = {
     install          = true
     version          = var.cert_manager_config.version
     namespace        = var.cert_manager_config.namespace
     create_namespace = true
+    image_registry   = local.harbor_registry
+    image_repository = "${local.harbor_quay_proxy}/jetstack"
   }
 }
 
@@ -60,8 +71,8 @@ module "coredns_config" {
 module "harbor_db_init" {
   source = "../../modules/configuration/patroni-init"
 
-  pg_host = data.terraform_remote_state.postgres.outputs.harbor_postgres_virtual_ip
-  pg_port = data.terraform_remote_state.postgres.outputs.harbor_postgres_haproxy_rw_port
+  pg_host = local.state.postgres.service_vip
+  pg_port = local.pg_port
 
   pg_superuser          = "postgres"
   pg_superuser_password = local.pg_superuser_password

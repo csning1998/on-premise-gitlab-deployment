@@ -18,3 +18,8 @@
     name: harbor
     state: restarted
     daemon_reload: true
+
+- name: Update CA Certificates
+  ansible.builtin.command: update-ca-certificates
+  changed_when: true
+

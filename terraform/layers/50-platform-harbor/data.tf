@@ -1,9 +1,24 @@
 
+# Foundation Metadata State (SSoT)
+data "terraform_remote_state" "metadata" {
+  backend = "local"
+  config = {
+    path = "../00-foundation-metadata/terraform.tfstate"
+  }
+}
+
+data "terraform_remote_state" "vault_prod_bootstrap" {
+  backend = "local"
+  config = {
+    path = "../20-security-vault-approle/terraform.tfstate"
+  }
+}
+
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-vault-pki/terraform.tfstate"
+    path = "../25-security-pki/terraform.tfstate"
   }
 }
 
@@ -11,21 +26,21 @@ data "terraform_remote_state" "vault_pki" {
 data "terraform_remote_state" "redis" {
   backend = "local"
   config = {
-    path = "../30-harbor-redis/terraform.tfstate"
+    path = "../30-infra-harbor-redis/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "postgres" {
   backend = "local"
   config = {
-    path = "../30-harbor-postgres/terraform.tfstate"
+    path = "../30-infra-harbor-postgres/terraform.tfstate"
   }
 }
 
 data "terraform_remote_state" "minio" {
   backend = "local"
   config = {
-    path = "../30-harbor-minio/terraform.tfstate"
+    path = "../30-infra-harbor-minio/terraform.tfstate"
   }
 }
 
@@ -33,20 +48,36 @@ data "terraform_remote_state" "minio" {
 data "terraform_remote_state" "microk8s_provision" {
   backend = "local"
   config = {
-    path = "../40-harbor-microk8s/terraform.tfstate"
+    path = "../30-infra-harbor-frontend/terraform.tfstate"
   }
 }
 
-# Vault Secrets for reading database and service passwords.
+# Harbor Bootstrapper State
+data "terraform_remote_state" "harbor_bootstrapper" {
+  backend = "local"
+  config = {
+    path = "../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
+  }
+}
+
+# 1. Fetch Harbor Secrets from Production Vault
 data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/harbor/databases"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/harbor/databases"
 }
 
 data "vault_generic_secret" "harbor_vars" {
-  path = "secret/on-premise-gitlab-deployment/harbor/app"
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/harbor/app"
 }
 
-# Fetch the Cluster CA
+# 2. Fetch Kubeconfig from Production Vault
+data "vault_generic_secret" "kubeconfig" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
+}
+
+# 3. Fetch the Cluster CA
 data "kubernetes_config_map" "kube_root_ca" {
   metadata {
     name      = "kube-root-ca.crt"
