@@ -63,7 +63,6 @@ locals {
 
 # 4. Vault Generic Secrets
 locals {
-  pg_superuser_password = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
   harbor_pg_db_password = data.vault_generic_secret.harbor_vars.data["harbor_pg_db_password"]
   harbor_admin_password = data.vault_generic_secret.harbor_vars.data["harbor_admin_password"]
 }

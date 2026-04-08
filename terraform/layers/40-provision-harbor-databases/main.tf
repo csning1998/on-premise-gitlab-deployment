@@ -11,15 +11,26 @@ module "minio_harbor_config" {
   minio_server_url         = "https://${data.terraform_remote_state.minio_infra.outputs.service_vip}:${data.terraform_remote_state.minio_infra.outputs.minio_api_port}"
 }
 
+# PKI Client Certificate for Postgres Provisioning
+resource "vault_pki_secret_backend_cert" "harbor_db_client" {
+  provider = vault.production
+  backend  = local.state.vault_pki.pki_configuration.path
+  name     = local.state.vault_pki.pki_configuration.component_roles["harbor-frontend"].name
+
+  common_name = local.state.vault_pki.pki_configuration.component_roles["harbor-frontend"].allowed_domains[0]
+
+  ttl = "2160h" # 90 Days
+}
+
 # Harbor DB Initialization
 module "harbor_db_init" {
   source = "../../modules/configuration/patroni-init"
 
-  pg_host = local.state.postgres.service_vip
-  pg_port = local.pg_port
+  pg_host = local.postgres_vip
+  pg_port = local.postgres_rw_port
 
   pg_superuser          = "postgres"
-  pg_superuser_password = local.pg_superuser_password
+  pg_superuser_password = local.postgres_password
 
   databases = {
     (var.db_init_config.db_name) = {
