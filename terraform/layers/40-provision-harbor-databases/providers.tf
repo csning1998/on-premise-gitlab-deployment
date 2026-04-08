@@ -11,7 +11,7 @@ terraform {
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"
-      version = "1.25.0"
+      version = "1.26.0"
     }
   }
 }
@@ -25,15 +25,15 @@ provider "vault" {
   auth_login {
     path = "auth/approle/login"
     parameters = {
-      role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
-      secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
+      role_id   = local.state.vault_prod_bootstrap.production_role_id
+      secret_id = local.state.vault_prod_bootstrap.production_secret_id
     }
   }
   skip_child_token = true
 }
 
 provider "minio" {
-  minio_server      = "${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
+  minio_server      = "${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
   minio_user        = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
   minio_password    = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
   minio_ssl         = true
@@ -52,8 +52,8 @@ provider "postgresql" {
   connect_timeout = 15
 
   clientcert {
-    cert      = vault_pki_secret_backend_cert.gitlab_db_client.certificate
-    key       = vault_pki_secret_backend_cert.gitlab_db_client.private_key
+    cert      = vault_pki_secret_backend_cert.harbor_db_client.certificate
+    key       = vault_pki_secret_backend_cert.harbor_db_client.private_key
     sslinline = true
   }
 }

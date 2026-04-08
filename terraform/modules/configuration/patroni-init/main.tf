@@ -1,14 +1,4 @@
 
-provider "postgresql" {
-  host            = var.pg_host
-  port            = var.pg_port
-  username        = var.pg_superuser
-  password        = var.pg_superuser_password
-  sslmode         = "require"
-  connect_timeout = 15
-  superuser       = false
-}
-
 resource "postgresql_database" "dbs" {
 
   depends_on = [postgresql_role.users]

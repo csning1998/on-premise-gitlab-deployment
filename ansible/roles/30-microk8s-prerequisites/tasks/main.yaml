@@ -17,18 +17,30 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "Step A2.4. Inject routing optimization for Infrastructure VIPs (Vault & Harbor MTU bypass)"
-      # Fix: MicroK8s (Calico) VXLAN overhead reduces MTU to 1450.
-      # This causes SSL handshake timeouts to external VIPs (MTU 1500) due to PMTU discovery failures.
-      community.general.ip_route:
-        prefix: "{{ item }}"
-        gateway: "{{ ansible_default_ipv4.gateway }}"
-        dev: "{{ ansible_default_ipv4.interface }}"
-        advmss: 1300
-        state: present
+    - name: "Step A2.4. Check routing optimization for Infrastructure VIPs"
+      ansible.builtin.shell: >
+        set -o pipefail &&
+        ip route show {{ item }} | grep -q "advmss 1300"
+      args:
+        executable: /bin/bash
+      register: route_check
+      failed_when: false
+      changed_when: false
       loop:
         - "{{ vault_addr | regex_replace('^https://', '') | regex_replace(':.*$', '') }}"
         - "{{ registry_vip }}"
+
+    - name: "Step A2.5. Inject routing optimization for Infrastructure VIPs (Vault & Harbor MTU bypass)"
+      ansible.builtin.command:
+        cmd: >
+          ip route replace {{ item.item }}
+          via {{ ansible_default_ipv4.gateway }}
+          dev {{ ansible_default_ipv4.interface }}
+          advmss 1300
+      when: item.rc != 0
+      loop: "{{ route_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
 
     - name: "Step A2.4.1. Force update CA certificates to validate Vault API"
       ansible.builtin.command: update-ca-certificates

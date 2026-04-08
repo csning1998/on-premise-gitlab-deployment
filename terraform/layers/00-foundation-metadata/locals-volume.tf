@@ -6,15 +6,15 @@
 
 /**
  * Layer 00: Foundation Metadata - Volume Topology
- * 
- * This file calculates the deterministic storage volume names and pool 
+ *
+ * This file calculates the deterministic storage volume names and pool
  * mappings for all components that require persistent data disks.
- * 
+ *
  * Logic:
- * 1. Segments: Filters the unified _flat_catalog (from locals-naming.tf) 
+ * 1. Segments: Filters the unified _flat_catalog (from locals-naming.tf)
  *    for components with data_disks.
  * 2. Mapping: Generates a Cartesian Product based on pre-calculated identities.
- * 3. Result: A flat map of volume names and their associated attributes 
+ * 3. Result: A flat map of volume names and their associated attributes
  *    (pool, capacity, base_id) for downstream VM provisioning.
  */
 
@@ -22,8 +22,8 @@ locals {
   /**
    * 1. Construct the flat Volume Topology (Cartesian Product).
    *    Time Complexity: O(Segments * Nodes * Disks)
-   * 
-   *    This implementation references the "One Place" identity source in 
+   *
+   *    This implementation references the "One Place" identity source in
    *    locals-naming.tf to ensure zero naming redundancy.
    */
   _volume_topology_raw = flatten([
