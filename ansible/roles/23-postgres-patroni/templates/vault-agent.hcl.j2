@@ -2,13 +2,14 @@
 pid_file = "/var/run/vault-agent.pid"
 
 vault {
-  address = "{{ vault_addr }}"
+  address = "{{ vault_addr | trim('/') }}"
+
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 
 auto_auth {
   method "approle" {
-    mount_path = "auth/{{ vault_auth_path }}"
+    mount_path = "auth/{{ vault_auth_path | trim('/') }}"
     config = {
       role_id_file_path = "/etc/vault.d/approle/role_id"
       secret_id_file_path = "/etc/vault.d/approle/secret_id"

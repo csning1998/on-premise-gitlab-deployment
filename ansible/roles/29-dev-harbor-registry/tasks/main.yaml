@@ -104,7 +104,7 @@
 
     - name: "Step C5.2. Download Vault PKI Issuing CA to OS trust store"
       ansible.builtin.get_url:
-        url: "{{ vault_addr }}/v1/pki/prod/ca/pem"
+        url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
         dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
         mode: "0644"
         owner: root
