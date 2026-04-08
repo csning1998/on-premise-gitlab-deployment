@@ -25,14 +25,6 @@ variable "cert_manager_config" {
   }
 }
 
-variable "db_init_config" {
-  description = "Configuration for Harbor Database Initialization"
-  type = object({
-    db_name = string # e.g., "registry"
-    db_user = string # e.g., "harbor"
-  })
-}
-
 variable "ingress_class_name" {
   description = "Ingress class name"
   type        = string
