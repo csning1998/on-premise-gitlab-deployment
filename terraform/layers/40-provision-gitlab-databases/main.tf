@@ -22,11 +22,6 @@ resource "random_password" "gitlab_db_password" {
 module "gitlab_db_init" {
   source = "../../modules/configuration/patroni-init"
 
-  pg_host               = local.postgres_vip
-  pg_port               = local.postgres_rw_port
-  pg_superuser          = "postgres"
-  pg_superuser_password = local.postgres_password
-
   databases = {
     "gitlabhq_production" = {
       owner      = "gitlab"
