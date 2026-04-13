@@ -25,12 +25,12 @@ auto_auth {
 
 # Server Certificate, Key & CA Bundle Template
 template {
-  destination = "/tmp/cert-bundle.json"
+  destination = "/etc/vault.d/cert-bundle.json"
   contents = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
 {{ '{{ .Data | toJSON }}' }}
 {{ '{{- end -}}' }}
 EOH
 
-  command = "/bin/sh -c \"jq -r '.certificate' /tmp/cert-bundle.json > /etc/minio/certs/public.crt && jq -r '.private_key' /tmp/cert-bundle.json > /etc/minio/certs/private.key && jq -r '.issuing_ca' /tmp/cert-bundle.json > /etc/minio/certs/CAs/root_ca.crt && chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/public.crt /etc/minio/certs/private.key /etc/minio/certs/CAs/root_ca.crt && chmod 0644 /etc/minio/certs/public.crt /etc/minio/certs/CAs/root_ca.crt && chmod 0600 /etc/minio/certs/private.key && systemctl restart minio\""
+  command = "/bin/sh -c \"jq -r '.certificate' /etc/vault.d/cert-bundle.json > /etc/minio/certs/public.crt && jq -r '.private_key' /etc/vault.d/cert-bundle.json > /etc/minio/certs/private.key && jq -r '.issuing_ca' /etc/vault.d/cert-bundle.json > /etc/minio/certs/CAs/root_ca.crt && chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/public.crt /etc/minio/certs/private.key /etc/minio/certs/CAs/root_ca.crt && chmod 0644 /etc/minio/certs/public.crt /etc/minio/certs/CAs/root_ca.crt && chmod 0600 /etc/minio/certs/private.key && systemctl restart minio\""
 }

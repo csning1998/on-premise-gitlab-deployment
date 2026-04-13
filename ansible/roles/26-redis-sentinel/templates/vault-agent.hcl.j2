@@ -24,12 +24,12 @@ auto_auth {
 
 # Server Certificate, Key & CA Bundle Template
 template {
-  destination = "/tmp/cert-bundle.json"
+  destination = "/etc/vault.d/cert-bundle.json"
   contents = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
 {{ '{{ .Data | toJSON }}' }}
 {{ '{{- end -}}' }}
 EOH
 
-  command = "/bin/sh -c \"jq -r '.certificate' /tmp/cert-bundle.json > /etc/redis/certs/server.crt && jq -r '.private_key' /tmp/cert-bundle.json > /etc/redis/certs/server.key && jq -r '.issuing_ca' /tmp/cert-bundle.json > /etc/redis/certs/ca.crt && chown redis:redis /etc/redis/certs/* && chmod 0644 /etc/redis/certs/*.crt && chmod 0600 /etc/redis/certs/server.key && systemctl restart redis-server && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)\""
+  command = "/bin/sh -c \"jq -r '.certificate' /etc/vault.d/cert-bundle.json > /etc/redis/certs/server.crt && jq -r '.private_key' /etc/vault.d/cert-bundle.json > /etc/redis/certs/server.key && jq -r '.issuing_ca' /etc/vault.d/cert-bundle.json > /etc/redis/certs/ca.crt && chown redis:redis /etc/redis/certs/* && chmod 0644 /etc/redis/certs/*.crt && chmod 0600 /etc/redis/certs/server.key && systemctl reload redis-server && (systemctl is-active --quiet redis-sentinel && systemctl reload redis-sentinel || true)\""
 }
