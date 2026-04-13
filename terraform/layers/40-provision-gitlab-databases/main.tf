@@ -20,7 +20,7 @@ resource "random_password" "gitlab_db_password" {
 
 # GitLab DB Initialization via Module
 module "gitlab_db_init" {
-  source = "../../modules/configuration/patroni-full-init"
+  source = "../../modules/configuration/patroni-init"
 
   pg_host               = local.postgres_vip
   pg_port               = local.postgres_rw_port
@@ -42,4 +42,16 @@ module "gitlab_db_init" {
       create_database = false
     }
   }
+}
+
+module "minio_gitlab_config" {
+  source = "../../modules/configuration/minio-bucket-setup"
+
+  providers = {
+    vault = vault.production
+  }
+
+  minio_tenants            = var.gitlab_minio_tenants
+  vault_secret_path_prefix = "on-premise-gitlab-deployment/gitlab/app/s3_credentials"
+  minio_server_url         = local.minio_url
 }
