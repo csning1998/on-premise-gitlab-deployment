@@ -32,6 +32,6 @@ template {
 {{ '{{- end -}}' }}
 EOH
 
-  # Split bundle into separate standard files using jq, apply permissions, and trigger nginx reload
-  command = "/bin/sh -c \"mkdir -p /data/harbor/secret/cert && jq -r '.certificate' /tmp/cert-bundle.json > {{ harbor_cert_path }} && jq -r '.private_key' /tmp/cert-bundle.json > {{ harbor_key_path }} && jq -r '.issuing_ca' /tmp/cert-bundle.json > {{ harbor_ca_path }} && chmod 600 {{ harbor_key_path }} && chmod 644 {{ harbor_ca_path }} && (docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true)\""
+  # Split bundle into separate standard files using jq, apply permissions, copy to nginx mount path, and trigger nginx reload
+  command = "/bin/sh -c \"mkdir -p /data/harbor/secret/cert && jq -r '.certificate' /tmp/cert-bundle.json > {{ harbor_cert_path }} && jq -r '.private_key' /tmp/cert-bundle.json > {{ harbor_key_path }} && jq -r '.issuing_ca' /tmp/cert-bundle.json > {{ harbor_ca_path }} && cp {{ harbor_cert_path }} /data/harbor/secret/cert/server.crt && cp {{ harbor_key_path }} /data/harbor/secret/cert/server.key && chmod 600 {{ harbor_key_path }} /data/harbor/secret/cert/server.key && chmod 644 {{ harbor_ca_path }} /data/harbor/secret/cert/server.crt && (docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true)\""
 }
