@@ -25,18 +25,13 @@ auto_auth {
 
 # Server Certificate, Key & CA Bundle Template
 template {
-  destination = "/tmp/cert-bundle.pem"
+  destination = "/tmp/cert-bundle.json"
   contents = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ dev_harbor_vip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
-{{ '{{ .Data.certificate }}' }}
-{{ '{{ .Data.issuing_ca }}' }}
------SPLIT-----
-{{ '{{ .Data.private_key }}' }}
------SPLIT-----
-{{ '{{ .Data.issuing_ca }}' }}
+{{ '{{ .Data | toJSON }}' }}
 {{ '{{- end -}}' }}
 EOH
 
-  # Split bundle into separate standard files using awk, apply permissions, and trigger nginx reload
-  command = "mkdir -p /data/harbor/secret/cert && awk -v RS='-----SPLIT-----\\n' 'NR==1{print > \"{{ harbor_cert_path }}\"} NR==2{print > \"{{ harbor_key_path }}\"} NR==3{print > \"{{ harbor_ca_path }}\"}' /tmp/cert-bundle.pem && chmod 600 {{ harbor_key_path }} && chmod 644 {{ harbor_ca_path }} && (docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true)"
+  # Split bundle into separate standard files using jq, apply permissions, and trigger nginx reload
+  command = "/bin/sh -c \"mkdir -p /data/harbor/secret/cert && jq -r '.certificate' /tmp/cert-bundle.json > {{ harbor_cert_path }} && jq -r '.private_key' /tmp/cert-bundle.json > {{ harbor_key_path }} && jq -r '.issuing_ca' /tmp/cert-bundle.json > {{ harbor_ca_path }} && chmod 600 {{ harbor_key_path }} && chmod 644 {{ harbor_ca_path }} && (docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true)\""
 }
