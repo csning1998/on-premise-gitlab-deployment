@@ -7,6 +7,7 @@ output "databases" {
 output "users" {
   description = "Created users information"
   value       = postgresql_role.users
+  sensitive   = true
 }
 
 output "extensions" {
