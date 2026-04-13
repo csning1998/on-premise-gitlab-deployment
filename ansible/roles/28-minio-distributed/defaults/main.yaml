@@ -9,6 +9,3 @@ minio_data_drives:
     mount_point: "/data1"
   - device: "/dev/vdc"
     mount_point: "/data2"
-
-# Verification TTL
-vault_agent_cert_ttl: "2m"

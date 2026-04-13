@@ -13,7 +13,6 @@ harbor_ca_path: "{{ harbor_pki_dir }}/ca.crt"
 
 # Vault Agent Configuration
 vault_agent_config_dir: "/etc/vault.d"
-vault_agent_cert_ttl: "2m"
 
 # Database and Harbor Admin Password from Vault
 harbor_bootstrapper_admin_password: "{{ harbor_vault_secrets.secret.harbor_bootstrapper_admin_password }}"

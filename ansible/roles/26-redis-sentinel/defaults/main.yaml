@@ -5,6 +5,3 @@ sentinel_master_name: "{{ service_identifier }}-sentinel_master"
 # Sentinel Tuning
 sentinel_down_after_milliseconds: 5000
 sentinel_failover_timeout: 180000
-
-# Verification TTL
-vault_agent_cert_ttl: "2m"

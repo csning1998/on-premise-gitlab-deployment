@@ -9,6 +9,3 @@ postgres_mtls_pod_subnet: "10.1.0.0/16"
 # Ports
 postgres_port: 5432
 patroni_restapi_port: 8008
-
-# Verification TTL
-vault_agent_cert_ttl: "2m"
