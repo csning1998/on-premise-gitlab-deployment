@@ -18,29 +18,28 @@ resource "random_password" "gitlab_db_password" {
   special = false
 }
 
-# GitLab Role
-resource "postgresql_role" "gitlab" {
-  name            = "gitlab"
-  login           = true
-  password        = random_password.gitlab_db_password.result
-  superuser       = false
-  create_database = false
-}
+# GitLab DB Initialization via Module
+module "gitlab_db_init" {
+  source = "../../modules/configuration/patroni-full-init"
 
-# GitLab Database
-resource "postgresql_database" "gitlabhq_production" {
-  name     = "gitlabhq_production"
-  owner    = postgresql_role.gitlab.name
-  encoding = "UTF8"
-}
+  pg_host               = local.postgres_vip
+  pg_port               = local.postgres_rw_port
+  pg_superuser          = "postgres"
+  pg_superuser_password = local.postgres_password
 
-# Enable necessary extensions
-resource "postgresql_extension" "pg_trgm" {
-  name     = "pg_trgm"
-  database = postgresql_database.gitlabhq_production.name
-}
+  databases = {
+    "gitlabhq_production" = {
+      owner      = "gitlab"
+      extensions = ["pg_trgm", "btree_gist"]
+    }
+  }
 
-resource "postgresql_extension" "btree_gist" {
-  name     = "btree_gist"
-  database = postgresql_database.gitlabhq_production.name
+  users = {
+    "gitlab" = {
+      password        = random_password.gitlab_db_password.result
+      login           = true
+      superuser       = false
+      create_database = false
+    }
+  }
 }

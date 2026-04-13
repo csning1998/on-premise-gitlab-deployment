@@ -21,9 +21,9 @@ output "postgres_connection_info" {
   value = {
     host     = local.postgres_vip
     port     = local.postgres_rw_port
-    username = postgresql_role.gitlab.name
-    password = postgresql_role.gitlab.password
-    database = postgresql_database.gitlabhq_production.name
+    username = module.gitlab_db_init.users["gitlab"].name
+    password = module.gitlab_db_init.users["gitlab"].password
+    database = module.gitlab_db_init.databases["gitlabhq_production"].name
   }
   sensitive = true
 }
