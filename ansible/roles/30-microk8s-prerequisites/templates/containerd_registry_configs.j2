@@ -1,0 +1,14 @@
+{% set base = [
+  {'domain': registry_host, 'upstream': registry_host},
+  {'domain': registry_vip, 'upstream': registry_host}
+] %}
+{% set extras = [] %}
+{% for item in (node_extra_hosts | default([])) %}
+  {% set _ = extras.append({'domain': item.host, 'upstream': item.host}) %}
+{% endfor %}
+{% set proxies = [
+  {'domain': 'docker.io', 'upstream': 'registry-1.docker.io', 'proxy': harbor_docker_proxy | default(''), 'mirror_host': registry_host},
+  {'domain': 'registry.k8s.io', 'upstream': 'registry.k8s.io', 'proxy': harbor_k8s_proxy | default(''), 'mirror_host': registry_host},
+  {'domain': 'quay.io', 'upstream': 'quay.io', 'proxy': harbor_quay_proxy | default(''), 'mirror_host': registry_host}
+] %}
+{{ base + extras + (proxies if (harbor_docker_proxy | default('')) != '' else []) }}
