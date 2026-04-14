@@ -1,7 +1,10 @@
 
-server = "https://{{ kubeadm_registry_host }}"
+server = "https://{{ item.upstream }}"
 
-[host."https://{{ kubeadm_registry_host }}"]
+[host."https://{{ item.mirror_host | default(item.domain) }}{{ '/v2/' ~ item.proxy if item.proxy | default('') != '' else '' }}"]
     capabilities = ["pull", "resolve", "push"]
     skip_verify = false
+    ca = "/usr/local/share/ca-certificates/vault-pki-issuing-ca.crt"
+{% if item.proxy | default('') != '' %}
     override_path = true
+{% endif %}

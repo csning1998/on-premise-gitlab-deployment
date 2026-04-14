@@ -14,6 +14,7 @@ all:
     kubeadm_registry_vip: "${custom_vars.registry_vip}"
     kubeadm_image_repository: "${custom_vars.image_repository}"
     kubeadm_dns_image_repository: "${custom_vars.image_repository}/coredns"
+    node_extra_hosts: ${jsonencode(custom_vars.node_extra_hosts)}
 
     kubeadm_http_nodeport: "${custom_vars.http_nodeport}"
     kubeadm_https_nodeport: "${custom_vars.https_nodeport}"

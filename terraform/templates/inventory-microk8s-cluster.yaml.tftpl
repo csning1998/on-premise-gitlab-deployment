@@ -18,6 +18,7 @@ all:
     harbor_docker_proxy: "${custom_vars.harbor_docker_proxy}"
     harbor_quay_proxy:   "${custom_vars.harbor_quay_proxy}"
     harbor_k8s_proxy:    "${custom_vars.harbor_k8s_proxy}"
+    node_extra_hosts:    ${jsonencode(custom_vars.node_extra_hosts)}
 
   children:
     nodes:

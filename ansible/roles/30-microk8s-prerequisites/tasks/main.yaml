@@ -37,7 +37,7 @@
           via {{ ansible_default_ipv4.gateway }}
           dev {{ ansible_default_ipv4.interface }}
           advmss 1300
-      when: item.rc != 0
+      changed_when: item.rc != 0
       loop: "{{ route_check.results }}"
       loop_control:
         label: "{{ item.item }}"
@@ -65,28 +65,31 @@
 - name: "Block B: Configure Containerd Registry endpoint (MicroK8s Snap)"
   become: true
   block:
-    - name: "Step B0. Ensure local DNS override for Harbor Bootstrapper Registry in /etc/hosts"
+    - name: "Step B1. Pre-calculate Registry Configurations"
+      ansible.builtin.set_fact:
+        _etc_hosts_list: >-
+          {{ ([{'host': registry_host, 'ip': registry_vip}] +
+              (node_extra_hosts | default([]))) | unique(attribute='host') }}
+        _containerd_registry_configs: "{{ lookup('template', 'containerd_registry_configs.j2') | from_yaml }}"
+
+    - name: "Step B2. Ensure local DNS overrides for Registries in /etc/hosts"
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        regexp: '^.*\s+{{ registry_host | regex_escape() }}(\s+|$)'
-        line: "{{ registry_vip }} {{ registry_host }}"
+        regexp: '^.*\s+{{ item.host | regex_escape() }}(\s+|$)'
+        line: "{{ item.ip }} {{ item.host }}"
         state: present
+      loop: "{{ _etc_hosts_list }}"
 
-    - name: "Step B1. Ensure Mirror Directories Exist"
+    - name: "Step B3. Ensure Mirror Directories Exist"
       ansible.builtin.file:
-        path: "/var/snap/microk8s/current/args/certs.d/{{ item }}"
+        path: "/var/snap/microk8s/current/args/certs.d/{{ item.domain }}"
         state: directory
         owner: root
         group: root
         mode: "0755"
-      loop:
-        - "{{ registry_host }}"
-        - "{{ registry_vip }}"
-        - "docker.io"
-        - "registry.k8s.io"
-        - "quay.io"
+      loop: "{{ _containerd_registry_configs }}"
 
-    - name: "Step B2. Deploy hosts.toml (Standard Registry & Inception redirection)"
+    - name: "Step B4. Deploy hosts.toml (Standard Registry & Inception redirection)"
       ansible.builtin.template:
         src: hosts.toml.j2
         dest: "/var/snap/microk8s/current/args/certs.d/{{ item.domain }}/hosts.toml"
@@ -94,9 +97,4 @@
         group: root
         mode: "0644"
       notify: Restart MicroK8s Containerd
-      loop:
-        - { domain: "{{ registry_host }}", upstream_server: "{{ registry_host }}" }
-        - { domain: "{{ registry_vip }}", upstream_server: "{{ registry_host }}" }
-        - { domain: "docker.io", upstream_server: "registry-1.docker.io", proxy: "{{ harbor_docker_proxy }}" }
-        - { domain: "registry.k8s.io", upstream_server: "registry.k8s.io", proxy: "{{ harbor_k8s_proxy }}" }
-        - { domain: "quay.io", upstream_server: "quay.io", proxy: "{{ harbor_quay_proxy }}" }
+      loop: "{{ _containerd_registry_configs }}"
