@@ -65,12 +65,35 @@
 - name: "Block B: Configure Containerd Registry endpoint (MicroK8s Snap)"
   become: true
   block:
-    - name: "Step B0. Ensure local DNS override for Harbor Bootstrapper Registry in /etc/hosts"
+    - name: "Step B0.1. Pre-calculate Registry Configurations"
+      ansible.builtin.set_fact:
+        _etc_hosts_list: "{{ ([{'host': registry_host, 'ip': registry_vip}] + (node_extra_hosts | default([]))) | unique(attribute='host') }}"
+        _registry_domains: "{{ ([registry_host, registry_vip] + (node_extra_hosts | default([]) | map(attribute='host') | list) + ['docker.io', 'registry.k8s.io', 'quay.io']) | unique }}"
+        _containerd_registry_configs: "{{ _raw_configs | from_yaml }}"
+      vars:
+        _raw_configs: |
+          {% set base = [
+            {'domain': registry_host, 'upstream': registry_host},
+            {'domain': registry_vip, 'upstream': registry_host}
+          ] %}
+          {% set extras = [] %}
+          {% for item in (node_extra_hosts | default([])) %}
+            {% set _ = extras.append({'domain': item.host, 'upstream': item.host}) %}
+          {% endfor %}
+          {% set proxies = [
+            {'domain': 'docker.io', 'upstream': 'registry-1.docker.io', 'proxy': harbor_docker_proxy, 'mirror_host': registry_host},
+            {'domain': 'registry.k8s.io', 'upstream': 'registry.k8s.io', 'proxy': harbor_k8s_proxy, 'mirror_host': registry_host},
+            {'domain': 'quay.io', 'upstream': 'quay.io', 'proxy': harbor_quay_proxy, 'mirror_host': registry_host}
+          ] %}
+          {{ base + extras + proxies }}
+
+    - name: "Step B0.2. Ensure local DNS overrides for Registries in /etc/hosts"
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        regexp: '^.*\s+{{ registry_host | regex_escape() }}(\s+|$)'
-        line: "{{ registry_vip }} {{ registry_host }}"
+        regexp: '^.*\s+{{ item.host | regex_escape() }}(\s+|$)'
+        line: "{{ item.ip }} {{ item.host }}"
         state: present
+      loop: "{{ _etc_hosts_list }}"
 
     - name: "Step B1. Ensure Mirror Directories Exist"
       ansible.builtin.file:
@@ -79,12 +102,7 @@
         owner: root
         group: root
         mode: "0755"
-      loop:
-        - "{{ registry_host }}"
-        - "{{ registry_vip }}"
-        - "docker.io"
-        - "registry.k8s.io"
-        - "quay.io"
+      loop: "{{ _registry_domains }}"
 
     - name: "Step B2. Deploy hosts.toml (Standard Registry & Inception redirection)"
       ansible.builtin.template:
@@ -94,9 +112,4 @@
         group: root
         mode: "0644"
       notify: Restart MicroK8s Containerd
-      loop:
-        - { domain: "{{ registry_host }}", upstream_server: "{{ registry_host }}" }
-        - { domain: "{{ registry_vip }}", upstream_server: "{{ registry_host }}" }
-        - { domain: "docker.io", upstream_server: "registry-1.docker.io", proxy: "{{ harbor_docker_proxy }}" }
-        - { domain: "registry.k8s.io", upstream_server: "registry.k8s.io", proxy: "{{ harbor_k8s_proxy }}" }
-        - { domain: "quay.io", upstream_server: "quay.io", proxy: "{{ harbor_quay_proxy }}" }
+      loop: "{{ _containerd_registry_configs }}"
