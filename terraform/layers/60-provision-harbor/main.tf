@@ -1,4 +1,11 @@
 
+# For Harbor core secret key
+resource "random_password" "harbor_core_secret_key" {
+  length  = 32
+  special = true
+  upper   = true
+}
+
 module "harbor_core" {
   source = "../../modules/kubernetes-addons/helm-chart-harbor"
 

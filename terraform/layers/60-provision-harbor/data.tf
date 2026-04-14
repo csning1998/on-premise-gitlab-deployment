@@ -1,68 +1,100 @@
 
-data "terraform_remote_state" "harbor_platform" {
+# 1. Fundamental Infrastructure Metadata
+data "terraform_remote_state" "metadata" {
   backend = "local"
   config = {
-    path = "../50-harbor-platform/terraform.tfstate"
+    path = "../00-foundation-metadata/terraform.tfstate"
   }
 }
 
-# HashiCorp Vault State
+data "terraform_remote_state" "network" {
+  backend = "local"
+  config = {
+    path = "../05-foundation-network/terraform.tfstate"
+  }
+}
+
+# 2. Security & Identity Context
 data "terraform_remote_state" "vault_pki" {
   backend = "local"
   config = {
-    path = "../20-vault-pki/terraform.tfstate"
+    path = "../25-security-pki/terraform.tfstate"
   }
 }
 
-# Infrastructure VIPs
-data "terraform_remote_state" "redis" {
+data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "local"
   config = {
-    path = "../30-harbor-redis/terraform.tfstate"
+    path = "../20-security-vault-approle/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "postgres" {
+# 3. Dependency Service States
+data "terraform_remote_state" "infra_redis" {
   backend = "local"
   config = {
-    path = "../30-harbor-postgres/terraform.tfstate"
+    path = "../30-infra-harbor-redis/terraform.tfstate"
   }
 }
 
-data "terraform_remote_state" "minio" {
+data "terraform_remote_state" "infra_postgres" {
   backend = "local"
   config = {
-    path = "../30-harbor-minio/terraform.tfstate"
+    path = "../30-infra-harbor-postgres/terraform.tfstate"
   }
 }
 
-# MicroK8s Cluster State
-data "terraform_remote_state" "microk8s_provision" {
+data "terraform_remote_state" "infra_minio" {
   backend = "local"
   config = {
-    path = "../40-harbor-microk8s/terraform.tfstate"
+    path = "../30-infra-harbor-minio/terraform.tfstate"
   }
 }
 
-data "vault_generic_secret" "variables" {
-  path = "secret/on-premise-gitlab-deployment/variables"
+# 4. Cluster Discovery (L30)
+data "terraform_remote_state" "microk8s_infra" {
+  backend = "local"
+  config = {
+    path = "../30-infra-harbor-frontend/terraform.tfstate"
+  }
 }
 
-# Vault Secrets for reading database and service passwords.
-data "vault_generic_secret" "db_vars" {
-  path = "secret/on-premise-gitlab-deployment/harbor/databases"
+data "terraform_remote_state" "harbor_platform" {
+  backend = "local"
+  config = {
+    path = "../50-platform-harbor/terraform.tfstate"
+  }
 }
 
-data "vault_generic_secret" "harbor_vars" {
-  path = "secret/on-premise-gitlab-deployment/harbor/app"
+# 5. Secret Retrieval via Vault (PRODUCTION ALIAS)
+# Kubeconfig for Harbor Cluster (Uploaded during L30)
+data "vault_kv_secret_v2" "kubeconfig" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
 }
 
-data "vault_generic_secret" "s3_credentials" {
-  path = "secret/on-premise-gitlab-deployment/harbor/s3_credentials/harbor-registry"
+# Shared Variables & Service Credentials
+data "vault_kv_secret_v2" "variables" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/guest_vm"
 }
 
-# Get PKI CA from Vault
-data "http" "vault_pki_ca" {
-  url         = "https://${data.terraform_remote_state.vault_pki.outputs.vault_ha_virtual_ip}:443/v1/pki/prod/ca/pem"
-  ca_cert_pem = data.terraform_remote_state.vault_pki.outputs.vault_certificates.ca_cert.ca_cert
+data "vault_kv_secret_v2" "harbor_db" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/databases"
+}
+
+data "vault_kv_secret_v2" "harbor_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/app"
+}
+
+data "vault_kv_secret_v2" "harbor_s3" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/s3_credentials/harbor-registry"
 }
