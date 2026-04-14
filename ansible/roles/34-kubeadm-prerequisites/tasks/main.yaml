@@ -40,32 +40,36 @@
 - name: "Block B: Configure Containerd Registry endpoint"
   become: true
   block:
-    - name: "Step B0. Ensure local DNS override for Harbor Bootstrapper Registry in /etc/hosts"
+    - name: "Step B1. Pre-calculate Registry Configurations"
+      ansible.builtin.set_fact:
+        _etc_hosts_list: >-
+          {{ ([{'host': kubeadm_registry_host, 'ip': kubeadm_registry_vip}] +
+              (node_extra_hosts | default([]))) | unique(attribute='host') }}
+        _containerd_registry_configs: "{{ lookup('template', 'containerd_registry_configs.j2') | from_yaml }}"
+
+    - name: "Step B2. Ensure local DNS overrides for Registries in /etc/hosts"
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        regexp: '^.*\s+{{ kubeadm_registry_host | regex_escape() }}$'
-        line: "{{ kubeadm_registry_vip }} {{ kubeadm_registry_host }}"
+        regexp: '^.*\s+{{ item.host | regex_escape() }}(\s+|$)'
+        line: "{{ item.ip }} {{ item.host }}"
         state: present
+      loop: "{{ _etc_hosts_list }}"
 
-    - name: "Step B1. Ensure /etc/containerd/certs.d directories exist"
+    - name: "Step B3. Ensure Mirror Directories Exist"
       ansible.builtin.file:
-        path: "/etc/containerd/certs.d/{{ item }}"
+        path: "/etc/containerd/certs.d/{{ item.domain }}"
         state: directory
         owner: root
         group: root
         mode: "0755"
-      loop:
-        - "{{ kubeadm_registry_host }}"
-        - "{{ kubeadm_registry_vip }}"
+      loop: "{{ _containerd_registry_configs }}"
 
-    - name: "Step B2. Deploy hosts.toml for Harbor Registry"
+    - name: "Step B4. Deploy hosts.toml for Harbor Registry"
       ansible.builtin.template:
         src: hosts.toml.j2
-        dest: "/etc/containerd/certs.d/{{ item }}/hosts.toml"
+        dest: "/etc/containerd/certs.d/{{ item.domain }}/hosts.toml"
         owner: root
         group: root
         mode: "0644"
       notify: Restart containerd service
-      loop:
-        - "{{ kubeadm_registry_host }}"
-        - "{{ kubeadm_registry_vip }}"
+      loop: "{{ _containerd_registry_configs }}"
