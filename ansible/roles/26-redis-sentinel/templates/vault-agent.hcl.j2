@@ -22,14 +22,35 @@ auto_auth {
   }
 }
 
-# Server Certificate, Key & CA Bundle Template
+# Single Template producing an executable shell script.
+# This prevents ALL JSON parsing dependencies and Cert/Key mismatches.
 template {
-  destination = "/etc/vault.d/cert-bundle.json"
-  contents = <<EOH
+  destination = "/etc/vault.d/deploy-certs.sh"
+  perms       = "0700"
+  contents    = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
-{{ '{{ .Data | toJSON }}' }}
+#!/bin/sh
+
+cat << 'CERT_EOF' > /etc/redis/certs/server.crt
+{{ '{{ .Data.certificate }}' }}
+CERT_EOF
+
+cat << 'KEY_EOF' > /etc/redis/certs/server.key
+{{ '{{ .Data.private_key }}' }}
+KEY_EOF
+
+cat << 'CA_EOF' > /etc/redis/certs/ca.crt
+{{ '{{ .Data.issuing_ca }}' }}
+CA_EOF
+
+chown redis:redis /etc/redis/certs/server.crt /etc/redis/certs/server.key /etc/redis/certs/ca.crt
+chmod 0644 /etc/redis/certs/server.crt /etc/redis/certs/ca.crt
+chmod 0600 /etc/redis/certs/server.key
+
+systemctl reload redis-server
+systemctl is-active --quiet redis-sentinel && systemctl reload redis-sentinel || true
 {{ '{{- end -}}' }}
 EOH
 
-  command = "/bin/sh -c \"jq -r '.certificate' /etc/vault.d/cert-bundle.json > /etc/redis/certs/server.crt && jq -r '.private_key' /etc/vault.d/cert-bundle.json > /etc/redis/certs/server.key && jq -r '.issuing_ca' /etc/vault.d/cert-bundle.json > /etc/redis/certs/ca.crt && chown redis:redis /etc/redis/certs/* && chmod 0644 /etc/redis/certs/*.crt && chmod 0600 /etc/redis/certs/server.key && systemctl reload redis-server && (systemctl is-active --quiet redis-sentinel && systemctl reload redis-sentinel || true)\""
+  command = "/bin/sh /etc/vault.d/deploy-certs.sh"
 }

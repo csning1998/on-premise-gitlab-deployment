@@ -23,14 +23,36 @@ auto_auth {
   }
 }
 
-# Server Certificate, Key & CA Bundle Template
+# Single Template producing an executable shell script.
+# This prevents ALL JSON parsing dependencies and Cert/Key mismatches.
 template {
-  destination = "/etc/vault.d/cert-bundle.json"
-  contents = <<EOH
+  destination = "/etc/vault.d/deploy-certs.sh"
+  perms       = "0700"
+  contents    = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ minio_service_domain ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ minio_ha_virtual_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
-{{ '{{ .Data | toJSON }}' }}
+#!/bin/sh
+
+mkdir -p /etc/minio/certs/CAs
+
+cat << 'CERT_EOF' > /etc/minio/certs/public.crt
+{{ '{{ .Data.certificate }}' }}
+CERT_EOF
+
+cat << 'KEY_EOF' > /etc/minio/certs/private.key
+{{ '{{ .Data.private_key }}' }}
+KEY_EOF
+
+cat << 'CA_EOF' > /etc/minio/certs/CAs/root_ca.crt
+{{ '{{ .Data.issuing_ca }}' }}
+CA_EOF
+
+chown {{ minio_user | default("minio-user") }}:{{ minio_group | default("minio-group") }} /etc/minio/certs/public.crt /etc/minio/certs/private.key /etc/minio/certs/CAs/root_ca.crt
+chmod 0644 /etc/minio/certs/public.crt /etc/minio/certs/CAs/root_ca.crt
+chmod 0600 /etc/minio/certs/private.key
+
+systemctl reload minio || systemctl restart minio
 {{ '{{- end -}}' }}
 EOH
 
-  command = "/bin/sh -c \"jq -r '.certificate' /etc/vault.d/cert-bundle.json > /etc/minio/certs/public.crt && jq -r '.private_key' /etc/vault.d/cert-bundle.json > /etc/minio/certs/private.key && jq -r '.issuing_ca' /etc/vault.d/cert-bundle.json > /etc/minio/certs/CAs/root_ca.crt && chown {{ minio_user | default('minio-user') }}:{{ minio_group | default('minio-group') }} /etc/minio/certs/public.crt /etc/minio/certs/private.key /etc/minio/certs/CAs/root_ca.crt && chmod 0644 /etc/minio/certs/public.crt /etc/minio/certs/CAs/root_ca.crt && chmod 0600 /etc/minio/certs/private.key && systemctl restart minio\""
+  command = "/bin/sh /etc/vault.d/deploy-certs.sh"
 }

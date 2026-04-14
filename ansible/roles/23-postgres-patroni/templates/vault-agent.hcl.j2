@@ -27,14 +27,34 @@ auto_auth {
 # Separate the Data object and EOH fields onto different lines to ensure that the rendered file's EOH field is on a separate line in HCL syntax.
 # Raw -> Ansible variable -> Raw
 
-# Server Certificate, Key & CA Bundle Template
+# Single Template producing an executable shell script.
+# This prevents ALL JSON parsing dependencies and Cert/Key mismatches.
 template {
-  destination = "/etc/vault.d/cert-bundle.json"
-  contents = <<EOH
+  destination = "/etc/vault.d/deploy-certs.sh"
+  perms       = "0700"
+  contents    = <<EOH
 {{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
-{{ '{{ .Data | toJSON }}' }}
+#!/bin/sh
+
+cat << 'CERT_EOF' > /etc/postgresql/certs/server.crt
+{{ '{{ .Data.certificate }}' }}
+CERT_EOF
+
+cat << 'KEY_EOF' > /etc/postgresql/certs/server.key
+{{ '{{ .Data.private_key }}' }}
+KEY_EOF
+
+cat << 'CA_EOF' > /etc/postgresql/certs/ca.crt
+{{ '{{ .Data.issuing_ca }}' }}
+CA_EOF
+
+chown postgres:postgres /etc/postgresql/certs/server.crt /etc/postgresql/certs/server.key /etc/postgresql/certs/ca.crt
+chmod 0644 /etc/postgresql/certs/server.crt /etc/postgresql/certs/ca.crt
+chmod 0600 /etc/postgresql/certs/server.key
+
+systemctl reload patroni
 {{ '{{- end -}}' }}
 EOH
 
-  command = "/bin/sh -c \"jq -r '.certificate' /etc/vault.d/cert-bundle.json > /etc/postgresql/certs/server.crt && jq -r '.private_key' /etc/vault.d/cert-bundle.json > /etc/postgresql/certs/server.key && jq -r '.issuing_ca' /etc/vault.d/cert-bundle.json > /etc/postgresql/certs/ca.crt && chown postgres:postgres /etc/postgresql/certs/* && chmod 0644 /etc/postgresql/certs/*.crt && chmod 0600 /etc/postgresql/certs/server.key && systemctl reload patroni\""
+  command = "/bin/sh /etc/vault.d/deploy-certs.sh"
 }
