@@ -116,6 +116,14 @@ locals {
     # Port Mappings
     http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
     https_nodeport = local.p_net_config.lb_config.ports["ingress-https"].backend_port
+
+    # Injected Host Overrides (Generic approach for PR 1)
+    node_extra_hosts = [
+      {
+        host = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
+        ip   = local.state.network.infrastructure_map["core-harbor-frontend"].lb_config.vip
+      }
+    ]
   }
 
   ansible_extra_vars = {
@@ -125,5 +133,10 @@ locals {
     vault_addr            = local.sys_vault_addr
     vault_role_name       = local.sec_vault_agent_identity.role_name
     service_name          = local.primary_context.s_name
+
+    # Mirroring Paths
+    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
+    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
+    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
   }
 }
