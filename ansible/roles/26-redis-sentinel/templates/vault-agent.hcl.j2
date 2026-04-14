@@ -22,35 +22,35 @@ auto_auth {
   }
 }
 
+# Single Template producing an executable shell script.
+# This prevents ALL JSON parsing dependencies and Cert/Key mismatches.
 template {
-  destination = "/etc/redis/certs/server.crt"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/'
-~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+  destination = "/etc/vault.d/deploy-certs.sh"
+  perms       = "0700"
+  contents    = <<EOH
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
+#!/bin/sh
+
+cat << 'CERT_EOF' > /etc/redis/certs/server.crt
 {{ '{{ .Data.certificate }}' }}
-{{ '{{ .Data.issuing_ca }}' }}
-{{ '{{- end -}}' }}
-EOH
-  command = "chown redis:redis /etc/redis/certs/server.crt && chmod 0644 /etc/redis/certs/server.crt && (systemctl is-active --quiet redis-server && systemctl restart redis-server || true) && (systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true)"
-}
+CERT_EOF
 
-template {
-  destination = "/etc/redis/certs/server.key"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ hostvars[inventory_hostname]['advertise_ip'] ~ ',' ~ redis_ha_virtual_ip ~ '" "ttl=24h" -}}' }}
+cat << 'KEY_EOF' > /etc/redis/certs/server.key
 {{ '{{ .Data.private_key }}' }}
-{{ '{{- end -}}' }}
-EOH
-  command = "chown redis:redis /etc/redis/certs/server.key && chmod 0600 /etc/redis/certs/server.key"
-}
+KEY_EOF
 
-# CA Certificate (Trust Anchor)
-template {
-  destination = "/etc/redis/certs/ca.crt"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ttl=24h" -}}' }}
+cat << 'CA_EOF' > /etc/redis/certs/ca.crt
 {{ '{{ .Data.issuing_ca }}' }}
+CA_EOF
+
+chown redis:redis /etc/redis/certs/server.crt /etc/redis/certs/server.key /etc/redis/certs/ca.crt
+chmod 0644 /etc/redis/certs/server.crt /etc/redis/certs/ca.crt
+chmod 0600 /etc/redis/certs/server.key
+
+systemctl reload redis-server
+systemctl is-active --quiet redis-sentinel && systemctl reload redis-sentinel || true
 {{ '{{- end -}}' }}
 EOH
-  command = "chown redis:redis /etc/redis/certs/ca.crt && chmod 0644 /etc/redis/certs/ca.crt"
+
+  command = "/bin/sh /etc/vault.d/deploy-certs.sh"
 }

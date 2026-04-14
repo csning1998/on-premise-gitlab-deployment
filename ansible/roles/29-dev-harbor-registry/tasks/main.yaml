@@ -19,6 +19,12 @@
         enabled: true
         daemon_reload: true
 
+    - name: "Step A3. Immediate Route Enforcement"
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ip route replace {{ item.to }} via {{ item.via }} dev {{ item.dev | default('ens3') }} metric {{ item.metric | default(100) }} advmss 1300"
+      loop: "{{ dev_harbor_static_routes }}"
+      changed_when: false
+
 - name: "Section B: Configure Data Storage Volume"
   become: true
   vars:

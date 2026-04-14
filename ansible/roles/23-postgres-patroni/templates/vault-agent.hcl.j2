@@ -27,37 +27,34 @@ auto_auth {
 # Separate the Data object and EOH fields onto different lines to ensure that the rendered file's EOH field is on a separate line in HCL syntax.
 # Raw -> Ansible variable -> Raw
 
-# Server Certificate & Key Template
+# Single Template producing an executable shell script.
+# This prevents ALL JSON parsing dependencies and Cert/Key mismatches.
 template {
-  destination = "/etc/postgresql/certs/server.crt"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+  destination = "/etc/vault.d/deploy-certs.sh"
+  perms       = "0700"
+  contents    = <<EOH
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
+#!/bin/sh
+
+cat << 'CERT_EOF' > /etc/postgresql/certs/server.crt
 {{ '{{ .Data.certificate }}' }}
-{{ '{{ .Data.issuing_ca }}' }}
-{{ '{{- end -}}' }}
-EOH
-  command = "chown postgres:postgres /etc/postgresql/certs/server.crt && (systemctl is-active --quiet patroni && systemctl reload patroni || true)"
-}
+CERT_EOF
 
-# The command above is to ensure that Patroni service exists before reloading, to avoid failure on first startup
-
-template {
-  destination = "/etc/postgresql/certs/server.key"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ '" "ttl=24h" -}}' }}
+cat << 'KEY_EOF' > /etc/postgresql/certs/server.key
 {{ '{{ .Data.private_key }}' }}
-{{ '{{- end -}}' }}
-EOH
-  command = "chown postgres:postgres /etc/postgresql/certs/server.key && chmod 0600 /etc/postgresql/certs/server.key"
-}
+KEY_EOF
 
-# CA Certificate (Trust Anchor)
-template {
-  destination = "/etc/postgresql/certs/ca.crt"
-  contents = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ttl=24h" -}}' }}
+cat << 'CA_EOF' > /etc/postgresql/certs/ca.crt
 {{ '{{ .Data.issuing_ca }}' }}
+CA_EOF
+
+chown postgres:postgres /etc/postgresql/certs/server.crt /etc/postgresql/certs/server.key /etc/postgresql/certs/ca.crt
+chmod 0644 /etc/postgresql/certs/server.crt /etc/postgresql/certs/ca.crt
+chmod 0600 /etc/postgresql/certs/server.key
+
+systemctl reload patroni
 {{ '{{- end -}}' }}
 EOH
-  command = "chown postgres:postgres /etc/postgresql/certs/ca.crt && chmod 0644 /etc/postgresql/certs/ca.crt"
+
+  command = "/bin/sh /etc/vault.d/deploy-certs.sh"
 }
