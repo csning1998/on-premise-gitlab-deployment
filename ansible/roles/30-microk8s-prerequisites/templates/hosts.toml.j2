@@ -1,9 +1,10 @@
 
-server = "https://{{ item.upstream_server }}"
+server = "https://{{ item.upstream }}"
 
-[host."https://{{ registry_host }}{{ '/v2/' ~ item.proxy if item.proxy is defined else '' }}"]
+[host."https://{{ item.mirror_host | default(item.domain) }}{{ '/v2/' ~ item.proxy if item.proxy is defined else '' }}"]
     capabilities = ["pull", "resolve", "push"]
     skip_verify = false
+    ca = "/usr/local/share/ca-certificates/vault-pki-issuing-ca.crt"
 {% if item.proxy is defined %}
     override_path = true
 {% endif %}
