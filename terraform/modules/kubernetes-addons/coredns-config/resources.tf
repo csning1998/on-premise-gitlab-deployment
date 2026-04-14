@@ -1,12 +1,12 @@
 
-resource "kubernetes_config_map_v1_data" "coredns_custom_config" {
-
+resource "kubernetes_config_map" "coredns_custom_config" {
   metadata {
     name      = "coredns"
     namespace = "kube-system"
+    labels = {
+      "k8s-app" = "kube-dns"
+    }
   }
-
-  force = true
 
   data = {
     Corefile = local.final_corefile
