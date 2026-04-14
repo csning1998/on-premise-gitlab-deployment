@@ -70,10 +70,6 @@
         _etc_hosts_list: >-
           {{ ([{'host': registry_host, 'ip': registry_vip}] +
               (node_extra_hosts | default([]))) | unique(attribute='host') }}
-        _registry_domains: >-
-          {{ ([registry_host, registry_vip] +
-              (node_extra_hosts | default([]) | map(attribute='host') | list) +
-              ['docker.io', 'registry.k8s.io', 'quay.io']) | unique }}
         _containerd_registry_configs: "{{ lookup('template', 'containerd_registry_configs.j2') | from_yaml }}"
 
     - name: "Step B2. Ensure local DNS overrides for Registries in /etc/hosts"
@@ -86,12 +82,12 @@
 
     - name: "Step B3. Ensure Mirror Directories Exist"
       ansible.builtin.file:
-        path: "/var/snap/microk8s/current/args/certs.d/{{ item }}"
+        path: "/var/snap/microk8s/current/args/certs.d/{{ item.domain }}"
         state: directory
         owner: root
         group: root
         mode: "0755"
-      loop: "{{ _registry_domains }}"
+      loop: "{{ _containerd_registry_configs }}"
 
     - name: "Step B4. Deploy hosts.toml (Standard Registry & Inception redirection)"
       ansible.builtin.template:

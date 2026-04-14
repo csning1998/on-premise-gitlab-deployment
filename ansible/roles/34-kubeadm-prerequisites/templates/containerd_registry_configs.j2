@@ -10,5 +10,5 @@
   {'domain': 'docker.io', 'upstream': 'registry-1.docker.io', 'proxy': harbor_docker_proxy | default(''), 'mirror_host': kubeadm_registry_host},
   {'domain': 'registry.k8s.io', 'upstream': 'registry.k8s.io', 'proxy': harbor_k8s_proxy | default(''), 'mirror_host': kubeadm_registry_host},
   {'domain': 'quay.io', 'upstream': 'quay.io', 'proxy': harbor_quay_proxy | default(''), 'mirror_host': kubeadm_registry_host}
-] %}
-{{ base + extras + (proxies if (harbor_docker_proxy | default('')) != '' else []) }}
+] | selectattr('proxy', 'ne', '') | list %}
+{{ base + extras + proxies }}
