@@ -1,10 +1,4 @@
 
-resource "kubernetes_namespace" "harbor" {
-  metadata {
-    name = "harbor"
-  }
-}
-
 # [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
   source = "../../modules/kubernetes-addons/platform-trust-engine"
