@@ -420,10 +420,10 @@ Successful execution and the display of virtual machines—regardless of whether
     | Permission                     | Access Level   | Description                               |
     | ------------------------------ | -------------- | ----------------------------------------- |
     | Metadata                       | Read-only      | Mandatory                                 |
-    | Administration                 | Read and Write | For modifying Repo settings and Ruleset   |
+    | Administration                 | Read and Write | For modifying Repo settings and Rulesets  |
     | Contents                       | Read and Write | For reading Ref and Git information       |
     | Repository security advisories | Read and Write | For managing security advisories          |
-    | Dependabot alerts              | Read and Write | For managing dependency alert             |
+    | Dependabot alerts              | Read and Write | For managing dependency alerts            |
     | Secrets                        | Read and Write | (Optional) for managing Actions Secrets   |
     | Variables                      | Read and Write | (Optional) for managing Actions Variables |
     | Webhooks                       | Read and Write | (Optional) for managing Webhooks          |
@@ -653,7 +653,7 @@ Before proceeding with any provisioning, it is essential to understand the prima
 
 4. **Resource Cleanup**:
     - **`14) Purge Specific Terraform Layer`**: Destroys specific layer's virtual machines, associating libvirt resources, and its Terraform state file.
-    - **`15) Purge All Libvirt Resources`**: Clears virtualization resources while maintaining project state. Executes `libvirt_resource_purger "all"`, \*\*deleting all guest VMs, networks, and storage pools created by This repo, while preserving Packer images and Terraform local state files.
+    - **`15) Purge All Libvirt Resources`**: Clears virtualization resources while maintaining project state. Executes `libvirt_resource_purger "all"`, **deleting** all guest VMs, networks, and storage pools created by This repo, while preserving Packer images and Terraform local state files.
     - **`16) Purge All Packer and Terraform Resources`**: Complete cleanup of all artifacts. Deletes all Packer output images and Terraform local state files.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
@@ -714,7 +714,7 @@ Complete following configuration steps in sequence:
 
     ```text
     172.16.126.250  gitlab.production.iac.local
-    172.16.131.250  harbor.production.iac.local notary.harbor.harbor.production.iac.local
+    172.16.131.250  harbor.production.iac.local notary.harbor.production.iac.local
     172.16.136.250  vault.production.iac.local
     172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
     172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local

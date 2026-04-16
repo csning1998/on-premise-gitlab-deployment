@@ -442,7 +442,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     podman compose up -d iac-vault-server
     ```
 
-    啟動 server 後，Bootstrapper Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Bootstrapper Vault，就必須手動清除 `vault/data/` 與 `vault/keys/` 內所有檔案。請開新終端機視鎖或分頁進行後續操作，以避免 shell session 的環境變數污染
+    啟動 server 後，Bootstrapper Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Bootstrapper Vault，就必須手動清除 `vault/data/` 與 `vault/keys/` 內所有檔案。請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
 
 3.  完成前述步驟後，執行 `entry.sh` 選擇選項 2 初始化 Bootstrapper Vault。此過程也會自動執行 Unseal
 4.  接下來只需手動修改以下專案使用的變數。密碼必須替換為不重複內容，藉以確保安全性
@@ -715,7 +715,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
     ```text
     172.16.126.250  gitlab.production.iac.local
-    172.16.131.250  harbor.production.iac.local notary.harbor.harbor.production.iac.local
+    172.16.131.250  harbor.production.iac.local notary.harbor.production.iac.local
     172.16.136.250  vault.production.iac.local
     172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
     172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
@@ -795,19 +795,20 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
         Boot->>Boot: 2. Enable KV Engine & Write Static Secrets
         User->>Meta: 3. Provision Resource Metadata
+        Meta->>Boot: 4. Auth via AppRole & Read Creds
 
         Note over User, LB: [Stage 1 cont.: Network & Load Balancer]
-        User->>LV: 4. Provision Libvirt Volume & Network (L05)
-        LV->>Boot: 5. Auth via AppRole & Read Metadata
-        User->>LB: 6. Provision Centralized Load Balancer (L10)
-        LB->>Boot: 7. Auth via AppRole & Read Network Config
+        User->>LV: 5. Provision Libvirt Volume & Network (L05)
+        LV->>Boot: 6. Auth via AppRole & Read Metadata
+        User->>LB: 7. Provision Centralized Load Balancer (L10)
+        LB->>Boot: 8. Auth via AppRole & Read Network Config
 
         Note over User, Prod: [Stage 2: Production Vault Setup]
-        User->>Prod: 8. Provision Vault Nodes (L15)
-        Prod->>Prod: 9. Configure HA Raft Backend & Enable Engines
-        User->>Prod: 10. Init & Unseal Production Vault Cluster
-        User->>Prod: 11. Configure AppRole Auth & PKI Root CA (L20/25)
-        User->>Prod: 12. Manually Inject Application Secrets
+        User->>Prod: 9. Provision Vault Nodes (L15)
+        Prod->>Prod: 10. Configure HA Raft Backend & Enable Engines
+        User->>Prod: 11. Init & Unseal Production Vault Cluster
+        User->>Prod: 12. Configure AppRole Auth & PKI Root CA (L20/25)
+        User->>Prod: 13. Manually Inject Application Secrets
     ```
 
     ```mermaid
