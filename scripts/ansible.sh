@@ -110,7 +110,7 @@ ansible_playbook_executor() {
 
 	# Select the environment context based on the playbook file prefix
 	# [Dev] 01-09: Dev Vault (Local)
-	# [Prod] 20-: Prod Vault (Layer10)
+	# [Prod] 20-: Prod Vault (Layer 15)
   local layer_prefix
   layer_prefix=$(echo "$playbook_file" | grep -oE '^[0-9]+' | head -n1)
 
