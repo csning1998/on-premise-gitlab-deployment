@@ -5,12 +5,12 @@
 
 ## Section 0. Introduction
 
-This repository (hereinafter referred to as "this repo") is a Proof of Concept (PoC) for Infrastructure as Code. It primarily achieves automated deployment of a High Availability (HA) Kubernetes cluster (Kubeadm / microk8s) in a purely on-premise environment using QEMU-KVM. This repo was developed based on personal exercises conducted during an internship at Cathay General Hospital. The objective is to establish an on-premise GitLab instance capable of automated infrastructure deployment, with the aim of creating a reusable IaC pipeline for legacy systems.
+This repository (hereinafter referred to as "this repo") is a Proof of Concept (PoC) for Infrastructure as Code. It focuses on automated deployment of High Availability (HA) Kubernetes clusters (Kubeadm / microk8s) in a pure on-premise environment using QEMU-KVM. This repo was developed based on personal exercises during an internship at Cathay General Hospital. The objective is to establish an on-premise GitLab instance with automated infrastructure deployment, aiming to create a reusable IaC pipeline for legacy systems.
 
 > [!NOTE]
-> This repo has been approved for public release by the relevant company department as part of a technical portfolio.
+> This repo has been authorized for public release by the relevant company department as part of a technical portfolio.
 
-The machine specifications used for development are listed below for reference only:
+The hardware specifications used for development are as follows (for reference only):
 
 - **Chipset:** Intel® HM770
 - **CPU:** Intel® Core™ i7 processor 14700HX
@@ -20,33 +20,29 @@ The machine specifications used for development are listed below for reference o
 The project can be cloned using the following command:
 
 ```shell
-git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
-The following resource allocation is configured based on RAM constraints:
+This repo has the following resource allocation, based on RAM constraints (for reference only):
 
-| Network Segment (CIDR) | Service Tier  | Usage (Service)  | Storage Pool Name   | VIP (HAProxy/Ingress) | Node IP Allocation                                 | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                                                     |
-| ---------------------- | ------------- | ---------------- | ------------------- | --------------------- | -------------------------------------------------- | ---------------- | -------- | --------- | -------- | -------------- | --------------------------------------------------------- |
-| 172.16.134.0/24        | App (GitLab)  | Kubeadm Cluster  | iac-kubeadm         | 172.16.134.250        | `.200` (Master), `.21x` (Worker)                   | Kubeadm Master   | 1        | 2         | 6.0 GiB  | 6,144 MiB      | Used for GitLab Helm Chart deployment                     |
-|                        |               |                  |                     |                       |                                                    | Kubeadm Worker   | 2        | 4         | 8.0 GiB  | 16,384 MiB     | For Rails/Sidekiq, GitLab Runner, etc.                    |
-| 172.16.135.0/24        | App (Harbor)  | MicroK8s Cluster | iac-harbor          | 172.16.135.250        | `.20x` (Nodes)                                     | MicroK8s Node    | 1        | 4         | 6.0 GiB  | 6,144 MiB      | Full Harbor consumes ~4-5 GB                              |
-| 172.16.136.0/24        | Shared        | Vault HA         | iac-vault           | 172.16.136.250        | `.20x` (Vault), `.21x` (HAProxy)                   | Vault (Raft)     | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Raft is lightweight; Shared secrets management center     |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        | TCP forwarding only                                       |
-| 172.16.137.0/24        | Data (Harbor) | Postgres HA      | iac-postgres-harbor | 172.16.137.250        | `.20x` (Postgres), `.21x` (Etcd), `.22x` (HAProxy) | Postgres         | 1        | 2         | 2.0 GiB  | 2,048 MiB      | `shared_buffers` set to 512MB; Instantiated via Module 21 |
-|                        |               |                  |                     |                       |                                                    | Etcd             | 1        | 1         | 1.0 GiB  | 1,024 MiB      | Patroni low usage                                         |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.138.0/24        | Data (Harbor) | Redis HA         | iac-redis-harbor    | 172.16.138.250        | `.20x` (Redis), `.21x` (HAProxy)                   | Redis            | 1        | 1         | 1.0 GiB  | 1,024 MiB      |                                                           |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.139.0/24        | Data (Harbor) | MinIO HA         | iac-minio-harbor    | 172.16.139.250        | `.20x` (MinIO), `.21x` (HAProxy)                   | MinIO            | 1        | 2         | 1.5 GiB  | 1,536 MiB      | Go heap not that heavy                                    |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.140.0/24        | Data (GitLab) | Postgres HA      | iac-postgres-gitlab | 172.16.140.250        | `.20x` (Postgres), `.21x` (Etcd), `.22x` (HAProxy) | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Replication of Layer 20                                   |
-|                        |               |                  |                     |                       |                                                    | Etcd             | 1        | 1         | 1.0 GiB  | 1,024 MiB      | Same as Harbor Postgres                                   |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.141.0/24        | Data (GitLab) | Redis HA         | iac-redis-gitlab    | 172.16.141.250        | `.20x` (Redis), `.21x` (HAProxy)                   | Redis            | 1        | 1         | 2.0 GiB  | 2,048 MiB      | Same as Harbor Redis                                      |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.142.0/24        | Data (GitLab) | MinIO HA         | iac-minio-gitlab    | 172.16.142.250        | `.20x` (MinIO), `.21x` (HAProxy)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Same as Harbor MinIO                                      |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| **Total**              |               |                  |                     |                       |                                                    |                  | **20**   |           |          | **49,152 MiB** | ≈ 48.0 GiB                                                |
+| Network Segment (CIDR) | Service Tier  | Usage (Service)  | Storage Pool Name   | VIP (HAProxy/Ingress) | Node IP Allocation               | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                                      |
+| ---------------------- | ------------- | ---------------- | ------------------- | --------------------- | -------------------------------- | ---------------- | -------- | --------- | -------- | -------------- | ------------------------------------------ |
+| 172.16.125.0/24        | Shared        | Central LB       | core-central-lb     | 172.16.125.250        | `.20x` (Frontend)                | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        | TCP forwarding only                        |
+| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster  | core-gitlab-kubeadm | 172.16.126.250        | `.200` (Master), `.21x` (Worker) | Kubeadm Master   | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Used for GitLab Helm Chart deployment      |
+|                        |               |                  |                     |                       |                                  | Kubeadm Worker   | 2        | 4         | 6.0 GiB  | 12,288 MiB     | For Rails/Sidekiq, GitLab Runner, etc.     |
+| 172.16.127.0/24        | Data (GitLab) | Postgres HA      | core-gitlab-pg      | 172.16.127.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Instantiated via Module 30                 |
+| 172.16.128.0/24        | Data (GitLab) | Etcd HA          | core-gitlab-etcd    | 172.16.128.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
+| 172.16.129.0/24        | Data (GitLab) | Redis HA         | core-gitlab-redis   | 172.16.129.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
+| 172.16.130.0/24        | Data (GitLab) | MinIO HA         | core-gitlab-minio   | 172.16.130.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Distributed MinIO ready                    |
+| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster | core-harbor         | 172.16.131.250        | `.20x` (Nodes)                   | MicroK8s Node    | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Full Harbor consumes ~4-5 GB               |
+| 172.16.132.0/24        | Data (Harbor) | Postgres HA      | core-harbor-pg      | 172.16.132.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Same as GitLab Postgres                    |
+| 172.16.133.0/24        | Data (Harbor) | Etcd HA          | core-harbor-etcd    | 172.16.133.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
+| 172.16.134.0/24        | Data (Harbor) | Redis HA         | core-harbor-redis   | 172.16.134.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
+| 172.16.135.0/24        | Data (Harbor) | MinIO HA         | core-harbor-minio   | 172.16.135.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Same as GitLab MinIO                       |
+| 172.16.136.0/24        | Shared        | Vault HA         | core-vault          | 172.16.136.250        | `.20x` (Vault)                   | Vault (Raft)     | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Raft is lightweight; Shared secrets center |
+| 172.16.137.0/24        | App (Harbor)  | Bootstrapper     | core-bootstrapper   | 172.16.137.250        | `.200` (Docker)                  | Docker Engine    | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Ephemeral deployment controller            |
+| 172.16.138.0/24        | Data (GitLab) | Gitaly node      | core-gitaly         | 172.16.138.250        | `.20x`                           | Gitaly           | 1        | 2         | 2.0 GiB  | 2,048 MiB      | [Pending] Not deployed                     |
+| **Total**              |               |                  |                     |                       |                                  |                  | **19**   |           |          | **55,296 MiB** | ≈ 54.0 GiB                                 |
 
 ### A. Disclaimer
 
@@ -71,7 +67,7 @@ The following resource allocation is configured based on RAM constraints:
 
 Before proceeding, ensure the host system meets the following requirements:
 
-- Linux host (RHEL 10 or Ubuntu 24 recommended).
+- Linux host (Fedora 43, RHEL 10, or Ubuntu 24 recommended).
 - CPU virtualization support (VT-x or AMD-V).
 - `sudo` privileges for Libvirt management.
 - `podman` and `podman compose` installed for containerized operations.
@@ -86,10 +82,12 @@ This project currently provisions the following services (Items 1–5 are config
 2. Postgres / Patroni (includes etcd).
 3. Redis / Sentinel.
 4. MinIO (S3) / Distributed MinIO.
-5. Harbor Container Registry.
-6. **[WIP]** GitLab / Runner / Gitaly etc.
-7. Private Key Encryption.
-8. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration for the feature of `*.tfstate` files encryption.
+5. Harbor as a Registry for GitLab Images.
+6. GitLab Webapp Core.
+7. **[ONGOING]** Resolve Redis configuration issues for Harbor and GitLab.
+8. **[WIP]** GitLab Runner (on Microk8s) / Gitaly (Praefact) etc.
+9. Private Key Encryption.
+10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration for the feature of `*.tfstate` files encryption.
 
 ### D. The Entrypoint: `entry.sh`
 
@@ -106,13 +104,13 @@ The `entry.sh` script located in the root directory handles all service initiali
 
 [INFO] Environment: NATIVE
 --------------------------------------------------
-[OK] Development Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer10): Running (Unsealed)
+[OK] Bootstrapper Vault (Local): Running (Unsealed)
+[OK] Production Vault (Layer 15): Running (Unsealed)
 ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
+1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
+2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
+3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
 4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
 5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
 6) Setup KVM / QEMU for Native                    12) Verify SSH
@@ -123,36 +121,57 @@ The `entry.sh` script located in the root directory handles all service initiali
 Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packer/output` and `terraform/layers` directories. The submenus for a complete configuration are shown below:
 
 > [!NOTE]
-> Option `11` is currently mulfunctioning.
+> Option `11` is currently malfunctioning.
 
-1. When selecting `9) Build Packer Base Image`.
+1. When selecting `9) Build Packer Base Image`:
 
     ```text
     [INPUT] Please select an action: 9
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
-    1) 01A-docker-harbor          4) 04-base-postgres          7) 07-base-vault            10) Build ALL Packer Images
-    2) 02-base-kubeadm            5) 05-base-redis             8) 08-base-haproxy          11) Back to Main Menu
-    3) 03-base-microk8s           6) 06-base-minio             9) 09-base-etcd
+    [INFO] Select Packer category to build:
+    ------------------------------------------------------------
+    1) Base OS Layers    2) Service Layers    3) Build ALL    4) Back to Main Menu
 
-    [INPUT] Select a Packer build to run:
+    [INPUT] Select a category:
     ```
 
-2. When selecting `10) Provision Terraform Layer`.
+    Selecting `1` is primarily used to build base OS images, including APT updates, etc.
+
+    ```text
+    [INPUT] Select a category: 1
+    1) ubuntu-24-updated
+    2) Build ALL in Base OS Images
+    3) Back
+    ```
+
+    Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
+
+    ```text
+    [INPUT] Select a category: 2
+    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
+    ```
+
+2. When selecting `10) Provision Terraform Layer`:
 
     ```text
     [INPUT] Please select an action: 10
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
-    1) 10-vault-raft         4) 30-gitlab-minio      7) 30-harbor-minio     10) 40-gitlab-kubeadm   13) 50-harbor-platform  16) 90-github-meta
-    2) 20-vault-pki          5) 30-gitlab-postgres   8) 30-harbor-postgres  11) 40-harbor-microk8s  14) 60-gitlab-service   17) Back to Main Menu
-    3) 30-dev-harbor-core    6) 30-gitlab-redis      9) 30-harbor-redis     12) 50-gitlab-platform  15) 60-harbor-service
+    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
+    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
+    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
+    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
+    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
+    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
+    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
 
     [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
-3. When selecting `11) Rebuild Layer via Ansible`.
+3. _**(Deprecated)**_ When selecting `11) Rebuild Layer via Ansible`:
 
     ```text
     [INPUT] Please select an action: 11
@@ -177,7 +196,7 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **Install HashiCorp Toolkit - Terraform and Packer**
+1. **_(Deprecated)_ Install HashiCorp Toolkit - Terraform and Packer**
 
     Execute `entry.sh` in the project root directory and select option `7` "Setup Core IaC Tools for Native" to install Terraform, Packer, and Ansible. Refer to the official installation guides for more details:
 
@@ -289,7 +308,7 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 ### Step A. Project Overview
 
 > [!IMPORTANT]
-> Initialization must be completed in the following order to ensure proper operation of this repo.
+> Initialization must be completed in the following order to ensure proper operation of This repo.
 
 0. **Environment Variables File:** `entry.sh` automatically generates a `.env` file for internal shell script use. This file typically requires no manual intervention.
 1. **SSH Key Generation:** SSH keys enable automated configuration by allowing services to authenticate with virtual machines during Terraform and Ansible execution. Use option `5` _"Generate SSH Key"_ in `./entry.sh` to create a key pair. The default name is `id_ed25519_on-premise-gitlab-deployment`, and keys are stored in the `~/.ssh/` directory.
@@ -392,7 +411,7 @@ Successful execution and the display of virtual machines—regardless of whether
 #### **Step B.1. Prepare GitHub Credentials for Self-Management**
 
 > [!NOTE]
-> This project utilizes [Terraform GitHub Integration](https://registry.terraform.io/providers/integrations/github/latest) by default for repository management. Consequently, a Fine-grained Personal Access Token must be configured. If the cloned repo is not managed via this integration, the `terraform/layers/90-github-meta` layer may be skipped or deleted without affecting subsequent operations.
+> This repo utilizes [Terraform GitHub Integration](https://registry.terraform.io/providers/integrations/github/latest) by default for repository management. Consequently, a Fine-grained Personal Access Token must be configured. If the cloned repo is not managed via this integration, the `terraform/layers/90-github-meta` layer may be skipped or deleted without affecting subsequent operations.
 
 1. Navigate to [GitHub Developer Settings](https://github.com/settings/personal-access-tokens) to generate a Fine-grained Personal Access Token.
 2. Click `Generate new token` and specify the token name, expiration period, and repository access scope.
@@ -401,10 +420,10 @@ Successful execution and the display of virtual machines—regardless of whether
     | Permission                     | Access Level   | Description                               |
     | ------------------------------ | -------------- | ----------------------------------------- |
     | Metadata                       | Read-only      | Mandatory                                 |
-    | Administration                 | Read and Write | For modifying Repo settings and Rulesets  |
+    | Administration                 | Read and Write | For modifying Repo settings and Ruleset   |
     | Contents                       | Read and Write | For reading Ref and Git information       |
     | Repository security advisories | Read and Write | For managing security advisories          |
-    | Dependabot alerts              | Read and Write | For managing dependency alerts            |
+    | Dependabot alerts              | Read and Write | For managing dependency alert             |
     | Secrets                        | Read and Write | (Optional) for managing Actions Secrets   |
     | Variables                      | Read and Write | (Optional) for managing Actions Variables |
     | Webhooks                       | Read and Write | (Optional) for managing Webhooks          |
@@ -414,27 +433,27 @@ Successful execution and the display of virtual machines—regardless of whether
 #### **Step B.2. Create Confidential Variable File for HashiCorp Vault**
 
 > [!IMPORTANT]
-> Confidential data is centralized within HashiCorp Vault and categorized into Development and Production modes. By default, the Vault instances in this repo utilize HTTPS secured by a self-signed CA. Follow these steps for correct configuration.
+> **Confidential data is centralized within HashiCorp Vault and categorized into Development and Production modes. This repo default setup uses HTTPS secured by a self-signed CA. Follow these steps for correct configuration.**
 
-0. **The Development Vault is a prerequisite for establishing the Production Vault. The Dev Vault serves exclusively to provision the Prod Vault and Packer images; thereafter, all sensitive project data is managed by the Prod Vault.**
+0. **Bootstrapper Vault is a prerequisite for establishing Production Vault. Bootstrapper Vault serves exclusively to provision Prod Vault and Packer Images; thereafter, all sensitive project data is managed by Prod Vault.**
 1. Execute `entry.sh` and select option `1` to generate the required TLS handshake files. Fields may be left blank when creating the self-signed CA. If TLS file regeneration is required, execute option `1` again.
-2. Navigate to the project root and execute the following command to start the Development Vault server. This repo defaults to running Vault in sidecar mode within the container:
+2. Navigate to the project root and execute the following command to start Bootstrapper Vault server. This repo defaults to running Vault in sidecar mode within the container:
 
     ```shell
     podman compose up -d iac-vault-server
     ```
 
-    Upon initialization, the Dev Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate the Dev Vault, all files within `vault/data/` and `vault/keys/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
+    Upon initialization, Bootstrapper Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate Bootstrapper Vault, all files within `vault/data/` and `vault/keys/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
 
-3. After completing the previous steps, execute `entry.sh` and select option `2` to initialize the Dev Vault. This process also automatically performs the unseal operation.
+3. After completing previous steps, execute `entry.sh` and select option `2` to initialize Bootstrapper Vault. This process also automatically performs unseal operation.
 4. Manually update the following variables. All default passwords must be replaced with unique values to ensure security.
-    - Purging sensitive variables from shell history after executing `vault kv put` commands is strongly recommended to mitigate data exposure. Refer to Note 0 for details.
-    - For Development Vault
-        - The following variables are required for provisioning the production HashiCorp Vault across Packer and Terraform Layer 10:
-        - `github_pat`: The GitHub Personal Access Token obtained in the previous step.
-        - `ssh_username`, `ssh_password`: Credentials for SSH access.
-        - `vm_username`, `vm_password`: Credentials for the virtual machine.
-        - `ssh_public_key_path`, `ssh_private_key_path`: Paths to the SSH public and private keys on the host.
+    - **Clearing shell history after executing `vault kv put` commands is strongly recommended to mitigate data exposure. Refer to Note 0 for details.**
+    - **For Bootstrapper Vault**
+        - The following variables are required for provisioning production HashiCorp Vault across Packer and Terraform Layer `10`:
+            - `github_pat`: The GitHub Personal Access Token obtained in previous step.
+            - `ssh_username`, `ssh_password`: Credentials for SSH access.
+            - `vm_username`, `vm_password`: Credentials for virtual machine.
+            - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host.
 
         ```shell
         printf "Enter ssh Password: "
@@ -442,212 +461,234 @@ Successful execution and the display of virtual machines—regardless of whether
         vault kv put \
             -address="https://127.0.0.1:8200" \
             -ca-cert="${PWD}/vault/tls/ca.pem" \
-            secret/on-premise-gitlab-deployment/variables \
-            github_pat="your-github-personal-access-token" \
-            ssh_username="some-user-name-for-ssh" \
+            secret/on-premise-gitlab-deployment/guest_vm \
+            ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
             ssh_password="$ssh_password" \
             ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
-            vm_username="some-user-name-for-vm" \
-            vm_password="$ssh_password" \
-            ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
-            ssh_private_key_path="~/.ssh/some-ssh-key-name"
+            vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+            vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
+            ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
+            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
+
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/project_meta \
+            github_pat="<YOUR_GITHUB_PERSONAL_ACCESS_TOKEN>"
 
         vault kv put \
             -address="https://127.0.0.1:8200" \
             -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/infrastructure \
-            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-development-mode" \
-            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-development-mode"
+            haproxy_stats_pass="haproxy_stats_pass_dev_password" \
+            keepalived_auth_pass="keepalived_auth_pass_dev_password"
         ```
 
-        If `90-github-meta` is not used to manage GitHub repository settings, the `github_pat` secret can be deleted.
+        If `90-github-meta` is not used to manage GitHub repo settings, `github_pat` secret can be deleted.
 
     - **For Production Vault**
-        - The following variables are required for provisioning the Terraform layers for Patroni, Sentinel, MinIO (S3), Harbor, and GitLab clusters:
+        - Following variables are required for provisioning Terraform layers for Patroni, Sentinel, MinIO (S3), Harbor, and GitLab clusters:
             - `ssh_username`, `ssh_password`: SSH login credentials.
             - `vm_username`, `vm_password`: Virtual machine login credentials.
-            - `ssh_public_key_path`, `ssh_private_key_path`: Paths to the SSH public and private keys on the host machine.
-            - `pg_superuser_password`: Password for the PostgreSQL superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
-            - `pg_replication_password`: Credentials for the streaming replication user. Patroni utilizes this password when provisioning standby nodes to enable WAL synchronization with the primary.
-            - `pg_vrrp_secret`: VRRP authentication key for Keepalived nodes. Ensures that only authorized nodes participate in Virtual IP (VIP) election and failover, mitigating malicious interference within the local network.
-            - `redis_requirepass`: Authentication password for Redis clients. All clients connecting to Redis, such as GitLab or Harbor, must authenticate via the `AUTH` command using this password.
-            - `redis_masterauth`: Authentication password used by Redis replicas to synchronize with the master. During failover, new replicas utilize this password for handshakes with the newly promoted master. This is typically set identical to `redis_requirepass` to ensure seamless replication in Sentinel + HA configurations.
-            - `redis_vrrp_secret`: VRRP authentication key for the Redis load balancing layer (HAProxy/Keepalived). Follows the same operational principle as `pg_vrrp_secret`.
-            - `minio_root_user`: MinIO root administrator account (formerly Access Key), used for MinIO Console access and managing buckets or policies via the MinIO Client (`mc`).
+            - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host machine.
+            - `pg_superuser_password`: Password for PostgreSQL superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
+            - `pg_replication_password`: Credentials for streaming replication user. Patroni utilizes this password when provisioning standby nodes to enable WAL synchronization with primary.
+            - `pg_vrrp_secret`: VRRP authentication key for Keepalived nodes. Ensures that only authorized nodes participate in Virtual IP (VIP) election and failover, mitigating malicious interference within local network.
+            - `redis_requirepass`: Authentication password for Redis clients. All clients connecting to Redis, such as GitLab or Harbor, must authenticate via `AUTH` command using this password.
+            - `redis_masterauth`: Authentication password used by Redis replicas to synchronize with master. During failover, new replicas utilize this password for handshakes with newly promoted master. This is typically set identical to `redis_requirepass` to ensure seamless replication in Sentinel + HA configurations.
+            - `redis_vrrp_secret`: VRRP authentication key for Redis load balancing layer (HAProxy/Keepalived). Follows same operational principle as `pg_vrrp_secret`.
+            - `minio_root_user`: MinIO root administrator account (formerly Access Key), used for MinIO Console access and managing buckets or policies via MinIO Client (`mc`).
             - `minio_root_password`: MinIO root administrator password (formerly Secret Key).
-            - `minio_vrrp_secret`: VRRP authentication key for the MinIO load balancing layer (HAProxy/Keepalived). Follows the same operational principle as `pg_vrrp_secret`.
-            - `vault_haproxy_stats_pass`: Password for the HAProxy Stats Dashboard (typically on port `8404`), used for monitoring backend server health and traffic statistics via the Web UI.
-            - `vault_keepalived_auth_pass`: VRRP authentication key for the Vault cluster load balancer to secure the Vault service VIP.
-            - `harbor_admin_password`: Default password for the Harbor Web Portal `admin` account, required for initial project creation and robot account configuration.
-            - `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to PostgreSQL. This application-level credential (assigned to the `harbor` DB user) is restricted with fewer privileges than `pg_superuser_password`.
+            - `minio_vrrp_secret`: VRRP authentication key for MinIO load balancing layer (HAProxy/Keepalived). Follows same operational principle as `pg_vrrp_secret`.
+            - `vault_haproxy_stats_pass`: Password for HAProxy Stats Dashboard (typically on port `8404`), used for monitoring backend server health and traffic statistics via Web UI.
+            - `vault_keepalived_auth_pass`: VRRP authentication key for Vault cluster load balancer to secure Vault service VIP.
+            - `harbor_admin_password`: Default password for Harbor Web Portal `admin` account, required for initial project creation and robot account configuration.
+            - `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to PostgreSQL. This application-level credential (assigned to `harbor` DB user) is restricted with fewer privileges than `pg_superuser_password`.
 
         ```shell
         export VAULT_ADDR="https://172.16.136.250:443"
-        export VAULT_CACERT="${PWD}/terraform/layers/10-vault-raft/tls/vault-ca.crt"
-        export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
+        export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+        export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
         vault secrets enable -path=secret kv-v2
-        ```
 
-        ```shell
-        vault kv put secret/on-premise-gitlab-deployment/variables \
-            ssh_username="some-username-for-ssh-for-production-mode" \
-            ssh_password="some-password-for-ssh-for-production-mode" \
-            ssh_password_hash='$some-password-for-ssh-for-production-mode' \
+        printf "Enter ssh Password: "
+        read -s ssh_password
+        vault kv put secret/on-premise-gitlab-deployment/guest_vm \
+            ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
+            ssh_password="$ssh_password" \
+            ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
+            vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+            vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
-            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment" \
-            vm_username="some-username-for-vm-for-production-mode" \
-            vm_password="some-password-for-vm-for-production-mode"
+            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
         vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-production-mode" \
-            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-production-mode"
+            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
+            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
 
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
-            pg_superuser_password="some-password-for-gitlab-pg-superuser-for-production-mode" \
-            pg_replication_password="some-password-for-gitlab-pg-replication-for-production-mode" \
-            pg_vrrp_secret="some-password-for-gitlab-pg-vrrp-for-production-mode" \
-            redis_requirepass="some-password-for-gitlab-redis-requirepass-for-production-mode" \
-            redis_masterauth="some-password-for-gitlab-redis-masterauth-for-production-mode" \
-            redis_vrrp_secret="some-password-for-gitlab-redis-vrrp-secret-for-production-mode" \
-            minio_root_password="some-password-for-gitlab-minio-root-password-for-production-mode" \
-            minio_vrrp_secret="some-password-for-gitlab-minio-vrrp-secret-for-production-mode" \
-            minio_root_user="some-username-for-gitlab-minio-root-user-for-production-mode"
+            pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
+            pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
+            pg_vrrp_secret="<YOUR_GITLAB_PG_VRRP_SECRET>" \
+            redis_requirepass="<YOUR_GITLAB_REDIS_REQUIREPASS>" \
+            redis_masterauth="<YOUR_GITLAB_REDIS_MASTERAUTH>" \
+            redis_vrrp_secret="<YOUR_GITLAB_REDIS_VRRP_SECRET>" \
+            minio_root_password="<YOUR_GITLAB_MINIO_ROOT_PASSWORD>" \
+            minio_vrrp_secret="<YOUR_GITLAB_MINIO_VRRP_SECRET>" \
+            minio_root_user="<YOUR_GITLAB_MINIO_ROOT_USER>"
 
         vault kv put secret/on-premise-gitlab-deployment/harbor/databases \
-            pg_superuser_password="some-password-for-harbor-pg-superuser-for-production-mode" \
-            pg_replication_password="some-password-for-harbor-pg-replication-for-production-mode" \
-            pg_vrrp_secret="some-password-for-harbor-pg-vrrp-for-production-mode" \
-            redis_requirepass="some-password-for-harbor-redis-requirepass-for-production-mode" \
-            redis_masterauth="some-password-for-harbor-redis-masterauth-for-production-mode" \
-            redis_vrrp_secret="some-password-for-harbor-redis-vrrp-secret-for-production-mode" \
-            minio_root_password="some-password-for-harbor-minio-root-password-for-production-mode" \
-            minio_vrrp_secret="some-password-for-harbor-minio-vrrp-secret-for-production-mode" \
-            minio_root_user="some-username-for-harbor-minio-root-user-for-production-mode"
+            pg_superuser_password="<YOUR_HARBOR_PG_SUPERUSER_PASSWORD>" \
+            pg_replication_password="<YOUR_HARBOR_PG_REPLICATION_PASSWORD>" \
+            pg_vrrp_secret="<YOUR_HARBOR_PG_VRRP_SECRET>" \
+            redis_requirepass="<YOUR_HARBOR_REDIS_REQUIREPASS>" \
+            redis_masterauth="<YOUR_HARBOR_REDIS_MASTERAUTH>" \
+            redis_vrrp_secret="<YOUR_HARBOR_REDIS_VRRP_SECRET>" \
+            minio_root_password="<YOUR_HARBOR_MINIO_ROOT_PASSWORD>" \
+            minio_vrrp_secret="<YOUR_HARBOR_MINIO_VRRP_SECRET>" \
+            minio_root_user="<YOUR_HARBOR_MINIO_ROOT_USER>"
 
         vault kv put secret/on-premise-gitlab-deployment/harbor/app \
-            harbor_admin_password="some-password-for-harbor-admin-password-for-production-mode" \
-            harbor_pg_db_password="some-password-for-harbor-pg-db-password-for-production-mode"
+            harbor_admin_password="<YOUR_HARBOR_ADMIN_PASSWORD>" \
+            harbor_pg_db_password="<YOUR_HARBOR_PG_DB_PASSWORD>"
+
+        vault kv put secret/on-premise-gitlab-deployment/harbor-bootstrapper/app \
+            harbor_bootstrapper_admin_password="<YOUR_BOOTSTRAPPER_ADMIN_PASSWORD>" \
+            harbor_bootstrapper_pg_db_password="<YOUR_BOOTSTRAPPER_PG_DB_PASSWORD>"
         ```
 
-    - **Note 0. Security Notice**: Clearing the shell history after executing `vault kv put` commands is strongly recommended to mitigate sensitive data exposure.
-    - **Note 1. Secret Retrieval**
-        1. Use the following command to retrieve credentials from Vault. For example, to fetch the PostgreSQL superuser password:
+    - **Note 0. Security Notice**: Clearing shell history after executing `vault kv put` commands is strongly recommended to mitigate sensitive data exposure.
+    - **Note 1. How to retrieve secrets**
+        1. Use following command to retrieve credentials from Vault. For example, to fetch PostgreSQL superuser password:
 
             ```shell
             export VAULT_ADDR="https://172.16.136.250:443"
-            export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
-            export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
-            vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
+            export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+            export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) \
+                vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
+            vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases
             ```
 
-        2. To prevent exposing secrets in the shell output, subshells can be utilized:
+        2. To prevent exposing secrets in shell output:
 
             ```shell
-            export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
             ```
 
-        3. For a more streamlined execution, use a single-line command:
+        3. For a more streamlined execution using a single-line command:
 
             ```shell
-            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
             ```
 
-        The same procedure applies to the Development Vault and other secrets.
+            `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
     - **Note 2**:
 
-        _For reference only since the passwords are already combined into a single-line command_
+        _For reference only as passwords are already combined into a single-line command_
 
-        `ssh_username` and `ssh_password` refer to the credentials used for virtual machine access. `ssh_password_hash` is the hashed value required by cloud-init for automated installation, which must be derived from the `ssh_password` string. For instance, if the password is `HelloWorld@k8s`, generate the hash using the following command:
+        `ssh_username` and `ssh_password` refer to credentials for virtual machine access. `ssh_password_hash` is hashed value required by cloud-init for automated installation, derived from `ssh_password` string. For instance, if password is `HelloWorld@k8s`, generate hash using:
 
         ```shell
         printf '%s' "HelloWorld@k8s" | openssl passwd -6 -stdin
         ```
 
-        - If a "command not found" error occurs for `openssl`, ensure the `openssl` package is installed.
-        - `ssh_public_key_path` should point to the filename of the previously generated public key (typically in `*.pub` format).
+        - If "command not found" error occurs for `openssl`, ensure `openssl` package is installed.
+        - `ssh_public_key_path` should point to filename of previously generated **public key** (typically in `*.pub` format).
 
     - **Note 3**:
 
-        SSH identity variables (`ssh_`) are primarily utilized in Packer for one-time provisioning, whereas VM identity variables (`vm_`) are used by Terraform during VM cloning. Both may be set to identical values. While it is possible to configure unique credentials for different VMs by modifying the `ansible_runner.vm_credentials` variable and implementing `for_each` loops in the HCL code, this approach introduces unnecessary complexity. Unless specific requirements dictate otherwise, maintaining identical values for SSH and VM identity variables is recommended.
+        SSH identity variables (`ssh_`) are primarily utilized in Packer for one-time provisioning, whereas VM identity variables (`vm_`) are used by Terraform during VM cloning. Both may be set to identical values. While it is possible to configure unique credentials for different VMs by modifying `ansible_runner.vm_credentials` variable and implementing `for_each` loops in HCL, this approach introduces unnecessary complexity. Unless specific requirements dictate otherwise, maintaining identical values for SSH and VM identity variables is recommended.
 
-5. In this repo, Vault must be unsealed after every startup. The following options are available:
-    - Option `3` in `entry.sh` unseals the Development Vault. This operation is performed by the `vault_dev_unseal_handler()` shell function.
-    - Option `4` in `entry.sh` unseals the Production Vault. This is managed via the `90-operation-vault-unseal.yaml` Ansible playbook.
+5. Vault must be unsealed after every startup in This repo. Following options are available:
+    - Option `3` in `entry.sh` unseals Bootstrapper Vault, using `vault_dev_unseal_handler()` shell function.
+    - Option `4` in `entry.sh` unseals Production Vault via `90-operation-vault-unseal.yaml` Ansible playbook.
 
-    Alternatively, the containerized approach described in sections B.1 and B.2 provides a more streamlined workflow.
+    Alternatively, containerized approach described in B.1-2 is more streamlined.
 
-#### **Step B.3. Create Variable File for Terraform:**
+#### **Step B.3. Understand the Metadata:**
+
+> [!TIP]
+> **Layer 00 (Foundation Metadata)** is the "Infrastructure Metadata Repository" and Single Source of Truth (SSoT) for the entire project.
+
+Before proceeding with any provisioning, it is essential to understand the primary functions of Layer `00`. This layer does not create any virtualization resources but is responsible for calculating:
+
+1. **Global Naming Definitions**: Translates abstract `service_catalog` into specific component identifiers such as `cluster_name`, `storage_pool_name`, ensuring naming consistency.
+2. **Automated Network Allocation**: Automatically calculates subnets, VIPs (`.250`), gateways, and host IP ranges for each service based on `cidr_index`. A `validation` mechanism is included to prevent IP conflicts from manual allocation.
+3. **Deterministic Connection Attributes**: Generates fixed MAC addresses and DNS SANs for each VM. This ensures that physical characteristics and TLS certificate identification remain persistent even if resources are rebuilt.
+4. **Cross-Layer Reference Standard**: Enables data-driven deployment via `terraform_remote_state` for all subsequent layers (e.g., `30-infra-xxx`).
+
+#### **Step B.4. Create Variable File for Terraform:**
 
 > [!NOTE]
-> These variable files define the configuration for cluster provisioning.
+> These variable files define configuration for cluster provisioning.
 
-1. Initialize the required `.tfvars` files by copying the examples for each layer:
+1. Initialize required `.tfvars` files by copying examples for each layer:
 
     ```shell
     for f in terraform/layers/*/terraform.tfvars.example; do cp -n "$f" "${f%.example}"; done
     ```
 
     1. For High Availability (HA) configurations:
-        - Services such as Vault (Production mode), Patroni (including etcd), Sentinel, MicroK8s (Harbor), and Kubeadm Master (GitLab) must follow an odd-node configuration (`n % 2 != 0`).
-        - MinIO Distributed requires a node count divisible by four (`n % 4 == 0`).
-    2. Static IPs assigned during node provisioning must align with the designated host-only network subnet.
+        - Services such as Vault (Production mode), Patroni (including etcd), Sentinel, MicroK8s (Harbor), and Kubeadm Master (GitLab) must follow odd-node configuration (`n % 2 != 0`).
+        - MinIO Distributed requires node count divisible by four (`n % 4 == 0`).
+    2. Static IPs assigned during node provisioning must align with designated host-only network subnet.
 
-2. This project utilizes Ubuntu Server 24.04.3 LTS (Noble) as the default Guest OS.
-    - The latest release is available at: [https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/](https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/).
-    - The specific version tested for this project is available at: [https://old-releases.ubuntu.com/releases/noble/](https://old-releases.ubuntu.com/releases/noble/).
+2. This project utilizes Ubuntu Server 24.04.3 LTS (Noble) as default Guest OS.
+    - Latest release: <https://cdimage.ubuntu.com/ubuntu/releases/24.04/release/>
+    - Specific version tested: <https://old-releases.ubuntu.com/releases/noble/>
     - Ensure checksum verification after downloading:
-        - Latest Noble: [https://releases.ubuntu.com/noble/SHA256SUMS](https://releases.ubuntu.com/noble/SHA256SUMS)
-        - Old-release Noble: [https://old-releases.ubuntu.com/releases/noble/SHA256SUMS](https://old-releases.ubuntu.com/releases/noble/SHA256SUMS)
+        - Latest Noble: <https://releases.ubuntu.com/noble/SHA256SUMS>
+        - Old-release Noble: <https://old-releases.ubuntu.com/releases/noble/SHA256SUMS>
 
-    Support for additional Linux distributions, such as Fedora 43 or RHEL 10, is planned for future updates.
+    Support for additional Linux Guest OS such as Fedora 43 or RHEL 10 is planned.
 
 3. **Independent Testing and Development**:
-    - Use menu option `9) Build Packer Base Image` to generate a base image.
+    - Use menu option `9) Build Packer Base Image` to generate base images.
     - Use menu option `10) Provision Terraform Layer` to test or redeploy specific layers (e.g., Harbor, Postgres).
 
-        Note: When rebuilding Harbor in Layer 50, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. This is resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/50-harbor-platform` before re-executing `terraform apply`.
+        Note: When rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/60-provision-harbor` before re-executing `terraform apply`.
 
-    To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use option `11) Rebuild Layer via Ansible`.
+    To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use `11) Rebuild Layer via Ansible`.
 
 4. **Resource Cleanup**:
-    - **`14) Purge Specific Terraform Layer`**: Destroys a specific layer's virtual machines, associated libvirt resources (networks, storage pools), and its Terraform state file. This allows for a clean reprovisioning of that specific layer.
-    - **`15) Purge All Libvirt Resources`**: Used to clear virtualization resources while maintaining the project state. This executes `libvirt_resource_purger "all"`, which deletes all guest VMs, networks, and storage pools created by this project, while preserving Packer images and Terraform local state files.
-    - **`16) Purge All Packer and Terraform Resources`**: Used for a complete cleanup of all artifacts. This deletes all Packer output images and all Terraform local state files, resetting the project environment to a pristine state.
+    - **`14) Purge Specific Terraform Layer`**: Destroys specific layer's virtual machines, associating libvirt resources, and its Terraform state file.
+    - **`15) Purge All Libvirt Resources`**: Clears virtualization resources while maintaining project state. Executes `libvirt_resource_purger "all"`, \*\*deleting all guest VMs, networks, and storage pools created by This repo, while preserving Packer images and Terraform local state files.
+    - **`16) Purge All Packer and Terraform Resources`**: Complete cleanup of all artifacts. Deletes all Packer output images and Terraform local state files.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> For local management of a cloned repository, this step can be automated by selecting `90-github-meta` via option `10) Provision Terraform Layer`. The following instructions detail the imperative manual procedure for reference:
+> For local management of a cloned repo, this step can be automated by selecting `90-github-meta` via option `10) Provision Terraform Layer`. Following instructions detail manual procedure for reference:
 
-1. Inject the GitHub token from Vault using a shell subquery. Execute this from the project root to verify that `${PWD}` aligns with the Vault credential directory:
+1. Inject GitHub token from Vault using shell subquery. Execute from project root to verify `${PWD}` aligns with Vault credential directory:
 
     ```shell
-    export GITHUB_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt) vault kv get -field=github_pat secret/on-premise-gitlab-deployment/variables)
+    export GITHUB_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=github_pat secret/on-premise-gitlab-deployment/project_meta)
     ```
 
-2. Existing repositories must be imported into the Terraform state before the initial execution of the governance layer.
+2. Existing repositories must be imported into Terraform state before initial execution of governance layer:
 
     ```shell
     cd terraform/layers/90-github-meta
     ```
 
 3. Initialization and Import
-    - **Scenario A (Existing Repository):** When managing an existing repository (such as this project), the import operation is **mandatory**.
-    - **Scenario B (New Repository):** When creating a new repository from scratch, the import step can be bypassed.
+    - **Scenario A (Existing Repository):** When managing existing repository (such as This repo), import operation is **mandatory**.
+    - **Scenario B (New Repository):** When creating a new repository from scratch, import step can be bypassed.
 
     ```shell
     terraform init
     terraform import github_repository.this on-premise-gitlab-deployment
     ```
 
-4. Apply Ruleset: Executing `terraform plan` to preview changes before applying is recommended.
+4. Apply Ruleset: Executing `terraform plan` to preview changes before applying is recommended:
 
     ```shell
     terraform apply -auto-approve
     ```
 
-    The output should look similar to the following:
+    Output should look similar to:
 
     ```shell
     Apply complete! Resources: x added, y changed, z destroyed.
@@ -659,46 +700,46 @@ Successful execution and the display of virtual machines—regardless of whether
 
 #### **Step B.5. Export Certs of Services:**
 
-Importing service certificates into the host trust store enables secure access to the following services without triggering browser security warnings:
+Importing service certificates into host trust store enables secure access to following services without triggering browser security warnings:
 
-- Prod Vault: `https://vault.iac.local`
-- Harbor: `https://harbor.iac.local`
-- Harbor MinIO Console: `https://minio.harbor.iac.local`
-- GitLab: `https://gitlab.iac.local`
-- GitLab MinIO Console: `https://minio.gitlab.iac.local`
+- Prod Vault: `https://vault.production.iac.local`
+- Harbor: `https://harbor.production.iac.local`
+- Harbor MinIO Console: `https://minio.harbor.production.iac.local`
+- GitLab: `https://gitlab.production.iac.local`
+- GitLab MinIO Console: `https://minio.gitlab.production.iac.local`
 
-Complete the following configuration steps in sequence:
+Complete following configuration steps in sequence:
 
-1. Configure DNS resolution by appending the following entries to the host's `/etc/hosts` file. These values must be aligned with the actual static IPs provisioned by Terraform:
+1. Configure DNS resolution by appending following entries to host's `/etc/hosts` file. These values must be aligned with actual static IPs provisioned by Terraform:
 
     ```text
-    172.16.134.250  gitlab.iac.local
-    172.16.135.250  harbor.iac.local notary.harbor.iac.local
-    172.16.136.250  vault.iac.local
-    172.16.139.250  minio.harbor.iac.local
-    172.16.142.250  minio.gitlab.iac.local
+    172.16.126.250  gitlab.production.iac.local
+    172.16.131.250  harbor.production.iac.local notary.harbor.harbor.production.iac.local
+    172.16.136.250  vault.production.iac.local
+    172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
+    172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
     ```
 
-2. Establish Host-level Trust (Infrastructure & Service CAs). Since the `tls/` directory is not tracked by git, the Service Root CA should be retrieve from the live Vault server before importing them. Use `curl` to fetch the public key of the Service CA directly from the Vault PKI engine. Using `-k` is required here as the trust chain is not yet established. Set the Vault Address (VIP) and download the Service CA to the local tls directory.
+2. Establish Host-level Trust (Infrastructure & Service CAs). Since `tls/` directory is not tracked by git, Service Root CA should be retrieved from live Vault server before importing them. Use `curl` to fetch public key of Service CA directly from Vault PKI engine. Using `-k` is required as trust chain is not yet established. Set Vault Address (VIP) and download Service CA to local tls directory:
 
     ```bash
     export VAULT_ADDR="https://172.16.136.250:443"
-    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt
     ```
 
 3. **Import BOTH Certificates into System Trust Store:**
 
-    Now there exists two CA files in `terraform/layers/10-vault-core/tls/`:
-    - `vault-ca.crt`: The **Infrastructure CA** (generated by Terraform locally).
-    - `vault-pki-ca.crt`: The **Service CA** (downloaded from Vault API).
+    Now there exist two CA files in `terraform/layers/15-shared-vault-frontend/tls/`:
+    - `vault-ca.crt`: **Infrastructure CA** (generated by Terraform locally).
+    - `vault-pki-ca.crt`: **Service CA** (downloaded from Vault API).
 
-    Execute the import commands based on your OS:
+    Execute import commands based on your OS:
     - **RHEL / CentOS / Fedora:**
 
         ```shell
         # 1. Copy both CAs to the anchors directory
-        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
-        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
 
         # 2. Update the trust store
         sudo update-ca-trust
@@ -708,28 +749,28 @@ Complete the following configuration steps in sequence:
 
         ```shell
         # 1. Copy both CAs to the shared certificates directory
-        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
-        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
 
         # 2. Update the certificates
         sudo update-ca-certificates
         ```
 
-4. Verify the trust store configuration by testing connectivity to MinIO. This verifies that the host trusts the "Service CA":
+4. Verify trust store configuration by testing connectivity to MinIO. This verifies that host trusts "Service CA":
 
     ```shell
-    curl -I https://minio.harbor.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.production.iac.local:9000/minio/health/live
     ```
 
-    An `HTTP/1.1 200 OK` response confirms that the trust store is correctly configured.
+    An `HTTP/1.1 200 OK` response confirms that trust store is correctly configured.
 
-5. Verify the complete certificate chain by accessing the Harbor interface:
+5. Verify complete certificate chain by accessing Harbor interface:
 
     ```shell
-    curl -vI https://harbor.iac.local
+    curl -vI https://harbor.production.iac.local
     ```
 
-    If the output displays `SSL certificate verify ok` and `HTTP/2 200`, the full PKI chain—spanning Vault issuance, cert-manager signing, Ingress deployment, and host-level trust—is successfully established.
+    If output displays `SSL certificate verify ok` and `HTTP/2 200`, full PKI chain—spanning Vault issuance, cert-manager signing, Ingress deployment, and host-level trust—is successfully established.
 
 ## Section 3. System Architecture
 
@@ -737,97 +778,83 @@ This repo leverages Packer, Terraform, and Ansible to implement an automated pip
 
 ### A. Deployment Workflow
 
-1. **Core Bootstrap Workflow**: The Development Vault centralizes initial secrets management, followed by the provisioning of the Production Vault.
+1. The automated deployment process is divided into the following stages. Deployment sequence and dependencies strictly follow internal system logic:
 
     ```mermaid
     sequenceDiagram
         autonumber
         actor User
-        participant Entry as entry.sh
-        participant DevVault as Dev Vault<br>(Local)
-        participant TF as Terraform<br>(Layer 10)
-        participant Libvirt
-        participant Ansible
-        participant ProdVault as Prod Vault<br>(Layer 10)
+        participant Boot as Bootstrapper Vault (L00)
+        participant Meta as Resource Metadata (L00)
+        participant LV as Libvirt Volume & Network (L05)
+        participant LB as Centralized Load Balancer (L10)
+        participant Prod as Production Vault (L15-25)
 
-        %% Step 1: Bootstrap
-        Note over User, DevVault: [Bootstrap Phase]
-        User->>Entry: [DEV] Initialize Dev Vault
-        Entry->>DevVault: Init & Unseal
-        Entry->>DevVault: Enable KV Engine (secret/)
-        User->>DevVault: Write Initial Secrets (SSH Keys, Root Pass)
+        Note over User, Meta: [Stage 1: Foundation Bootstrapping]
+        User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
+        Boot->>Boot: 2. Enable KV Engine & Write Static Secrets
+        User->>Meta: 3. Provision Resource Metadata
+        Meta->>Boot: 4. Auth via AppRole & Read Creds
 
-        %% Step 2: Infrastructure
-        Note over User, ProdVault: [Layer 10: Infrastructure]
-        User->>Entry: Provision Layer 10
-        Entry->>TF: Apply (Stage 1)
-        TF->>DevVault: Read SSH Keys/Creds
-        TF->>Libvirt: Create Vault VMs (Active/Standby)
-        TF->>Ansible: Trigger Provisioning
-        Ansible->>ProdVault: Install Vault Binary & Config
+        Note over User, LB: [Stage 1 cont.: Network & Load Balancer]
+        User->>LV: 5. Provision Libvirt Volume & Network (L05)
+        LV->>Boot: 6. Auth via AppRole & Read Metadata
+        User->>LB: 7. Provision Centralized Load Balancer (L10)
+        LB->>Boot: 8. Auth via AppRole & Read Network Config
 
-        %% Step 3: Operation
-        Note over User, ProdVault: [Layer 10: Operation]
-        User->>Entry: [PROD] Unseal Production Vault
-        Entry->>Ansible: Run Playbook (90-operation-unseal)
-        Ansible->>ProdVault: Init (if new) & Unseal
-        Ansible-->>Entry: Return Root Token (Saved to Artifacts)
-
-        %% Step 4: Configuration
-        Note over User, ProdVault: [Layer 10: Configuration]
-        Entry->>TF: Apply (Stage 2 - Vault Provider)
-        TF->>ProdVault: Enable PKI Engine (Root CA)
-        TF->>ProdVault: Configure Roles (postgres, redis, minio)
-        TF->>ProdVault: Enable AppRole Auth
+        Note over User, Prod: [Stage 2: Production Vault Setup]
+        User->>Prod: 9. Provision Vault Nodes (L15)
+        Prod->>Prod: 10. Configure HA Raft Backend & Enable Engines
+        User->>Prod: 11. Init & Unseal Production Vault Cluster
+        User->>Prod: 12. Configure AppRole Auth & PKI Root CA (L20/25)
+        User->>Prod: 13. Manually Inject Application Secrets
     ```
 
-2. **Data Services and PKI**: Provisions data services through automated pipelines. MinIO serves as the representative model for these workflows, which follow the same architectural patterns applied to PostgreSQL and Redis.
-
     ```mermaid
     sequenceDiagram
         autonumber
         actor User
-        participant TF as Terraform<br>(Layer 20)
-        participant ProdVault as Prod Vault<br>(Layer 10)
-        participant Libvirt
-        participant Ansible
-        participant Agent as Vault Agent<br>(On Guest)
-        participant Service as MinIO Service
+        participant Prod as Production Vault (L15-25)
+        participant SS as StatefulSets (Postgres/Redis/MinIO)
+        participant Harbor as Bootstrapper Harbor
+        participant K8sGit as Kubeadm Cluster (Dist GitLab)
+        participant K8sHbr as Microk8s Cluster (Dist Harbor)
 
-        Note over User, Service: [Layer 20: Provisioning MinIO]
+        Note over User, Harbor: [Stage 3 / L30 Infra: StatefulSets & Bootstrapper Harbor]
+        par
+            User->>SS: 1. Provision DB Infrastructure (VMs & LBs)
+            SS->>Prod: Request TLS Certificate (PKI Issue)
+            SS->>SS: Start Services with TLS Enabled
+        and
+            User->>Harbor: 2. Provision Bootstrapper Harbor Infrastructure
+            Harbor->>Prod: Request TLS Certificate (PKI Issue)
+            Harbor->>Harbor: Initialize Seed Container Registry
+        end
 
-        %% Terraform Phase
-        User->>TF: Apply Layer 20 (MinIO)
-        TF->>ProdVault: 1. Create AppRole 'harbor-minio'
-        ProdVault-->>TF: Return RoleID & SecretID
-        TF->>Libvirt: 2. Create MinIO VMs & LBs
+        Note over User, K8sHbr: [L30 Infra: K8s Clusters - Depends on Above]
+        par Depends on StatefulSets + Bootstrapper Harbor
+            User->>K8sGit: 3. Provision Kubeadm Cluster (Dist GitLab)
+            K8sGit->>Harbor: Pull Bootstrap Images from Seed Registry
+        and
+            User->>K8sHbr: 4. Provision Microk8s Cluster (Dist Harbor)
+            K8sHbr->>Harbor: Pull Bootstrap Images from Seed Registry
+        end
 
-        %% Ansible Phase
-        TF->>Ansible: 3. Trigger Playbook (Pass AppRole Creds)
+        Note over User, K8sHbr: [L40: Application-Level Provisioning]
+        User->>SS: 5. Provision Database Services (Ansible + Vault Agent TLS)
+        User->>Harbor: 6. Provision Bootstrapper Harbor (Ansible)
 
-        Ansible->>Agent: 3a. Install Vault Agent
-        Ansible->>Agent: 3b. Write RoleID/SecretID to /etc/vault.d/approle/
-        Ansible->>Agent: 3c. Configure Agent Templates (public.crt, private.key)
-        Ansible->>Agent: 3d. Start Vault Agent Service
+        Note over User, K8sHbr: [L50: Platform Deployment]
+        User->>K8sHbr: 7. Deploy Harbor Platform on Microk8s
 
-        %% Runtime Phase
-        Agent->>ProdVault: 4. Auth (AppRole Login)
-        ProdVault-->>Agent: Return Client Token
-        Agent->>ProdVault: 5. Request Cert (pki/prod/issue/minio-role)
-        ProdVault-->>Agent: Return Signed Cert & Key
-
-        Agent->>Service: 6. Render Certs to /etc/minio/certs/
-        Agent->>Service: 7. Restart/Reload MinIO Service
-
-        Service->>Service: 8. Start with TLS (HTTPS)
-
-        %% Client Config
-        Ansible->>Service: 9. Trust CA & Configure 'mc' Client
+        Note over User, K8sGit: [L60: Application Provision]
+        User->>K8sGit: 8. Deploy GitLab on Kubeadm
+        User->>K8sHbr: 9. Deploy Harbor on Microk8s
     ```
 
 ### B. Toolchain Roles and Responsibilities
 
-The cluster configurations in this project draw upon the following resources:
+The cluster establishing in This repo refers to following articles:
 
 > [!NOTE]
 > Procedures derived directly from official documentation are omitted from the list below.
@@ -837,4 +864,4 @@ The cluster configurations in this project draw upon the following resources:
 > 3. Dickson Gathima (2025). [_Building a Highly Available PostgreSQL Cluster with Patroni, etcd, and HAProxy._](https://medium.com/@dickson.gathima/building-a-highly-available-postgresql-cluster-with-patroni-etcd-and-haproxy-1fd465e2c17f) Medium.
 > 4. Deniz TÜRKMEN (2025). [_Redis Cluster Provisioning — Fully Automated with Ansible._](https://deniz-turkmen.medium.com/redis-cluster-provisioning-fully-automated-with-ansible-dc719bb48f75) Medium.
 
-**_(To be continued...)_**
+_**(To be continued...)**_

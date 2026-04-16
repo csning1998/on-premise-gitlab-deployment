@@ -103,16 +103,16 @@ vault_status_reporter() {
 
   # Check Production Vault on Production Guest VM
 	if [[ ! -f "$PROD_CA_CERT" ]]; then
-    log_print "WARN" "Production Vault (Layer10): Unknown (CA Cert missing at $PROD_CA_CERT)"
+    log_print "WARN" "Production Vault (Layer 15): Unknown (CA Cert missing at $PROD_CA_CERT)"
     log_print "INFO" "Run Layer 20 Terraform to generate the Bootstrap CA file."
   else
     # Exit code 0 for Unsealed; 2 for Sealed; 1 for Error
     if timeout 2 vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json >/dev/null 2>&1; then
-      log_print "OK" "Production Vault (Layer10): Running (Unsealed)"
+      log_print "OK" "Production Vault (Layer 15): Running (Unsealed)"
     elif [[ $? -eq 2 ]]; then
-      log_print "WARN" "Production Vault (Layer10): Running (Sealed)"
+      log_print "WARN" "Production Vault (Layer 15): Running (Sealed)"
     else
-      log_print "ERROR" "Production Vault (Layer10): Stopped or Unreachable"
+      log_print "ERROR" "Production Vault (Layer 15): Stopped or Unreachable"
     fi
 	fi
   log_divider

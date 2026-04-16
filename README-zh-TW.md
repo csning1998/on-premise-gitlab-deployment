@@ -82,10 +82,12 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 2. Postgres / Patroni 包含 etcd
 3. Redis / Sentinel
 4. MinIO (S3) / Distributed MinIO
-5. Harbor 作為映像檔 Registry
-6. **[WIP]** GitLab / Runner / Gitaly 等
-7. Private Key Encryption
-8. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration 對於 `*.tfstates` 檔案的加密
+5. Harbor 作為映像檔 GitLab 的 Registry
+6. GitLab Webapp 本體
+7. **[ONGOING]** 修正 Harbor 與 GitLab 的 Rediss 問題
+8. **[WIP]** GitLab Runner (on Microk8s) / Gitaly (Praefact) 等
+9. Private Key Encryption
+10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration 對於 `*.tfstates` 檔案的加密
 
 ### D. The Entrypoint: `entry.sh`
 
@@ -102,16 +104,16 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 [INFO] Environment: NATIVE
 --------------------------------------------------
-[OK] Development Vault (Local): Running (Unsealed)
+[OK] Bootstrapper Vault (Local): Running (Unsealed)
 [OK] Production Vault (Layer 15): Running (Unsealed)
 ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Dev Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Dev Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
-4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
-5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
-6) Setup KVM / QEMU for Native                    12) Verify SSH
+1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
+2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
+3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
+4) [PROD] Unseal Production Vault (via Ansible)            10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
+5) Generate SSH Key                                        11) Rebuild Terraform Layer via Ansible           17) Quit
+6) Setup KVM / QEMU for Native                             12) Verify SSH
 
 [INPUT] Please select an action:
 ```
@@ -432,20 +434,20 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!IMPORTANT]
 > **所有機密資料均整合到 HashiCorp Vault 內，且分為 Development mode 與 Production mode。此 repo 預設使用的 Vault 是走 HTTPS 傳輸、且憑證為 Self-signed CA。請依以下步驟正確設定**
 
-0.  **要先建立 Development Vault 後才能建立 Production Vault。其中 Dev Vault 僅用於建立 Prod Vault 與 Packer Images，之後所有專案的敏感資料皆由 Prod Vault 管理**
+0.  **要先建立 Bootstrapper Vault 後才能建立 Production Vault。其中 Bootstrapper Vault 僅用於建立 Production Vault 與 Packer Images，之後所有專案的敏感資料皆由 Production Vault 管理**
 1.  首先執行 `entry.sh` 選擇選項 `1`，產生 TLS handshake 所需要的檔案。建立 Self-signed CA 時，部分欄位可留空。若需重新產生 TLS 檔案，可再次執行選項 `1`
-2.  切換至專案根目錄，執行以下指令啟動 Development mode Vault server。此 repo 預設在 container 走 side-car 模式執行：
+2.  切換至專案根目錄，執行以下指令啟動引導用 Bootstrapper Vault server。此 repo 預設在 container 走 side-car 模式執行：
 
     ```shell
     podman compose up -d iac-vault-server
     ```
 
-    啟動 server 後，Dev Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Dev Vault，就必須手動清除 `vault/data/` 與 `vault/keys/` 內所有檔案。請開新終端機視窗或分頁進行後續操作，以避免 shell session 的環境變數污染
+    啟動 server 後，Bootstrapper Vault 就會在 `vault/data/` 路徑中產生 `vault.db` 以及 Raft 相關檔案。如果有需要重新建立 Bootstrapper Vault，就必須手動清除 `vault/data/` 與 `vault/keys/` 內所有檔案。請開新終端機視鎖或分頁進行後續操作，以避免 shell session 的環境變數污染
 
-3.  完成前述步驟後，執行 `entry.sh` 選擇選項 2 初始化 Dev Vault。此過程也會自動執行 Unseal
+3.  完成前述步驟後，執行 `entry.sh` 選擇選項 2 初始化 Bootstrapper Vault。此過程也會自動執行 Unseal
 4.  接下來只需手動修改以下專案使用的變數。密碼必須替換為不重複內容，藉以確保安全性
     - **強烈建議執行完任何 `vault kv put` 指令之後，清除 Shell Histroy 的機敏變數，以免洩漏。詳見下方 Note 0 說明**
-    - **For Development Vault**
+    - **針對 Bootstrapper Vault**
         - 以下變數用來建立 packer 與 Terraform Layer `10` 中的 production HashiCorp Vault
             - `github_pat`: 前一步取得的 GitHub Personal Access Token
             - `ssh_username`, `ssh_password`: SSH 使用者名稱與密碼
@@ -580,7 +582,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
             可以操作 `echo` 指令進行驗證
 
-        在 Development Vault 及其他機密操作方式相同
+        在 Bootstrapper Vault 及其他機密操作方式相同
 
     - **Note 2:**
 
@@ -600,7 +602,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         目前的 SSH identity 變數（`ssh_`）主要會用在 Packer 的單次使用情境；而 VM identity 變數（`vm_`）則由 Terraform 在 clone VM 時使用。原則上兩者可設為相同值。若因不同 VM 需要不同名稱，可直接修改 HCL 中的物件與相關程式碼。通常會修改 `ansible_runner.vm_credentials` 變數及相關傳遞方式，然後使用 `for_each` 迴圈迭代。但這此方式會增加複雜度，因此如果沒有其他需求，建議可以維持 SSH 與 VM identity 變數相同
 
 5.  在此 repo 中，Vault 在每一次啟動之後，都會需要進行 unseal 操作。可以使用以下方式：
-    - `entry.sh` 選項 `3` 做 Unseal Development mode Vault，會使用 Shell Script 的 `vault_dev_unseal_handler()` 執行
+    - `entry.sh` 選項 `3` 做 Unseal Bootstrapper Vault，會使用 Shell Script 的 `vault_dev_unseal_handler()` 執行
     - `entry.sh` 選項 `4` 做 Unseal Production mode Vault，會使用 Ansible Playbook `90-operation-vault-unseal.yaml` 操作
 
     或者如 B.1-2 所述使用容器，較為簡便
@@ -646,7 +648,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     - 選單 `9) Build Packer Base Image` 建立 Packer image
     - 選單 `10) Provision Terraform Layer` 獨立測試或重建特定 Terraform module layer（如 Harbor 或 Postgres 等）
 
-        有時在 Layer 50 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/50-harbor-platform` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
+        有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
 
     若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
 
@@ -788,7 +790,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         participant LV as Libvirt Volume & Network (L05)
         participant LB as Centralized Load Balancer (L10)
         participant Prod as Production Vault (L15-25)
-        participant Harbor as Bootstrapper Harbor (L30/40)
 
         Note over User, Meta: [Stage 1: Foundation Bootstrapping]
         User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
