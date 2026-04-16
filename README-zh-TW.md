@@ -731,7 +731,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 3.  **將兩個 Certificates 都匯入 System Trust Store:**
 
     現在在 `terraform/layers/15-shared-vault-frontend/tls/` 路徑內存在兩個 CA 檔案：
-    - `vault-ca.crt`：**Infrastructure CA** （由 Terraform 當場產生）
+    - `bootstrap-ca.crt`：**Infrastructure CA** （由 Terraform 當場產生）
     - `vault-pki-ca.crt`：**Service CA** （透過 Vault API 下載）
 
     執行以下指令將兩份 CA 匯入作業系統：
@@ -739,7 +739,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
         ```shell
         # 1. Copy both CAs to the anchors directory
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt /etc/pki/ca-trust/source/anchors/
         sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
 
         # 2. Update the trust store
@@ -750,7 +750,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
         ```shell
         # 1. Copy both CAs to the shared certificates directory
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt /usr/local/share/ca-certificates/bootstrap-ca.crt
         sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
 
         # 2. Update the certificates
