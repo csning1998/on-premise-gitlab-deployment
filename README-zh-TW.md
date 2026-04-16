@@ -20,33 +20,29 @@
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供參考：
 
-| Network Segment (CIDR) | Service Tier  | Usage (Service)  | Storage Pool Name   | VIP (HAProxy/Ingress) | Node IP Allocation                                 | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                                                     |
-| ---------------------- | ------------- | ---------------- | ------------------- | --------------------- | -------------------------------------------------- | ---------------- | -------- | --------- | -------- | -------------- | --------------------------------------------------------- |
-| 172.16.134.0/24        | App (GitLab)  | Kubeadm Cluster  | iac-kubeadm         | 172.16.134.250        | `.200` (Master), `.21x` (Worker)                   | Kubeadm Master   | 1        | 2         | 6.0 GiB  | 6,144 MiB      | Used for GitLab Helm Chart deployment                     |
-|                        |               |                  |                     |                       |                                                    | Kubeadm Worker   | 2        | 4         | 8.0 GiB  | 16,384 MiB     | For Rails/Sidekiq, GitLab Runner, etc.                    |
-| 172.16.135.0/24        | App (Harbor)  | MicroK8s Cluster | iac-harbor          | 172.16.135.250        | `.20x` (Nodes)                                     | MicroK8s Node    | 1        | 4         | 6.0 GiB  | 6,144 MiB      | Full Harbor consumes ~4-5 GB                              |
-| 172.16.136.0/24        | Shared        | Vault HA         | iac-vault           | 172.16.136.250        | `.20x` (Vault), `.21x` (HAProxy)                   | Vault (Raft)     | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Raft is lightweight; Shared secrets management center     |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        | TCP forwarding only                                       |
-| 172.16.137.0/24        | Data (Harbor) | Postgres HA      | iac-postgres-harbor | 172.16.137.250        | `.20x` (Postgres), `.21x` (Etcd), `.22x` (HAProxy) | Postgres         | 1        | 2         | 2.0 GiB  | 2,048 MiB      | `shared_buffers` set to 512MB; Instantiated via Module 21 |
-|                        |               |                  |                     |                       |                                                    | Etcd             | 1        | 1         | 1.0 GiB  | 1,024 MiB      | Patroni low usage                                         |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.138.0/24        | Data (Harbor) | Redis HA         | iac-redis-harbor    | 172.16.138.250        | `.20x` (Redis), `.21x` (HAProxy)                   | Redis            | 1        | 1         | 1.0 GiB  | 1,024 MiB      |                                                           |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.139.0/24        | Data (Harbor) | MinIO HA         | iac-minio-harbor    | 172.16.139.250        | `.20x` (MinIO), `.21x` (HAProxy)                   | MinIO            | 1        | 2         | 1.5 GiB  | 1,536 MiB      | Go heap not that heavy                                    |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.140.0/24        | Data (GitLab) | Postgres HA      | iac-postgres-gitlab | 172.16.140.250        | `.20x` (Postgres), `.21x` (Etcd), `.22x` (HAProxy) | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Replication of Layer 20                                   |
-|                        |               |                  |                     |                       |                                                    | Etcd             | 1        | 1         | 1.0 GiB  | 1,024 MiB      | Same as Harbor Postgres                                   |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.141.0/24        | Data (GitLab) | Redis HA         | iac-redis-gitlab    | 172.16.141.250        | `.20x` (Redis), `.21x` (HAProxy)                   | Redis            | 1        | 1         | 2.0 GiB  | 2,048 MiB      | Same as Harbor Redis                                      |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| 172.16.142.0/24        | Data (GitLab) | MinIO HA         | iac-minio-gitlab    | 172.16.142.250        | `.20x` (MinIO), `.21x` (HAProxy)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Same as Harbor MinIO                                      |
-|                        |               |                  |                     |                       |                                                    | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        |                                                           |
-| **Total**              |               |                  |                     |                       |                                                    |                  | **20**   |           |          | **49,152 MiB** | ≈ 48.0 GiB                                                |
+| Network Segment (CIDR) | Service Tier  | Usage (Service)  | Storage Pool Name   | VIP (HAProxy/Ingress) | Node IP Allocation               | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                                      |
+| ---------------------- | ------------- | ---------------- | ------------------- | --------------------- | -------------------------------- | ---------------- | -------- | --------- | -------- | -------------- | ------------------------------------------ |
+| 172.16.125.0/24        | Shared        | Central LB       | core-central-lb     | 172.16.125.250        | `.20x` (Frontend)                | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        | TCP forwarding only                        |
+| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster  | core-gitlab-kubeadm | 172.16.126.250        | `.200` (Master), `.21x` (Worker) | Kubeadm Master   | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Used for GitLab Helm Chart deployment      |
+|                        |               |                  |                     |                       |                                  | Kubeadm Worker   | 2        | 4         | 6.0 GiB  | 12,288 MiB     | For Rails/Sidekiq, GitLab Runner, etc.     |
+| 172.16.127.0/24        | Data (GitLab) | Postgres HA      | core-gitlab-pg      | 172.16.127.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Instantiated via Module 30                 |
+| 172.16.128.0/24        | Data (GitLab) | Etcd HA          | core-gitlab-etcd    | 172.16.128.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
+| 172.16.129.0/24        | Data (GitLab) | Redis HA         | core-gitlab-redis   | 172.16.129.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
+| 172.16.130.0/24        | Data (GitLab) | MinIO HA         | core-gitlab-minio   | 172.16.130.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Distributed MinIO ready                    |
+| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster | core-harbor         | 172.16.131.250        | `.20x` (Nodes)                   | MicroK8s Node    | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Full Harbor consumes ~4-5 GB               |
+| 172.16.132.0/24        | Data (Harbor) | Postgres HA      | core-harbor-pg      | 172.16.132.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Same as GitLab Postgres                    |
+| 172.16.133.0/24        | Data (Harbor) | Etcd HA          | core-harbor-etcd    | 172.16.133.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
+| 172.16.134.0/24        | Data (Harbor) | Redis HA         | core-harbor-redis   | 172.16.134.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
+| 172.16.135.0/24        | Data (Harbor) | MinIO HA         | core-harbor-minio   | 172.16.135.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Same as GitLab MinIO                       |
+| 172.16.136.0/24        | Shared        | Vault HA         | core-vault          | 172.16.136.250        | `.20x` (Vault)                   | Vault (Raft)     | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Raft is lightweight; Shared secrets center |
+| 172.16.137.0/24        | App (Harbor)  | Bootstrapper     | core-bootstrapper   | 172.16.137.250        | `.200` (Docker)                  | Docker Engine    | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Ephemeral deployment controller            |
+| 172.16.138.0/24        | Data (GitLab) | Gitaly node      | core-gitaly         | 172.16.138.250        | `.20x`                           | Gitaly           | 1        | 2         | 2.0 GiB  | 2,048 MiB      | [Pending] Not deployed                     |
+| **Total**              |               |                  |                     |                       |                                  |                  | **19**   |           |          | **55,296 MiB** | ≈ 54.0 GiB                                 |
 
 ### A. Disclaimer
 
@@ -63,7 +59,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 > [!WARNING]
 > **Compatibility Warning**
-> 此 repo 目前僅支援具有 CPU virtualization 功能的 Linux 裝置。如果使用的裝置 CPU 不支援 virtualization（例如無 VT-x/AMD-V），請切換至 `legacy-workstation-on-ubuntu` branch，可以支援架設 HA Kubeadm cluster
+> 此 repo 目前僅支援具有 CPU virtualization 功能的 Linux 裝置。如果使用的裝置 CPU 不支援 virtualization（例如無 VT-x/AMD-V），請切換至 `legacy-workstation-on-ubuntu` branch，可以支援最基本的 HA Kubeadm Cluster 架設
 >
 > 此外，目前此 repo 為個人獨立開發，可能存在邊際問題，一經發現將立即修正
 
@@ -71,7 +67,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 在開始前，要先確認裝置滿足以下條件：
 
-- 一台 Linux Host，建議使用 RHEL 10 或 Ubuntu 24
+- 一台 Linux Host，建議使用 Fedora 43、RHEL 10 或 Ubuntu 24
 - CPU 必須有支援 virtualization，即具有 VT-x 或 AMD-V
 - 具備 `sudo` 權限以操作 Libvirt
 - 已安裝 `podman` 與 `podman compose`，用於 containerized 模式
@@ -107,7 +103,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 [INFO] Environment: NATIVE
 --------------------------------------------------
 [OK] Development Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer10): Running (Unsealed)
+[OK] Production Vault (Layer 15): Running (Unsealed)
 ------------------------------------------------------------
 
 1) [DEV] Set up TLS for Dev Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
@@ -132,11 +128,28 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
-    1) 01A-docker-harbor          4) 04-base-postgres          7) 07-base-vault            10) Build ALL Packer Images
-    2) 02-base-kubeadm            5) 05-base-redis             8) 08-base-haproxy          11) Back to Main Menu
-    3) 03-base-microk8s           6) 06-base-minio             9) 09-base-etcd
+    [INFO] Select Packer category to build:
+    ------------------------------------------------------------
+    1) Base OS Layers    2) Service Layers    3) Build ALL    4) Back to Main Menu
 
-    [INPUT] Select a Packer build to run:
+    [INPUT] Select a category:
+    ```
+
+    選擇 `1` 主要是用來建立基礎映像檔案，會包含 APT 更新等
+
+    ```text
+    [INPUT] Select a category: 1
+    1) ubuntu-24-updated
+    2) Build ALL in Base OS Images
+    3) Back
+    ```
+
+    選擇 `2` 會建立服務映像檔案。這會在 Packer HCL 內指定 `1` 所建立好的映像檔案來源，並在映像檔案內安裝該服務的執行檔與相關套件
+
+    ```text
+    [INPUT] Select a category: 2
+    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
     ```
 
 2. 選 `10) Provision Terraform Layer` 時
@@ -145,14 +158,18 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
     [INPUT] Please select an action: 10
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
-    1) 10-vault-raft         4) 30-gitlab-minio      7) 30-harbor-minio     10) 40-gitlab-kubeadm   13) 50-harbor-platform  16) 90-github-meta
-    2) 20-vault-pki          5) 30-gitlab-postgres   8) 30-harbor-postgres  11) 40-harbor-microk8s  14) 60-gitlab-service   17) Back to Main Menu
-    3) 30-dev-harbor-core    6) 30-gitlab-redis      9) 30-harbor-redis     12) 50-gitlab-platform  15) 60-harbor-service
+    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
+    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
+    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
+    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
+    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
+    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
+    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
 
     [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
-3. 選 `11) Rebuild Layer via Ansible` 時
+3. _**（即將棄用）**_ 選 `11) Rebuild Layer via Ansible` 時
 
     ```text
     [INPUT] Please select an action: 11
@@ -177,12 +194,12 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **安裝 HashiCorp Toolkit - Terraform and Packer**
+1. **_（即將棄用）_ 安裝 HashiCorp Toolkit - Terraform and Packer**
 
     接著在專案根目錄執行 `entry.sh`，選擇選項 `7` _"Setup Core IaC Tools for Native"_ 來安裝 Terraform、Packer 與 Ansible。可以參考官方安裝說明：
 
-    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_  
-    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_  
+    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
+    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
     > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
 
     預期輸出應顯示最新版本，例如（在 zsh 下）：
@@ -215,7 +232,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 2. 要確認 Podman / Docker 已經正確安裝，需根據開發裝置的作業系統，參考以下網址選擇對應安裝方式
 
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_  
+    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
     > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
 
 3. 以 Podman 為例，在 Podman 安裝完成後，切換至專案根目錄：
@@ -441,22 +458,27 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
         vault kv put \
             -address="https://127.0.0.1:8200" \
             -ca-cert="${PWD}/vault/tls/ca.pem" \
-            secret/on-premise-gitlab-deployment/variables \
-            github_pat="your-github-personal-access-token" \
-            ssh_username="some-user-name-for-ssh" \
+            secret/on-premise-gitlab-deployment/guest_vm \
+            ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
             ssh_password="$ssh_password" \
             ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
-            vm_username="some-user-name-for-vm" \
-            vm_password="$ssh_password" \
-            ssh_public_key_path="~/.ssh/some-ssh-key-name.pub" \
-            ssh_private_key_path="~/.ssh/some-ssh-key-name"
+            vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+            vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
+            ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
+            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
+
+        vault kv put \
+            -address="https://127.0.0.1:8200" \
+            -ca-cert="${PWD}/vault/tls/ca.pem" \
+            secret/on-premise-gitlab-deployment/project_meta \
+            github_pat="<YOUR_GITHUB_PERSONAL_ACCESS_TOKEN>"
 
         vault kv put \
             -address="https://127.0.0.1:8200" \
             -ca-cert="${PWD}/vault/tls/ca.pem" \
             secret/on-premise-gitlab-deployment/infrastructure \
-            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-development-mode" \
-            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-development-mode"
+            haproxy_stats_pass="haproxy_stats_pass_dev_password" \
+            keepalived_auth_pass="keepalived_auth_pass_dev_password"
         ```
 
         如果沒有使用 `90-github-meta` 管理 GitHub Repo 的設定，可以刪除 `github_pat` 這個 secret
@@ -482,50 +504,54 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
         ```shell
         export VAULT_ADDR="https://172.16.136.250:443"
-        export VAULT_CACERT="${PWD}/terraform/layers/10-vault-core/tls/vault-ca.crt"
-        export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
+        export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+        export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
         vault secrets enable -path=secret kv-v2
-        ```
 
-        ```shell
-        vault kv put secret/on-premise-gitlab-deployment/variables \
-            ssh_username="some-username-for-ssh-for-production-mode" \
-            ssh_password="some-password-for-ssh-for-production-mode" \
-            ssh_password_hash='$some-password-for-ssh-for-production-mode' \
+        printf "Enter ssh Password: "
+        read -s ssh_password
+        vault kv put secret/on-premise-gitlab-deployment/guest_vm \
+            ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
+            ssh_password="$ssh_password" \
+            ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
+            vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+            vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
-            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment" \
-            vm_username="some-username-for-vm-for-production-mode" \
-            vm_password="some-password-for-vm-for-production-mode"
+            ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
         vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            vault_haproxy_stats_pass="some-password-for-vault-haproxy-stats-pass-for-production-mode" \
-            vault_keepalived_auth_pass="some-password-for-vault-keepalived-auth-pass-for-production-mode"
+            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
+            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
 
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
-            pg_superuser_password="some-password-for-gitlab-pg-superuser-for-production-mode" \
-            pg_replication_password="some-password-for-gitlab-pg-replication-for-production-mode" \
-            pg_vrrp_secret="some-password-for-gitlab-pg-vrrp-for-production-mode" \
-            redis_requirepass="some-password-for-gitlab-redis-requirepass-for-production-mode" \
-            redis_masterauth="some-password-for-gitlab-redis-masterauth-for-production-mode" \
-            redis_vrrp_secret="some-password-for-gitlab-redis-vrrp-secret-for-production-mode" \
-            minio_root_password="some-password-for-gitlab-minio-root-password-for-production-mode" \
-            minio_vrrp_secret="some-password-for-gitlab-minio-vrrp-secret-for-production-mode" \
-            minio_root_user="some-username-for-gitlab-minio-root-user-for-production-mode"
+            pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
+            pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
+            pg_vrrp_secret="<YOUR_GITLAB_PG_VRRP_SECRET>" \
+            redis_requirepass="<YOUR_GITLAB_REDIS_REQUIREPASS>" \
+            redis_masterauth="<YOUR_GITLAB_REDIS_MASTERAUTH>" \
+            redis_vrrp_secret="<YOUR_GITLAB_REDIS_VRRP_SECRET>" \
+            minio_root_password="<YOUR_GITLAB_MINIO_ROOT_PASSWORD>" \
+            minio_vrrp_secret="<YOUR_GITLAB_MINIO_VRRP_SECRET>" \
+            minio_root_user="<YOUR_GITLAB_MINIO_ROOT_USER>"
 
         vault kv put secret/on-premise-gitlab-deployment/harbor/databases \
-            pg_superuser_password="some-password-for-harbor-pg-superuser-for-production-mode" \
-            pg_replication_password="some-password-for-harbor-pg-replication-for-production-mode" \
-            pg_vrrp_secret="some-password-for-harbor-pg-vrrp-for-production-mode" \
-            redis_requirepass="some-password-for-harbor-redis-requirepass-for-production-mode" \
-            redis_masterauth="some-password-for-harbor-redis-masterauth-for-production-mode" \
-            redis_vrrp_secret="some-password-for-harbor-redis-vrrp-secret-for-production-mode" \
-            minio_root_password="some-password-for-harbor-minio-root-password-for-production-mode" \
-            minio_vrrp_secret="some-password-for-harbor-minio-vrrp-secret-for-production-mode" \
-            minio_root_user="some-username-for-harbor-minio-root-user-for-production-mode"
+            pg_superuser_password="<YOUR_HARBOR_PG_SUPERUSER_PASSWORD>" \
+            pg_replication_password="<YOUR_HARBOR_PG_REPLICATION_PASSWORD>" \
+            pg_vrrp_secret="<YOUR_HARBOR_PG_VRRP_SECRET>" \
+            redis_requirepass="<YOUR_HARBOR_REDIS_REQUIREPASS>" \
+            redis_masterauth="<YOUR_HARBOR_REDIS_MASTERAUTH>" \
+            redis_vrrp_secret="<YOUR_HARBOR_REDIS_VRRP_SECRET>" \
+            minio_root_password="<YOUR_HARBOR_MINIO_ROOT_PASSWORD>" \
+            minio_vrrp_secret="<YOUR_HARBOR_MINIO_VRRP_SECRET>" \
+            minio_root_user="<YOUR_HARBOR_MINIO_ROOT_USER>"
 
         vault kv put secret/on-premise-gitlab-deployment/harbor/app \
-            harbor_admin_password="some-password-for-harbor-admin-password-for-production-mode" \
-            harbor_pg_db_password="some-password-for-harbor-pg-db-password-for-production-mode"
+            harbor_admin_password="<YOUR_HARBOR_ADMIN_PASSWORD>" \
+            harbor_pg_db_password="<YOUR_HARBOR_PG_DB_PASSWORD>"
+
+        vault kv put secret/on-premise-gitlab-deployment/harbor-bootstrapper/app \
+            harbor_bootstrapper_admin_password="<YOUR_BOOTSTRAPPER_ADMIN_PASSWORD>" \
+            harbor_bootstrapper_pg_db_password="<YOUR_BOOTSTRAPPER_PG_DB_PASSWORD>"
         ```
 
     - **Note 0. Security Notice**：在執行完 `vault kv put` 指令之後，強烈建議清除 shell history，以避免敏感資訊外洩
@@ -534,22 +560,25 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
             ```shell
             export VAULT_ADDR="https://172.16.136.250:443"
-            export VAULT_CACERT="${PWD}/terraform/layers/10-vault-raft/tls/vault-ca.crt"
-            export VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json)
-            vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases
+            export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+            export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) \
+                vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
+            vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases
             ```
 
         2. 如果要避免機密外洩，可使用：
 
             ```shell
-            export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
             ```
 
         3. 若需保持 shell 環境乾淨，可使用單行指令：
 
             ```shell
-            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/10-vault-raft/tls/vault-ca.crt" VAULT_TOKEN=$(jq -r .root_token ansible/fetched/vault/vault_init_output.json) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/databases)
+            export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
             ```
+
+            可以操作 `echo` 指令進行驗證
 
         在 Development Vault 及其他機密操作方式相同
 
@@ -576,7 +605,19 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
     或者如 B.1-2 所述使用容器，較為簡便
 
-#### **Step B.3. Create Variable File for Terraform:**
+#### **Step B.3. Understand the Metadata:**
+
+> [!TIP]
+> **Layer 00 (Foundation Metadata)** 是整個專案的「基礎設施元資料庫」與單一真理來源 (SSoT)。
+
+在執行任何 Provision 之前，必須理解 `00` 層級的主要工作，這 Layer 不會建立任何虛擬化資源，而是負責計算：
+
+1. **全域名稱定義**：將抽象的 `service_catalog` 轉換為具體的元件標識，如 `cluster_name`, `storage_pool_name`，確保命名一致性。
+2. **自動化網路分配**：基於 `cidr_index` 自動計算每個服務的子網段、VIP (`.250`)、Gateway 以及主機 IP 範圍。其中設有 `validation` 機制以避免人為手動分配導致的 IP 衝突
+3. **決定論式連線屬性**：為每台 VM 生成固定的 MAC 地址與 DNS SANs。這樣即便資源重建，其物理特徵與 TLS 憑證辨識等依然維持不變
+4. **跨層級引用標準**：透過 `terraform_remote_state` 進行資料驅動佈署，提供給後續所有層級（如 `30-infra-xxx`）使用
+
+#### **Step B.4. Create Variable File for Terraform:**
 
 > [!NOTE]
 > 這些是建立 Clusters 的變數檔案
@@ -622,7 +663,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 1. 使用 Shell Bridge Pattern 從 Vault 注入 Token。在專案根目錄執行以確保 `${PWD}` 指向正確的 Vault 憑證路徑
 
     ```shell
-    export GITHUB_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat ${PWD}/vault/keys/root-token.txt) vault kv get -field=github_pat secret/on-premise-gitlab-deployment/variables)
+    export GITHUB_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=github_pat secret/on-premise-gitlab-deployment/project_meta)
     ```
 
 2. 由於 repository 已存在，首次執行 governance layer 前需 import
@@ -660,34 +701,34 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 匯出服務憑證可以讓使用者在 Host 端直接瀏覽以下服務，且不會出現憑證錯誤
 
-- Prod Vault：`https://vault.iac.local`
-- Harbor：`https://harbor.iac.local`
-- Harhor MinIO Console：`https://minio.harbor.iac.local`
-- GitLab：`https://gitlab.iac.local`
-- GitLab MinIO Console：`https://minio.gitlab.iac.local`
+- Prod Vault：`https://vault.production.iac.local`
+- Harbor：`https://harbor.production.iac.local`
+- Harhor MinIO Console：`https://minio.harbor.production.iac.local`
+- GitLab：`https://gitlab.production.iac.local`
+- GitLab MinIO Console：`https://minio.gitlab.production.iac.local`
 
 這樣需要做兩件事情，依序如下：
 
 1.  在 `/etc/hosts` 處理 DNS 解析，將以下內容（此 repo 預設）加入 host 端的 `/etc/hosts`。注意這要依照實際 Terraform 輸出的 IP 進行調整
 
     ```text
-    172.16.134.250  gitlab.iac.local
-    172.16.135.250  harbor.iac.local notary.harbor.iac.local
-    172.16.136.250  vault.iac.local
-    172.16.139.250  minio.harbor.iac.local
-    172.16.142.250  minio.gitlab.iac.local
+    172.16.126.250  gitlab.production.iac.local
+    172.16.131.250  harbor.production.iac.local notary.harbor.harbor.production.iac.local
+    172.16.136.250  vault.production.iac.local
+    172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
+    172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
     ```
 
-2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA。這裡可以使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/10-vault-core/tls` 路徑內
+2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA。這裡可以使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/15-shared-vault-frontend/tls` 路徑內
 
     ```bash
     export VAULT_ADDR="https://172.16.136.250:443"
-    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/10-vault-core/tls/vault-pki-ca.crt
+    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt
     ```
 
 3.  **將兩個 Certificates 都匯入 System Trust Store:**
 
-    現在在 `terraform/layers/10-vault-core/tls/` 路徑內存在兩個 CA 檔案：
+    現在在 `terraform/layers/15-shared-vault-frontend/tls/` 路徑內存在兩個 CA 檔案：
     - `vault-ca.crt`：**Infrastructure CA** （由 Terraform 當場產生）
     - `vault-pki-ca.crt`：**Service CA** （透過 Vault API 下載）
 
@@ -696,8 +737,8 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
         ```shell
         # 1. Copy both CAs to the anchors directory
-        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
-        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /etc/pki/ca-trust/source/anchors/
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
 
         # 2. Update the trust store
         sudo update-ca-trust
@@ -707,8 +748,8 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
         ```shell
         # 1. Copy both CAs to the shared certificates directory
-        sudo cp terraform/layers/10-vault-core/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
-        sudo cp terraform/layers/10-vault-core/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-ca.crt /usr/local/share/ca-certificates/vault-ca.crt
+        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
 
         # 2. Update the certificates
         sudo update-ca-certificates
@@ -717,7 +758,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 4.  從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA
 
     ```shell
-    curl -I https://minio.harbor.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.production.iac.local:9000/minio/health/live
     ```
 
     若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定
@@ -725,7 +766,7 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 5.  從 host 存取 Harbor 驗證 Trust Store
 
     ```shell
-    curl -vI https://harbor.iac.local
+    curl -vI https://harbor.production.iac.local
     ```
 
     若顯示 `SSL certificate verify ok` 與 `HTTP/2 200`，代表從 Vault 憑證發行、經 cert-manager 簽署、Ingress 部署到 host 信任的完整 PKI Chain 已成功建立
@@ -736,92 +777,78 @@ git clone -b v1.7.2 --depth 1 https://github.com/csning1998-old/on-premise-gitla
 
 ### A. Deployment Workflow
 
-1. **核心 Bootstrap 流程**：使用 Development Vault 儲存初始機密，接著建立 Production Vault
+1.  自動化部署流程分為以下四個核心組別與階段，其佈署時序與相依關係嚴格遵循系統內部運作邏輯：
 
     ```mermaid
     sequenceDiagram
         autonumber
         actor User
-        participant Entry as entry.sh
-        participant DevVault as Dev Vault<br>(Local)
-        participant TF as Terraform<br>(Layer 10)
-        participant Libvirt
-        participant Ansible
-        participant ProdVault as Prod Vault<br>(Layer 10)
+        participant Boot as Bootstrapper Vault (L00)
+        participant Meta as Resource Metadata (L00)
+        participant LV as Libvirt Volume & Network (L05)
+        participant LB as Centralized Load Balancer (L10)
+        participant Prod as Production Vault (L15-25)
+        participant Harbor as Bootstrapper Harbor (L30/40)
 
-        %% Step 1: Bootstrap
-        Note over User, DevVault: [Bootstrap Phase]
-        User->>Entry: [DEV] Initialize Dev Vault
-        Entry->>DevVault: Init & Unseal
-        Entry->>DevVault: Enable KV Engine (secret/)
-        User->>DevVault: Write Initial Secrets (SSH Keys, Root Pass)
+        Note over User, Meta: [Stage 1: Foundation Bootstrapping]
+        User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
+        Boot->>Boot: 2. Enable KV Engine & Write Static Secrets
+        User->>Meta: 3. Provision Resource Metadata
 
-        %% Step 2: Infrastructure
-        Note over User, ProdVault: [Layer 10: Infrastructure]
-        User->>Entry: Provision Layer 10
-        Entry->>TF: Apply (Stage 1)
-        TF->>DevVault: Read SSH Keys/Creds
-        TF->>Libvirt: Create Vault VMs (Active/Standby)
-        TF->>Ansible: Trigger Provisioning
-        Ansible->>ProdVault: Install Vault Binary & Config
+        Note over User, LB: [Stage 1 cont.: Network & Load Balancer]
+        User->>LV: 4. Provision Libvirt Volume & Network (L05)
+        LV->>Boot: 5. Auth via AppRole & Read Metadata
+        User->>LB: 6. Provision Centralized Load Balancer (L10)
+        LB->>Boot: 7. Auth via AppRole & Read Network Config
 
-        %% Step 3: Operation
-        Note over User, ProdVault: [Layer 10: Operation]
-        User->>Entry: [PROD] Unseal Production Vault
-        Entry->>Ansible: Run Playbook (90-operation-unseal)
-        Ansible->>ProdVault: Init (if new) & Unseal
-        Ansible-->>Entry: Return Root Token (Saved to Artifacts)
-
-        %% Step 4: Configuration
-        Note over User, ProdVault: [Layer 10: Configuration]
-        Entry->>TF: Apply (Stage 2 - Vault Provider)
-        TF->>ProdVault: Enable PKI Engine (Root CA)
-        TF->>ProdVault: Configure Roles (postgres, redis, minio)
-        TF->>ProdVault: Enable AppRole Auth
+        Note over User, Prod: [Stage 2: Production Vault Setup]
+        User->>Prod: 8. Provision Vault Nodes (L15)
+        Prod->>Prod: 9. Configure HA Raft Backend & Enable Engines
+        User->>Prod: 10. Init & Unseal Production Vault Cluster
+        User->>Prod: 11. Configure AppRole Auth & PKI Root CA (L20/25)
+        User->>Prod: 12. Manually Inject Application Secrets
     ```
 
-2. **資料服務與 PKI**：自動佈署資料庫服務。以 MinIO 為例，而 Postgres 與 Redis 類似
-
     ```mermaid
     sequenceDiagram
         autonumber
         actor User
-        participant TF as Terraform<br>(Layer 20)
-        participant ProdVault as Prod Vault<br>(Layer 10)
-        participant Libvirt
-        participant Ansible
-        participant Agent as Vault Agent<br>(On Guest)
-        participant Service as MinIO Service
+        participant Prod as Production Vault (L15-25)
+        participant SS as StatefulSets (Postgres/Redis/MinIO)
+        participant Harbor as Bootstrapper Harbor
+        participant K8sGit as Kubeadm Cluster (Dist GitLab)
+        participant K8sHbr as Microk8s Cluster (Dist Harbor)
 
-        Note over User, Service: [Layer 20: Provisioning MinIO]
+        Note over User, Harbor: [Stage 3 / L30 Infra: StatefulSets & Bootstrapper Harbor]
+        par
+            User->>SS: 1. Provision DB Infrastructure (VMs & LBs)
+            SS->>Prod: Request TLS Certificate (PKI Issue)
+            SS->>SS: Start Services with TLS Enabled
+        and
+            User->>Harbor: 2. Provision Bootstrapper Harbor Infrastructure
+            Harbor->>Prod: Request TLS Certificate (PKI Issue)
+            Harbor->>Harbor: Initialize Seed Container Registry
+        end
 
-        %% Terraform Phase
-        User->>TF: Apply Layer 20 (MinIO)
-        TF->>ProdVault: 1. Create AppRole 'harbor-minio'
-        ProdVault-->>TF: Return RoleID & SecretID
-        TF->>Libvirt: 2. Create MinIO VMs & LBs
+        Note over User, K8sHbr: [L30 Infra: K8s Clusters - Depends on Above]
+        par Depends on StatefulSets + Bootstrapper Harbor
+            User->>K8sGit: 3. Provision Kubeadm Cluster (Dist GitLab)
+            K8sGit->>Harbor: Pull Bootstrap Images from Seed Registry
+        and
+            User->>K8sHbr: 4. Provision Microk8s Cluster (Dist Harbor)
+            K8sHbr->>Harbor: Pull Bootstrap Images from Seed Registry
+        end
 
-        %% Ansible Phase
-        TF->>Ansible: 3. Trigger Playbook (Pass AppRole Creds)
+        Note over User, K8sHbr: [L40: Application-Level Provisioning]
+        User->>SS: 5. Provision Database Services (Ansible + Vault Agent TLS)
+        User->>Harbor: 6. Provision Bootstrapper Harbor (Ansible)
 
-        Ansible->>Agent: 3a. Install Vault Agent
-        Ansible->>Agent: 3b. Write RoleID/SecretID to /etc/vault.d/approle/
-        Ansible->>Agent: 3c. Configure Agent Templates (public.crt, private.key)
-        Ansible->>Agent: 3d. Start Vault Agent Service
+        Note over User, K8sHbr: [L50: Platform Deployment]
+        User->>K8sHbr: 7. Deploy Harbor Platform on Microk8s
 
-        %% Runtime Phase
-        Agent->>ProdVault: 4. Auth (AppRole Login)
-        ProdVault-->>Agent: Return Client Token
-        Agent->>ProdVault: 5. Request Cert (pki/prod/issue/minio-role)
-        ProdVault-->>Agent: Return Signed Cert & Key
-
-        Agent->>Service: 6. Render Certs to /etc/minio/certs/
-        Agent->>Service: 7. Restart/Reload MinIO Service
-
-        Service->>Service: 8. Start with TLS (HTTPS)
-
-        %% Client Config
-        Ansible->>Service: 9. Trust CA & Configure 'mc' Client
+        Note over User, K8sGit: [L60: Application Provision]
+        User->>K8sGit: 8. Deploy GitLab on Kubeadm
+        User->>K8sHbr: 9. Deploy Harbor on Microk8s
     ```
 
 ### B. Toolchain Roles and Responsibilities
