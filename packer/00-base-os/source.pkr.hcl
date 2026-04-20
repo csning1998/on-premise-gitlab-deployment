@@ -2,9 +2,9 @@
 # This file defines the single, data-driven QEMU source for ISO-based installation.
 
 locals {
-  ssh_username        = vault("secret/data/on-premise-gitlab-deployment/variables", "ssh_username")
-  ssh_password        = vault("secret/data/on-premise-gitlab-deployment/variables", "ssh_password")
-  ssh_password_hash   = vault("secret/data/on-premise-gitlab-deployment/variables", "ssh_password_hash")
+  ssh_username        = vault("secret/data/on-premise-gitlab-deployment/guest_vm", "ssh_username")
+  ssh_password        = vault("secret/data/on-premise-gitlab-deployment/guest_vm", "ssh_password")
+  ssh_password_hash   = vault("secret/data/on-premise-gitlab-deployment/guest_vm", "ssh_password_hash")
 
   # The final hostname is simple.
   final_hostname = var.build_name
