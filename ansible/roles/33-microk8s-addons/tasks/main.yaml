@@ -32,3 +32,7 @@
       when: coredns_check.rc == 0
       ignore_errors: true
       tags: [hack_coredns]
+
+    - name: "Step 3. Re-enable DNS addon to ensure Deployment/Pods exist."
+      command: "microk8s enable dns"
+      tags: [hack_coredns]

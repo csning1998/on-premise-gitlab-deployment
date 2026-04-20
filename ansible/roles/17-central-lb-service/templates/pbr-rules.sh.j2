@@ -11,9 +11,7 @@ ip rule add from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }}
 ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} dev {{ seg.interface_alias }} table rt_{{ seg.name | replace('-', '_') }}
 {% endfor %}
 
-# 2. Inject scope link exchange routes between each table
-{% for seg1 in lb_service_segments %}
-{% for seg2 in lb_service_segments %}
-ip route replace {{ seg2.cidr }} dev {{ seg2.interface_alias }} scope link table rt_{{ seg1.name | replace('-', '_') }}
-{% endfor %}
+# 2. Inject scope link for the local segment only
+{% for seg in lb_service_segments %}
+ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table rt_{{ seg.name | replace('-', '_') }}
 {% endfor %}
