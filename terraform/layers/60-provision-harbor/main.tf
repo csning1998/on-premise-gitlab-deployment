@@ -1,4 +1,10 @@
 
+resource "kubernetes_namespace" "harbor" {
+  metadata {
+    name = "harbor"
+  }
+}
+
 # For Harbor core secret key
 resource "random_password" "harbor_core_secret_key" {
   length  = 32
@@ -40,7 +46,7 @@ module "harbor_core" {
       port     = local.postgres_rw_port
     }
     redis = {
-      host     = local.redis_address
+      host     = "${local.redis_address}:${local.redis_port}"
       password = local.redis_password
     }
     s3 = {
