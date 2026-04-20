@@ -55,7 +55,7 @@ build {
     ]
     extra_arguments = [
       "--extra-vars", "expected_hostname=${local.final_hostname}",
-      "--extra-vars", "public_key_file=${vault("secret/data/on-premise-gitlab-deployment/variables", "ssh_public_key_path")}",
+      "--extra-vars", "public_key_file=${vault(var.secrets_path, "ssh_public_key_path")}",
       "--extra-vars", "ssh_user=${local.ssh_username}",
       "--extra-vars", "ansible_ssh_transfer_method=piped",
       "-v",
