@@ -26,13 +26,7 @@
       - bash-completion
       - python3-pip
       - jq
-    state: present
-    update_cache: true
-
-- name: "System: Install ncurses-term for terminfo support"
-  become: true
-  ansible.builtin.apt:
-    name: ncurses-term
+      - ncurses-term
     state: present
     update_cache: true
 
