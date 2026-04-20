@@ -28,3 +28,19 @@
       - jq
     state: present
     update_cache: true
+
+- name: "System: Install ncurses-term for terminfo support"
+  become: true
+  ansible.builtin.apt:
+    name: ncurses-term
+    state: present
+    update_cache: true
+
+- name: "System: Install Ghostty xterm-ghostty terminfo"
+  become: true
+  ansible.builtin.shell:
+    cmd: infocmp -x xterm-ghostty | tic -x -
+  args:
+    creates: /usr/share/terminfo/x/xterm-ghostty
+  when: ansible_os_family == "Debian"
+  changed_when: true
