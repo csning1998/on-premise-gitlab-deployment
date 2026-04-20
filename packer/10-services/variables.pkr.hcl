@@ -52,3 +52,8 @@ variable "net_device" {
   type    = string
   default = "virtio-net"
 }
+
+variable "secrets_path" {
+  type = string
+  default = "secret/data/on-premise-gitlab-deployment/guest_vm"
+}
