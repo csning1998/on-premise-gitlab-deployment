@@ -15,3 +15,15 @@ ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} de
 {% for seg in lb_service_segments %}
 ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table rt_{{ seg.name | replace('-', '_') }}
 {% endfor %}
+
+# 3. Targeted L2 Return Paths for Vault
+#    Nodes bypass the core router to reach Vault via fix-routes.service.
+#    Injection of scope links for all segments into the Vault routing table ensures symmetric L2 returns.
+#    Other routing tables (e.g., Redis) remain reliant on L3 symmetry.
+{% for target_seg in lb_service_segments %}
+{% if 'vault' in target_seg.name %}
+{% for source_seg in lb_service_segments %}
+ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scope link table rt_{{ target_seg.name | replace('-', '_') }} 2>/dev/null || true
+{% endfor %}
+{% endif %}
+{% endfor %}

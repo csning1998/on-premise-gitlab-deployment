@@ -49,6 +49,9 @@ bootstrap:
     # Terraform Runner (No mTLS, Password Only)
     - hostssl all all {{ terraform_runner_subnet | default('172.16.137.0/24') }} md5
 
+    # Exception: Harbor Application lacks native mTLS client cert support
+    - hostssl all harbor {{ postgres_mtls_node_subnet }} md5
+
     # Rule 1: K8s Node Network (Enforce mTLS) from Terraform
     - hostssl all all {{ postgres_mtls_node_subnet }} md5 clientcert=verify-ca
 
