@@ -1,35 +1,5 @@
+
 # Generic Namespace is provided by the caller
-
-# Certificate CR (Delegated to Trust Engine / Cert-Manager)
-resource "kubernetes_manifest" "gitlab_certificate" {
-  manifest = {
-    apiVersion = "cert-manager.io/v1"
-    kind       = "Certificate"
-    metadata = {
-      name      = var.ingress_config.tls_secret_name
-      namespace = var.helm_config.namespace
-    }
-    spec = {
-      secretName = var.ingress_config.tls_secret_name
-      issuerRef = {
-        name = var.ingress_config.issuer_name
-        kind = var.ingress_config.issuer_kind
-      }
-      commonName  = var.gitlab_config.hostname
-      dnsNames    = [var.gitlab_config.hostname]
-      duration    = var.certificate_config.duration
-      renewBefore = var.certificate_config.renew_before
-    }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      manifest.metadata.labels,
-      manifest.metadata.annotations,
-    ]
-  }
-}
-
 # CA Bundle Secret (Trust Anchor)
 resource "kubernetes_secret" "gitlab_ca_bundle" {
   metadata {

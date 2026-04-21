@@ -47,3 +47,9 @@ output "redis_connection_info" {
   }
   sensitive = true
 }
+
+output "minio_credentials" {
+  description = "Credentials for MinIO buckets"
+  value       = module.minio_gitlab_config.service_accounts
+  sensitive   = true
+}
