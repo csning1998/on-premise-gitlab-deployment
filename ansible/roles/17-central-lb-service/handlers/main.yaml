@@ -8,3 +8,9 @@
   ansible.builtin.systemd:
     name: haproxy
     state: restarted
+
+- name: Restart PBR
+  ansible.builtin.systemd:
+    name: pbr-rules.service
+    state: restarted
+    daemon_reload: true
