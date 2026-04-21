@@ -7,6 +7,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "network" {
+  backend = "local"
+  config = {
+    path = "../05-foundation-network/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "local"
   config = {
@@ -80,4 +87,11 @@ data "kubernetes_config_map" "kube_root_ca" {
     name      = "kube-root-ca.crt"
     namespace = "kube-system"
   }
+}
+
+data "vault_kv_secret_v2" "gitlab_s3" {
+  provider = vault.production
+  for_each = local.minio_function_map
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/s3_credentials/${each.value}"
 }

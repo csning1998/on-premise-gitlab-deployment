@@ -68,3 +68,6 @@ pull-request.md
 terraform/layers/**/*.output.json
 .gitignore
 note.md
+
+# Temp
+terraform/modules/kubernetes-addons/platform-trust-engine/charts/cert-manager-v1.14.0.tgz

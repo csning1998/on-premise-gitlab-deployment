@@ -15,7 +15,7 @@ locals {
 
 # K8s Provider Authentication Context
 locals {
-  kubeconfig   = yamldecode(base64decode(data.vault_generic_secret.kubeconfig.data["content_b64"]))
+  kubeconfig   = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info = local.kubeconfig.clusters[0].cluster
   user_info    = local.kubeconfig.users[0].user
 
@@ -61,13 +61,31 @@ locals {
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 }
 
-# 4. Vault Generic Secrets
+# 4. Vault KV Secrets
 locals {
-  harbor_pg_db_password = data.vault_generic_secret.harbor_vars.data["harbor_pg_db_password"]
-  harbor_admin_password = data.vault_generic_secret.harbor_vars.data["harbor_admin_password"]
+  harbor_pg_db_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
+  harbor_admin_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
+
+  # Database & Storage Credentials (discovered from vault)
+  redis_password   = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
+  minio_access_key = data.vault_kv_secret_v2.s3_vars.data["access_key"]
+  minio_secret_key = data.vault_kv_secret_v2.s3_vars.data["secret_key"]
 }
 
-# 5. DNS Configuration (Standardized)
+# 5. CA Bundle Configuration (Dynamic Merging)
+locals {
+  ca_bundle_config = {
+    name        = "harbor-ca-bundle" # K8s Secret Name
+    secret_name = "harbor-ca-bundle" # Helm Chart Reference Name
+
+    content = join("\n", [
+      base64decode(local.state.vault_pki.pki_configuration.ca_cert),
+      base64decode(local.state.vault_pki.bootstrap_ca.content)
+    ])
+  }
+}
+
+# 6. DNS Configuration (Standardized)
 locals {
   # Explicitly extract IPs to avoid implicit map projection failures
   harbor_vip   = local.state.microk8s_provision.harbor_microk8s_virtual_ip
