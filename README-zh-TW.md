@@ -779,7 +779,9 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 ### A. Deployment Workflow
 
-1.  自動化部署流程分為以下四個核心組別與階段，其佈署時序與相依關係嚴格遵循系統內部運作邏輯：
+自動化部署流程分為以下數個階段，整體佈署時序與相依關係嚴格遵循系統內部運作邏輯：
+
+1. 基礎 Libvirt 資源、網路、以及密碼管理
 
     ```mermaid
     sequenceDiagram
@@ -810,6 +812,59 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         User->>Prod: 12. Configure AppRole Auth & PKI Root CA (L20/25)
         User->>Prod: 13. Manually Inject Application Secrets
     ```
+
+2. PBR 策略大致如下
+
+    ```mermaid
+    graph LR
+    subgraph Central_LB["Central LB"]
+        direction TB
+        RULE["ip rule: from &lt;VIP&gt; lookup rt_&lt;name&gt;"]
+
+        subgraph PBR_Standard["Standard Segments<br>(L3 Symmetric)"]
+            direction LR
+            RT_GE["rt_gitlab_etcd<br>128.0/24 → gw .128.1"]
+            RT_GM["rt_gitlab_minio<br>130.0/24 → gw .130.1"]
+            RT_GP["rt_gitlab_postgres<br>127.0/24 → gw .127.1"]
+            RT_GR["rt_gitlab_redis<br>129.0/24 → gw .129.1"]
+            RT_HB["rt_harbor_bootstrapper<br>137.0/24 → gw .137.1"]
+            RT_HE["rt_harbor_etcd<br>133.0/24 → gw .133.1"]
+            RT_HF["rt_harbor_frontend<br>131.0/24 → gw .131.1"]
+            RT_HM["rt_harbor_minio<br>135.0/24 → gw .135.1"]
+            RT_HP["rt_harbor_postgres<br>132.0/24 → gw .132.1"]
+            RT_HR["rt_harbor_redis<br>134.0/24 → gw .134.1"]
+        end
+
+        subgraph PBR_Vault["Vault Segment<br>(L2 Exception)"]
+            RT_VF["rt_vault_frontend\n136.0/24\nscope link: ALL subnets"]
+        end
+    end
+
+    subgraph Libvirt_Router["Libvirt Host Router"]
+        GW_STD["172.16.xxx.1"]
+    end
+
+    subgraph Segments["Service Segments"]
+        SEG_HF["Harbor Frontend<br>172.16.131.0/24"]
+        SEG_HR["Harbor Redis<br>172.16.134.0/24"]
+        SEG_HP["Harbor Postgres<br>172.16.132.0/24"]
+        SEG_VF["Vault Frontend<br>172.16.136.0/24"]
+    end
+
+    RULE --> PBR_Standard
+    RULE --> PBR_Vault
+
+    RT_HR & RT_HP & RT_HF -->|"cross-subnet reply"| GW_STD
+    GW_STD --> SEG_HF & SEG_HR & SEG_HP
+
+    RT_VF -->|"L2 direct (bypass router)"| SEG_VF
+    RT_VF -->|"scope link all → L2 return"| SEG_HF
+
+    SEG_HF -->|"SYN → 172.16.134.250"| RT_HR
+    SEG_VF -->|"SYN → 172.16.136.250"| RT_VF
+    ```
+
+3. 有關應用程式佈署關係如下：
 
     ```mermaid
     sequenceDiagram
