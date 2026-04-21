@@ -122,8 +122,3 @@ module "harbor_core" {
 
   depends_on = [module.platform_trust_engine]
 }
-
-module "harbor_system_config" {
-  source     = "../../modules/configuration/harbor-system-config"
-  depends_on = [module.harbor_core] # Should be after Harbor Helm Chart Pod Ready
-}
