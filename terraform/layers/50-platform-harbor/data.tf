@@ -61,20 +61,29 @@ data "terraform_remote_state" "harbor_bootstrapper" {
 }
 
 # 1. Fetch Harbor Secrets from Production Vault
-data "vault_generic_secret" "db_vars" {
+data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/harbor/databases"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/databases"
 }
 
-data "vault_generic_secret" "harbor_vars" {
+data "vault_kv_secret_v2" "harbor_vars" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/harbor/app"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/app"
+}
+
+data "vault_kv_secret_v2" "s3_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor/s3_credentials/harbor-registry"
 }
 
 # 2. Fetch Kubeconfig from Production Vault
-data "vault_generic_secret" "kubeconfig" {
+data "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
 }
 
 # 3. Fetch the Cluster CA

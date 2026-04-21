@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "3.0.2"
     }
+    harbor = {
+      source  = "goharbor/harbor"
+      version = "3.11.3"
+    }
     vault = {
       source  = "hashicorp/vault"
       version = "5.5.0"
@@ -58,4 +62,10 @@ provider "helm" {
     client_certificate     = local.api_server_connection.client_certificate
     client_key             = local.api_server_connection.client_key
   }
+}
+
+provider "harbor" {
+  url      = "https://${local.harbor_fqdn}"
+  username = "admin"
+  password = local.harbor_admin_password
 }

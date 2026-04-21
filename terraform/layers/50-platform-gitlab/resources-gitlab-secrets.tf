@@ -53,3 +53,27 @@ resource "vault_kv_secret_v2" "gitlab_internal_keys" {
     root_password       = random_password.gitlab_internal["root-password"].result
   })
 }
+
+# K8s Infrastructure Secrets
+resource "kubernetes_secret" "gitlab_postgres_tls" {
+  metadata {
+    name      = "gitlab-postgres-tls"
+    namespace = kubernetes_namespace.gitlab_ns.metadata[0].name
+  }
+
+  type = "kubernetes.io/tls"
+
+  data = {
+    "tls.crt" = base64decode(local.state.provision_databases.postgres_client_cert.crt)
+    "tls.key" = base64decode(local.state.provision_databases.postgres_client_cert.key)
+    "ca.crt"  = base64decode(local.state.provision_databases.postgres_client_cert.ca)
+  }
+
+  lifecycle {
+    ignore_changes = [
+      data,
+      metadata[0].labels,
+      metadata[0].annotations,
+    ]
+  }
+}

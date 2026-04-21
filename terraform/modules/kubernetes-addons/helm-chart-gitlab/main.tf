@@ -9,7 +9,6 @@ resource "helm_release" "gitlab" {
   create_namespace = true
 
   depends_on = [
-    kubernetes_manifest.gitlab_certificate,
     kubernetes_secret.gitlab_postgres_password,
     kubernetes_secret.gitlab_redis_password,
     kubernetes_secret.gitlab_minio_secrets,
@@ -68,7 +67,10 @@ resource "helm_release" "gitlab" {
           configureCertmanager = false # use own secret
           class                = var.ingress_config.class_name
           annotations = {
-            "cert-manager.io/issuer" = null
+            "cert-manager.io/issuer"       = var.ingress_config.issuer_name
+            "cert-manager.io/issuer-kind"  = var.ingress_config.issuer_kind
+            "cert-manager.io/duration"     = var.certificate_config.duration
+            "cert-manager.io/renew-before" = var.certificate_config.renew_before
           }
           tls = {
             enabled    = true

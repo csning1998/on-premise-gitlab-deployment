@@ -1,21 +1,9 @@
 
 terraform {
   required_providers {
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "2.38.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "3.0.2"
-    }
     vault = {
       source  = "hashicorp/vault"
       version = "5.5.0"
-    }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "1.19.0"
     }
     # gitlab = {
     #   source  = "gitlabhq/gitlab"
@@ -40,27 +28,8 @@ provider "vault" {
   skip_child_token = true
 }
 
-# Configure the Kubernetes provider using details from the remote state
-provider "kubernetes" {
-  host                   = local.api_server_connection.host
-  cluster_ca_certificate = local.api_server_connection.ca_cert
-  client_certificate     = local.api_server_connection.client_certificate
-  client_key             = local.api_server_connection.client_key
-}
-
-provider "kubectl" {
-  load_config_file       = false
-  host                   = local.api_server_connection.host
-  cluster_ca_certificate = local.api_server_connection.ca_cert
-  client_certificate     = local.api_server_connection.client_certificate
-  client_key             = local.api_server_connection.client_key
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = local.api_server_connection.host
-    cluster_ca_certificate = local.api_server_connection.ca_cert
-    client_certificate     = local.api_server_connection.client_certificate
-    client_key             = local.api_server_connection.client_key
-  }
-}
+# provider "gitlab" {
+#   base_url = "https://${local.gitlab_fqdn}/api/v4/"
+#   password = local.gitlab_root_password
+#   username = "root"
+# }
