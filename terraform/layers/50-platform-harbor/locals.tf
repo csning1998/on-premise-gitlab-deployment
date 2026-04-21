@@ -69,13 +69,28 @@ locals {
 
 # 5. DNS Configuration (Standardized)
 locals {
-  dns_hosts = {
-    "${local.state.microk8s_provision.harbor_microk8s_virtual_ip}" = "${local.harbor_fqdn} notary.${local.harbor_fqdn}"
-    "${local.state.vault_pki.vault_service_vip}"                   = local.vault_fqdn
+  # Explicitly extract IPs to avoid implicit map projection failures
+  harbor_vip   = local.state.microk8s_provision.harbor_microk8s_virtual_ip
+  vault_vip    = local.state.vault_pki.vault_service_vip
+  redis_vip    = local.state.redis.service_vip
+  postgres_vip = local.state.postgres.service_vip
+  minio_vip    = local.state.minio.service_vip
 
-    # Dependency Roles
-    "${local.state.redis.service_vip}"    = local.state.metadata.global_pki_map["harbor-redis"].dns_san[0]
-    "${local.state.postgres.service_vip}" = local.state.metadata.global_pki_map["harbor-postgres"].dns_san[0]
-    "${local.state.minio.service_vip}"    = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
+  # Explicitly extract FQDNs
+  redis_fqdn    = local.state.metadata.global_pki_map["harbor-redis"].dns_san[0]
+  postgres_fqdn = local.state.metadata.global_pki_map["harbor-postgres"].dns_san[0]
+  minio_fqdn    = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
+
+  dns_hosts = {
+    "${local.harbor_vip}" = "${local.harbor_fqdn} notary.${local.harbor_fqdn}"
+    "${local.vault_vip}"  = local.vault_fqdn
+
+    # Dependency Roles (Explicitly Mapping)
+    "${local.redis_vip}"    = local.redis_fqdn
+    "${local.postgres_vip}" = local.postgres_fqdn
+    "${local.minio_vip}"    = local.minio_fqdn
+
+    # Registry Redirection (SSoT)
+    "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_registry
   }
 }

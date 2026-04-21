@@ -91,7 +91,8 @@ locals {
 
     # Injected Host Overrides
     node_extra_hosts = [
-      { host = local.svc_fqdn, ip = local.net_service_vip }
+      { host = local.svc_fqdn, ip = local.net_service_vip },
+      { host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0], ip = local.state.harbor_registry.service_vip }
     ]
 
     # Mirroring Paths

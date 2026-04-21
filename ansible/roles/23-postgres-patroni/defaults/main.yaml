@@ -6,6 +6,10 @@ postgres_version: 18
 postgres_mtls_pod_subnet: "10.1.0.0/16"
 # Note that postgres_mtls_node_subnet is injected from Terraform via inventory.
 
+# PostgreSQL password encryption method.
+# e.g., "scram-sha-256", "md5"
+password_encryption: "scram-sha-256"
+
 # Ports
 postgres_port: 5432
 patroni_restapi_port: 8008
