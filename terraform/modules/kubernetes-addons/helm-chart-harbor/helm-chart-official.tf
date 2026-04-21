@@ -10,7 +10,7 @@ resource "helm_release" "harbor" {
   create_namespace = true
 
   depends_on = [
-    kubernetes_manifest.harbor_certificate
+    kubernetes_secret.harbor_ca_bundle
   ]
 
   values = [
@@ -35,6 +35,10 @@ resource "helm_release" "harbor" {
           className = var.ingress_config.class_name
           annotations = {
             "nginx.ingress.kubernetes.io/proxy-body-size" = "0"
+            "cert-manager.io/issuer"                      = var.ingress_config.issuer_name
+            "cert-manager.io/issuer-kind"                 = var.ingress_config.issuer_kind
+            "cert-manager.io/duration"                    = var.certificate_config.duration
+            "cert-manager.io/renew-before"                = var.certificate_config.renew_before
           }
         }
       }
