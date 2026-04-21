@@ -6,7 +6,7 @@
       ansible.builtin.command: >
         microk8s kubectl get pods -n kube-system -l k8s-app=kube-dns --no-headers
       register: coredns_terminating_check
-      until: coredns_terminating_check.stdout | length == 0
+      until: coredns_terminating_check.rc == 0 and coredns_terminating_check.stdout == ""
       retries: 30
       delay: 5
       failed_when: false
