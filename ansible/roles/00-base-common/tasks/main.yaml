@@ -32,9 +32,9 @@
 
 - name: "System: Install Ghostty xterm-ghostty terminfo"
   become: true
-  ansible.builtin.shell:
-    cmd: infocmp -x xterm-ghostty | tic -x -
-  args:
-    creates: /usr/share/terminfo/x/xterm-ghostty
-  when: ansible_os_family == "Debian"
-  changed_when: true
+  ansible.builtin.copy:
+    dest: /etc/profile.d/ghostty-term.sh
+    content: |
+      export TERM=xterm-256color
+    mode: "0644"
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version is match("24.04")

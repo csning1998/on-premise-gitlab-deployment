@@ -28,35 +28,38 @@ bootstrap:
   initdb:
     - encoding: UTF8
     - data-checksums
-    - auth-host: md5
-    - auth-local: md5
+    - auth-host: "{{ password_encryption }}"
+    - auth-local: "{{ password_encryption }}"
   pg_hba:
     # HAProxy does not need mTLS
 {% for host in groups['postgres_haproxy_nodes'] | default([]) %}
-    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 md5
+    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
 {% endfor %}
 
     # Patroni does not need mTLS
-    - host all all {{ advertise_ip }}/32 md5
+    - host all all {{ advertise_ip }}/32 "{{ password_encryption }}"
 
     # Allow other nodes in the cluster to replicate (no mTLS)
 {% for host in groups['postgres_db_nodes'] %}
-    - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 md5
-    - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 md5
-    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 md5
+    - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
+    - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
+    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
 {% endfor %}
 
     # Terraform Runner (No mTLS, Password Only)
-    - hostssl all all {{ terraform_runner_subnet | default('172.16.137.0/24') }} md5
+    - hostssl all all {{ terraform_runner_subnet | default('172.16.137.0/24') }} "{{ password_encryption }}"
+
+    # Exception: Harbor Application lacks native mTLS client cert support
+    - hostssl all harbor {{ postgres_mtls_node_subnet }} "{{ password_encryption }}"
 
     # Rule 1: K8s Node Network (Enforce mTLS) from Terraform
-    - hostssl all all {{ postgres_mtls_node_subnet }} md5 clientcert=verify-ca
+    - hostssl all all {{ postgres_mtls_node_subnet }} "{{ password_encryption }}" clientcert=verify-ca
 
     # Rule 2: K8s Pod Network (Enforce mTLS) from Ansible Defaults
-    - hostssl all all {{ postgres_mtls_pod_subnet }} md5 clientcert=verify-ca
+    - hostssl all all {{ postgres_mtls_pod_subnet }} "{{ password_encryption }}" clientcert=verify-ca
 
     # Local loopback
-    - host all all 127.0.0.1/32 md5
+    - host all all 127.0.0.1/32 "{{ password_encryption }}"
 
 postgresql:
   listen: "{{ advertise_ip }}:{{ postgres_port }}"
