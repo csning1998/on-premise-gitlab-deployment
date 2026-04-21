@@ -80,7 +80,7 @@ locals {
 
     content = join("\n", [
       base64decode(local.state.vault_pki.pki_configuration.ca_cert),
-      local.state.vault_pki.bootstrap_ca.content
+      base64decode(local.state.vault_pki.bootstrap_ca.content)
     ])
   }
 }
