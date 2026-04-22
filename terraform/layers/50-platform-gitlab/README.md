@@ -24,19 +24,14 @@ OpenSSL::Cipher::CipherError
 
 Since the new secrets have been regenerated, any existing data in the database is unrecoverable without the old keys. Therefore, the database must be wiped to allow the migration job to perform a fresh initialization
 
-1. Access the Postgres node
-
-    ```bash
-    ssh core-gitlab-postgres-node-00
-    ```
-
+1. Switch to the root directory of the project.
 2. Delete and recreate the Postgres database
 
     ```bash
     export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
 
-    psql -h 172.16.127.200 -U postgres -d postgres -c "DROP DATABASE gitlabhq_production WITH (FORCE);"
-    psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"
+    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "DROP DATABASE gitlabhq_production WITH (FORCE);"'
+    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"'
     ```
 
 3. Re-apply the GitLab platform layer `50-platform-gitlab` to create the data schema and seed initial data using the **new** secrets.

@@ -24,19 +24,14 @@ OpenSSL::Cipher::CipherError
 
 由於新的密碼已重新產生，如果在沒有舊密鑰的情況下，資料庫中的任何現有資料都無法復原。因此這時候就必須要清除資料庫，才能讓 Migration 重新執行初始化
 
-1. 先登入 Postgres 節點
-
-    ```bash
-    ssh core-gitlab-postgres-node-00
-    ```
-
+1. 先切換到專案根目錄
 2. 刪除並重新建立 Postgres 資料庫
 
     ```bash
     export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
 
-    psql -h 172.16.127.200 -U postgres -d postgres -c "DROP DATABASE gitlabhq_production WITH (FORCE);"
-    psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"
+    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "DROP DATABASE gitlabhq_production WITH (FORCE);"'
+    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"'
     ```
 
 3. 重新套用 GitLab 平台層 `50-platform-gitlab`，以使用**新**的機密資訊來建立資料結構描述並植入初始資料。
