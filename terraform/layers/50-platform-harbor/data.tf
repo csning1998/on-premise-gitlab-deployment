@@ -86,6 +86,13 @@ data "vault_kv_secret_v2" "s3_vars" {
   name     = "on-premise-gitlab-deployment/harbor/s3_credentials/harbor-registry"
 }
 
+# Harbor Bootstrapper Robot Account (RBAC)
+data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+}
+
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production

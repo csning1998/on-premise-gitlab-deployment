@@ -101,3 +101,10 @@ data "vault_kv_secret_v2" "gitlab_s3" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app/s3_credentials/${each.value}"
 }
+
+# Harbor Bootstrapper Robot Account (RBAC)
+data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+}

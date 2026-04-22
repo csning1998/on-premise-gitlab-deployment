@@ -67,8 +67,8 @@ provider "helm" {
   registries = [
     {
       url      = "oci://${local.harbor_registry}"
-      username = "admin"
-      password = data.vault_generic_secret.harbor_bootstrapper.data["harbor_bootstrapper_admin_password"]
+      username = data.vault_kv_secret_v2.harbor_bootstrapper_robot.data["username"]
+      password = data.vault_kv_secret_v2.harbor_bootstrapper_robot.data["password"]
     }
   ]
 }
