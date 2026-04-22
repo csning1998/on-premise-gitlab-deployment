@@ -66,6 +66,13 @@
         line: "127.0.0.1 {{ dev_harbor_service_domain }} {{ dev_harbor_fqdn }}"
         state: present
 
+    - name: "Step C2.1. Ensure Registry FQDN resolves to VIP for local operations"
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ dev_harbor_vip }} {{ dev_harbor_fqdn }}"
+        state: present
+        regexp: "^.* {{ dev_harbor_fqdn }}$"
+
     - name: "Step C3. Create Vault Agent Config Directory"
       ansible.builtin.file:
         path: "{{ vault_agent_config_dir }}/approle"

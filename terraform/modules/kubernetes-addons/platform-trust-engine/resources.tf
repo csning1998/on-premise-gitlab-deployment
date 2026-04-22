@@ -53,7 +53,6 @@ resource "helm_release" "cert_manager" {
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   create_namespace = var.helm_config.create_namespace
-  # chart            = "${path.module}/charts/cert-manager-v1.14.0.tgz" # for ad-hoc and will be integrated using oci
 
   set = [
     {
