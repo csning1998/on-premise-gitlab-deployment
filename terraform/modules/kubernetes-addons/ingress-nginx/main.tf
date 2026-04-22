@@ -63,9 +63,6 @@ resource "helm_release" "ingress_nginx" {
             ]
           }
         }
-        admissionWebhooks = {
-          enabled = false
-        }
       }
     })
   ]
