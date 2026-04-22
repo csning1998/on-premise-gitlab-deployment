@@ -54,13 +54,6 @@ variable "helm_config" {
     create_namespace = bool
     image_registry   = string
     image_repository = string
+    chart_project    = string
   })
-  default = {
-    install          = true
-    version          = "v1.14.0"
-    namespace        = "cert-manager"
-    create_namespace = true
-    image_registry   = "quay.io"
-    image_repository = "jetstack"
-  }
 }

@@ -2,9 +2,11 @@
 variable "helm_config" {
   description = "Helm Chart deployment configuration"
   type = object({
-    version   = string
-    namespace = string
-    timeout   = number
+    version        = string
+    namespace      = string
+    timeout        = number
+    image_registry = string
+    chart_project  = string
   })
 }
 

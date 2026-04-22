@@ -39,6 +39,9 @@ locals {
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
 
+  # Helm Charts Project (Sourced from Bootstrapper)
+  helm_chart_project = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
+
   # K8s API Endpoint for Vault Callback (Standardized)
   api_port     = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
   api_endpoint = "https://${local.state.microk8s_provision.harbor_microk8s_ip_list[0]}:${local.api_port}"

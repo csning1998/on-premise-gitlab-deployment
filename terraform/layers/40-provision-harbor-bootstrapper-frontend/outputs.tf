@@ -4,6 +4,11 @@ output "proxy_caches" {
   value       = local.proxy_caches
 }
 
+output "proxy_oci" {
+  description = "The Declared Harbor Projects for storing OCI images."
+  value       = local.proxy_oci
+}
+
 output "service_vip" {
   description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
   value       = data.terraform_remote_state.harbor_bootstrapper.outputs.service_vip

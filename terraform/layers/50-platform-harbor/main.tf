@@ -43,6 +43,8 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
+    chart_proxy      = local.harbor_quay_proxy
+    chart_project    = local.helm_chart_project
   }
 }
 
@@ -52,6 +54,8 @@ module "ingress_controller" {
 
   ingress_vip        = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip
   ingress_class_name = "nginx"
+  image_registry     = local.harbor_registry
+  chart_project      = local.helm_chart_project
 }
 
 # CoreDNS Configuration
@@ -80,9 +84,11 @@ module "harbor_core" {
   ca_bundle = local.ca_bundle_config
 
   helm_config = {
-    version   = var.harbor_helm_config.version
-    namespace = var.harbor_helm_config.namespace
-    timeout   = 600
+    version        = var.harbor_helm_config.version
+    namespace      = var.harbor_helm_config.namespace
+    timeout        = 600
+    image_registry = local.harbor_registry
+    chart_project  = local.helm_chart_project
   }
 
   certificate_config = var.certificate_config

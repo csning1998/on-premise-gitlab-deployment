@@ -4,6 +4,7 @@ module "tigera_calico" {
   pod_subnet     = local.state.kubeadm.kubernetes_config.pod_subnet
   image_registry = local.harbor_registry
   image_path     = local.harbor_quay_proxy
+  chart_project  = local.helm_chart_project
 }
 
 # [REFACTORED] Trust Engine Integration
@@ -50,6 +51,8 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
+    chart_proxy      = local.harbor_quay_proxy
+    chart_project    = local.helm_chart_project
   }
 
   # Ensure CNI is ready before installing Cert-Manager
@@ -65,6 +68,7 @@ module "metric_server" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_k8s_proxy}/metrics-server"
+    chart_project    = local.helm_chart_project
   }
   depends_on = [module.platform_trust_engine]
 }
@@ -78,6 +82,7 @@ module "ingress_nginx" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_k8s_proxy}/ingress-nginx"
+    chart_project    = local.helm_chart_project
   }
   depends_on = [module.platform_trust_engine]
 }
@@ -92,6 +97,7 @@ module "storage_local_path" {
     image_registry          = local.harbor_registry
     image_repository        = "${local.harbor_docker_proxy}/rancher"
     helper_image_repository = "${local.harbor_docker_proxy}/library"
+    chart_project           = local.helm_chart_project
   }
   depends_on = [module.tigera_calico]
 }
@@ -118,14 +124,17 @@ module "gitlab_core" {
     kubernetes_secret.gitlab_postgres_tls,
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
-    module.platform_trust_engine
+    module.platform_trust_engine,
+    module.ingress_nginx
   ]
 
   # Helm Deployment Configuration
   helm_config = {
-    version   = var.gitlab_helm_config.version
-    namespace = kubernetes_namespace.gitlab_ns.metadata[0].name
-    timeout   = 900
+    version        = var.gitlab_helm_config.version
+    namespace      = kubernetes_namespace.gitlab_ns.metadata[0].name
+    timeout        = 900
+    image_registry = local.harbor_registry
+    chart_project  = local.helm_chart_project
   }
 
   # GitLab Application Configuration
