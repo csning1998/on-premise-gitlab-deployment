@@ -21,3 +21,27 @@ resource "harbor_project" "proxy_oci" {
   public        = "true"
   force_destroy = "true"
 }
+
+resource "harbor_robot_account" "helm_puller" {
+  name        = "helm-puller"
+  description = "Robot account for Helm Provider to pull charts"
+  level       = "project"
+  permissions {
+    kind      = "project"
+    namespace = harbor_project.proxy_oci["helm_charts"].name
+    access {
+      action   = "pull"
+      resource = "repository"
+    }
+  }
+}
+
+resource "vault_kv_secret_v2" "robot_helm_puller" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+  data_json = jsonencode({
+    username = harbor_robot_account.helm_puller.full_name
+    password = harbor_robot_account.helm_puller.secret
+  })
+}
