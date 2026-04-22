@@ -60,18 +60,19 @@
       vars:
         vault_install_only: true
 
-    - name: "Step C2. Ensure Service Domain and FQDN resolve to Localhost"
+    - name: "Step C2. Ensure Service Domain resolves to Localhost for Vault Agent"
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        line: "127.0.0.1 {{ dev_harbor_service_domain }} {{ dev_harbor_fqdn }}"
+        line: "127.0.0.1 {{ dev_harbor_service_domain }}"
         state: present
+        regexp: "^127.0.0.1 {{ dev_harbor_service_domain }}$"
 
     - name: "Step C2.1. Ensure Registry FQDN resolves to VIP for local operations"
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "{{ dev_harbor_vip }} {{ dev_harbor_fqdn }}"
         state: present
-        regexp: "^.* {{ dev_harbor_fqdn }}$"
+        regexp: "^.* {{ dev_harbor_fqdn | replace('.', '\\.') }}$"
 
     - name: "Step C3. Create Vault Agent Config Directory"
       ansible.builtin.file:
@@ -257,11 +258,14 @@
   block:
     - name: "Step G1. Download Helm installation script"
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        url: "{{ helm_install_script_url }}"
         dest: /tmp/get_helm.sh
         mode: "0700"
+        checksum: "{{ helm_install_script_checksum }}"
 
     - name: "Step G2. Execute Helm installation script"
       ansible.builtin.command:
         cmd: /tmp/get_helm.sh
         creates: /usr/local/bin/helm
+      environment:
+        DESIRED_VERSION: "{{ helm_version }}"
