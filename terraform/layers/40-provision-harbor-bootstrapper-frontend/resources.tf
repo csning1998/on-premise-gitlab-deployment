@@ -9,8 +9,8 @@ resource "harbor_registry" "proxy_registries" {
 resource "harbor_project" "proxy_projects" {
   for_each      = local.proxy_caches
   name          = each.value.project_name
-  public        = "true"
-  force_destroy = "true"
+  public        = true
+  force_destroy = true
   registry_id   = harbor_registry.proxy_registries[each.key].registry_id
 }
 
@@ -18,8 +18,8 @@ resource "harbor_project" "proxy_projects" {
 resource "harbor_project" "proxy_oci" {
   for_each      = local.proxy_oci
   name          = each.value.name
-  public        = "true"
-  force_destroy = "true"
+  public        = true
+  force_destroy = true
 }
 
 resource "harbor_robot_account" "helm_puller" {
