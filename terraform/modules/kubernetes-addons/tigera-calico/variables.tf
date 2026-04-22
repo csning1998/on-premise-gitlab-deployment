@@ -15,3 +15,8 @@ variable "image_path" {
   description = "The image path/project within the registry"
   default     = null
 }
+
+variable "chart_project" {
+  type        = string
+  description = "The project name in Harbor for Helm charts"
+}

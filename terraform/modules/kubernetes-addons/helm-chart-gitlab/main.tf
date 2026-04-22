@@ -1,8 +1,7 @@
 
 resource "helm_release" "gitlab" {
   name             = "gitlab"
-  chart            = "gitlab"
-  repository       = "https://charts.gitlab.io/"
+  chart            = "oci://${var.helm_config.image_registry}/${var.helm_config.chart_project}/gitlab"
   namespace        = var.helm_config.namespace
   version          = var.helm_config.version
   timeout          = var.helm_config.timeout

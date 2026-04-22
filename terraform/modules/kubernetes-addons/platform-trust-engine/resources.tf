@@ -49,12 +49,10 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "helm_release" "cert_manager" {
   count            = var.helm_config.install ? 1 : 0
   name             = "cert-manager"
-  repository       = "https://charts.jetstack.io"
-  chart            = "cert-manager"
+  chart            = "oci://${var.helm_config.image_registry}/${var.helm_config.chart_project}/cert-manager"
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   create_namespace = var.helm_config.create_namespace
-  # chart            = "${path.module}/charts/cert-manager-v1.14.0.tgz" # for ad-hoc and will be integrated using oci
 
   set = [
     {

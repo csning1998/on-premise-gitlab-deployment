@@ -17,3 +17,8 @@ vault_agent_config_dir: "/etc/vault.d"
 # Database and Harbor Admin Password from Vault
 harbor_bootstrapper_admin_password: "{{ harbor_vault_secrets.secret.harbor_bootstrapper_admin_password }}"
 harbor_bootstrapper_pg_db_password: "{{ harbor_vault_secrets.secret.harbor_bootstrapper_pg_db_password }}"
+
+# Helm Installation
+helm_version: "v3.14.3"
+helm_install_script_url: "https://raw.githubusercontent.com/helm/helm/{{ helm_version }}/scripts/get-helm-3"
+helm_install_script_checksum: "sha256:6701e269a95eec0a5f67067f504f43ad94e9b4a52ec1205d26b3973d6f5cb3dc"

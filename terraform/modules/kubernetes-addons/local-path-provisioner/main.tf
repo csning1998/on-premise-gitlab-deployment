@@ -3,8 +3,7 @@ resource "helm_release" "local_path_provisioner" {
   count = var.helm_config.install ? 1 : 0
 
   name             = "local-path-storage"
-  repository       = "https://charts.containeroo.ch"
-  chart            = "local-path-provisioner"
+  chart            = "oci://${var.helm_config.image_registry}/${var.helm_config.chart_project}/local-path-provisioner"
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   create_namespace = var.helm_config.create_namespace

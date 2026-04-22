@@ -283,24 +283,25 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 ### C. Miscellaneous
 
-- **建議的 VSCode Plugin：** 主要是相關 syataxes highlighting 的支援而已：
-    1. Ansible language support extension. [Marketplace Link of Ansible](https://marketplace.visualstudio.com/items?itemName=redhat.ansible)
+**建議的 VSCode Plugin：** 主要是相關 syataxes highlighting 的支援而已：
 
-        ```shell
-        code --install-extension redhat.ansible
-        ```
+1. Ansible language support extension. [Marketplace Link of Ansible](https://marketplace.visualstudio.com/items?itemName=redhat.ansible)
 
-    2. HCL language support extension for Terraform. [Marketplace Link of HashiCorp HCL](https://marketplace.visualstudio.com/items?itemName=HashiCorp.HCL)
+    ```shell
+    code --install-extension redhat.ansible
+    ```
 
-        ```shell
-        code --install-extension HashiCorp.HCL
-        ```
+2. HCL language support extension for Terraform. [Marketplace Link of HashiCorp HCL](https://marketplace.visualstudio.com/items?itemName=HashiCorp.HCL)
 
-    3. Packer tool extension. [Marketplace Link of Packer Powertools](https://marketplace.visualstudio.com/items?itemName=szTheory.vscode-packer-powertools)
+    ```shell
+    code --install-extension HashiCorp.HCL
+    ```
 
-        ```shell
-        code --install-extension szTheory.vscode-packer-powertools
-        ```
+3. Packer tool extension. [Marketplace Link of Packer Powertools](https://marketplace.visualstudio.com/items?itemName=szTheory.vscode-packer-powertools)
+
+    ```shell
+    code --install-extension szTheory.vscode-packer-powertools
+    ```
 
 ## Section 2. Configuration
 
@@ -606,6 +607,56 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     - `entry.sh` 選項 `4` 做 Unseal Production mode Vault，會使用 Ansible Playbook `90-operation-vault-unseal.yaml` 操作
 
     或者如 B.1-2 所述使用容器，較為簡便
+
+6.  由於 Layer 50 相關的 Helm Chart 一律都採用 OCI 與 Bootstrapper Harbor 進行連線，因此需要先從遠端 `helm pull` 相關 Artifacts 並且推送到 Bootstrapper Harbor 中。要先確保 `30-infra-harbor-bootstrapper-frontend` 與 `40-provision-harbor-bootstrapper-frontend` 都有成功執行
+
+    在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令：
+    1. **環境變數相關以及登入**
+
+        ```bash
+        # 1. Environments
+        export VAULT_ADDR="https://172.16.136.250:443"
+        export VAULT_SKIP_VERIFY=true
+
+        ROLE_ID=$(sudo cat /etc/vault.d/approle/role_id)
+        SECRET_ID=$(sudo cat /etc/vault.d/approle/secret_id)
+
+        export HARBOR_REGISTRY="harbor-bootstrapper.production.iac.local"
+        export VAULT_TOKEN=$(vault write -field=token auth/workload-approle/login role_id="$ROLE_ID" secret_id="$SECRET_ID")
+        vault kv get -field=password_pusher secret/on-premise-gitlab-deployment/harbor-bootstrapper/robot | \
+        helm registry login "$HARBOR_REGISTRY" -u 'robot$helm-charts+helm-pusher' --password-stdin
+        ```
+
+    2. Pull 本次專案中相關的 Helm Chart，這是目前採用的版本
+
+        ```bash
+        helm pull ingress-nginx --version 4.10.0 --repo https://kubernetes.github.io/ingress-nginx
+        helm pull ingress-nginx --version 4.13.1 --repo https://kubernetes.github.io/ingress-nginx
+        helm pull metrics-server --version 3.13.0 --repo https://kubernetes-sigs.github.io/metrics-server/
+        helm pull oci://quay.io/jetstack/charts/cert-manager --version v1.14.0
+        helm pull oci://ghcr.io/rancher/local-path-provisioner/charts/local-path-provisioner --version 0.0.35
+        helm pull gitlab --version 9.8.2 --repo https://charts.gitlab.io/
+        helm pull tigera-operator --version v3.28.0 --repo https://docs.tigera.io/calico/charts
+        helm pull harbor --version 1.18.0 --repo https://helm.goharbor.io
+        ```
+
+    3. Push 剛剛取得的 Artifacts 到 `helm-charts`（預設）的 Porxy Project 內
+
+        ```bash
+        helm push ingress-nginx-4.10.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push ingress-nginx-4.13.1.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push metrics-server-3.13.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push cert-manager-v1.14.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push local-path-provisioner-0.0.35.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push gitlab-9.8.2.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push tigera-operator-v3.28.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        helm push harbor-1.18.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
+        ```
+
+    4. 後續才能執行 L50 的 Helm Chart
+
+> [!NOTE]
+> 如果要使用遠端來源，通常要設定 `terraform/modules/kubernetes-addons` 路徑中每一個 Helm Chart Module 的`repository` 與 `chart` 資訊。可以參考 #96 當時的 [程式碼紀錄](https://github.com/csning1998-old/on-premise-gitlab-deployment/tree/018233b3032e517b43e52fc4e17bcd3dde7cf52f/terraform/modules/kubernetes-addons)
 
 #### **Step B.3. Understand the Metadata:**
 

@@ -67,6 +67,12 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
+data "vault_generic_secret" "harbor_bootstrapper" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app"
+}
+
 # 1. Database Provisioning State
 data "terraform_remote_state" "provision_databases" {
   backend = "local"
@@ -94,4 +100,11 @@ data "vault_kv_secret_v2" "gitlab_s3" {
   for_each = local.minio_function_map
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app/s3_credentials/${each.value}"
+}
+
+# Harbor Bootstrapper Robot Account (RBAC)
+data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
 }

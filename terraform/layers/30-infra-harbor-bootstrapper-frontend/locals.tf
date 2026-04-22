@@ -101,11 +101,11 @@ locals {
 locals {
   ansible_template_vars = {
     access_scope        = local.network_infrastructure_map["default"].network.hostonly.cidr
-    dev_harbor_fqdn     = local.svc_fqdn
     dev_harbor_tls_port = local.network_infrastructure_map["default"].lb_config.ports["https"].frontend_port
-    dev_harbor_vip      = local.net_physical_infra.lb_config.vip
     nat_gateway         = local.network_infrastructure_map["default"].network.nat.gateway
     service_name        = local.svc_name
+    dev_harbor_fqdn     = local.svc_fqdn
+    dev_harbor_vip      = local.net_physical_infra.lb_config.vip
     vault_vip           = local.state.vault_sys.service_vip
   }
 

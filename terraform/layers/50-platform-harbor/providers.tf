@@ -62,6 +62,14 @@ provider "helm" {
     client_certificate     = local.api_server_connection.client_certificate
     client_key             = local.api_server_connection.client_key
   }
+
+  registries = [
+    {
+      url      = "oci://${local.harbor_registry}"
+      username = data.vault_kv_secret_v2.harbor_bootstrapper_robot.data["username_puller"]
+      password = data.vault_kv_secret_v2.harbor_bootstrapper_robot.data["password_puller"]
+    }
+  ]
 }
 
 provider "harbor" {
