@@ -9,9 +9,10 @@ global
     daemon
 
     # Tuning
-    maxconn 50000
+    maxconn 2000
+    nbthread 4
     tune.ssl.default-dh-param 2048
-    tune.bufsize 32768
+    tune.bufsize 16384
 
     # Default SSL material locations
     ca-base /etc/ssl/certs
@@ -22,10 +23,10 @@ defaults
     mode    tcp
     option  tcplog
     option  dontlognull
-    maxconn 10000
+    maxconn 1000
     timeout connect 5000
-    timeout client  150000
-    timeout server  150000
+    timeout client  60000
+    timeout server  60000
     timeout http-keep-alive 10000
 
 # Stats Interface, only bind to management IP
