@@ -10,6 +10,14 @@ locals {
 }
 
 locals {
+  proxy_oci = {
+    helm_charts = {
+      name = "helm-charts"
+    }
+  }
+}
+
+locals {
   proxy_caches = {
     docker_hub = {
       registry_name = "hub.docker.com"
