@@ -3,7 +3,7 @@ resource "helm_release" "ingress_nginx" {
   count = var.helm_config.install ? 1 : 0
 
   name             = "ingress-nginx"
-  chart            = "oci://${var.helm_config.image_registry}/helm-charts/ingress-nginx"
+  chart            = "oci://${var.helm_config.image_registry}/${var.helm_config.chart_project}/ingress-nginx"
   namespace        = var.helm_config.namespace
   create_namespace = var.helm_config.create_namespace
   version          = var.helm_config.version

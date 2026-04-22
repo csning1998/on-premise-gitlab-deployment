@@ -9,14 +9,6 @@ variable "helm_config" {
     image_registry          = string
     image_repository        = string
     helper_image_repository = string
+    chart_project           = string
   })
-  default = {
-    install                 = true
-    version                 = "0.0.35"
-    namespace               = "kube-system"
-    create_namespace        = true
-    image_registry          = "docker.io"
-    image_repository        = "rancher"
-    helper_image_repository = "library"
-  }
 }

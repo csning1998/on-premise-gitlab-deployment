@@ -2,7 +2,7 @@
 # Harbor Helm Release
 resource "helm_release" "harbor" {
   name             = "harbor"
-  chart            = "oci://${var.helm_config.image_registry}/helm-charts/harbor"
+  chart            = "oci://${var.helm_config.image_registry}/${var.helm_config.chart_project}/harbor"
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   timeout          = var.helm_config.timeout

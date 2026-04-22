@@ -9,7 +9,7 @@ resource "kubernetes_namespace_v1" "tigera_operator" {
 # Install the tigera-operator directly using the repository URL
 resource "helm_release" "tigera_operator" {
   name             = "calico"
-  chart            = "oci://${var.image_registry}/helm-charts/tigera-operator"
+  chart            = "oci://${var.image_registry}/${var.chart_project}/tigera-operator"
   namespace        = kubernetes_namespace_v1.tigera_operator.metadata[0].name
   version          = "v3.28.0"
   create_namespace = false # The namespace is created explicitly above

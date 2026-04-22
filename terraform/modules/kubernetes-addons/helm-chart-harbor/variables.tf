@@ -6,6 +6,7 @@ variable "helm_config" {
     namespace      = string
     timeout        = number
     image_registry = string
+    chart_project  = string
   })
 }
 
