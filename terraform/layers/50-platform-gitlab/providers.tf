@@ -63,4 +63,12 @@ provider "helm" {
     client_certificate     = local.api_server_connection.client_certificate
     client_key             = local.api_server_connection.client_key
   }
+
+  registries = [
+    {
+      url      = "oci://${local.harbor_registry}"
+      username = "admin"
+      password = data.vault_generic_secret.harbor_bootstrapper.data["harbor_bootstrapper_admin_password"]
+    }
+  ]
 }

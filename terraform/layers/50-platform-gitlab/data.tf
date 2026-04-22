@@ -67,6 +67,12 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
+data "vault_generic_secret" "harbor_bootstrapper" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app"
+}
+
 # 1. Database Provisioning State
 data "terraform_remote_state" "provision_databases" {
   backend = "local"

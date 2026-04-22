@@ -50,6 +50,7 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
+    chart_proxy      = local.harbor_quay_proxy
   }
 
   # Ensure CNI is ready before installing Cert-Manager
@@ -118,14 +119,16 @@ module "gitlab_core" {
     kubernetes_secret.gitlab_postgres_tls,
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
-    module.platform_trust_engine
+    module.platform_trust_engine,
+    module.ingress_nginx
   ]
 
   # Helm Deployment Configuration
   helm_config = {
-    version   = var.gitlab_helm_config.version
-    namespace = kubernetes_namespace.gitlab_ns.metadata[0].name
-    timeout   = 900
+    version        = var.gitlab_helm_config.version
+    namespace      = kubernetes_namespace.gitlab_ns.metadata[0].name
+    timeout        = 900
+    image_registry = local.harbor_registry
   }
 
   # GitLab Application Configuration

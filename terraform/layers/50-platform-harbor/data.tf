@@ -60,6 +60,13 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
+data "vault_kv_secret_v2" "harbor_bootstrapper_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+}
+
 # 1. Fetch Harbor Secrets from Production Vault
 data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
