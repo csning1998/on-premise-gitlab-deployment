@@ -49,8 +49,7 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "helm_release" "cert_manager" {
   count            = var.helm_config.install ? 1 : 0
   name             = "cert-manager"
-  repository       = "https://charts.jetstack.io"
-  chart            = "cert-manager"
+  chart            = "oci://${var.helm_config.image_registry}/helm-charts/cert-manager"
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   create_namespace = var.helm_config.create_namespace

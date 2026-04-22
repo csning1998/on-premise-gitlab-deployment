@@ -2,8 +2,7 @@
 # Harbor Helm Release
 resource "helm_release" "harbor" {
   name             = "harbor"
-  repository       = "https://helm.goharbor.io"
-  chart            = "harbor"
+  chart            = "oci://${var.helm_config.image_registry}/helm-charts/harbor"
   version          = var.helm_config.version
   namespace        = var.helm_config.namespace
   timeout          = var.helm_config.timeout
