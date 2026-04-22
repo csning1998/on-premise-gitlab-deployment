@@ -244,3 +244,17 @@
       until: result.status == 200
       retries: 30
       delay: 10
+
+- name: "Section G: Install Utilities for Artifact Management"
+  become: true
+  block:
+    - name: "Step G1. Download Helm installation script"
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get_helm.sh
+        mode: "0700"
+
+    - name: "Step G2. Execute Helm installation script"
+      ansible.builtin.command:
+        cmd: /tmp/get_helm.sh
+        creates: /usr/local/bin/helm
