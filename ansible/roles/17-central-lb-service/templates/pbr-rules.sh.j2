@@ -8,12 +8,12 @@ ip rule del from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }} 2>/de
 ip rule add from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }}
 
 #    - Ensure default route exists
-ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} dev {{ seg.interface_alias }} table rt_{{ seg.name | replace('-', '_') }}
+ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} dev {{ seg.interface_alias }} table rt_{{ seg.name | replace('-', '_') }} advmss 1300
 {% endfor %}
 
 # 2. Inject scope link for the local segment only
 {% for seg in lb_service_segments %}
-ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table rt_{{ seg.name | replace('-', '_') }}
+ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table rt_{{ seg.name | replace('-', '_') }} advmss 1300
 {% endfor %}
 
 # 3. Targeted L2 Return Paths for Vault
@@ -23,7 +23,7 @@ ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table r
 {% for target_seg in lb_service_segments %}
 {% if 'vault' in target_seg.name %}
 {% for source_seg in lb_service_segments %}
-ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scope link table rt_{{ target_seg.name | replace('-', '_') }} 2>/dev/null || true
+ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scope link table rt_{{ target_seg.name | replace('-', '_') }} advmss 1300 2>/dev/null || true
 {% endfor %}
 {% endif %}
 {% endfor %}
