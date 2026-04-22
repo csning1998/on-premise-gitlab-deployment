@@ -583,7 +583,7 @@ Successful execution and the display of virtual machines—regardless of whether
 
             `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
-            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [here](terraform/layers/50-platform-gitlab/README-zh-TW.md) for detailed explanation.
+            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [here](terraform/layers/50-platform-gitlab/README.md) for detailed explanation.
 
     - **Note 2**:
 
