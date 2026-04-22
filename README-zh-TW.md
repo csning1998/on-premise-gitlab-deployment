@@ -581,9 +581,9 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
             export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
             ```
 
-            可以操作 `echo` 指令進行驗證
+            可以操作 `echo` 指令進行驗證。在 Bootstrapper Vault 及其他機密操作方式相同
 
-        在 Bootstrapper Vault 及其他機密操作方式相同
+            這指令在佈署 GitLab 出現 `OpenSSL::Cipher::CipherError` 時會使用到。可以參考 [這裡](terraform/layers/50-platform-gitlab/README-zh-TW.md) 說明
 
     - **Note 2:**
 
