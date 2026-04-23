@@ -36,6 +36,8 @@ resource "helm_release" "harbor" {
             "nginx.ingress.kubernetes.io/proxy-body-size" = "0"
             "cert-manager.io/issuer"                      = var.ingress_config.issuer_name
             "cert-manager.io/issuer-kind"                 = var.ingress_config.issuer_kind
+            "cert-manager.io/common-name"                 = var.harbor_config.hostname
+            "cert-manager.io/subject-alternative-names"   = join(",", var.harbor_config.dns_sans)
             "cert-manager.io/duration"                    = var.certificate_config.duration
             "cert-manager.io/renew-before"                = var.certificate_config.renew_before
           }

@@ -66,10 +66,12 @@ resource "helm_release" "gitlab" {
           configureCertmanager = false # use own secret
           class                = var.ingress_config.class_name
           annotations = {
-            "cert-manager.io/issuer"       = var.ingress_config.issuer_name
-            "cert-manager.io/issuer-kind"  = var.ingress_config.issuer_kind
-            "cert-manager.io/duration"     = var.certificate_config.duration
-            "cert-manager.io/renew-before" = var.certificate_config.renew_before
+            "cert-manager.io/issuer"                    = var.ingress_config.issuer_name
+            "cert-manager.io/issuer-kind"               = var.ingress_config.issuer_kind
+            "cert-manager.io/common-name"               = var.gitlab_config.hostname
+            "cert-manager.io/subject-alternative-names" = join(",", var.gitlab_config.dns_sans)
+            "cert-manager.io/duration"                  = var.certificate_config.duration
+            "cert-manager.io/renew-before"              = var.certificate_config.renew_before
           }
           tls = {
             enabled    = true

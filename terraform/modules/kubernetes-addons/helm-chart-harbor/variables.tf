@@ -17,6 +17,7 @@ variable "harbor_config" {
     notary_prefix  = string
     admin_password = string
     secret_key     = string # for internal encryption (core-secret)
+    dns_sans       = list(string)
   })
 }
 

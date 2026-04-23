@@ -15,6 +15,7 @@ variable "gitlab_config" {
   type = object({
     hostname = string
     edition  = string
+    dns_sans = list(string)
   })
 }
 
