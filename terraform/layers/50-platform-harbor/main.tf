@@ -43,7 +43,6 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
-    chart_proxy      = local.harbor_quay_proxy
     chart_project    = local.helm_chart_project
   }
 }
