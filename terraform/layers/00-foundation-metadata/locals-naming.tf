@@ -58,13 +58,13 @@ locals {
       #    Supports multi-to-one mapping. Resolver is unidirectional and doesn't conflict with L7 routing.
       # 2. TLS/SSL Handshake Validation (RFC 5280/6066):
       #    Utilizes X.509 SAN extensions and SNI for domain-level isolation and certificate matching.
-      
+
       # Always include a deterministic default SAN for internal certificates.
       # Merge with any Ingress-defined SANs to ensure dns_san[0] is always safe.
       dns_san = distinct(concat(
         flatten([
           for i_key, i_data in coalesce(item.config.ingress, {}) : [
-            for sub in i_data.subdomains : 
+            for sub in i_data.subdomains :
             join(".", compact([
               sub,
               # Use conditional lookup to avoid ternary operator
@@ -88,6 +88,10 @@ locals {
       ]
 
       ttl_stage = item.stage
+      auth_config = {
+        method = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes" : "approle"
+        path   = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes-${item.cluster_name}" : "workload-approle"
+      }
     }
   ])
 

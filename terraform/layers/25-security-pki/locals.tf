@@ -36,7 +36,7 @@ locals {
   component_roles = {
     for k, v in local.state.metadata.global_pki_map : k => {
       name            = v.role_name
-      allowed_domains = v.dns_san
+      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
       ou              = v.ou
       max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
       ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
@@ -48,7 +48,7 @@ locals {
   dependency_roles = {
     for k, v in local.state.metadata.global_pki_map : k => {
       name            = v.role_name
-      allowed_domains = v.dns_san
+      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
       ou              = v.ou
       max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
       ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
@@ -69,6 +69,20 @@ locals {
     }
     "gitlab-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
+    }
+  }
+}
+# 4. Auth Backends Discovery
+locals {
+  # Extract unique authentication paths from metadata.
+  _auth_paths = distinct([for k, v in local.state.metadata.global_pki_map : v.auth_config.path])
+
+  # Map unique paths back to their respective methods.
+  _auth_backends = {
+    for path in local._auth_paths :
+    path => {
+      type = [for k, v in local.state.metadata.global_pki_map : v.auth_config.method if v.auth_config.path == path][0]
+      path = path
     }
   }
 }

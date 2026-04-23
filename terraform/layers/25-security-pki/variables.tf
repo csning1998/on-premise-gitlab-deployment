@@ -1,12 +1,4 @@
 
-variable "vault_auth_backends" {
-  description = "Map of Auth Backends to enable (e.g., approle, kubernetes)"
-  type = map(object({
-    type = string
-    path = string
-  }))
-}
-
 variable "vault_pki_engine_config" {
   description = "Configuration for the PKI Secrets Engine"
   type = object({
