@@ -4,9 +4,13 @@ vault_auth_backends = {
     type = "approle"
     path = "workload-approle"
   }
-  "kubernetes" = {
+  "kubernetes-gitlab-frontend" = {
     type = "kubernetes"
-    path = "kubernetes"
+    path = "kubernetes-gitlab-frontend"
+  }
+  "kubernetes-harbor-frontend" = {
+    type = "kubernetes"
+    path = "kubernetes-harbor-frontend"
   }
 }
 
