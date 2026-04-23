@@ -72,9 +72,9 @@ locals {
 
   sec_vault_agent_identity = {
     vault_address = local.sys_vault_addr
-    auth_path     = local.state.vault_pki.workload_identities_components[local.sec_vault_identity_key].auth_path
-    role_id       = local.state.vault_pki.workload_identities_components[local.sec_vault_identity_key].role_id
-    role_name     = local.state.vault_pki.pki_configuration.component_roles[local.sec_vault_identity_key].name
+    auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].auth_path
+    role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
+    role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
     ca_cert_b64   = local.state.metadata.global_vault_pki.ca_cert
     common_name   = local.svc_fqdn
