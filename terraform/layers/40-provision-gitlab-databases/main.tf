@@ -3,11 +3,10 @@
 # This resource remains in Layer 40 because the postgresql provider
 # requires it to establish a secure TLS connection during provisioning.
 resource "vault_pki_secret_backend_cert" "gitlab_db_client" {
-  provider = vault.production
-  backend  = local.state.vault_pki.pki_configuration.path
-  name     = local.state.vault_pki.pki_configuration.component_roles["gitlab-frontend"].name
-
-  common_name = local.state.vault_pki.pki_configuration.component_roles["gitlab-frontend"].allowed_domains[0]
+  provider    = vault.production
+  backend     = local.state.vault_pki.pki_configuration.path
+  name        = local.state.vault_pki.pki_configuration.pki_roles["gitlab-frontend"].name
+  common_name = local.state.vault_pki.pki_configuration.pki_roles["gitlab-frontend"].allowed_domains[0]
 
   ttl = "2160h" # 90 Days
 }
