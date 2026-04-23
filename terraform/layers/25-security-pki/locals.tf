@@ -36,7 +36,7 @@ locals {
   component_roles = {
     for k, v in local.state.metadata.global_pki_map : k => {
       name            = v.role_name
-      allowed_domains = v.dns_san
+      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
       ou              = v.ou
       max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
       ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
@@ -48,7 +48,7 @@ locals {
   dependency_roles = {
     for k, v in local.state.metadata.global_pki_map : k => {
       name            = v.role_name
-      allowed_domains = v.dns_san
+      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
       ou              = v.ou
       max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
       ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
