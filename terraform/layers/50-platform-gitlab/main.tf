@@ -147,8 +147,8 @@ module "gitlab_core" {
   ingress_config = {
     class_name      = var.gitlab_helm_config.ingress_class
     tls_secret_name = var.gitlab_helm_config.tls_secret_name
-    issuer_name     = local.issuer_name # "vault-issuer" from Layer 50
-    issuer_kind     = local.issuer_kind # "ClusterIssuer"
+    issuer_name     = var.trust_engine_config.issuer_name
+    issuer_kind     = var.trust_engine_config.issuer_kind
   }
 
   certificate_config = var.certificate_config
