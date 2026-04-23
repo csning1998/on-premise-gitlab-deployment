@@ -11,6 +11,7 @@ resource "vault_pki_secret_backend_role" "component_roles" {
   allow_glob_domains = false
   allow_ip_sans      = true
   allow_bare_domains = true
+  require_cn         = true
 
   key_usage = ["DigitalSignature", "KeyEncipherment", "KeyAgreement"]
 

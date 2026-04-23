@@ -51,7 +51,6 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
-    chart_proxy      = local.harbor_quay_proxy
     chart_project    = local.helm_chart_project
   }
 
@@ -141,7 +140,7 @@ module "gitlab_core" {
   gitlab_config = {
     hostname = local.fqdn_gitlab
     edition  = "ce"
-    # Root Password
+    dns_sans = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
   }
 
   # Trust Engine Integration

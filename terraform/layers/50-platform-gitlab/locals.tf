@@ -72,9 +72,9 @@ locals {
   vault_ca_cert  = local.state.vault_pki.bootstrap_ca.content
   vault_pki_path = local.state.vault_pki.pki_configuration.path
 
-  # Map to the specific component identity in Vault PKI
-  vault_role_name   = local.state.vault_pki.pki_configuration.component_roles["gitlab-frontend"].name
-  vault_auth_path   = local.state.vault_pki.auth_backend_paths["kubernetes"]
+  # Map to the specific component identity in Vault PKI (SSoT Driven)
+  vault_role_name = local.state.metadata.global_pki_map["gitlab-frontend"].role_name
+  vault_auth_path = local.state.metadata.global_pki_map["gitlab-frontend"].auth_config.path
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 }
 

@@ -58,9 +58,9 @@ locals {
   # Dependency Ports (Standardized)
   pg_port = local.state.metadata.global_topology_network["harbor"]["postgres"].ports["rw-proxy"].frontend_port
 
-  # Map to the specific component identity in Vault PKI
-  vault_role_name   = local.state.vault_pki.pki_configuration.component_roles["harbor-frontend"].name
-  vault_auth_path   = local.state.vault_pki.auth_backend_paths["kubernetes"]
+  # Map to the specific component identity in Vault PKI (SSoT Driven)
+  vault_role_name   = local.state.metadata.global_pki_map["harbor-frontend"].role_name
+  vault_auth_path   = local.state.metadata.global_pki_map["harbor-frontend"].auth_config.path
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 }
 

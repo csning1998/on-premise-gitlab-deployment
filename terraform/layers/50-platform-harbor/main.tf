@@ -43,7 +43,6 @@ module "platform_trust_engine" {
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
-    chart_proxy      = local.harbor_quay_proxy
     chart_project    = local.helm_chart_project
   }
 }
@@ -98,6 +97,7 @@ module "harbor_core" {
     admin_password = local.harbor_admin_password
     notary_prefix  = var.harbor_helm_config.notary_prefix
     secret_key     = random_password.harbor_core_secret_key.result
+    dns_sans       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san
   }
 
   ingress_config = {
