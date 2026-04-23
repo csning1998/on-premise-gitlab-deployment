@@ -1,19 +1,4 @@
 
-vault_auth_backends = {
-  "approle" = {
-    type = "approle"
-    path = "workload-approle"
-  }
-  "kubernetes-gitlab-frontend" = {
-    type = "kubernetes"
-    path = "kubernetes-gitlab-frontend"
-  }
-  "kubernetes-harbor-frontend" = {
-    type = "kubernetes"
-    path = "kubernetes-harbor-frontend"
-  }
-}
-
 vault_pki_engine_config = {
   path                = "pki/prod"
   root_ca_common_name = "on-premise-gitlab-deployment-root-ca"

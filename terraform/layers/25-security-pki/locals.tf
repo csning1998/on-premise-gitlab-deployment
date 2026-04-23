@@ -72,3 +72,17 @@ locals {
     }
   }
 }
+# 4. Auth Backends Discovery
+locals {
+  # Extract unique authentication paths from metadata.
+  _auth_paths = distinct([for k, v in local.state.metadata.global_pki_map : v.auth_config.path])
+
+  # Map unique paths back to their respective methods.
+  _auth_backends = {
+    for path in local._auth_paths :
+    path => {
+      type = [for k, v in local.state.metadata.global_pki_map : v.auth_config.method if v.auth_config.path == path][0]
+      path = path
+    }
+  }
+}

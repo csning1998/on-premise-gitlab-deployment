@@ -15,7 +15,7 @@ module "vault_pki_setup" {
   root_domain         = local.root_domain
   root_ca_common_name = local.root_ca_common_name
 
-  auth_backends     = var.vault_auth_backends
+  auth_backends     = local._auth_backends
   pki_engine_config = var.vault_pki_engine_config
 
   component_roles  = local.component_roles
