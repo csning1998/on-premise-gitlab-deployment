@@ -59,19 +59,17 @@ resource "vault_pki_secret_backend_role" "pki_roles" {
   enforce_hostnames = true
 }
 
-# 1. Universal AppRole Backends (One per role for node identity)
+# 1. Shared AppRole Backend (Standard approach for workload identity)
 resource "vault_auth_backend" "approle" {
-  for_each = var.pki_roles
-
-  path = each.value.approle_path
+  path = "workload-approle"
   type = "approle"
 }
 
-# 2. Kubernetes Auth Backends (Optional, for Pod identity)
+# 2. Kubernetes Auth Backends (One per cluster for identity isolation)
 resource "vault_auth_backend" "kubernetes" {
-  for_each = { for k, v in var.pki_roles : k => v if v.auth_method == "kubernetes" }
+  for_each = toset(distinct([for k, v in var.pki_roles : v.auth_path if v.auth_method == "kubernetes"]))
 
-  path = each.value.auth_path
+  path = each.value
   type = "kubernetes"
 }
 

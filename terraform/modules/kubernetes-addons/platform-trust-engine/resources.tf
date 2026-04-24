@@ -10,7 +10,7 @@ resource "kubernetes_service_account" "vault_reviewer" {
 # Grant Reviewer the authority to verify Token (system:auth-delegator)
 resource "kubernetes_cluster_role_binding" "vault_reviewer" {
   metadata {
-    name = "${var.reviewer_service_account.name}-binding"
+    name = var.reviewer_service_account.name
   }
   role_ref {
     api_group = "rbac.authorization.k8s.io"
@@ -27,7 +27,7 @@ resource "kubernetes_cluster_role_binding" "vault_reviewer" {
 # Explicitly create Long-Lived Token (compatible with K8s 1.24+) due to Terraform dependency chain: SA -> Secret -> Vault Config
 resource "kubernetes_secret" "vault_reviewer_token" {
   metadata {
-    name      = "${var.reviewer_service_account.name}-token"
+    name      = var.reviewer_service_account.name
     namespace = var.reviewer_service_account.namespace
     annotations = {
       "kubernetes.io/service-account.name" = kubernetes_service_account.vault_reviewer.metadata[0].name
@@ -84,7 +84,7 @@ resource "kubernetes_service_account" "issuer" {
   depends_on = [helm_release.cert_manager]
 
   metadata {
-    name      = "${var.issuer_config.name}-sa"
+    name      = var.issuer_config.name
     namespace = var.helm_config.namespace
   }
 }
@@ -92,7 +92,7 @@ resource "kubernetes_service_account" "issuer" {
 # Create Issuer's Secret (Client Token) to prove its identity to Vault
 resource "kubernetes_secret" "issuer_token" {
   metadata {
-    name      = "${var.issuer_config.name}-token"
+    name      = var.issuer_config.name
     namespace = var.helm_config.namespace
     annotations = {
       "kubernetes.io/service-account.name" = kubernetes_service_account.issuer.metadata[0].name

@@ -29,7 +29,7 @@ module "vault_workload_identity_approle" {
   for_each           = local.all_roles
   name               = each.key
   vault_role_name    = each.value.name
-  approle_mount_path = each.value.approle_path
+  approle_mount_path = module.vault_pki_setup.auth_backend_paths["approle"]
   pki_mount_path     = module.vault_pki_setup.vault_pki_path
   extra_policy_hcl   = lookup(local.workload_identity_extra_rules, each.key, {})
 }
@@ -56,10 +56,9 @@ resource "vault_kubernetes_auth_backend_role" "kubernetes_role" {
   backend   = module.vault_pki_setup.auth_backend_paths[each.value.auth_path]
   role_name = each.value.name
 
-  # Allow all service accounts in all namespaces within the specific cluster-auth mount
-  # This matches the dynamic nature of the metadata-driven auth backends
-  bound_service_account_names      = ["*"]
-  bound_service_account_namespaces = ["*"]
+  # Restrict to component-specific namespace and ServiceAccounts
+  bound_service_account_names      = [each.key, "vault-issuer", "default"]
+  bound_service_account_namespaces = [split("-", each.key)[0], "cert-manager", "default"]
 
   token_policies = [
     "default",

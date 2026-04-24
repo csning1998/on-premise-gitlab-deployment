@@ -19,7 +19,7 @@ output "workload_identities_approle" {
     for service_name, mod in module.vault_workload_identity_approle : service_name => {
       role_id   = mod.approle_role_id
       role_name = mod.approle_name
-      auth_path = mod.approle_path
+      auth_path = module.vault_pki_setup.auth_backend_paths["approle"]
     }
   }
 }

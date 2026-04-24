@@ -23,7 +23,7 @@ output "pki_roles" {
 output "auth_backend_paths" {
   description = "Map of enabled Auth Backend paths"
   value = merge(
-    { for k, v in vault_auth_backend.approle : v.path => v.path },
-    { for k, v in vault_auth_backend.kubernetes : v.path => v.path }
+    { "approle" = vault_auth_backend.approle.path },
+    { for k, v in vault_auth_backend.kubernetes : k => v.path }
   )
 }
