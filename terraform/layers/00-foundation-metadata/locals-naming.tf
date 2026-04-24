@@ -89,8 +89,9 @@ locals {
 
       ttl_stage = item.stage
       auth_config = {
-        method = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes" : "approle"
-        path   = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes-${item.cluster_name}" : "workload-approle"
+        method       = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes" : "approle"
+        path         = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes/${item.service_name}" : "workload-approle"
+        approle_path = "workload-approle"
       }
     }
   ])

@@ -14,25 +14,17 @@ variable "root_ca_common_name" {
   type        = string
 }
 
-variable "component_roles" {
-  description = "Map of Component PKI Roles (Internal/Frontend)"
+variable "pki_roles" {
+  description = "Unified Map of PKI Roles for all services"
   type = map(object({
     name            = string
+    auth_method     = string
+    auth_path       = string
+    approle_path    = string
     allowed_domains = list(string)
+    ou              = list(string)
     max_ttl         = number
     ttl             = number
-    ou              = list(string)
-  }))
-}
-
-variable "dependency_roles" {
-  description = "Map of Dependency PKI Roles (Backing Services)"
-  type = map(object({
-    name            = string
-    allowed_domains = list(string)
-    max_ttl         = number
-    ttl             = number
-    ou              = list(string)
   }))
 }
 

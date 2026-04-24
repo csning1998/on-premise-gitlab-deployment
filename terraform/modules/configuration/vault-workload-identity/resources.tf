@@ -1,7 +1,7 @@
 
 # 1. Define Policy: Standard PKI access + Optional Extras
 resource "vault_policy" "this" {
-  name = "${var.name}-policy"
+  name = "${var.name}-approle-policy"
   policy = jsonencode({
     path = merge(
       {
