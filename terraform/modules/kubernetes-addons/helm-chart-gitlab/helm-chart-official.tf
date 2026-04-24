@@ -29,9 +29,6 @@ resource "helm_release" "gitlab" {
         } : null
 
         certificates = {
-          image = var.image_registry != null ? {
-            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-certificates"
-          } : null
           customCAs = [
             {
               secret = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
@@ -39,17 +36,7 @@ resource "helm_release" "gitlab" {
           ]
         }
 
-        kubectl = {
-          image = var.image_registry != null ? {
-            repository = "${var.image_registry.registry}/${var.image_registry.repository}/kubectl"
-          } : null
-        }
 
-        gitlabBase = {
-          image = var.image_registry != null ? {
-            repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-base"
-          } : null
-        }
 
         # Domain & Ingress
         hosts = {
@@ -65,14 +52,6 @@ resource "helm_release" "gitlab" {
         ingress = {
           configureCertmanager = false # use own secret
           class                = var.ingress_config.class_name
-          annotations = {
-            (var.ingress_config.issuer_kind == "ClusterIssuer" ? "cert-manager.io/cluster-issuer" : "cert-manager.io/issuer") = var.ingress_config.issuer_name
-
-            "cert-manager.io/common-name"               = var.gitlab_config.hostname
-            "cert-manager.io/subject-alternative-names" = join(",", var.gitlab_config.dns_sans)
-            "cert-manager.io/duration"                  = var.certificate_config.duration
-            "cert-manager.io/renew-before"              = var.certificate_config.renew_before
-          }
           tls = {
             enabled    = true
             secretName = var.ingress_config.tls_secret_name
@@ -89,7 +68,6 @@ resource "helm_release" "gitlab" {
           port     = var.external_services.postgres.port
           username = var.external_services.postgres.username
           database = var.external_services.postgres.database
-
           ssl = var.external_services.postgres.ssl_secret != null ? {
             secret            = var.external_services.postgres.ssl_secret
             clientCertificate = "tls.crt"
@@ -180,14 +158,6 @@ resource "helm_release" "gitlab" {
           secret = kubernetes_secret.gitlab_internal_secrets["root-password"].metadata[0].name,
           key    = "secret"
         }
-
-        certificates = {
-          customCAs = [
-            {
-              secret = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
-            }
-          ]
-        }
       }
 
       # Disable Bundled Services
@@ -273,6 +243,45 @@ resource "helm_release" "gitlab" {
                 secret = kubernetes_secret.gitlab_minio_secrets["backups"].metadata[0].name
                 key    = "connection"
               }
+            }
+          }
+        }
+      }
+    }),
+
+    # Injected annotations on both ingresses ensure Cert-Manager requests identical SAN lists, preventing race condition overwrites.
+    yamlencode({
+      global = {
+        ingress = {
+          annotations = {
+            (var.ingress_config.issuer_kind == "ClusterIssuer"
+              ? "cert-manager.io/cluster-issuer"
+              : "cert-manager.io/issuer"
+            ) = var.ingress_config.issuer_name
+
+            "cert-manager.io/common-name"               = var.gitlab_config.hostname
+            "cert-manager.io/subject-alternative-names" = join(",", var.gitlab_config.dns_sans)
+            "cert-manager.io/duration"                  = var.certificate_config.duration
+            "cert-manager.io/renew-before"              = var.certificate_config.renew_before
+          }
+        }
+      }
+
+      gitlab = {
+        kas = {
+          ingress = {
+            tls = {
+              enabled    = true
+              secretName = "${var.ingress_config.tls_secret_name}-kas"
+            }
+            annotations = {
+              (var.ingress_config.issuer_kind == "ClusterIssuer"
+                ? "cert-manager.io/cluster-issuer"
+                : "cert-manager.io/issuer"
+              ) = var.ingress_config.issuer_name
+
+              "cert-manager.io/common-name"               = "kas.${replace(var.gitlab_config.hostname, "/^gitlab\\./", "")}"
+              "cert-manager.io/subject-alternative-names" = join(",", var.gitlab_config.dns_sans)
             }
           }
         }
