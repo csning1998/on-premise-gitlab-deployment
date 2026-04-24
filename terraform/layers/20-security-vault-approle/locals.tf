@@ -12,11 +12,14 @@ locals {
 }
 
 locals {
-  # Extract unique authentication paths from metadata to avoid duplicate key errors
-  # during policy map construction (e.g., multiple baremetal components sharing 'workload-approle').
-  _all_auth_paths = distinct([for k, v in local.state.metadata.global_pki_map : v.auth_config.path])
+  # Extract unique authentication paths from metadata to ensure all provisioned
+  # backends (AppRole and Kubernetes) are authorized.
+  _all_auth_paths = distinct(concat(
+    [for k, v in local.state.metadata.global_pki_map : v.auth_config.path],
+    [for k, v in local.state.metadata.global_pki_map : v.auth_config.approle_path]
+  ))
 
-  # Dynamically generate administrative rules for all authentication backends defined in Metadata.
+  # Dynamically generate administrative rules using valid Vault prefix wildcards.
   _auth_rules = {
     for path in local._all_auth_paths :
     "auth/${path}/*" => { capabilities = ["create", "read", "update", "delete", "list"] }

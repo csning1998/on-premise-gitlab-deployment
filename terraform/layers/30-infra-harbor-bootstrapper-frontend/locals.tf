@@ -74,9 +74,9 @@ locals {
   sec_vault_agent_identity = {
     ca_cert_b64   = local.pki_global_ca.ca_cert
     common_name   = local.svc_fqdn
-    auth_path     = local.state.vault_pki.workload_identities_components[local.sec_vault_role_key].auth_path
-    role_id       = local.state.vault_pki.workload_identities_components[local.sec_vault_role_key].role_id
-    role_name     = local.state.vault_pki.pki_configuration.component_roles[local.sec_vault_role_key].name
+    auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
+    role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
+    role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.bootstrap_harbor_agent.secret_id
     vault_address = local.sys_vault_addr
   }

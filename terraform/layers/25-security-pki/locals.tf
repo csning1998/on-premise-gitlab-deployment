@@ -32,29 +32,22 @@ locals {
 #    b. Inject Metadata (OU)
 #    c. Apply TTL Policy
 locals {
-  # Component Roles (Server Certs):
-  component_roles = {
+  # Consolidated Roles (Based on SSoT global_pki_map)
+  all_roles = {
     for k, v in local.state.metadata.global_pki_map : k => {
       name            = v.role_name
       allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
       ou              = v.ou
+      auth_path       = v.auth_config.path
+      auth_method     = v.auth_config.method
+      approle_path    = v.auth_config.approle_path
       max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
       ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
     }
-    if !endswith(k, "-dep")
   }
 
-  # Dependency Roles (Client Certs / Auth):
-  dependency_roles = {
-    for k, v in local.state.metadata.global_pki_map : k => {
-      name            = v.role_name
-      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
-      ou              = v.ou
-      max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
-      ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
-    }
-    if endswith(k, "-dep")
-  }
+  # Identification of roles requiring Kubernetes Auth for main.tf resources
+  kubernetes_roles = { for k, v in local.all_roles : k => v if v.auth_method == "kubernetes" }
 }
 
 # 6. Specific Vault Policy for some Workload Identity:
@@ -69,20 +62,6 @@ locals {
     }
     "gitlab-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
-    }
-  }
-}
-# 4. Auth Backends Discovery
-locals {
-  # Extract unique authentication paths from metadata.
-  _auth_paths = distinct([for k, v in local.state.metadata.global_pki_map : v.auth_config.path])
-
-  # Map unique paths back to their respective methods.
-  _auth_backends = {
-    for path in local._auth_paths :
-    path => {
-      type = [for k, v in local.state.metadata.global_pki_map : v.auth_config.method if v.auth_config.path == path][0]
-      path = path
     }
   }
 }

@@ -209,7 +209,7 @@ service_catalog = {
           "ingress-https" = { frontend_port = 443, backend_port = 443 }
         }
         ingress = {
-          "frontend" = { subdomains = ["harbor", "notary.harbor"] }
+          "frontend" = { subdomains = ["harbor", "notary"] }
         }
       }
       "postgres" = {

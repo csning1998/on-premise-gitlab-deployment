@@ -14,19 +14,6 @@ defaults
     timeout client {{ haproxy_timeout_client }}
     timeout server {{ haproxy_timeout_server }}
 
-frontend k8s_api
-    bind {{ kubeadm_ha_virtual_ip }}:{{ haproxy_frontend_port }}
-    mode tcp
-    default_backend k8s_api_backend
-
-backend k8s_api_backend
-    mode tcp
-    balance roundrobin
-    option tcp-check
-{% for host in groups['master'] %}
-    server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ haproxy_backend_port }} check fall 3 rise 2
-{% endfor %}
-
 # GitLab HTTP Ingress (Port 80 -> NodePort 30080)
 frontend gitlab_http
     bind {{ kubeadm_ha_virtual_ip }}:80
