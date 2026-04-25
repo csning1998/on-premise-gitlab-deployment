@@ -479,10 +479,6 @@ Successful execution and the display of virtual machines—regardless of whether
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
             ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
-        vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
-            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
-
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
             pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
             pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
@@ -567,7 +563,7 @@ Successful execution and the display of virtual machines—regardless of whether
 
 6. Since Helm Charts related to Layer 50 consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `30-infra-harbor-bootstrapper-frontend` and `40-provision-harbor-bootstrapper-frontend` have been executed successfully.
 
-    Once it is confirmed that the Bootstrapper Harbor related L30 and L40 have been executed, you can directly run the following commands:
+    Once it is confirmed that the Bootstrapper Harbor related L30 and L40 have been executed, you can directly run the following commands (This will be integrated into L40 triggered by Ansible Provider):
     1. **Environment Variables and Login**
 
         ```bash

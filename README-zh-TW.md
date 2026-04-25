@@ -479,10 +479,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
             ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
-        vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
-            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
-
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
             pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
             pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
@@ -567,7 +563,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 6.  由於 Layer 50 相關的 Helm Chart 一律都採用 OCI 與 Bootstrapper Harbor 進行連線，因此需要先從遠端 `helm pull` 相關 Artifacts 並且推送到 Bootstrapper Harbor 中。要先確保 `30-infra-harbor-bootstrapper-frontend` 與 `40-provision-harbor-bootstrapper-frontend` 都有成功執行
 
-    在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令：
+    在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令（這之後會整合為透過 Ansible Provider 驅動）：
     1. **環境變數相關以及登入**
 
         ```bash
