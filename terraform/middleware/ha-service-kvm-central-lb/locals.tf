@@ -1,5 +1,10 @@
 
 locals {
+  # 0. Global Alias
+  svc_name = var.svc_identity.service_name
+  svc_net  = var.svc_network_map[local.svc_name]
+  infra    = var.network_infrastructure_map[local.svc_name]
+
   # 1. Credentials Context
   credentials_vm_for_hypervisor = var.credentials_vm
   credentials_vm_for_ssh = {
@@ -12,7 +17,7 @@ locals {
   }
 
   # 2. Physics & Network Context
-  net_lb_base_mac_parts = split(":", var.svc_network_map[var.svc_identity.service_name].mac_address)
+  net_lb_base_mac_parts = split(":", local.svc_net.mac_address)
   net_sorted_node_keys  = sort(keys(var.topology_cluster.load_balancer_config.nodes))
 
   lb_cluster_vm_config = {
@@ -26,7 +31,7 @@ locals {
         interfaces = flatten([
           # Interface 1: NAT (Management) [ens3]
           [{
-            network_name = var.network_infrastructure_map[var.svc_identity.service_name].nat.name
+            network_name = local.infra.nat.name
             mac = format("%s:%s:%s:00:%s:%02x",
               local.net_lb_base_mac_parts[0],
               local.net_lb_base_mac_parts[1],
@@ -39,7 +44,7 @@ locals {
 
           # Interface 2: HostOnly (Internal) [ens4]
           [{
-            network_name = var.network_infrastructure_map[var.svc_identity.service_name].hostonly.name
+            network_name = local.infra.hostonly.name
             mac = format("%s:%s:%s:%s:%s:%02x",
               local.net_lb_base_mac_parts[0],
               local.net_lb_base_mac_parts[1],
@@ -50,8 +55,8 @@ locals {
             )
             addresses = [
               format("%s/%s",
-                cidrhost(var.svc_network_map[var.svc_identity.service_name].cidr_block, node_spec.ip_suffix),
-                split("/", var.svc_network_map[var.svc_identity.service_name].cidr_block)[1]
+                cidrhost(local.svc_net.cidr_block, node_spec.ip_suffix),
+                split("/", local.svc_net.cidr_block)[1]
               )
             ]
           }],
@@ -81,24 +86,26 @@ locals {
   lb_cluster_network_config = {
     network = {
       nat = {
-        name_network = var.network_infrastructure_map[var.svc_identity.service_name].nat.name
-        name_bridge  = var.network_infrastructure_map[var.svc_identity.service_name].nat.bridge_name
+        name_network = local.infra.nat.name
+        name_bridge  = local.infra.nat.bridge_name
         mode         = "nat"
         ips = {
-          address = var.network_infrastructure_map[var.svc_identity.service_name].nat.gateway
-          prefix  = var.network_infrastructure_map[var.svc_identity.service_name].nat.prefix
-          dhcp    = var.network_infrastructure_map[var.svc_identity.service_name].nat.dhcp
+          address = local.infra.nat.gateway
+          prefix  = local.infra.nat.prefix
+          dhcp    = local.infra.nat.dhcp
         }
+        mtu = local.infra.nat.mtu
       }
       hostonly = {
-        name_network = var.network_infrastructure_map[var.svc_identity.service_name].hostonly.name
-        name_bridge  = var.network_infrastructure_map[var.svc_identity.service_name].hostonly.bridge_name
+        name_network = local.infra.hostonly.name
+        name_bridge  = local.infra.hostonly.bridge_name
         mode         = "route"
         ips = {
-          address = var.network_infrastructure_map[var.svc_identity.service_name].hostonly.gateway
-          prefix  = var.network_infrastructure_map[var.svc_identity.service_name].hostonly.prefix
+          address = local.infra.hostonly.gateway
+          prefix  = local.infra.hostonly.prefix
           dhcp    = null
         }
+        mtu = local.infra.hostonly.mtu
       }
     }
   }

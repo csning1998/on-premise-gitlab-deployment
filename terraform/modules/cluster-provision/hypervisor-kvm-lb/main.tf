@@ -101,8 +101,9 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 
   network_config = templatefile("${path.module}/../../../templates/network_config_lb.tftpl", {
     config = {
+      mtu         = var.lb_cluster_network_config.network.hostonly.mtu
       nat_mac     = each.value.interfaces[0].mac
-      nat_ip_cidr = try(each.value.interfaces[0].addresses[0], "")
+      nat_ip_cidr = try(each.value.interfaces[0].addresses[0], "") # Use try to handle the case where the interface has no IP address
       nat_gateway = var.lb_cluster_network_config.network.nat.ips.address
 
       hostonly_mac     = each.value.interfaces[1].mac
