@@ -15,13 +15,3 @@
       register: metallb_result
       changed_when: "'MetalLB is already enabled' not in metallb_result.stdout"
       when: metallb_ip_range is defined
-
-    - name: "Step 3. Patch Calico MTU for MicroK8s"
-      become: true
-      ansible.builtin.shell: |
-        # 1. Update veth_mtu in ConfigMap
-        microk8s kubectl patch configmap calico-config -n kube-system --type merge -p '{"data": {"veth_mtu": "{{ global_mtu - 50 | int }}"}}'
-        # 2. Trigger rollout to apply changes to existing nodes
-        microk8s kubectl rollout restart daemonset calico-node -n kube-system
-      register: calico_patch_result
-      changed_when: "'patched' in calico_patch_result.stdout"
