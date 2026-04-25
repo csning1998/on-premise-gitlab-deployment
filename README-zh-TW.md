@@ -181,48 +181,20 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **_（即將棄用）_ 安裝 HashiCorp Toolkit - Terraform and Packer**
+1.  **安裝 IaC Toolkit - OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
-    接著在專案根目錄執行 `entry.sh`，選擇選項 `7` _"Setup Core IaC Tools for Native"_ 來安裝 Terraform、Packer 與 Ansible。可以參考官方安裝說明：
+    可以參考以下資源進行套件安裝：
+    - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)
+    - [Terraform Installation](https://developer.hashicorp.com/terraform/install)
+    - [HashiCorp Vault Installation](https://developer.hashicorp.com/vault/docs/install)
+    - [Packer Installation](https://developer.hashicorp.com/packer/install)
+    - [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
-    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
-    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
-    > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+2.  要確認 Podman / Docker 已經正確安裝，需根據開發裝置的作業系統，參考以下網址選擇對應安裝方式
+    - [Podman Installation](https://podman.io/getting-started/installation) _Recommanded for RHEL / Fedora_
+    - [Docker Installation](https://docs.docker.com/get-docker/)
 
-    預期輸出應顯示最新版本，例如（在 zsh 下）：
-
-    ```text
-    ...
-    [INPUT] Please select an action: 7
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [STEP] Setting up core IaC tools...
-    [TASK] Installing OS-specific base packages for RHEL...
-    ...
-    [TASK] Installing Ansible Core using pip...
-    ...
-    [INFO] Installing HashiCorp Toolkits (Terraform, Packer, Vault)...
-    [TASK] Installing terraform...
-    ...
-    [TASK] Installing packer...
-    ...
-    [TASK] Installing vault...
-    ...
-    [TASK] Installing to /usr/local/bin/vault
-    [INFO] Verifying installed tools...
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [INFO] HashiCorp Packer: Installed
-    [INFO] HashiCorp Terraform: Installed
-    [INFO] HashiCorp Vault: Installed
-    [INFO] Red Hat Ansible: Installed
-    [OK] Core IaC tools setup and verification completed.
-    ```
-
-2. 要確認 Podman / Docker 已經正確安裝，需根據開發裝置的作業系統，參考以下網址選擇對應安裝方式
-
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
-    > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
-
-3. 以 Podman 為例，在 Podman 安裝完成後，切換至專案根目錄：
+3.  以 Podman 為例，在 Podman 安裝完成後，切換至專案根目錄：
     1. 通常預設的 memlock limit (`ulimit -l`) 較低，會導致 HashiCorp Vault 的 mlock system call 失敗，且一般情況下的 Rootless Podman 只是經過 `uid` mapping 到 Host 上的普通使用者，會直接繼承權限限制。為解決此問題，請執行以下指令修改：
 
         ```shell
@@ -681,21 +653,22 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     若有時間，未來會支援其他 Linux Guest OS 如 Fedora 43 或 RHEL 10
 
 3. **獨立測試與開發**：可以使用
-    - 選單 `9) Build Packer Base Image` 建立 Packer image
-    - 選單 `10) Provision Terraform Layer` 獨立測試或重建特定 Terraform module layer（如 Harbor 或 Postgres 等）
+    - 選單 `7) Build Packer Base Image` 建立 Packer image
+    - **[注意]**：`Provision Terraform Layer` 互動選單已拔除，請手動進入 `terraform/layers/` 各目錄執行 `tofu apply` 進行佈署。
 
-        有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
-
+        有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate*.backup` 後重新執行 `tofu apply` 即可
 
 4. **資源清理**：
-    - **`14) Purge Specific Terraform Layer`** 主要用於清空特定 Terraform Layer 的虛擬機、儲存空間、網卡、以及 Terraform 的 state 檔案
-    - **`15) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境。這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
-    - **`16) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts。這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
+    - **`10) Purge All Packer Artifacts`**：專門清理所有 Packer 輸出的映像檔（Images），讓 Packer 狀態回到全新
+    - **`11) Purge All Infrastructure Resources (Libvirt + Terraform)`**：將 Libvirt 虛擬化資源與 Terraform 狀態檔案綁定清理，確保環境狀態同步歸零
+
+> [!NOTE]
+> 以下內容有關 CLI 指令，會使用 `tofu` 為主；使用 Terraform 的話，只需要把 `tofu` 替換成 `terraform` 即可
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> 若本 repository 是 clone 來個人使用，此步驟（B.4）可透過 `10) Provision Terraform Layer` 選擇 `90-github-meta` 執行。以下內容僅提供 imperative 手動程序參考
+> 若本 repository 是 clone 來個人使用，此步驟（B.4）可手動進入 `terraform/layers/90-github-meta` 路徑並執行 `tofu apply` 完成。以下內容僅提供 imperative 手動程序參考
 
 1. 使用 Shell Bridge Pattern 從 Vault 注入 Token。在專案根目錄執行以確保 `${PWD}` 指向正確的 Vault 憑證路徑
 
@@ -714,14 +687,14 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     - **情境 B（全新 Repo）：** 若從頭建立全新 repository，可跳過 import 步驟
 
     ```shell
-    terraform init
-    terraform import github_repository.this on-premise-gitlab-deployment
+    tofu init
+    tofu import github_repository.this on-premise-gitlab-deployment
     ```
 
-4. 套用 Ruleset：建議先執行 `terraform plan` 預覽變更再 apply
+4. 套用 Ruleset：建議先執行 `tofu plan` 預覽變更再 apply
 
     ```shell
-    terraform apply -auto-approve
+    tofu apply -auto-approve
     ```
 
     輸出類似以下：

@@ -171,7 +171,7 @@ Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packe
     [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
-The following sections detail the usage instructions for `entry.sh`.
+**The following sections detail the usage instructions for `entry.sh`.**
 
 ## Section 1. Environmental Setup
 
@@ -181,48 +181,20 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **_(Deprecated)_ Install HashiCorp Toolkit - Terraform and Packer**
+1.  **Install HashiCorp Toolkit - Terraform and Packer**
 
-    Execute `entry.sh` in the project root directory and select option `7` "Setup Core IaC Tools for Native" to install Terraform, Packer, and Ansible. Refer to the official installation guides for more details:
+    Refer to the following resources for toolkit installation:
+    - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)
+    - [Terraform Installation](https://developer.hashicorp.com/terraform/install)
+    - [HashiCorp Vault Installation](https://developer.hashicorp.com/vault/docs/install)
+    - [Packer Installation](https://developer.hashicorp.com/packer/install)
+    - [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
-    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
-    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
-    > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+2.  Ensure Podman / Docker is correctly installed. Select the appropriate installation method from the links below based on your development machine's operating system:
+    - [Podman Installation](https://podman.io/getting-started/installation) _Recommended for RHEL / Fedora_
+    - [Docker Installation](https://docs.docker.com/get-docker/)
 
-    The expected output should be the latest version. For instance (in zsh):
-
-    ```text
-    ...
-    [INPUT] Please select an action: 7
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [STEP] Setting up core IaC tools...
-    [TASK] Installing OS-specific base packages for RHEL...
-    ...
-    [TASK] Installing Ansible Core using pip...
-    ...
-    [INFO] Installing HashiCorp Toolkits (Terraform, Packer, Vault)...
-    [TASK] Installing terraform...
-    ...
-    [TASK] Installing packer...
-    ...
-    [TASK] Installing vault...
-    ...
-    [TASK] Installing to /usr/local/bin/vault
-    [INFO] Verifying installed tools...
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [INFO] HashiCorp Packer: Installed
-    [INFO] HashiCorp Terraform: Installed
-    [INFO] HashiCorp Vault: Installed
-    [INFO] Red Hat Ansible: Installed
-    [OK] Core IaC tools setup and verification completed.
-    ```
-
-2. Verify that Podman or Docker is correctly installed. The appropriate installation method should be selected based on the host operating system by following the official documentation linked below:
-
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
-    > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
-
-3. For Podman-based setups, navigate to the project root directory after the installation:
+3.  For Podman-based setups, navigate to the project root directory after the installation:
     1. The default memlock limit (`ulimit -l`) is typically insufficient, causing HashiCorp Vault `mlock` system calls to fail. In Rootless Podman environments, processes are mapped via UID to a standard host user and inherit existing permission restrictions. To resolve this, the following configuration should be applied to `/etc/security/limits.conf`:
 
         ```shell
@@ -681,21 +653,22 @@ Before proceeding with any provisioning, it is essential to understand the prima
     Support for additional Linux Guest OS such as Fedora 43 or RHEL 10 is planned.
 
 3. **Independent Testing and Development**:
-    - Use menu option `9) Build Packer Base Image` to generate base images.
-    - Use menu option `10) Provision Terraform Layer` to test or redeploy specific layers (e.g., Harbor, Postgres).
+    - Use menu option `7) Build Packer Base Image` to generate base images.
+    - **[Note]**: The `Provision Terraform Layer` interactive menu has been removed. Please manually navigate to the `terraform/layers/` directories and execute `tofu apply` for deployment.
 
-        Note: When rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/60-provision-harbor` before re-executing `terraform apply`.
-
+        Occasionally, when rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate*.backup` from `terraform/layers/60-provision-harbor` before re-executing `tofu apply`.
 
 4. **Resource Cleanup**:
-    - **`14) Purge Specific Terraform Layer`**: Destroys specific layer's virtual machines, associating libvirt resources, and its Terraform state file.
-    - **`15) Purge All Libvirt Resources`**: Clears virtualization resources while maintaining project state. Executes `libvirt_resource_purger "all"`, **deleting** all guest VMs, networks, and storage pools created by This repo, while preserving Packer images and Terraform local state files.
-    - **`16) Purge All Packer and Terraform Resources`**: Complete cleanup of all artifacts. Deletes all Packer output images and Terraform local state files.
+    - **`10) Purge All Packer Artifacts`**: Specifically cleans up all Packer-generated images, resetting the Packer state.
+    - **`11) Purge All Infrastructure Resources (Libvirt + Terraform)`**: Bundles the destruction of Libvirt virtualization resources with the cleanup of Terraform state files, ensuring the environment is completely reset.
+
+> [!NOTE]
+> The following content uses `tofu` as the main command. For users who are using `terraform`, just replace `tofu` with `terraform` accordingly.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> For local management of a cloned repo, this step can be automated by selecting `90-github-meta` via option `10) Provision Terraform Layer`. Following instructions detail manual procedure for reference:
+> For local management of a cloned repo, this step can be manually performed by navigating to `terraform/layers/90-github-meta` and executing `tofu apply`. Following instructions detail the manual procedure for reference:
 
 1. Inject GitHub token from Vault using shell subquery. Execute from project root to verify `${PWD}` aligns with Vault credential directory:
 
@@ -714,14 +687,14 @@ Before proceeding with any provisioning, it is essential to understand the prima
     - **Scenario B (New Repository):** When creating a new repository from scratch, import step can be bypassed.
 
     ```shell
-    terraform init
-    terraform import github_repository.this on-premise-gitlab-deployment
+    tofu init
+    tofu import github_repository.this on-premise-gitlab-deployment
     ```
 
-4. Apply Ruleset: Executing `terraform plan` to preview changes before applying is recommended:
+4. Apply Ruleset: Executing `tofu plan` to preview changes before applying is recommended:
 
     ```shell
-    terraform apply -auto-approve
+    tofu apply -auto-approve
     ```
 
     Output should look similar to:
