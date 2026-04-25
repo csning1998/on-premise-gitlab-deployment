@@ -11,6 +11,7 @@ network:
       addresses:
         - "${config.nat_ip_cidr}"
       gateway4: "${config.nat_gateway}"
+      mtu: ${config.mtu}
 %{ else ~}
       dhcp4: true
 %{ endif ~}
@@ -27,6 +28,7 @@ network:
         - to: 172.16.0.0/16
           via: "${config.hostonly_gateway}"
           metric: 100
+      mtu: ${config.mtu}
 
 %{ for iface in config.service_interfaces ~}
     id${iface.index + 2}:
@@ -38,4 +40,5 @@ network:
       dhcp4: false
       addresses:
         - "${iface.ip_cidr}"
+      mtu: ${config.mtu}
 %{ endfor ~}

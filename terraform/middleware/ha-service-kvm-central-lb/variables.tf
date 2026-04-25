@@ -94,12 +94,14 @@ variable "network_infrastructure_map" {
         start = string
         end   = string
       }))
+      mtu = number
     })
     hostonly = object({
       name        = string
       bridge_name = string
       gateway     = string
       prefix      = number
+      mtu         = number
     })
     access_scope = optional(string)
   }))

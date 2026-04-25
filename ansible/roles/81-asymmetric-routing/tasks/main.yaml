@@ -1,0 +1,49 @@
+---
+- name: "Step 0. Dynamically collect candidate host-only interfaces"
+  ansible.builtin.set_fact:
+    candidate_ifaces: "{{ candidate_ifaces | default([]) + [item] }}"
+  loop: "{{ ansible_facts.interfaces }}"
+  when:
+    - item != 'lo'
+    - item != 'docker0'
+    - not item.startswith('br-')
+    - not item.startswith('veth')
+    - ansible_facts.default_ipv4 is defined
+    - item != ansible_facts.default_ipv4.interface
+    - ansible_facts[item] is defined
+    - ansible_facts[item].ipv4 is defined
+
+- name: "Step 1. Validate exactly one host-only interface is detected"
+  ansible.builtin.assert:
+    that:
+      - candidate_ifaces is defined
+      - candidate_ifaces | length == 1
+    fail_msg: |
+      Validation failed: Expected exactly 1 host-only interface, but found
+      {{ candidate_ifaces | default([]) | length }}.
+      Candidates: {{ candidate_ifaces | default([]) }}
+    success_msg: "Successfully identified host-only interface: {{ candidate_ifaces[0] }}"
+
+- name: "Step 2. Finalize host-only interface variable"
+  ansible.builtin.set_fact:
+    hostonly_iface: "{{ candidate_ifaces[0] }}"
+
+- name: "Step 3. Deploy Routing Fix Service"
+  ansible.builtin.template:
+    src: fix-routes.service.j2
+    dest: /etc/systemd/system/fix-vault-routes.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Asymmetric Route Service
+
+- name: "Step 4. Immediate Route Enforcement"
+  ansible.builtin.command:
+    cmd: >-
+      /usr/sbin/ip route replace {{ item.to }}
+      via {{ item.via }}
+      dev {{ hostonly_iface }}
+      metric {{ item.metric | default(100) }}
+      advmss {{ global_mss | default(1310) }}
+  loop: "{{ routing_static_routes }}"
+  changed_when: false
