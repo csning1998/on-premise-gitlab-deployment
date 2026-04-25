@@ -2,15 +2,6 @@
 - name: "Block 1: Configure and enable MicroK8s addons"
   become: true
   block:
-    - name: "Step 0. Wait for any Terminating CoreDNS pods to be fully removed"
-      ansible.builtin.command: >
-        microk8s kubectl get pods -n kube-system -l k8s-app=kube-dns --no-headers
-      register: coredns_terminating_check
-      until: coredns_terminating_check.rc == 0 and coredns_terminating_check.stdout == ""
-      retries: 30
-      delay: 5
-      failed_when: false
-
     - name: "Step 1. Enable core addons for MicroK8s"
       ansible.builtin.command:
         cmd: "microk8s enable {{ item }}"
@@ -24,3 +15,13 @@
       register: metallb_result
       changed_when: "'MetalLB is already enabled' not in metallb_result.stdout"
       when: metallb_ip_range is defined
+
+    - name: "Step 3. Patch Calico MTU for MicroK8s"
+      become: true
+      ansible.builtin.shell: |
+        # 1. Update veth_mtu in ConfigMap
+        microk8s kubectl patch configmap calico-config -n kube-system --type merge -p '{"data": {"veth_mtu": "{{ global_mtu - 50 | int }}"}}'
+        # 2. Trigger rollout to apply changes to existing nodes
+        microk8s kubectl rollout restart daemonset calico-node -n kube-system
+      register: calico_patch_result
+      changed_when: "'patched' in calico_patch_result.stdout"

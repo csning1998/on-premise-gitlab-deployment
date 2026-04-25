@@ -13,6 +13,7 @@
 
 - name: Reload Netplan
   ansible.builtin.command: netplan apply
+  changed_when: false
 
 - name: Restart Route Service
   ansible.builtin.systemd:

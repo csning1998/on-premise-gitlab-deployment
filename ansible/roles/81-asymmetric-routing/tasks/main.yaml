@@ -1,0 +1,32 @@
+---
+- name: "Step 0. Dynamically locate the host-only interface"
+  ansible.builtin.set_fact:
+    hostonly_iface: "{{ item }}"
+  loop: "{{ ansible_facts.interfaces }}"
+  when:
+    - item != 'lo'
+    - ansible_facts.default_ipv4 is defined
+    - item != ansible_facts.default_ipv4.interface
+    - ansible_facts[item] is defined
+    - ansible_facts[item].ipv4 is defined
+  run_once: false
+
+- name: "Step 1. Deploy Routing Fix Service"
+  ansible.builtin.template:
+    src: fix-routes.service.j2
+    dest: /etc/systemd/system/fix-vault-routes.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Asymmetric Route Service
+
+- name: "Step 2. Immediate Route Enforcement"
+  ansible.builtin.command:
+    cmd: >-
+      /usr/sbin/ip route replace {{ item.to }}
+      via {{ item.via }}
+      dev {{ hostonly_iface }}
+      metric {{ item.metric | default(100) }}
+      advmss {{ global_mss | default(1310) }}
+  loop: "{{ routing_static_routes }}"
+  changed_when: false
