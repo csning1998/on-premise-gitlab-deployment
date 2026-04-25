@@ -95,7 +95,16 @@
         cmd: "{{ microk8s_base.commands.reset }}"
       changed_when: true
 
-    - name: "Step D2. Stop the MicroK8s service for clean state"
+    - name: "Step D2. Wait for all pods to be fully removed"
+      ansible.builtin.command: >
+        microk8s kubectl get pods -A --no-headers
+      register: all_pods_check
+      until: all_pods_check.rc == 0 and all_pods_check.stdout == ""
+      retries: 30
+      delay: 5
+      failed_when: false
+
+    - name: "Step D3. Stop the MicroK8s service for clean state"
       ansible.builtin.command:
         cmd: "{{ microk8s_base.commands.stop }}"
       changed_when: true
