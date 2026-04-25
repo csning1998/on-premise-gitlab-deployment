@@ -35,7 +35,7 @@ for lib in "${SCRIPTS_LIB_DIR}"/*.sh; do
 	source "$lib"
 done
 
-# Set correct permissions since 
+# Set correct permissions since
 if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
   check_and_fix_permissions || { log_print "FATAL" "Permission fix failed."; exit 1; }
 fi
@@ -69,8 +69,6 @@ options+=("[PROD] Unseal Production Vault (via Ansible)")
 
 # [Infrastructure]
 options+=("Generate SSH Key")
-options+=("Setup KVM / QEMU for Native")
-options+=("Setup Core IaC Tools")
 options+=("Verify IaC Environment")
 
 # [Operations]
@@ -104,7 +102,7 @@ select opt in "${options[@]}"; do
       ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_unseal_handler
       break
       ;;
-    
+
     # Production Vault with PKI Functionality
     "[PROD] Unseal Production Vault (via Ansible)")
       ENVIRONMENT_STRATEGY="native" vault_prod_unseal_trigger
@@ -116,14 +114,6 @@ select opt in "${options[@]}"; do
       log_print "STEP" "Generate SSH Key for this project..."
       ssh_key_generator_handler
       log_print "OK" "SSH Key successfully generated."
-      break
-      ;;
-    "Setup KVM / QEMU for Native")
-      libvirt_install_handler && libvirt_environment_setup_handler
-      break
-      ;;
-    "Setup Core IaC Tools")
-      if iac_tools_install_prompter; then iac_tools_installation_handler; fi
       break
       ;;
     "Verify IaC Environment")
