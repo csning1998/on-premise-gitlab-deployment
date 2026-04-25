@@ -54,12 +54,14 @@ variable "network_infrastructure_map" {
         gateway     = string
         cidr        = string
         dhcp        = optional(any)
+        mtu         = number
       })
       hostonly = object({
         name        = string
         bridge_name = string
         gateway     = string
         cidr        = string
+        mtu         = number
       })
     })
     lb_config = optional(any)
