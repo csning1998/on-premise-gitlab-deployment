@@ -1,8 +1,6 @@
 
 vault_pki_engine_config = {
-  path                = "pki/prod"
-  root_ca_common_name = "on-premise-gitlab-deployment-root-ca"
-
+  path                      = "pki/prod"
   default_lease_ttl_seconds = 60 * 60 * 24       # 1 Day
   max_lease_ttl_seconds     = 60 * 60 * 24 * 365 # 1 Year
 }
