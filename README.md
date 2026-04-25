@@ -109,7 +109,7 @@ This project currently provisions the following services (Items 1–5 are config
     ------------------------------------------------------------
 
     1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
-    2) [DEV] Initialize Dev Vault (Local)                          8) Verify SSH
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify Guest VM Connectivity via SSH
     3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
     4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
     5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
@@ -514,7 +514,7 @@ Successful execution and the display of virtual machines—regardless of whether
 
             `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
-            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [here](terraform/layers/50-platform-gitlab/README.md) for detailed explanation.
+            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [L50 README](terraform/layers/50-platform-gitlab/README.md) for detailed explanation.
 
     - **Note 2**:
 

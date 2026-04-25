@@ -73,7 +73,7 @@ options+=("Verify IaC Environment")
 
 # [Operations]
 options+=("Build Packer Base Image")
-options+=("Verify SSH")
+options+=("Verify Guest VM Connectivity via SSH")
 options+=("Switch Environment Strategy")
 
 # [Reset]
@@ -125,7 +125,7 @@ select opt in "${options[@]}"; do
       packer_menu_handler
       break
       ;;
-    "Verify SSH")
+    "Verify Guest VM Connectivity via SSH")
       if ssh_key_verifier; then ssh_verification_handler; fi
       break
       ;;

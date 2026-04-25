@@ -109,7 +109,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     ------------------------------------------------------------
 
     1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
-    2) [DEV] Initialize Dev Vault (Local)                          8) Verify SSH
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify Guest VM Connectivity via SSH
     3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
     4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
     5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
@@ -513,7 +513,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
             可以操作 `echo` 指令進行驗證。在 Bootstrapper Vault 及其他機密操作方式相同
 
-            這指令在佈署 GitLab 出現 `OpenSSL::Cipher::CipherError` 時會使用到。可以參考 [這裡](terraform/layers/50-platform-gitlab/README-zh-TW.md) 說明
+            這指令在佈署 GitLab 出現 `OpenSSL::Cipher::CipherError` 時會使用到。可以參考 [L50 README](terraform/layers/50-platform-gitlab/README-zh-TW.md) 說明
 
     - **Note 2:**
 
