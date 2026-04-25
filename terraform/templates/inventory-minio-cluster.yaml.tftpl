@@ -16,7 +16,6 @@ all:
     minio_static_routes:
       - to: "${custom_vars.vault_vip}/32"
         via: "${custom_vars.minio_vip}"
-        dev: "ens3"
         metric: 100
 
   children:
