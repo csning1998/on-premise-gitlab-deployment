@@ -94,39 +94,34 @@ This project currently provisions the following services (Items 1–5 are config
 > [!NOTE]
 > Section 1 and Section 2 cover the pre-execution setup tasks. See below for details.
 
-The `entry.sh` script located in the root directory handles all service initialization and lifecycle management. Executing `./entry.sh` from the repo root displays the following interface:
-
-```text
-➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
-... (Some preflight check)
-
-======= IaC-Driven Virtualization Management =======
-
-[INFO] Environment: NATIVE
---------------------------------------------------
-[OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer 15): Running (Unsealed)
-------------------------------------------------------------
-
-1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
-4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
-5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
-6) Setup KVM / QEMU for Native                    12) Verify SSH
-
-[INPUT] Please select an action:
-```
-
-Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packer/output` and `terraform/layers` directories. The submenus for a complete configuration are shown below:
-
-> [!NOTE]
-> Option `11` is currently malfunctioning.
-
-1. When selecting `9) Build Packer Base Image`:
+1.  The `entry.sh` script located in the root directory handles all service initialization and lifecycle management. Executing `./entry.sh` from the repo root displays the following interface:
 
     ```text
-    [INPUT] Please select an action: 9
+    ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
+    ... (Some preflight check)
+
+    ======= IaC-Driven Virtualization Management =======
+
+    [INFO] Environment: NATIVE
+    --------------------------------------------------
+    [OK] Bootstrapper Vault (Local): Running (Unsealed)
+    [OK] Production Vault (Layer 15): Running (Unsealed)
+    ------------------------------------------------------------
+
+    1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify Guest VM Connectivity via SSH
+    3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
+    4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
+    5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
+    6) Verify IaC Environment                                     12) Quit
+
+    [INPUT] Please select an action:
+    ```
+
+2.  Option `7` dynamically populates submenus by scanning the `packer/output` directory. The submenus for a complete configuration are shown below:
+
+    ```text
+    [INPUT] Please select an action: 7
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
@@ -137,56 +132,24 @@ Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packe
     [INPUT] Select a category:
     ```
 
-    Selecting `1` is primarily used to build base OS images, including APT updates, etc.
+    1. Selecting `1` is primarily used to build base OS images, including APT updates, etc.
 
-    ```text
-    [INPUT] Select a category: 1
-    1) ubuntu-24-updated
-    2) Build ALL in Base OS Images
-    3) Back
-    ```
+        ```text
+        [INPUT] Select a category: 1
+        1) ubuntu-24-updated
+        2) Build ALL in Base OS Images
+        3) Back
+        ```
 
-    Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
+    2. Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
 
-    ```text
-    [INPUT] Select a category: 2
-    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
-    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
-    ```
+        ```text
+        [INPUT] Select a category: 2
+        1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+        2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
+        ```
 
-2. When selecting `10) Provision Terraform Layer`:
-
-    ```text
-    [INPUT] Please select an action: 10
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
-    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
-    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
-    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
-    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
-    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
-    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
-
-    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
-    ```
-
-3. _**(Deprecated)**_ When selecting `11) Rebuild Layer via Ansible`:
-
-    ```text
-    [INPUT] Please select an action: 11
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) inventory-10-vault-core.yaml         6) inventory-20-harbor-postgres.yaml
-    2) inventory-20-gitlab-minio.yaml       7) inventory-20-harbor-redis.yaml
-    3) inventory-20-gitlab-postgres.yaml    8) inventory-30-gitlab-kubeadm.yaml
-    4) inventory-20-gitlab-redis.yaml       9) inventory-30-harbor-microk8s.yaml
-    5) inventory-20-harbor-minio.yaml      10) Back to Main Menu
-
-    [INPUT] Select a Cluster Inventory to run its Playbook:
-    ```
-
-The following sections detail the usage instructions for `entry.sh`.
+**The following sections detail the usage instructions for `entry.sh`.**
 
 ## Section 1. Environmental Setup
 
@@ -196,48 +159,20 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **_(Deprecated)_ Install HashiCorp Toolkit - Terraform and Packer**
+1.  **Install IaC Toolkit - OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
-    Execute `entry.sh` in the project root directory and select option `7` "Setup Core IaC Tools for Native" to install Terraform, Packer, and Ansible. Refer to the official installation guides for more details:
+    Refer to the following resources for toolkit installation:
+    - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)
+    - [Terraform Installation](https://developer.hashicorp.com/terraform/install)
+    - [HashiCorp Vault Installation](https://developer.hashicorp.com/vault/docs/install)
+    - [Packer Installation](https://developer.hashicorp.com/packer/install)
+    - [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
-    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
-    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
-    > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+2.  Ensure Podman / Docker is correctly installed. Select the appropriate installation method from the links below based on your development machine's operating system:
+    - [Podman Installation](https://podman.io/getting-started/installation) _Recommended for RHEL / Fedora_
+    - [Docker Installation](https://docs.docker.com/get-docker/)
 
-    The expected output should be the latest version. For instance (in zsh):
-
-    ```text
-    ...
-    [INPUT] Please select an action: 7
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [STEP] Setting up core IaC tools...
-    [TASK] Installing OS-specific base packages for RHEL...
-    ...
-    [TASK] Installing Ansible Core using pip...
-    ...
-    [INFO] Installing HashiCorp Toolkits (Terraform, Packer, Vault)...
-    [TASK] Installing terraform...
-    ...
-    [TASK] Installing packer...
-    ...
-    [TASK] Installing vault...
-    ...
-    [TASK] Installing to /usr/local/bin/vault
-    [INFO] Verifying installed tools...
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [INFO] HashiCorp Packer: Installed
-    [INFO] HashiCorp Terraform: Installed
-    [INFO] HashiCorp Vault: Installed
-    [INFO] Red Hat Ansible: Installed
-    [OK] Core IaC tools setup and verification completed.
-    ```
-
-2. Verify that Podman or Docker is correctly installed. The appropriate installation method should be selected based on the host operating system by following the official documentation linked below:
-
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
-    > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
-
-3. For Podman-based setups, navigate to the project root directory after the installation:
+3.  For Podman-based setups, navigate to the project root directory after the installation:
     1. The default memlock limit (`ulimit -l`) is typically insufficient, causing HashiCorp Vault `mlock` system calls to fail. In Rootless Podman environments, processes are mapped via UID to a standard host user and inherit existing permission restrictions. To resolve this, the following configuration should be applied to `/etc/security/limits.conf`:
 
         ```shell
@@ -522,10 +457,6 @@ Successful execution and the display of virtual machines—regardless of whether
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
             ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
-        vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
-            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
-
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
             pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
             pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
@@ -583,7 +514,7 @@ Successful execution and the display of virtual machines—regardless of whether
 
             `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
-            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [here](terraform/layers/50-platform-gitlab/README.md) for detailed explanation.
+            This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [L50 README](terraform/layers/50-platform-gitlab/README.md) for detailed explanation.
 
     - **Note 2**:
 
@@ -610,7 +541,7 @@ Successful execution and the display of virtual machines—regardless of whether
 
 6. Since Helm Charts related to Layer 50 consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `30-infra-harbor-bootstrapper-frontend` and `40-provision-harbor-bootstrapper-frontend` have been executed successfully.
 
-    Once it is confirmed that the Bootstrapper Harbor related L30 and L40 have been executed, you can directly run the following commands:
+    Once it is confirmed that the Bootstrapper Harbor related L30 and L40 have been executed, you can directly run the following commands (This will be integrated into L40 triggered by Ansible Provider):
     1. **Environment Variables and Login**
 
         ```bash
@@ -696,22 +627,22 @@ Before proceeding with any provisioning, it is essential to understand the prima
     Support for additional Linux Guest OS such as Fedora 43 or RHEL 10 is planned.
 
 3. **Independent Testing and Development**:
-    - Use menu option `9) Build Packer Base Image` to generate base images.
-    - Use menu option `10) Provision Terraform Layer` to test or redeploy specific layers (e.g., Harbor, Postgres).
+    - Use menu option `7) Build Packer Base Image` to generate base images.
+    - **[Note]**: The `Provision Terraform Layer` interactive menu has been removed. Please manually navigate to the `terraform/layers/` directories and execute `tofu apply` for deployment.
 
-        Note: When rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/60-provision-harbor` before re-executing `terraform apply`.
-
-    To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use `11) Rebuild Layer via Ansible`.
+        Occasionally, when rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate*.backup` from `terraform/layers/60-provision-harbor` before re-executing `tofu apply`.
 
 4. **Resource Cleanup**:
-    - **`14) Purge Specific Terraform Layer`**: Destroys specific layer's virtual machines, associating libvirt resources, and its Terraform state file.
-    - **`15) Purge All Libvirt Resources`**: Clears virtualization resources while maintaining project state. Executes `libvirt_resource_purger "all"`, **deleting** all guest VMs, networks, and storage pools created by This repo, while preserving Packer images and Terraform local state files.
-    - **`16) Purge All Packer and Terraform Resources`**: Complete cleanup of all artifacts. Deletes all Packer output images and Terraform local state files.
+    - **`10) Purge All Packer Artifacts`**: Specifically cleans up all Packer-generated images, resetting the Packer state.
+    - **`11) Purge All Infrastructure Resources (Libvirt + Terraform)`**: Bundles the destruction of Libvirt virtualization resources with the cleanup of Terraform state files, ensuring the environment is completely reset.
+
+> [!NOTE]
+> The following content uses `tofu` as the main command. For users who are using `terraform`, just replace `tofu` with `terraform` accordingly.
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> For local management of a cloned repo, this step can be automated by selecting `90-github-meta` via option `10) Provision Terraform Layer`. Following instructions detail manual procedure for reference:
+> For local management of a cloned repo, this step can be manually performed by navigating to `terraform/layers/90-github-meta` and executing `tofu apply`. Following instructions detail the manual procedure for reference:
 
 1. Inject GitHub token from Vault using shell subquery. Execute from project root to verify `${PWD}` aligns with Vault credential directory:
 
@@ -730,14 +661,14 @@ Before proceeding with any provisioning, it is essential to understand the prima
     - **Scenario B (New Repository):** When creating a new repository from scratch, import step can be bypassed.
 
     ```shell
-    terraform init
-    terraform import github_repository.this on-premise-gitlab-deployment
+    tofu init
+    tofu import github_repository.this on-premise-gitlab-deployment
     ```
 
-4. Apply Ruleset: Executing `terraform plan` to preview changes before applying is recommended:
+4. Apply Ruleset: Executing `tofu plan` to preview changes before applying is recommended:
 
     ```shell
-    terraform apply -auto-approve
+    tofu apply -auto-approve
     ```
 
     Output should look similar to:

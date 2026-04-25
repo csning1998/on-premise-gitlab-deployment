@@ -29,21 +29,21 @@ ssh_key_generator_handler() {
   local key_name
 
   log_print "INFO" "This utility will generate an SSH key for IaC automation (unattended mode)."
-  
+
   log_print "INPUT" "Enter the desired key name (default: ${default_key_name}): "
   read -r key_name
-  
+
   key_name=${key_name:-$default_key_name}
-  
+
   local private_key_path="${HOME}/.ssh/${key_name}"
   local public_key_path="${private_key_path}.pub"
 
   if [ -f "$private_key_path" ]; then
     log_print "WARN" "Key file '${private_key_path}' already exists."
-    
+
     log_print "INPUT" "Overwrite? (y/n): "
     read -r overwrite_answer
-    
+
     if [[ ! "$overwrite_answer" =~ ^[Yy]$ ]]; then
       log_print "INFO" "Skipping key generation."
       return
@@ -52,11 +52,11 @@ ssh_key_generator_handler() {
 
   log_print "TASK" "Generating key at '${private_key_path}'..."
   ssh-keygen -t ed25519 -f "$private_key_path" -C "$key_name" -N ""
-  
+
   log_print "OK" "Key generated successfully."
   ls -l "$private_key_path" "$public_key_path"
   log_divider
-  
+
   log_print "TASK" "Updating SSH_PRIVATE_KEY in .env file to: ${private_key_path}"
   # Call the helper function to update the .env file
   env_var_mutator "SSH_PRIVATE_KEY" "${private_key_path}"
@@ -69,16 +69,16 @@ ssh_key_generator_handler() {
   log_divider
 }
 
-# Function: Verify SSH access to hosts defined in ~/.ssh/on-premise-gitlab-deployment_config
+# Function: Verify Guest VM Connectivity via SSH access to hosts defined in ~/.ssh/ssh_*
 ssh_connection_verifier() {
   log_print "STEP" "Performing strict SSH access verification for all IaC configurations..."
 
   local ssh_config_file
   # Use an array to handle cases where no files are found
-  readarray -t ssh_config_files < <(find "$HOME/.ssh" -maxdepth 1 -name "iac-kubeadm-*_config")
+  readarray -t ssh_config_files < <(find "$HOME/.ssh" -maxdepth 1 -name "ssh_*")
 
   if [ ${#ssh_config_files[@]} -eq 0 ]; then
-    log_print "ERROR" "No IaC SSH config files found matching '$HOME/.ssh/iac-kubeadm-*_config'."
+    log_print "ERROR" "No IaC SSH config files found matching '$HOME/.ssh/ssh_*'."
     return 1
   fi
 
@@ -113,7 +113,7 @@ ssh_connection_verifier() {
     # Loop through each host and test the connection silently.
     while IFS= read -r host; do
       if [ -z "$host" ]; then continue; fi
-      
+
       log_print "TASK" "Verifying connection to host: ${host}..."
       # Use ssh with the 'true' command for a quick, non-interactive connection test.
       # The '-n' option is CRITICAL here to prevent ssh from consuming the stdin of the while loop.
@@ -142,11 +142,11 @@ ssh_connection_verifier() {
   log_divider
 }
 
-# Function: Check if user wants to verify SSH connections
+# Function: Check if user wants to Verify Guest VM Connectivity via SSH connections
 ssh_verification_handler() {
-  log_print "INPUT" "Do you want to verify SSH connections? (y/n): "
+  log_print "INPUT" "Do you want to Verify Guest VM Connectivity via SSH connections? (y/n): "
   read -r answer
-  
+
   if [[ "${answer}" =~ ^[Yy]$ ]]; then
     ssh_connection_verifier
   else
@@ -226,13 +226,13 @@ ssh_config_include_unbootstrapper() {
     log_print "ERROR" "No config path provided to ssh_config_include_unbootstrapper."
     return 1
   fi
-  
+
   local ssh_config_file="${SSH_CONFIG:-$HOME/.ssh/config}"
   if [[ -z "${SSH_CONFIG}" ]]; then
     log_print "ERROR" "SSH_CONFIG is not defined"
     exit 1
   fi
-  
+
   local include_line="Include ${k8s_config_path}"
   if [[ -f "${ssh_config_file}" ]]; then
     sed -i "\|${include_line}|d" "${ssh_config_file}"
@@ -264,11 +264,11 @@ known_hosts_bootstrapper() {
   fi
 
   local known_hosts_file="$HOME/.ssh/known_hosts_${config_name}"
-  
+
   log_print "STEP" "Preparing SSH known_hosts: ${known_hosts_file}"
   mkdir -p "$HOME/.ssh"
   rm -f "${known_hosts_file}"
-  
+
   log_print "TASK" "Scanning host keys for all nodes..."
 
   local tmp_dir
@@ -279,7 +279,7 @@ known_hosts_bootstrapper() {
   scan_single_host() {
     local target_host="$1"
     local output_file="$2"
-    
+
     if ${perform_poll}; then
       log_print "TASK" "Waiting for SSH on ${target_host} ..."
       for ((attempt=1; attempt<=150; attempt++)); do
