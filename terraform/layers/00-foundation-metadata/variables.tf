@@ -37,6 +37,8 @@ variable "network_baseline" {
     vip_offset    = number
     node_ip_start = number
     mac_prefix    = string
+    global_mtu    = number
+    global_mss    = number
   })
 
   # Validate CIDR Block Format
