@@ -77,8 +77,8 @@ options+=("Verify SSH")
 options+=("Switch Environment Strategy")
 
 # [Reset]
-options+=("Purge All Libvirt Resources")
-options+=("Purge All Packer and Terraform Resources")
+options+=("Purge All Packer Artifacts")
+options+=("Purge All Infrastructure Resources (Libvirt + Terraform)")
 options+=("Quit")
 
 select opt in "${options[@]}"; do
@@ -133,18 +133,16 @@ select opt in "${options[@]}"; do
       strategy_switch_handler
       ;;
     # Reset
-    "Purge All Libvirt Resources")
-      if manual_confirmation_prompter "Libvirt resources"; then
-        libvirt_service_manager
-        libvirt_resource_purger "all"
+    "Purge All Packer Artifacts")
+      if manual_confirmation_prompter "All Packer artifacts (Images)"; then
+        packer_artifact_cleaner "all"
       fi
       break
       ;;
-    "Purge All Packer and Terraform Resources")
-      if manual_confirmation_prompter "Packer images/Terraform states"; then
+    "Purge All Infrastructure Resources (Libvirt + Terraform)")
+      if manual_confirmation_prompter "All Infrastructure (Libvirt VMs/Networks + Terraform States)"; then
         libvirt_service_manager
         libvirt_resource_purger "all"
-        packer_artifact_cleaner "all"
         terraform_artifact_cleaner "all"
         execution_time_reporter
       fi
