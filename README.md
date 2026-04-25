@@ -118,10 +118,10 @@ This project currently provisions the following services (Items 1–5 are config
     [INPUT] Please select an action:
     ```
 
-2.  Option `9` dynamically populate submenus by scanning the `packer/output` directory. The submenus for a complete configuration are shown below:
+2.  Option `7` dynamically populates submenus by scanning the `packer/output` directory. The submenus for a complete configuration are shown below:
 
     ```text
-    [INPUT] Please select an action: 9
+    [INPUT] Please select an action: 7
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
@@ -159,7 +159,7 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 ### B. Option 1. Install IaC tools on Native
 
-1.  **Install HashiCorp Toolkit - Terraform and Packer**
+1.  **Install IaC Toolkit - OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
     Refer to the following resources for toolkit installation:
     - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)

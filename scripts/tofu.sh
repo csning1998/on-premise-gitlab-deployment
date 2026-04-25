@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# This script contains functions for managing Terraform resources.
+# This script contains functions for managing OpenTofu resources.
 
-# Function: Clean up a specific Terraform layer's state files.
+# Function: Clean up a specific OpenTofu layer's state files.
 # Parameter 1: The short name of the layer (e.g., "10-provision-kubeadm") or "all".
 tofu_artifact_cleaner() {
   local target_layer="$1"
   if [ -z "$target_layer" ]; then
     log_print "FATAL" "No Terraform layer specified for tofu_artifact_cleaner function."
-    log_print "INFO" "Available layers: ${ALL_LAYERS[*]}"
+    log_print "INFO" "Available layers: ${ALL_TERRAFORM_LAYERS[*]}"
     return 1
   fi
 
@@ -32,7 +32,7 @@ tofu_artifact_cleaner() {
     log_print "STEP" "Cleaning Terraform artifacts for layer [${layer_name}]..."
     rm -rf "${layer_dir}/.terraform.lock.hcl" \
       "${layer_dir}/terraform.tfstate" \
-      "${layer_dir}/terraform.tfstate*.backup"
+      "${layer_dir}"/terraform.tfstate*.backup
     log_print "INFO" "Terraform artifact cleanup for [${layer_name}] completed."
     log_divider
   done

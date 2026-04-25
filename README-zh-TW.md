@@ -118,10 +118,10 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     [INPUT] Please select an action:
     ```
 
-2.  選擇選項 `9` 後會根據 `packer/output` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
+2.  選擇選項 `7` 後會根據 `packer/output` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
 
     ```text
-    [INPUT] Please select an action: 9
+    [INPUT] Please select an action: 7
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
@@ -146,6 +146,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         ```text
         [INPUT] Select a category: 2
         1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+        2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
         ```
 
 **以下為 `entry.sh` 的使用說明**

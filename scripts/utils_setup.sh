@@ -41,7 +41,7 @@ env_native_verifier() {
         all_ok=false
       fi
     done
-    return $([[ "$group_ok" == "true" ]])
+    [[ "$group_ok" == "true" ]]
   }
 
   check_tool_group "Libvirt/KVM Environment" "${libvirt_tools[@]}"
