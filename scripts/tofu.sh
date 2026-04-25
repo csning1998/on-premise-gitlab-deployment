@@ -4,10 +4,10 @@
 
 # Function: Clean up a specific Terraform layer's state files.
 # Parameter 1: The short name of the layer (e.g., "10-provision-kubeadm") or "all".
-terraform_artifact_cleaner() {
+tofu_artifact_cleaner() {
   local target_layer="$1"
   if [ -z "$target_layer" ]; then
-    log_print "FATAL" "No Terraform layer specified for terraform_artifact_cleaner function."
+    log_print "FATAL" "No Terraform layer specified for tofu_artifact_cleaner function."
     log_print "INFO" "Available layers: ${ALL_LAYERS[*]}"
     return 1
   fi

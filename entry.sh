@@ -143,7 +143,7 @@ select opt in "${options[@]}"; do
       if manual_confirmation_prompter "All Infrastructure (Libvirt VMs/Networks + Terraform States)"; then
         libvirt_service_manager
         libvirt_resource_purger "all"
-        terraform_artifact_cleaner "all"
+        tofu_artifact_cleaner "all"
         execution_time_reporter
       fi
       break
