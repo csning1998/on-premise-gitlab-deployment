@@ -171,21 +171,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
-3. _**（即將棄用）**_ 選 `11) Rebuild Layer via Ansible` 時
-
-    ```text
-    [INPUT] Please select an action: 11
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) inventory-10-vault-core.yaml         6) inventory-20-harbor-postgres.yaml
-    2) inventory-20-gitlab-minio.yaml       7) inventory-20-harbor-redis.yaml
-    3) inventory-20-gitlab-postgres.yaml    8) inventory-30-gitlab-kubeadm.yaml
-    4) inventory-20-gitlab-redis.yaml       9) inventory-30-harbor-microk8s.yaml
-    5) inventory-20-harbor-minio.yaml      10) Back to Main Menu
-
-    [INPUT] Select a Cluster Inventory to run its Playbook:
-    ```
-
 **以下為 `entry.sh` 的使用說明**
 
 ## Section 1. Environmental Setup
@@ -701,7 +686,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
         有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
 
-    若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
 
 4. **資源清理**：
     - **`14) Purge Specific Terraform Layer`** 主要用於清空特定 Terraform Layer 的虛擬機、儲存空間、網卡、以及 Terraform 的 state 檔案

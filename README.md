@@ -171,21 +171,6 @@ Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packe
     [INPUT] Select a Terraform layer to UPDATE / PROVISION:
     ```
 
-3. _**(Deprecated)**_ When selecting `11) Rebuild Layer via Ansible`:
-
-    ```text
-    [INPUT] Please select an action: 11
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) inventory-10-vault-core.yaml         6) inventory-20-harbor-postgres.yaml
-    2) inventory-20-gitlab-minio.yaml       7) inventory-20-harbor-redis.yaml
-    3) inventory-20-gitlab-postgres.yaml    8) inventory-30-gitlab-kubeadm.yaml
-    4) inventory-20-gitlab-redis.yaml       9) inventory-30-harbor-microk8s.yaml
-    5) inventory-20-harbor-minio.yaml      10) Back to Main Menu
-
-    [INPUT] Select a Cluster Inventory to run its Playbook:
-    ```
-
 The following sections detail the usage instructions for `entry.sh`.
 
 ## Section 1. Environmental Setup
@@ -701,7 +686,6 @@ Before proceeding with any provisioning, it is essential to understand the prima
 
         Note: When rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate.backup` from `terraform/layers/60-provision-harbor` before re-executing `terraform apply`.
 
-    To test Ansible playbooks on existing hosts without reprovisioning virtual machines, use `11) Rebuild Layer via Ansible`.
 
 4. **Resource Cleanup**:
     - **`14) Purge Specific Terraform Layer`**: Destroys specific layer's virtual machines, associating libvirt resources, and its Terraform state file.

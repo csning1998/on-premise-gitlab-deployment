@@ -76,7 +76,6 @@ options+=("Verify IaC Environment")
 # [Operations]
 options+=("Build Packer Base Image")
 options+=("Provision Terraform Layer")
-options+=("Rebuild Terraform Layer via Ansible")
 options+=("Verify SSH")
 options+=("Switch Environment Strategy")
 options+=("Purge Specific Terraform Layer")
@@ -141,14 +140,6 @@ select opt in "${options[@]}"; do
     "Provision Terraform Layer")
       libvirt_service_manager
       terraform_layer_selector
-      break
-      ;;
-    "Rebuild Terraform Layer via Ansible")
-      if ssh_key_verifier; then
-        libvirt_service_manager
-        ansible_menu_handler
-        execution_time_reporter
-      fi
       break
       ;;
     "Verify SSH")
