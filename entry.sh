@@ -73,10 +73,8 @@ options+=("Verify IaC Environment")
 
 # [Operations]
 options+=("Build Packer Base Image")
-options+=("Provision Terraform Layer")
 options+=("Verify SSH")
 options+=("Switch Environment Strategy")
-options+=("Purge Specific Terraform Layer")
 
 # [Reset]
 options+=("Purge All Libvirt Resources")
@@ -127,22 +125,12 @@ select opt in "${options[@]}"; do
       packer_menu_handler
       break
       ;;
-    "Provision Terraform Layer")
-      libvirt_service_manager
-      terraform_layer_selector
-      break
-      ;;
     "Verify SSH")
       if ssh_key_verifier; then ssh_verification_handler; fi
       break
       ;;
     "Switch Environment Strategy")
       strategy_switch_handler
-      ;;
-    "Purge Specific Terraform Layer")
-      libvirt_service_manager
-      terraform_layer_purger_selector
-      break
       ;;
     # Reset
     "Purge All Libvirt Resources")
