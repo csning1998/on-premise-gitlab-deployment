@@ -94,36 +94,31 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!NOTE]
 > Section 1 與 Section 2 的內容為正式執行前的前置作業。詳見以下說明：
 
-此 Repo 的服務前置作業、與生命週期管理等，都會透過根目錄下的 `entry.sh` 腳本處理。在終端機切換到此 repo 的根目錄後，執行 `./entry.sh` 會顯示以下內容：
+1.  此 Repo 的服務前置作業、與生命週期管理等，都會透過根目錄下的 `entry.sh` 腳本處理。在終端機切換到此 repo 的根目錄後，執行 `./entry.sh` 會顯示以下內容：
 
-```text
-➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
-... (Some preflight check)
+    ```text
+    ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
+    ... (Some preflight check)
 
-======= IaC-Driven Virtualization Management =======
+    ======= IaC-Driven Virtualization Management =======
 
-[INFO] Environment: NATIVE
---------------------------------------------------
-[OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer 15): Running (Unsealed)
-------------------------------------------------------------
+    [INFO] Environment: NATIVE
+    --------------------------------------------------
+    [OK] Bootstrapper Vault (Local): Running (Unsealed)
+    [OK] Production Vault (Layer 15): Running (Unsealed)
+    ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
-4) [PROD] Unseal Production Vault (via Ansible)            10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
-5) Generate SSH Key                                        11) Rebuild Terraform Layer via Ansible           17) Quit
-6) Setup KVM / QEMU for Native                             12) Verify SSH
+    1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify SSH
+    3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
+    4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
+    5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
+    6) Verify IaC Environment                                     12) Quit
 
-[INPUT] Please select an action:
-```
+    [INPUT] Please select an action:
+    ```
 
-選擇選項 `9`、`10`、`11` 後會根據 `packer/output` 與 `terraform/layers` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
-
-> [!NOTE]
-> 目前選項 `11` 的功能故障
-
-1. 選 `9) Build Packer Base Image` 時
+2.  選擇選項 `9` 後會根據 `packer/output` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
 
     ```text
     [INPUT] Please select an action: 9
@@ -137,39 +132,21 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     [INPUT] Select a category:
     ```
 
-    選擇 `1` 主要是用來建立基礎映像檔案，會包含 APT 更新等
+    1.  選擇 `1` 主要是用來建立基礎映像檔案，會包含 APT 更新等
 
-    ```text
-    [INPUT] Select a category: 1
-    1) ubuntu-24-updated
-    2) Build ALL in Base OS Images
-    3) Back
-    ```
+        ```text
+        [INPUT] Select a category: 1
+        1) ubuntu-24-updated
+        2) Build ALL in Base OS Images
+        3) Back
+        ```
 
-    選擇 `2` 會建立服務映像檔案。這會在 Packer HCL 內指定 `1` 所建立好的映像檔案來源，並在映像檔案內安裝該服務的執行檔與相關套件
+    2.  選擇 `2` 建立服務映像檔。它在 Packer HCL 中指定來自 `1` 的基礎映像作為來源，並安裝服務二進位檔案和相關套件。
 
-    ```text
-    [INPUT] Select a category: 2
-    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
-    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
-    ```
-
-2. 選 `10) Provision Terraform Layer` 時
-
-    ```text
-    [INPUT] Please select an action: 10
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
-    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
-    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
-    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
-    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
-    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
-    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
-
-    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
-    ```
+        ```text
+        [INPUT] Select a category: 2
+        1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+        ```
 
 **以下為 `entry.sh` 的使用說明**
 

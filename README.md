@@ -94,36 +94,31 @@ This project currently provisions the following services (Items 1–5 are config
 > [!NOTE]
 > Section 1 and Section 2 cover the pre-execution setup tasks. See below for details.
 
-The `entry.sh` script located in the root directory handles all service initialization and lifecycle management. Executing `./entry.sh` from the repo root displays the following interface:
+1.  The `entry.sh` script located in the root directory handles all service initialization and lifecycle management. Executing `./entry.sh` from the repo root displays the following interface:
 
-```text
-➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
-... (Some preflight check)
+    ```text
+    ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
+    ... (Some preflight check)
 
-======= IaC-Driven Virtualization Management =======
+    ======= IaC-Driven Virtualization Management =======
 
-[INFO] Environment: NATIVE
---------------------------------------------------
-[OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer 15): Running (Unsealed)
-------------------------------------------------------------
+    [INFO] Environment: NATIVE
+    --------------------------------------------------
+    [OK] Bootstrapper Vault (Local): Running (Unsealed)
+    [OK] Production Vault (Layer 15): Running (Unsealed)
+    ------------------------------------------------------------
 
-1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
-4) [PROD] Unseal Production Vault (via Ansible)   10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
-5) Generate SSH Key                               11) Rebuild Terraform Layer via Ansible           17) Quit
-6) Setup KVM / QEMU for Native                    12) Verify SSH
+    1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify SSH
+    3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
+    4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
+    5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
+    6) Verify IaC Environment                                     12) Quit
 
-[INPUT] Please select an action:
-```
+    [INPUT] Please select an action:
+    ```
 
-Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packer/output` and `terraform/layers` directories. The submenus for a complete configuration are shown below:
-
-> [!NOTE]
-> Option `11` is currently malfunctioning.
-
-1. When selecting `9) Build Packer Base Image`:
+2.  Option `9` dynamically populate submenus by scanning the `packer/output` directory. The submenus for a complete configuration are shown below:
 
     ```text
     [INPUT] Please select an action: 9
@@ -137,39 +132,22 @@ Options `9`, `10`, and `11` dynamically populate submenus by scanning the `packe
     [INPUT] Select a category:
     ```
 
-    Selecting `1` is primarily used to build base OS images, including APT updates, etc.
+    1. Selecting `1` is primarily used to build base OS images, including APT updates, etc.
 
-    ```text
-    [INPUT] Select a category: 1
-    1) ubuntu-24-updated
-    2) Build ALL in Base OS Images
-    3) Back
-    ```
+        ```text
+        [INPUT] Select a category: 1
+        1) ubuntu-24-updated
+        2) Build ALL in Base OS Images
+        3) Back
+        ```
 
-    Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
+    2. Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
 
-    ```text
-    [INPUT] Select a category: 2
-    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
-    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
-    ```
-
-2. When selecting `10) Provision Terraform Layer`:
-
-    ```text
-    [INPUT] Please select an action: 10
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
-    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
-    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
-    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
-    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
-    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
-    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
-
-    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
-    ```
+        ```text
+        [INPUT] Select a category: 2
+        1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+        2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
+        ```
 
 **The following sections detail the usage instructions for `entry.sh`.**
 
