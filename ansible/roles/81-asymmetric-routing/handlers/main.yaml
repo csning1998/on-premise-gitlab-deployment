@@ -1,0 +1,7 @@
+---
+- name: Restart Asymmetric Route Service
+  ansible.builtin.systemd:
+    name: fix-vault-routes.service
+    state: restarted
+    enabled: true
+    daemon_reload: true

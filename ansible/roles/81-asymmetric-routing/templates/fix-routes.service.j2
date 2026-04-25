@@ -8,8 +8,8 @@ Wants=network-online.target
 Type=oneshot
 # Force traffic to Vault VIP to go via Local LB VIP
 # This bypasses the Default Gateway to prevent stateful firewall drops
-{% for route in dev_harbor_static_routes %}
-ExecStart=/usr/sbin/ip route replace {{ route.to }} via {{ route.via }} dev {{ route.dev | default(ansible_default_ipv4.interface) }} metric {{ route.metric | default(100) }} advmss 1300
+{% for route in routing_static_routes %}
+ExecStart=/usr/sbin/ip route replace {{ route.to }} via {{ route.via }} dev {{ hostonly_iface }} metric {{ route.metric | default(100, true) }} advmss {{ global_mss | default(1310, true) }}
 {% endfor %}
 # RemainAfterExit ensures systemd considers this service "active" once run
 RemainAfterExit=yes

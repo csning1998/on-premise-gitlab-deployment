@@ -24,6 +24,11 @@ output "global_domain_suffix" {
   value       = var.domain_suffix
 }
 
+output "global_network_baseline" {
+  description = "Base network configuration including CIDR, VIP offsets, and global MTU/MSS settings."
+  value       = var.network_baseline
+}
+
 output "global_pki_settings" {
   description = "Global PKI Identity Settings for downstream layers (e.g. Vault PKI)."
   value       = var.pki_settings

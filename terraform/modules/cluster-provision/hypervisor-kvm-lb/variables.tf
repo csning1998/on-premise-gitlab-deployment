@@ -48,6 +48,7 @@ variable "lb_cluster_network_config" {
             end   = optional(string)
           }))
         })
+        mtu = number
       })
       hostonly = object({
         name_network = string
@@ -61,6 +62,7 @@ variable "lb_cluster_network_config" {
             end   = optional(string)
           }))
         })
+        mtu = number
       })
     })
   })
@@ -86,13 +88,14 @@ variable "network_infrastructure" {
       bridge_name = string
       gateway     = string
       prefix      = number
+      mtu         = number
     })
     nat = object({
       name        = string
       bridge_name = string
       gateway     = string
       prefix      = number
-      dhcp        = optional(any)
+      mtu         = number
     })
     access_scope = optional(string)
   }))

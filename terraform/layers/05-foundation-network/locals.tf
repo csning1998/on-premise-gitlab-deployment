@@ -34,6 +34,7 @@ locals {
         gateway     = cidrhost(data.network.cidr_block, 1)
         cidr        = data.network.cidr_block
         prefix      = 24
+        mtu         = local.state.metadata.global_network_baseline.global_mtu
       }
       nat = {
         name        = "${data.identity.cluster_name}-nat"
@@ -42,6 +43,7 @@ locals {
         cidr        = data.network.nat_cidr_block
         prefix      = 24
         dhcp        = data.network.nat_dhcp
+        mtu         = local.state.metadata.global_network_baseline.global_mtu
       }
     }
   }
