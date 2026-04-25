@@ -94,39 +94,34 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!NOTE]
 > Section 1 與 Section 2 的內容為正式執行前的前置作業。詳見以下說明：
 
-此 Repo 的服務前置作業、與生命週期管理等，都會透過根目錄下的 `entry.sh` 腳本處理。在終端機切換到此 repo 的根目錄後，執行 `./entry.sh` 會顯示以下內容：
-
-```text
-➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
-... (Some preflight check)
-
-======= IaC-Driven Virtualization Management =======
-
-[INFO] Environment: NATIVE
---------------------------------------------------
-[OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer 15): Running (Unsealed)
-------------------------------------------------------------
-
-1) [DEV] Set up TLS for Bootstrapper Vault (Local)          7) Setup Core IaC Tools                          13) Switch Environment Strategy
-2) [DEV] Initialize Bootstrapper Vault (Local)              8) Verify IaC Environment                        14) Purge Specific Terraform Layer
-3) [DEV] Unseal Bootstrapper Vault (Local)                  9) Build Packer Base Image                       15) Purge All Libvirt Resources
-4) [PROD] Unseal Production Vault (via Ansible)            10) Provision Terraform Layer                     16) Purge All Packer and Terraform Resources
-5) Generate SSH Key                                        11) Rebuild Terraform Layer via Ansible           17) Quit
-6) Setup KVM / QEMU for Native                             12) Verify SSH
-
-[INPUT] Please select an action:
-```
-
-選擇選項 `9`、`10`、`11` 後會根據 `packer/output` 與 `terraform/layers` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
-
-> [!NOTE]
-> 目前選項 `11` 的功能故障
-
-1. 選 `9) Build Packer Base Image` 時
+1.  此 Repo 的服務前置作業、與生命週期管理等，都會透過根目錄下的 `entry.sh` 腳本處理。在終端機切換到此 repo 的根目錄後，執行 `./entry.sh` 會顯示以下內容：
 
     ```text
-    [INPUT] Please select an action: 9
+    ➜  on-premise-gitlab-deployment git:(main) ✗ ./entry.sh
+    ... (Some preflight check)
+
+    ======= IaC-Driven Virtualization Management =======
+
+    [INFO] Environment: NATIVE
+    --------------------------------------------------
+    [OK] Bootstrapper Vault (Local): Running (Unsealed)
+    [OK] Production Vault (Layer 15): Running (Unsealed)
+    ------------------------------------------------------------
+
+    1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
+    2) [DEV] Initialize Dev Vault (Local)                          8) Verify Guest VM Connectivity via SSH
+    3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
+    4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
+    5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
+    6) Verify IaC Environment                                     12) Quit
+
+    [INPUT] Please select an action:
+    ```
+
+2.  選擇選項 `7` 後會根據 `packer/output` 目錄動態產生 submenu。目前完整設定下的 submenu 如下：
+
+    ```text
+    [INPUT] Please select an action: 7
     [INFO] Checking status of libvirt service...
     [OK] libvirt service is already running.
 
@@ -137,54 +132,22 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     [INPUT] Select a category:
     ```
 
-    選擇 `1` 主要是用來建立基礎映像檔案，會包含 APT 更新等
+    1.  選擇 `1` 主要是用來建立基礎映像檔案，會包含 APT 更新等
 
-    ```text
-    [INPUT] Select a category: 1
-    1) ubuntu-24-updated
-    2) Build ALL in Base OS Images
-    3) Back
-    ```
+        ```text
+        [INPUT] Select a category: 1
+        1) ubuntu-24-updated
+        2) Build ALL in Base OS Images
+        3) Back
+        ```
 
-    選擇 `2` 會建立服務映像檔案。這會在 Packer HCL 內指定 `1` 所建立好的映像檔案來源，並在映像檔案內安裝該服務的執行檔與相關套件
+    2.  選擇 `2` 建立服務映像檔。它在 Packer HCL 中指定來自 `1` 的基礎映像作為來源，並安裝服務二進位檔案和相關套件。
 
-    ```text
-    [INPUT] Select a category: 2
-    1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
-    2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
-    ```
-
-2. 選 `10) Provision Terraform Layer` 時
-
-    ```text
-    [INPUT] Please select an action: 10
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) 00-foundation-metadata                       8) 25-security-pki                            15) 30-infra-harbor-minio                      22) 50-platform-harbor
-    2) 00-foundation-vault-bootstrapper             9) 30-infra-gitlab-frontend                   16) 30-infra-harbor-postgres                   23) 60-provision-gitlab
-    3) 05-foundation-network                       10) 30-infra-gitlab-minio                      17) 30-infra-harbor-redis                      24) 60-provision-harbor
-    4) 05-foundation-volume                        11) 30-infra-gitlab-postgres                   18) 40-provision-gitlab-databases              25) 90-meta-github
-    5) 10-shared-load-balancer-frontend            12) 30-infra-gitlab-redis                      19) 40-provision-harbor-bootstrapper-frontend  26) Back to Main Menu
-    6) 15-shared-vault-frontend                    13) 30-infra-harbor-bootstrapper-frontend      20) 40-provision-harbor-databases
-    7) 20-security-vault-approle                   14) 30-infra-harbor-frontend                   21) 50-platform-gitlab
-
-    [INPUT] Select a Terraform layer to UPDATE / PROVISION:
-    ```
-
-3. _**（即將棄用）**_ 選 `11) Rebuild Layer via Ansible` 時
-
-    ```text
-    [INPUT] Please select an action: 11
-    [INFO] Checking status of libvirt service...
-    [OK] libvirt service is already running.
-    1) inventory-10-vault-core.yaml         6) inventory-20-harbor-postgres.yaml
-    2) inventory-20-gitlab-minio.yaml       7) inventory-20-harbor-redis.yaml
-    3) inventory-20-gitlab-postgres.yaml    8) inventory-30-gitlab-kubeadm.yaml
-    4) inventory-20-gitlab-redis.yaml       9) inventory-30-harbor-microk8s.yaml
-    5) inventory-20-harbor-minio.yaml      10) Back to Main Menu
-
-    [INPUT] Select a Cluster Inventory to run its Playbook:
-    ```
+        ```text
+        [INPUT] Select a category: 2
+        1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
+        2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
+        ```
 
 **以下為 `entry.sh` 的使用說明**
 
@@ -196,48 +159,20 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 ### B. Option 1. Install IaC tools on Native
 
-1. **_（即將棄用）_ 安裝 HashiCorp Toolkit - Terraform and Packer**
+1.  **安裝 IaC Toolkit - OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
-    接著在專案根目錄執行 `entry.sh`，選擇選項 `7` _"Setup Core IaC Tools for Native"_ 來安裝 Terraform、Packer 與 Ansible。可以參考官方安裝說明：
+    可以參考以下資源進行套件安裝：
+    - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)
+    - [Terraform Installation](https://developer.hashicorp.com/terraform/install)
+    - [HashiCorp Vault Installation](https://developer.hashicorp.com/vault/docs/install)
+    - [Packer Installation](https://developer.hashicorp.com/packer/install)
+    - [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
-    > _Reference: [Terraform Installation](https://developer.hashicorp.com/terraform/install)_
-    > _Reference: [Packer Installation](https://developer.hashicorp.com/packer/install)_
-    > _Reference: [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)_
+2.  要確認 Podman / Docker 已經正確安裝，需根據開發裝置的作業系統，參考以下網址選擇對應安裝方式
+    - [Podman Installation](https://podman.io/getting-started/installation) _Recommanded for RHEL / Fedora_
+    - [Docker Installation](https://docs.docker.com/get-docker/)
 
-    預期輸出應顯示最新版本，例如（在 zsh 下）：
-
-    ```text
-    ...
-    [INPUT] Please select an action: 7
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [STEP] Setting up core IaC tools...
-    [TASK] Installing OS-specific base packages for RHEL...
-    ...
-    [TASK] Installing Ansible Core using pip...
-    ...
-    [INFO] Installing HashiCorp Toolkits (Terraform, Packer, Vault)...
-    [TASK] Installing terraform...
-    ...
-    [TASK] Installing packer...
-    ...
-    [TASK] Installing vault...
-    ...
-    [TASK] Installing to /usr/local/bin/vault
-    [INFO] Verifying installed tools...
-    [STEP] Verifying Core IaC Tools (HashiCorp/Ansible)...
-    [INFO] HashiCorp Packer: Installed
-    [INFO] HashiCorp Terraform: Installed
-    [INFO] HashiCorp Vault: Installed
-    [INFO] Red Hat Ansible: Installed
-    [OK] Core IaC tools setup and verification completed.
-    ```
-
-2. 要確認 Podman / Docker 已經正確安裝，需根據開發裝置的作業系統，參考以下網址選擇對應安裝方式
-
-    > _Reference: [Podman Installation](https://podman.io/getting-started/installation)_
-    > _Reference: [Docker Installation](https://docs.docker.com/get-docker/)_
-
-3. 以 Podman 為例，在 Podman 安裝完成後，切換至專案根目錄：
+3.  以 Podman 為例，在 Podman 安裝完成後，切換至專案根目錄：
     1. 通常預設的 memlock limit (`ulimit -l`) 較低，會導致 HashiCorp Vault 的 mlock system call 失敗，且一般情況下的 Rootless Podman 只是經過 `uid` mapping 到 Host 上的普通使用者，會直接繼承權限限制。為解決此問題，請執行以下指令修改：
 
         ```shell
@@ -522,10 +457,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
             ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
             ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
-        vault kv put secret/on-premise-gitlab-deployment/infrastructure \
-            haproxy_stats_pass="<YOUR_HAPROXY_STATS_PASSWORD>" \
-            keepalived_auth_pass="<YOUR_KEEPALIVED_AUTH_PASSWORD>"
-
         vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
             pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
             pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
@@ -583,7 +514,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
             可以操作 `echo` 指令進行驗證。在 Bootstrapper Vault 及其他機密操作方式相同
 
-            這指令在佈署 GitLab 出現 `OpenSSL::Cipher::CipherError` 時會使用到。可以參考 [這裡](terraform/layers/50-platform-gitlab/README-zh-TW.md) 說明
+            這指令在佈署 GitLab 出現 `OpenSSL::Cipher::CipherError` 時會使用到。可以參考 [L50 README](terraform/layers/50-platform-gitlab/README-zh-TW.md) 說明
 
     - **Note 2:**
 
@@ -610,7 +541,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 6.  由於 Layer 50 相關的 Helm Chart 一律都採用 OCI 與 Bootstrapper Harbor 進行連線，因此需要先從遠端 `helm pull` 相關 Artifacts 並且推送到 Bootstrapper Harbor 中。要先確保 `30-infra-harbor-bootstrapper-frontend` 與 `40-provision-harbor-bootstrapper-frontend` 都有成功執行
 
-    在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令：
+    在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令（這之後會整合為透過 Ansible Provider 驅動）：
     1. **環境變數相關以及登入**
 
         ```bash
@@ -696,22 +627,22 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     若有時間，未來會支援其他 Linux Guest OS 如 Fedora 43 或 RHEL 10
 
 3. **獨立測試與開發**：可以使用
-    - 選單 `9) Build Packer Base Image` 建立 Packer image
-    - 選單 `10) Provision Terraform Layer` 獨立測試或重建特定 Terraform module layer（如 Harbor 或 Postgres 等）
+    - 選單 `7) Build Packer Base Image` 建立 Packer image
+    - **[注意]**：`Provision Terraform Layer` 互動選單已拔除，請手動進入 `terraform/layers/` 各目錄執行 `tofu apply` 進行佈署。
 
-        有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate.backup` 後重新執行 `terraform apply` 即可
-
-    若在現有機器上反覆測試 Ansible Playbook 而無需重建虛擬機器，可以使用 `11) Rebuild Layer via Ansible`
+        有時在 Layer 60 的 Service Provision 階段重建 Harbor 會出現 `module.harbor_system_config.harbor_garbage_collection.gc` Resource not found 錯誤，只需要移除 `terraform/layers/60-provision-harbor` 中的 `terraform.tfstate` 與 `terraform.tfstate*.backup` 後重新執行 `tofu apply` 即可
 
 4. **資源清理**：
-    - **`14) Purge Specific Terraform Layer`** 主要用於清空特定 Terraform Layer 的虛擬機、儲存空間、網卡、以及 Terraform 的 state 檔案
-    - **`15) Purge All Libvirt Resources`** 主要用在需要清理虛擬化資源，但需要保留專案狀態的情境。這個選項會執行 `libvirt_resource_purger "all"`，**僅刪除** 這個專案建立的所有 guest VM、network 與 storage pool，但會 **保留** Packer 輸出的 image 與 Terraform 的本地 state 檔案
-    - **`16) Purge All Packer and Terraform Resources`** 主要用於清空所有 artifacts。這個選項會刪除**所有** Packer 輸出 image 與**所有** Terraform Layer 本地 state，讓 Packer 與 Terraform 狀態幾乎回到全新
+    - **`10) Purge All Packer Artifacts`**：專門清理所有 Packer 輸出的映像檔（Images），讓 Packer 狀態回到全新
+    - **`11) Purge All Infrastructure Resources (Libvirt + Terraform)`**：將 Libvirt 虛擬化資源與 Terraform 狀態檔案綁定清理，確保環境狀態同步歸零
+
+> [!NOTE]
+> 以下內容有關 CLI 指令，會使用 `tofu` 為主；使用 Terraform 的話，只需要把 `tofu` 替換成 `terraform` 即可
 
 #### **Step B.4. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> 若本 repository 是 clone 來個人使用，此步驟（B.4）可透過 `10) Provision Terraform Layer` 選擇 `90-github-meta` 執行。以下內容僅提供 imperative 手動程序參考
+> 若本 repository 是 clone 來個人使用，此步驟（B.4）可手動進入 `terraform/layers/90-github-meta` 路徑並執行 `tofu apply` 完成。以下內容僅提供 imperative 手動程序參考
 
 1. 使用 Shell Bridge Pattern 從 Vault 注入 Token。在專案根目錄執行以確保 `${PWD}` 指向正確的 Vault 憑證路徑
 
@@ -730,14 +661,14 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     - **情境 B（全新 Repo）：** 若從頭建立全新 repository，可跳過 import 步驟
 
     ```shell
-    terraform init
-    terraform import github_repository.this on-premise-gitlab-deployment
+    tofu init
+    tofu import github_repository.this on-premise-gitlab-deployment
     ```
 
-4. 套用 Ruleset：建議先執行 `terraform plan` 預覽變更再 apply
+4. 套用 Ruleset：建議先執行 `tofu plan` 預覽變更再 apply
 
     ```shell
-    terraform apply -auto-approve
+    tofu apply -auto-approve
     ```
 
     輸出類似以下：

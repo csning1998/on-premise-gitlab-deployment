@@ -35,7 +35,7 @@ for lib in "${SCRIPTS_LIB_DIR}"/*.sh; do
 	source "$lib"
 done
 
-# Set correct permissions since 
+# Set correct permissions since
 if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
   check_and_fix_permissions || { log_print "FATAL" "Permission fix failed."; exit 1; }
 fi
@@ -69,21 +69,16 @@ options+=("[PROD] Unseal Production Vault (via Ansible)")
 
 # [Infrastructure]
 options+=("Generate SSH Key")
-options+=("Setup KVM / QEMU for Native")
-options+=("Setup Core IaC Tools")
 options+=("Verify IaC Environment")
 
 # [Operations]
 options+=("Build Packer Base Image")
-options+=("Provision Terraform Layer")
-options+=("Rebuild Terraform Layer via Ansible")
-options+=("Verify SSH")
+options+=("Verify Guest VM Connectivity via SSH")
 options+=("Switch Environment Strategy")
-options+=("Purge Specific Terraform Layer")
 
 # [Reset]
-options+=("Purge All Libvirt Resources")
-options+=("Purge All Packer and Terraform Resources")
+options+=("Purge All Packer Artifacts")
+options+=("Purge All Infrastructure Resources (Libvirt + Terraform)")
 options+=("Quit")
 
 select opt in "${options[@]}"; do
@@ -105,7 +100,7 @@ select opt in "${options[@]}"; do
       ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_unseal_handler
       break
       ;;
-    
+
     # Production Vault with PKI Functionality
     "[PROD] Unseal Production Vault (via Ansible)")
       ENVIRONMENT_STRATEGY="native" vault_prod_unseal_trigger
@@ -119,14 +114,6 @@ select opt in "${options[@]}"; do
       log_print "OK" "SSH Key successfully generated."
       break
       ;;
-    "Setup KVM / QEMU for Native")
-      libvirt_install_handler && libvirt_environment_setup_handler
-      break
-      ;;
-    "Setup Core IaC Tools")
-      if iac_tools_install_prompter; then iac_tools_installation_handler; fi
-      break
-      ;;
     "Verify IaC Environment")
       env_native_verifier
       break
@@ -138,45 +125,25 @@ select opt in "${options[@]}"; do
       packer_menu_handler
       break
       ;;
-    "Provision Terraform Layer")
-      libvirt_service_manager
-      terraform_layer_selector
-      break
-      ;;
-    "Rebuild Terraform Layer via Ansible")
-      if ssh_key_verifier; then
-        libvirt_service_manager
-        ansible_menu_handler
-        execution_time_reporter
-      fi
-      break
-      ;;
-    "Verify SSH")
+    "Verify Guest VM Connectivity via SSH")
       if ssh_key_verifier; then ssh_verification_handler; fi
       break
       ;;
     "Switch Environment Strategy")
       strategy_switch_handler
       ;;
-    "Purge Specific Terraform Layer")
-      libvirt_service_manager
-      terraform_layer_purger_selector
-      break
-      ;;
     # Reset
-    "Purge All Libvirt Resources")
-      if manual_confirmation_prompter "Libvirt resources"; then
-        libvirt_service_manager
-        libvirt_resource_purger "all"
+    "Purge All Packer Artifacts")
+      if manual_confirmation_prompter "All Packer artifacts (Images)"; then
+        packer_artifact_cleaner "all"
       fi
       break
       ;;
-    "Purge All Packer and Terraform Resources")
-      if manual_confirmation_prompter "Packer images/Terraform states"; then
+    "Purge All Infrastructure Resources (Libvirt + Terraform)")
+      if manual_confirmation_prompter "All Infrastructure (Libvirt VMs/Networks + Terraform States)"; then
         libvirt_service_manager
         libvirt_resource_purger "all"
-        packer_artifact_cleaner "all"
-        terraform_artifact_cleaner "all"
+        tofu_artifact_cleaner "all"
         execution_time_reporter
       fi
       break
