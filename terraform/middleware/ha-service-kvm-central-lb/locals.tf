@@ -29,7 +29,7 @@ locals {
         base_image_path = node_spec.base_image_path
 
         interfaces = flatten([
-          # Interface 1: NAT (Management) [ens3]
+          # Interface 1: NAT (Management)
           [{
             network_name = local.infra.nat.name
             mac = format("%s:%s:%s:00:%s:%02x",
@@ -42,7 +42,7 @@ locals {
             addresses = []
           }],
 
-          # Interface 2: HostOnly (Internal) [ens4]
+          # Interface 2: HostOnly (Internal)
           [{
             network_name = local.infra.hostonly.name
             mac = format("%s:%s:%s:%s:%s:%02x",
