@@ -132,16 +132,19 @@
         enabled: true
         daemon_reload: true
 
-    - name: "Step D8.1. Flush handlers to restart Vault Agent immediately if config changed"
+    - name: "Step D9. Flush handlers to restart Vault Agent immediately if config changed"
       ansible.builtin.meta: flush_handlers
 
-    - name: "Step D9. Wait for valid certificate on disk"
-      ansible.builtin.shell: |
-        openssl x509 -checkend 0 -noout -in /etc/minio/certs/public.crt
-      register: cert_check
-      until: cert_check.rc == 0
-      retries: 30
-      delay: 2
+    - name: "Step D10. Wait for Certificates to be generated"
+      ansible.builtin.wait_for:
+        path: /etc/minio/certs/public.crt
+        timeout: 60
+        msg: "Timeout waiting for Vault Agent to generate certificates."
+
+    - name: "Step D11. Verify Certificate Validity"
+      ansible.builtin.command:
+        cmd: "openssl x509 -in /etc/minio/certs/public.crt -noout -checkend 0"
+      changed_when: false
 
 - name: "Section E: Start Service"
   ansible.builtin.systemd:
@@ -200,15 +203,7 @@
         mode: "0644"
       when: ansible_user != 'root'
 
-    - name: "Task F6 Wait for Vault Agent"
-      ansible.builtin.command: systemctl is-active vault-agent
-      register: vault_status
-      until: vault_status.rc == 0
-      retries: 10
-      delay: 2
-      changed_when: false
-
-    - name: "Task F7. Wait for MinIO Cluster Readiness"
+    - name: "Task F6. Wait for MinIO Cluster Readiness"
       ansible.builtin.uri:
         url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/ready"
         validate_certs: true
@@ -218,7 +213,7 @@
       retries: 30
       delay: 5
 
-    - name: "Task F8. Configure local alias 'myminio' for Root"
+    - name: "Task F7. Configure local alias 'myminio' for Root"
       ansible.builtin.command:
         cmd: >-
           mc alias set myminio
@@ -231,7 +226,7 @@
       delay: 3
       changed_when: false
 
-    - name: "Task F9. Verify MinIO Cluster Status (Deep Check)"
+    - name: "Task F8. Verify MinIO Cluster Status (Deep Check)"
       ansible.builtin.command:
         cmd: mc admin info myminio
       register: mc_info
