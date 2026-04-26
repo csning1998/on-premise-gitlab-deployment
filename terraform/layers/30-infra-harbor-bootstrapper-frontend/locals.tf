@@ -115,11 +115,10 @@ locals {
       harbor_bootstrapper_admin_password = local.sec_app_creds.harbor_admin_password
       harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
       terraform_runner_subnet            = local.network_infrastructure_map["default"].network.hostonly.cidr
+      vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.vault_agent_cert_ttl
     },
-    local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
-      vault_server_cert = local.pki_global_ca.server_cert
-      vault_server_key  = local.pki_global_ca.server_key
-      vault_ca_cert     = base64decode(local.state.vault_pki.bootstrap_ca.content)
+    local.state.vault_pki != null ? {
+      vault_ca_cert = local.state.vault_pki.bootstrap_ca.content
     } : {}
   )
 }
