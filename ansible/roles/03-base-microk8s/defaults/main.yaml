@@ -13,6 +13,7 @@ microk8s_base:
     wait_snapd: "snap wait system seed.loaded"
     wait_ready: "microk8s status --wait-ready"
     reset: "microk8s reset"
+    wait_terminated: "microk8s kubectl get pods -A --no-headers"
     stop: "snap stop microk8s"
 
   aliases:
