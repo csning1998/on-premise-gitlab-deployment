@@ -1,19 +1,16 @@
 
-# Persist the PKI CA Certificate for Dependent Layers (e.g. Minio Provider)
+# Persist the PKI CA Certificate for Dependent Layers. e.g. L30
 resource "local_file" "pki_root_ca" {
   content  = module.vault_pki_setup.pki_root_ca_certificate
   filename = abspath("${path.module}/tls/pki-root-ca.crt")
 }
 
-# Aggregate Bootstrap CA and PKI CA into a single bundle for all downstream layers.
-# This ensures that during rotation, both old and new trust roots are valid.
 resource "local_file" "trust_bundle" {
-  content = join("\n", compact([
-    base64decode(local.state.metadata.global_vault_pki.ca_cert),
-    module.vault_pki_setup.pki_root_ca_certificate
-  ]))
-  filename        = abspath("${path.module}/tls/trust-bundle.crt")
-  file_permission = "0644"
+  content  = <<EOT
+${chomp(base64decode(local.state.metadata.global_vault_pki.ca_cert))}
+${chomp(module.vault_pki_setup.pki_root_ca_certificate)}
+EOT
+  filename = abspath("${path.module}/tls/trust-bundle.crt")
 }
 
 module "vault_pki_setup" {
