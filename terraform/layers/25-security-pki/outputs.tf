@@ -41,10 +41,10 @@ output "auth_backend_paths" {
 }
 
 output "bootstrap_ca" {
-  description = "Bootstrap CA certificate details"
+  description = "Aggregated Trust Bundle (Bootstrap CA + PKI CA)"
   value = {
-    path    = local.bootstrap_ca_path
-    content = base64encode(file(local.bootstrap_ca_path))
+    path    = local_file.trust_bundle.filename
+    content = base64encode(local_file.trust_bundle.content)
   }
 }
 
