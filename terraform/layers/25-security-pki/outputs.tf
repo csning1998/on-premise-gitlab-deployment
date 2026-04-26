@@ -10,7 +10,7 @@ output "pki_configuration" {
     path                 = module.vault_pki_setup.vault_pki_path
     pki_roles            = module.vault_pki_setup.pki_roles
     ca_cert              = base64encode(module.vault_pki_setup.pki_root_ca_certificate)
-    vault_agent_cert_ttl = "${floor(var.vault_pki_engine_config.max_lease_ttl_seconds * 0.2)}s"
+    vault_agent_cert_ttl = var.environment == "production" ? "12h" : "5m"
   }
 }
 
