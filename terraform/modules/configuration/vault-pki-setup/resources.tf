@@ -1,8 +1,4 @@
 
-resource "time_rotating" "ca_rotation" {
-  rotation_minutes = 10 # Sync with Global
-}
-
 # 1. PKI Engine
 resource "vault_mount" "pki_prod" {
   path        = var.pki_engine_config.path
@@ -25,12 +21,6 @@ resource "vault_pki_secret_backend_root_cert" "prod_root_ca" {
   key_type             = "rsa"
   key_bits             = 4096
   exclude_cn_from_sans = true
-
-  lifecycle {
-    replace_triggered_by = [
-      time_rotating.ca_rotation
-    ]
-  }
 }
 
 # CRL/OSCP URL
