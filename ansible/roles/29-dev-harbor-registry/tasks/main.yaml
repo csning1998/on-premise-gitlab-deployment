@@ -223,10 +223,20 @@
       ansible.builtin.command: update-ca-certificates
       changed_when: false
 
+    - name: "Step F0.1. Wait for Server Certificate to be valid (Not Expired)"
+      ansible.builtin.shell: |
+        openssl x509 -in {{ harbor_cert_path }} -noout -checkend 0
+      register: cert_check
+      until: cert_check.rc == 0
+      retries: 30
+      delay: 5
+      changed_when: false
+
     - name: "Step F1. Wait for Harbor Health (HTTPS)"
       ansible.builtin.uri:
         url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
         validate_certs: true
+        ca_path: "/etc/vault.d/vault-ca.crt"
         status_code: 200
         return_content: true
       register: result
