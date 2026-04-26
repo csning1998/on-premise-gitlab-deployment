@@ -52,30 +52,11 @@
       notify: Restart MinIO
 
 - name: "Section C: Configure Network Routing"
-  become: true
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ minio_static_routes }}"
   when: minio_static_routes is defined and minio_static_routes | length > 0
-  block:
-    - name: "Step C1. Deploy Routing Fix Service"
-      ansible.builtin.template:
-        src: fix-routes.service.j2
-        dest: /etc/systemd/system/fix-vault-routes.service
-        owner: root
-        group: root
-        mode: "0644"
-      register: route_service_config
-
-    - name: "Step C2. Enable and Start Routing Fix"
-      ansible.builtin.systemd:
-        name: fix-vault-routes.service
-        state: restarted
-        enabled: true
-        daemon_reload: true
-
-    - name: "Step C3. Immediate Route Enforcement"
-      ansible.builtin.command:
-        cmd: "/usr/sbin/ip route replace {{ item.to }} via {{ item.via }} dev {{ item.dev | default('ens3') }} metric {{ item.metric | default(100) }} advmss 1300"
-      loop: "{{ minio_static_routes }}"
-      changed_when: false
 
 - name: "Section D: Certificate"
   become: true

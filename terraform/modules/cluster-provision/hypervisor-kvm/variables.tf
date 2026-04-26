@@ -57,6 +57,7 @@ variable "libvirt_infrastructure" {
             end   = optional(string)
           }))
         })
+        mtu = number
       })
       hostonly = object({
         name_network = string
@@ -70,6 +71,7 @@ variable "libvirt_infrastructure" {
             end   = optional(string)
           }))
         })
+        mtu = number
       })
     })
     storage_pool_name = string

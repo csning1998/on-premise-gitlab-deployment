@@ -7,7 +7,6 @@ all:
     postgres_static_routes:
       - to: "${custom_vars.vault_vip}/32"
         via: "${custom_vars.postgres_vip}"
-        dev: "ens3"
         metric: 100
 
   children:

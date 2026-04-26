@@ -110,6 +110,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     hostonly_ip_cidr = local.nodes_config[each.key].hostonly_ip_cidr
     nat_gateway      = var.libvirt_infrastructure[each.value.network_tier].network.nat.ips.address
     hostonly_gateway = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.ips.address
+    mtu              = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.mtu
   })
 }
 

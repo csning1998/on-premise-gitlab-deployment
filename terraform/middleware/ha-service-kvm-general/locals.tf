@@ -139,6 +139,7 @@ locals {
             address = infra.network.nat.gateway
             dhcp    = infra.network.nat.dhcp
           }
+          mtu = infra.network.nat.mtu
         }
         hostonly = {
           name_network = infra.network.hostonly.name
@@ -149,6 +150,7 @@ locals {
             address = infra.network.hostonly.gateway
             dhcp    = null
           }
+          mtu = infra.network.hostonly.mtu
         }
       }
       storage_pool_name = var.topology_cluster.storage_pool_name
