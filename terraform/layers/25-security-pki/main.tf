@@ -1,10 +1,4 @@
 
-# Persist the PKI CA Certificate for Dependent Layers. e.g. L30
-resource "local_file" "pki_root_ca" {
-  content  = module.vault_pki_setup.pki_root_ca_certificate
-  filename = abspath("${path.module}/tls/pki-root-ca.crt")
-}
-
 resource "local_file" "trust_bundle" {
   content  = <<EOT
 ${chomp(base64decode(local.state.metadata.global_vault_pki.ca_cert))}

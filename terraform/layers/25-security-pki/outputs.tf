@@ -47,11 +47,3 @@ output "bootstrap_ca" {
     content = base64encode(local_file.trust_bundle.content)
   }
 }
-
-output "pki_ca" {
-  description = "PKI Root CA certificate details"
-  value = {
-    path    = local_file.pki_root_ca.filename
-    content = base64encode(local_file.pki_root_ca.content)
-  }
-}
