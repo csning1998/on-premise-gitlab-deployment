@@ -135,10 +135,13 @@
     - name: "Step D8.1. Flush handlers to restart Vault Agent immediately if config changed"
       ansible.builtin.meta: flush_handlers
 
-    - name: "Step D9. Wait for Certificates"
-      ansible.builtin.wait_for:
-        path: /etc/minio/certs/public.crt
-        timeout: 30
+    - name: "Step D9. Wait for valid certificate on disk"
+      ansible.builtin.shell: |
+        openssl x509 -checkend 0 -noout -in /etc/minio/certs/public.crt
+      register: cert_check
+      until: cert_check.rc == 0
+      retries: 30
+      delay: 2
 
 - name: "Section E: Start Service"
   ansible.builtin.systemd:
