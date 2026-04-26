@@ -60,8 +60,7 @@ locals {
 
 # Security & App Context
 locals {
-  sys_vault_addr   = "https://${local.state.vault_sys.service_vip}:443"
-  pki_vault_ca_b64 = local.state.metadata.global_vault_pki.ca_cert
+  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
@@ -87,7 +86,7 @@ locals {
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.minio_agent.secret_id
-    ca_cert_b64   = local.pki_vault_ca_b64
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
     common_name   = local.svc_fqdn
   }
 }
