@@ -102,9 +102,10 @@
       until: all_pods_check.rc == 0 and all_pods_check.stdout == ""
       retries: 30
       delay: 5
-      failed_when: false
+      changed_when: false
 
     - name: "Step D3. Stop the MicroK8s service for clean state"
       ansible.builtin.command:
         cmd: "{{ microk8s_base.commands.stop }}"
-      changed_when: true
+      register: microk8s_stop_result
+      changed_when: "'Stopped' in microk8s_stop_result.stdout"
