@@ -109,11 +109,19 @@
         enabled: true
         daemon_reload: true
 
-    - name: "Step D8. Wait for Certificates"
+    - name: "Step D8. Flush Handlers to restart Vault Agent immediately if config changed"
+      ansible.builtin.meta: flush_handlers
+
+    - name: "Step D9. Wait for Certificates to be generated"
       ansible.builtin.wait_for:
         path: /etc/redis/certs/server.crt
-        timeout: 120
+        timeout: 60
         msg: "Timeout waiting for Vault Agent to generate certificates."
+
+    - name: "Step D10. Verify Certificate Validity"
+      ansible.builtin.command:
+        cmd: "openssl x509 -in /etc/redis/certs/server.crt -noout -checkend 0"
+      changed_when: false
 
 - name: "Section E: Start Services"
   block:

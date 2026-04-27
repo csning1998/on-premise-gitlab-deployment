@@ -7,6 +7,7 @@ network:
       match:
         macaddress: "${nat_mac}"
       dhcp4: true
+      dhcp-identifier: mac
       nameservers:
         addresses: [8.8.8.8, 1.1.1.1]
 

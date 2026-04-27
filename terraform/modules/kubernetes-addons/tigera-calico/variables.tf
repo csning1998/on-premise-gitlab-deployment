@@ -20,3 +20,8 @@ variable "chart_project" {
   type        = string
   description = "The project name in Harbor for Helm charts"
 }
+
+variable "mtu" {
+  type        = number
+  description = "The MTU to use for the Calico network."
+}

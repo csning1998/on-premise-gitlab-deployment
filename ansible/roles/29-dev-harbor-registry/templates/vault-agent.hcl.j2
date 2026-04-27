@@ -29,7 +29,7 @@ template {
   destination = "/etc/vault.d/deploy-certs.sh"
   perms       = "0700"
   contents    = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ dev_harbor_vip ~ '" "ttl=' ~ (vault_agent_cert_ttl | default('24h')) ~ '" -}}' }}
+{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ advertise_ip ~ ',' ~ dev_harbor_vip ~ '" "ttl=' ~ vault_agent_cert_ttl ~ '" -}}' }}
 #!/bin/sh
 
 mkdir -p "$(dirname "{{ harbor_cert_path }}")"
@@ -37,6 +37,7 @@ mkdir -p /data/harbor/secret/cert
 
 cat << 'CERT_EOF' > {{ harbor_cert_path }}
 {{ '{{ .Data.certificate }}' }}
+{{ '{{ .Data.issuing_ca }}' }}
 CERT_EOF
 
 cat << 'KEY_EOF' > {{ harbor_key_path }}

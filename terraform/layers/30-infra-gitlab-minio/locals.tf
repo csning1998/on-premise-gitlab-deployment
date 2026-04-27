@@ -60,8 +60,7 @@ locals {
 
 # Security & App Context
 locals {
-  sys_vault_addr   = "https://${local.state.vault_sys.service_vip}:443"
-  pki_vault_ca_b64 = local.state.metadata.global_vault_pki.ca_cert
+  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
@@ -87,7 +86,7 @@ locals {
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.minio_agent.secret_id
-    ca_cert_b64   = local.state.metadata.global_vault_pki.ca_cert
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
     common_name   = local.svc_fqdn
   }
 }
@@ -121,8 +120,11 @@ locals {
     vault_addr              = local.sys_vault_addr
     vault_role_name         = local.sec_vault_agent_identity.role_name
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
-    minio_root_user         = local.sec_db_creds.minio_root_user
-    minio_root_password     = local.sec_db_creds.minio_root_password
-    minio_vrrp_secret       = local.sec_db_creds.minio_vrrp_secret
+    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
+
+    minio_root_user     = local.sec_db_creds.minio_root_user
+    minio_root_password = local.sec_db_creds.minio_root_password
+    minio_vrrp_secret   = local.sec_db_creds.minio_vrrp_secret
+    global_mss          = local.state.metadata.global_network_baseline.global_mss
   }
 }

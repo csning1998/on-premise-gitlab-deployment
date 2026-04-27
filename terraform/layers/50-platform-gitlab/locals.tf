@@ -35,6 +35,9 @@ locals {
 
 # 3. Addons & Trust Engine Context
 locals {
+  # Network Context
+  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+
   # FQDNs
   fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
   fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
