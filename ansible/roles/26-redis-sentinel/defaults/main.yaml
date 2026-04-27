@@ -1,4 +1,8 @@
 ---
+# Redis Service Configuration
+redis_user: "redis"
+redis_group: "redis"
+
 # Sentinel Configuration
 sentinel_master_name: "{{ service_identifier }}-sentinel_master"
 

@@ -38,90 +38,15 @@
     routing_static_routes: "{{ redis_static_routes }}"
   when: redis_static_routes is defined and redis_static_routes | length > 0
 
-- name: "Section D: Configure Vault Agent"
-  become: true
-  block:
-    - name: "Step D0. Ensure Vault Binary is installed"
-      ansible.builtin.include_role:
-        name: 07-base-vault
-      vars:
-        vault_install_only: true
-
-    - name: "Step D1. Create Vault Agent Config Directory"
-      ansible.builtin.file:
-        path: "/etc/vault.d/approle"
-        state: directory
-        owner: vault
-        group: vault
-        mode: "0750"
-
-    - name: "Step D2. Write AppRole Credentials"
-      ansible.builtin.copy:
-        content: "{{ item.content }}"
-        dest: "/etc/vault.d/approle/{{ item.file }}"
-        owner: vault
-        group: vault
-        mode: "0600"
-      loop:
-        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
-        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
-      no_log: true
-      notify: Restart Vault Agent
-
-    - name: "Step D3. Deploy Vault CA Certificate"
-      ansible.builtin.copy:
-        content: "{{ vault_ca_cert_b64 | b64decode }}"
-        dest: "/etc/vault.d/vault-ca.crt"
-        owner: vault
-        group: vault
-        mode: "0644"
-
-    - name: "Step D4. Ensure Redis Cert Directory Exists"
-      ansible.builtin.file:
-        path: /etc/redis/certs
-        state: directory
-        owner: redis
-        group: redis
-        mode: "0750"
-
-    - name: "Step D5. Configure Vault Agent (agent.hcl)"
-      ansible.builtin.template:
-        src: vault-agent.hcl.j2
-        dest: /etc/vault.d/vault-agent.hcl
-        owner: vault
-        group: vault
-        mode: "0640"
-      notify: Restart Vault Agent
-
-    - name: "Step D6. Configure Vault Agent Service"
-      ansible.builtin.template:
-        src: vault-agent.service.j2
-        dest: /etc/systemd/system/vault-agent.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify: Restart Vault Agent
-
-    - name: "Step D7. Enable and Start Vault Agent"
-      ansible.builtin.systemd:
-        name: vault-agent
-        state: started
-        enabled: true
-        daemon_reload: true
-
-    - name: "Step D8. Flush Handlers to restart Vault Agent immediately if config changed"
-      ansible.builtin.meta: flush_handlers
-
-    - name: "Step D9. Wait for Certificates to be generated"
-      ansible.builtin.wait_for:
-        path: /etc/redis/certs/server.crt
-        timeout: 60
-        msg: "Timeout waiting for Vault Agent to generate certificates."
-
-    - name: "Step D10. Verify Certificate Validity"
-      ansible.builtin.command:
-        cmd: "openssl x509 -in /etc/redis/certs/server.crt -noout -checkend 0"
-      changed_when: false
+- name: "Section D: Configure Vault Agent for PKI Rotation"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "{{ redis_user }}"
+    vault_agent_group: "{{ redis_group }}"
+    vault_agent_cert_base_dir: "/etc/redis/certs"
+    vault_agent_post_command: "systemctl restart redis-server redis-sentinel"
+    vault_agent_ip_sans: "{{ advertise_ip }}"
 
 - name: "Section E: Start Services"
   block:
