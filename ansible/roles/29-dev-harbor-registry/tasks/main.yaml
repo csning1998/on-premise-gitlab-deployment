@@ -103,7 +103,7 @@
         mount_point: "{{ vault_auth_path }}"
         role_id: "{{ vault_agent_role_id }}"
         secret_id: "{{ vault_agent_secret_id }}"
-        ca_cert: "/etc/vault.d/vault-ca.crt"
+        ca_cert: "{{ vault_agent_config_dir }}/vault-ca.crt"
       register: harbor_vault_secrets
 
 - name: "Section F: Configure Harbor"
