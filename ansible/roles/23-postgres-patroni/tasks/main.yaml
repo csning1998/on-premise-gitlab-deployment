@@ -59,7 +59,7 @@
     vault_agent_group: "{{ postgres_group }}"
     vault_agent_cert_base_dir: "/etc/postgresql/certs"
     vault_agent_post_command: "systemctl restart patroni"
-    vault_agent_ip_sans: "{{ advertise_ip }}, {{ postgres_ha_virtual_ip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"
 
 - name: "Section F: Start and Enable Patroni Service"
   block:
