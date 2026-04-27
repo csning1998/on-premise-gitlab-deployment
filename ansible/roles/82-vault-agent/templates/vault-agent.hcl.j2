@@ -39,9 +39,9 @@ mkdir -p "{{ dir }}"
 {% for cert in vault_agent_cert_files %}
 # Ensure subdirectories exist for the specific cert file if needed
 mkdir -p "$(dirname "{{ cert.dest }}")"
-cat << 'EOF' > {{ cert.dest }}
+cat << '_VAULT_AGENT_EOF_' > {{ cert.dest }}
 {{ cert.content }}
-EOF
+_VAULT_AGENT_EOF_
 {% endfor %}
 
 {% for dir in vault_agent_cert_dirs %}
@@ -49,11 +49,7 @@ chown -R {{ vault_agent_owner }}:{{ vault_agent_group }} {{ dir }}
 {% endfor %}
 
 {% for cert in vault_agent_cert_files %}
-{% if 'key' in cert.dest %}
-chmod 0600 {{ cert.dest }}
-{% else %}
-chmod 0644 {{ cert.dest }}
-{% endif %}
+chmod {{ cert.mode }} {{ cert.dest }}
 {% endfor %}
 
 {{ vault_agent_post_command }}

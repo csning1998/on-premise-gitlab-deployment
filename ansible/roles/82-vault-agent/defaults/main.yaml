@@ -32,10 +32,13 @@ vault_agent_ca_content: "{{ '{{ .Data.issuing_ca }}' }}"
 vault_agent_cert_files:
   - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_cert_name }}"
     content: "{{ vault_agent_cert_content }}"
+    mode: "0644"
   - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_key_name }}"
     content: "{{ vault_agent_key_content }}"
+    mode: "0600"
   - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_ca_name }}"
     content: "{{ vault_agent_ca_content }}"
+    mode: "0644"
 
 # Operational Defaults
 vault_agent_wait_file: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_cert_name }}"
