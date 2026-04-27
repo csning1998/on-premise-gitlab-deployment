@@ -1,4 +1,8 @@
 ---
+# PostgreSQL Service Configuration
+postgres_user: "postgres"
+postgres_group: "postgres"
+
 # PostgreSQL Version
 postgres_version: 18
 
