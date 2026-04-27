@@ -58,19 +58,19 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "Step C4. Download Vault PKI Issuing CA to OS trust store"
+    - name: "Step C4. Force update CA certificates before downloading Issuing CA"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+
+    - name: "Step C5. Download Vault PKI Issuing CA to OS trust store"
       ansible.builtin.get_url:
         url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
         dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
         mode: "0644"
         owner: root
         group: root
-        validate_certs: false  # Self-signed bootstrap period
+        validate_certs: true
       notify: Update CA Certificates
-
-    - name: "Step C5. Force update CA certificates"
-      ansible.builtin.command: update-ca-certificates
-      changed_when: false
 
 - name: "Section D: Configure Vault Agent for PKI Rotation"
   ansible.builtin.include_role:
