@@ -95,6 +95,7 @@ locals {
 
   ansible_extra_vars = {
     terraform_runner_subnet = local.net_lb_config.hostonly.cidr
+    global_mss              = local.state.metadata.global_network_baseline.global_mss
   }
 }
 
