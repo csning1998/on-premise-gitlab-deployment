@@ -114,6 +114,6 @@ locals {
     pg_superuser_password   = local.sec_app_creds.superuser_password
     pg_vrrp_secret          = local.sec_app_creds.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
-    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.vault_agent_cert_ttl
+    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
   }
 }

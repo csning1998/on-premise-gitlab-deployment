@@ -132,7 +132,7 @@ locals {
     vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
     vault_addr            = local.sys_vault_addr
     vault_role_name       = local.sec_vault_agent_identity.role_name
-    vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.vault_agent_cert_ttl
+    vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.lease_durations.agent
     service_name          = local.primary_context.s_name
 
     # Mirroring Paths
