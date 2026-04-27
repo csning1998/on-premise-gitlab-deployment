@@ -49,8 +49,8 @@ chown redis:redis /etc/redis/certs/server.crt /etc/redis/certs/server.key /etc/r
 chmod 0644 /etc/redis/certs/server.crt /etc/redis/certs/ca.crt
 chmod 0600 /etc/redis/certs/server.key
 
-systemctl reload redis-server
-systemctl is-active --quiet redis-sentinel && systemctl reload redis-sentinel || true
+systemctl restart redis-server
+systemctl is-active --quiet redis-sentinel && systemctl restart redis-sentinel || true
 {{ '{{- end -}}' }}
 EOH
 

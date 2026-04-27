@@ -53,7 +53,7 @@ chown postgres:postgres /etc/postgresql/certs/server.crt /etc/postgresql/certs/s
 chmod 0644 /etc/postgresql/certs/server.crt /etc/postgresql/certs/ca.crt
 chmod 0600 /etc/postgresql/certs/server.key
 
-systemctl reload patroni
+systemctl restart patroni
 {{ '{{- end -}}' }}
 EOH
 

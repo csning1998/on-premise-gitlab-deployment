@@ -51,7 +51,7 @@ chown {{ minio_user | default("minio-user") }}:{{ minio_group | default("minio-g
 chmod 0644 /etc/minio/certs/public.crt /etc/minio/certs/CAs/root_ca.crt
 chmod 0600 /etc/minio/certs/private.key
 
-systemctl reload minio || systemctl restart minio
+systemctl restart minio
 {{ '{{- end -}}' }}
 EOH
 
