@@ -5,8 +5,7 @@ resource "vault_pki_secret_backend_cert" "harbor_db_client" {
   backend     = local.state.vault_pki.pki_configuration.path
   name        = local.state.vault_pki.pki_configuration.pki_roles["harbor-frontend"].name
   common_name = local.state.vault_pki.pki_configuration.pki_roles["harbor-frontend"].allowed_domains[0]
-
-  ttl = "2160h" # 90 Days
+  ttl         = local.state.vault_pki.pki_configuration.lease_durations.default
 }
 
 module "minio_harbor_config" {
