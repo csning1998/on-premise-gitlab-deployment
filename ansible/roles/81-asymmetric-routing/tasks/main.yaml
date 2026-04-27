@@ -44,6 +44,6 @@
       via {{ item.via }}
       dev {{ hostonly_iface }}
       metric {{ item.metric | default(100) }}
-      advmss {{ global_mss | default(1310) }}
+      advmss {{ global_mss }}
   loop: "{{ routing_static_routes }}"
   changed_when: false

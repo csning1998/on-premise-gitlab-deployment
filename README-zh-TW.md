@@ -592,7 +592,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 #### **Step B.3. Understand the Metadata:**
 
 > [!TIP]
-> **Layer 00 (Foundation Metadata)** 是整個專案的「基礎設施元資料庫」與單一真理來源 (SSoT)。
+> **Layer 00 (Foundation Metadata)** 是整個專案的「基礎設施元資料庫」與單一事實來源 (SSoT)。
 
 在執行任何 Provision 之前，必須理解 `00` 層級的主要工作，這 Layer 不會建立任何虛擬化資源，而是負責計算：
 
@@ -639,7 +639,21 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!NOTE]
 > 以下內容有關 CLI 指令，會使用 `tofu` 為主；使用 Terraform 的話，只需要把 `tofu` 替換成 `terraform` 即可
 
-#### **Step B.4. Provision the GitHub Repository with Terraform:**
+#### **Step B.5. Vault PKI 憑證輪替規則:**
+
+有關 Vault PKI Rotation 相關設定
+
+1.  **Infrastructure Root CA**：定義在 L00 內由 `tls_self_signed_cert` 產生，預設有效期限為 1 年，專門用在 Central Load Balancer 與 Vault 伺服器本身的 HTTPS 介面。原則上 Root CA **不進行自動輪替**，否則會產生非冪等的無效循環
+
+2.  **Service Root CA**：定義在 L25 由 Vault PKI Engine (`pki/prod`) 內透過 `type = "internal"` 產生，用於所有內部服務包含 Postgres、Redis、MinIO、Harbor、GitLab 之間的 TLS / mTLS 通訊。如果需更換 Root CA，需要在 `terraform/layers/25-security-pki` 目錄下執行以下指令：
+
+    ```shell
+    tofu apply -replace="module.vault_pki_setup.vault_pki_secret_backend_root_cert.prod_root_ca" -auto-approve
+    ```
+
+3.  **Leaf Certificate Rotation**：Leaf 憑證由 L25 `terraform.tfvars` 中的 `max_lease_ttl_seonds` 決定，其中在 Postgres、Redis、MinIO、Bootstrapper Harbor 中，都有佈署 **Vault Agent** 進行 Sidecar 輪替。Vault Agent 會在憑證過期前自動向 Vault 申請新憑證，隨後寫入其內部的 `/etc/vault.d/` 路徑下
+
+#### **Step B.6. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
 > 若本 repository 是 clone 來個人使用，此步驟（B.4）可手動進入 `terraform/layers/90-github-meta` 路徑並執行 `tofu apply` 完成。以下內容僅提供 imperative 手動程序參考
@@ -681,7 +695,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     ruleset_id = <a-numeric-id>
     ```
 
-#### **Step B.5. Export Certs of Services:**
+#### **Step B.7. Export Certs of Services:**
 
 匯出服務憑證可以讓使用者在 Host 端直接瀏覽以下服務，且不會出現憑證錯誤
 
@@ -703,43 +717,24 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
     ```
 
-2.  要建立 Host-level Trust (Infrastructure & Service CAs). 由於 `tls/` 路徑並沒有做 git 版控, 因此在做憑證匯入之前，需要從 live Vault server 取得 Root CA。這裡可以使用 `curl` 從 Vault PKI 引擎中取得 Service CA 的公鑰。這裡需要加上 `-k` 參數，因為這時候 trust chain 還沒有被建立起來。這裡先設定 Vault Address 後，就下載到 `terraform/layers/15-shared-vault-frontend/tls` 路徑內
-
-    ```bash
-    export VAULT_ADDR="https://172.16.136.250:443"
-    curl -k $VAULT_ADDR/v1/pki/prod/ca/pem -o terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt
-    ```
-
-3.  **將兩個 Certificates 都匯入 System Trust Store:**
-
-    現在在 `terraform/layers/15-shared-vault-frontend/tls/` 路徑內存在兩個 CA 檔案：
-    - `bootstrap-ca.crt`：**Infrastructure CA** （由 Terraform 當場產生）
-    - `vault-pki-ca.crt`：**Service CA** （透過 Vault API 下載）
+2.  由於此 repo 在 L25 已經將 Infrastructure CA 與 Service CA 聚合成單一 `trust-bundle.crt`，讓 Host 同時信任這兩個獨立的憑證根。可以參考 _Step B.5_ 內容，現在可以 `terraform/layers/25-security-pki/tls/` 路徑內確認聚合後的憑證檔案
 
     執行以下指令將兩份 CA 匯入作業系統：
     - **RHEL / CentOS / Fedora:**
 
-        ```shell
-        # 1. Copy both CAs to the anchors directory
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt /etc/pki/ca-trust/source/anchors/
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /etc/pki/ca-trust/source/anchors/
-
-        # 2. Update the trust store
+        ```bash
+        sudo cp terraform/layers/25-security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
         sudo update-ca-trust
         ```
 
     - **Ubuntu / Debian:**
 
         ```shell
-        # 1. Copy both CAs to the shared certificates directory
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt /usr/local/share/ca-certificates/bootstrap-ca.crt
-        sudo cp terraform/layers/15-shared-vault-frontend/tls/vault-pki-ca.crt /usr/local/share/ca-certificates/vault-pki-ca.crt
-
-        # 2. Update the certificates
+        sudo cp terraform/layers/25-security-pki/tls/trust-bundle.crt /usr/local/share/ca-certificates/on-premise-gitlab-pki-bundle.crt
         sudo update-ca-certificates
         ```
 
-4.  從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA
+3.  可以驗證從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA。例如：
 
     ```shell
     curl -I https://minio.harbor.production.iac.local:9000/minio/health/live
@@ -747,13 +742,15 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
     若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定
 
-5.  從 host 存取 Harbor 驗證 Trust Store
+4.  從 host 存取 Harbor 驗證 Trust Store
 
     ```shell
     curl -vI https://harbor.production.iac.local
     ```
 
     若顯示 `SSL certificate verify ok` 與 `HTTP/2 200`，代表從 Vault 憑證發行、經 cert-manager 簽署、Ingress 部署到 host 信任的完整 PKI Chain 已成功建立
+
+5.  另一個驗證方式就是直接透過 GUI 存取對應的位置
 
 ## Section 3. System Architecture
 

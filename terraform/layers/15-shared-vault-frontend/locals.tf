@@ -86,6 +86,7 @@ locals {
       ansible_user       = local.sec_vm_creds.username
       dev_vault_url      = var.vault_dev_addr
       dev_vault_api_path = "on-premise-gitlab-deployment/credentials"
+      global_mss         = local.state.metadata.global_network_baseline.global_mss
     },
     local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
       vault_server_cert = local.pki_global_ca.server_cert

@@ -72,8 +72,8 @@ locals {
   # Component Specific Vault Identities
   sec_vault_role_key = local.svc_pki_role.key
   sec_vault_agent_identity = {
-    ca_cert_b64   = local.pki_global_ca.ca_cert
     common_name   = local.svc_fqdn
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
     auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
@@ -115,11 +115,11 @@ locals {
       harbor_bootstrapper_admin_password = local.sec_app_creds.harbor_admin_password
       harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
       terraform_runner_subnet            = local.network_infrastructure_map["default"].network.hostonly.cidr
+      vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.lease_durations.agent
+      global_mss                         = local.state.metadata.global_network_baseline.global_mss
     },
-    local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
-      vault_server_cert = local.pki_global_ca.server_cert
-      vault_server_key  = local.pki_global_ca.server_key
-      vault_ca_cert     = local.pki_global_ca.ca_cert
+    local.state.vault_pki != null ? {
+      vault_ca_cert = local.state.vault_pki.bootstrap_ca.content
     } : {}
   )
 }

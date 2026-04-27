@@ -7,8 +7,7 @@ resource "vault_pki_secret_backend_cert" "gitlab_db_client" {
   backend     = local.state.vault_pki.pki_configuration.path
   name        = local.state.vault_pki.pki_configuration.pki_roles["gitlab-frontend"].name
   common_name = local.state.vault_pki.pki_configuration.pki_roles["gitlab-frontend"].allowed_domains[0]
-
-  ttl = "2160h" # 90 Days
+  ttl         = local.state.vault_pki.pki_configuration.lease_durations.default
 }
 
 # Random password for GitLab database role

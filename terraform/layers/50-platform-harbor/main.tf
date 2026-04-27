@@ -90,7 +90,10 @@ module "harbor_core" {
     chart_project  = local.helm_chart_project
   }
 
-  certificate_config = var.certificate_config
+  certificate_config = {
+    duration     = local.state.vault_pki.pki_configuration.lease_durations.default
+    renew_before = local.state.vault_pki.pki_configuration.lease_durations.agent
+  }
 
   harbor_config = {
     hostname       = local.harbor_fqdn

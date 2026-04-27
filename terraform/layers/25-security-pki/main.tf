@@ -1,8 +1,10 @@
 
-# Persist the PKI CA Certificate for Dependent Layers (e.g. Minio Provider)
-resource "local_file" "pki_root_ca" {
-  content  = module.vault_pki_setup.pki_root_ca_certificate
-  filename = abspath("${path.module}/tls/pki-root-ca.crt")
+resource "local_file" "trust_bundle" {
+  content  = <<EOT
+${chomp(base64decode(local.state.metadata.global_vault_pki.ca_cert))}
+${chomp(module.vault_pki_setup.pki_root_ca_certificate)}
+EOT
+  filename = abspath("${path.module}/tls/trust-bundle.crt")
 }
 
 module "vault_pki_setup" {

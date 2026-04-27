@@ -76,7 +76,7 @@ locals {
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
-    ca_cert_b64   = local.state.metadata.global_vault_pki.ca_cert
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
     common_name   = local.svc_fqdn
   }
 
@@ -132,11 +132,13 @@ locals {
     vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
     vault_addr            = local.sys_vault_addr
     vault_role_name       = local.sec_vault_agent_identity.role_name
+    vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.lease_durations.agent
     service_name          = local.primary_context.s_name
 
     # Mirroring Paths
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+    global_mss          = local.state.metadata.global_network_baseline.global_mss
   }
 }

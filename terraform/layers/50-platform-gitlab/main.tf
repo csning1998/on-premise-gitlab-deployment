@@ -5,6 +5,7 @@ module "tigera_calico" {
   image_registry = local.harbor_registry
   image_path     = local.harbor_quay_proxy
   chart_project  = local.helm_chart_project
+  mtu            = local.pod_network_mtu - 50
 }
 
 # [REFACTORED] Trust Engine Integration
@@ -131,7 +132,7 @@ module "gitlab_core" {
   helm_config = {
     version        = var.gitlab_helm_config.version
     namespace      = kubernetes_namespace.gitlab_ns.metadata[0].name
-    timeout        = 900
+    timeout        = 1500
     image_registry = local.harbor_registry
     chart_project  = local.helm_chart_project
   }
@@ -151,7 +152,10 @@ module "gitlab_core" {
     issuer_kind     = var.trust_engine_config.issuer_kind
   }
 
-  certificate_config = var.certificate_config
+  certificate_config = {
+    duration     = local.state.vault_pki.pki_configuration.lease_durations.default
+    renew_before = local.state.vault_pki.pki_configuration.lease_durations.agent
+  }
 
   image_registry = {
     registry   = local.gitlab_image_registry

@@ -143,11 +143,16 @@
     - name: "Step C10. Flush handlers to restart Vault Agent immediately if config changed"
       ansible.builtin.meta: flush_handlers
 
-    - name: "Step C11. Wait for Certificate Generation"
+    - name: "Step C11. Wait for Certificates to be generated"
       ansible.builtin.wait_for:
         path: "{{ harbor_cert_path }}"
         timeout: 60
         msg: "Timeout waiting for Vault Agent to generate Harbor certificates."
+
+    - name: "Step C12. Verify Certificate Validity"
+      ansible.builtin.command:
+        cmd: "openssl x509 -in {{ harbor_cert_path }} -noout -checkend 0"
+      changed_when: false
 
 - name: "Section D: Fetch Secrets from Vault"
   become: true
@@ -227,6 +232,7 @@
       ansible.builtin.uri:
         url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
         validate_certs: true
+        ca_path: "/etc/vault.d/vault-ca.crt"
         status_code: 200
         return_content: true
       register: result

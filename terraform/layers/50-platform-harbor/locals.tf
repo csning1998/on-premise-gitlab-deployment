@@ -29,6 +29,9 @@ locals {
 
 # Addons & Trust Engine Context
 locals {
+  # Network Context
+  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+
   # FQDNs
   harbor_fqdn = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
   vault_fqdn  = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
@@ -39,23 +42,23 @@ locals {
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
 
-  # Helm Charts Project (Sourced from Bootstrapper)
+  # Helm Charts Project Sourced from Bootstrapper
   helm_chart_project = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
-  # K8s API Endpoint for Vault Callback (Standardized)
+  # K8s API Endpoint for Vault Callback
   api_port     = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
   api_endpoint = "https://${local.state.microk8s_provision.harbor_microk8s_ip_list[0]}:${local.api_port}"
 
   # Cluster CA from ConfigMap
   cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
 
-  # Vault Connection (Standardized)
+  # Vault Connection
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert  = local.state.vault_pki.bootstrap_ca.content
   vault_pki_path = local.state.vault_pki.pki_configuration.path
 
-  # Dependency Ports (Standardized)
+  # Dependency Ports
   pg_port = local.state.metadata.global_topology_network["harbor"]["postgres"].ports["rw-proxy"].frontend_port
 
   # Map to the specific component identity in Vault PKI (SSoT Driven)
@@ -69,13 +72,13 @@ locals {
   harbor_pg_db_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
   harbor_admin_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
 
-  # Database & Storage Credentials (discovered from vault)
+  # Database & Storage Credentials discovered from vault
   redis_password   = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
   minio_access_key = data.vault_kv_secret_v2.s3_vars.data["access_key"]
   minio_secret_key = data.vault_kv_secret_v2.s3_vars.data["secret_key"]
 }
 
-# 5. CA Bundle Configuration (Dynamic Merging)
+# 5. CA Bundle Configuration
 locals {
   ca_bundle_config = {
     name        = "harbor-ca-bundle" # K8s Secret Name
@@ -88,7 +91,7 @@ locals {
   }
 }
 
-# 6. DNS Configuration (Standardized)
+# 6. DNS Configuration
 locals {
   # Explicitly extract IPs to avoid implicit map projection failures
   harbor_vip   = local.state.microk8s_provision.harbor_microk8s_virtual_ip
@@ -106,12 +109,12 @@ locals {
     "${local.harbor_vip}" = "${local.harbor_fqdn} notary.${local.harbor_fqdn}"
     "${local.vault_vip}"  = local.vault_fqdn
 
-    # Dependency Roles (Explicitly Mapping)
+    # Dependency Roles
     "${local.redis_vip}"    = local.redis_fqdn
     "${local.postgres_vip}" = local.postgres_fqdn
     "${local.minio_vip}"    = local.minio_fqdn
 
-    # Registry Redirection (SSoT)
+    # Registry Redirection
     "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_registry
   }
 }

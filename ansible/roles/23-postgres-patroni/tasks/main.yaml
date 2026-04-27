@@ -102,14 +102,19 @@
         enabled: true
         daemon_reload: true
 
-    - name: "Step D7.1. Flush handlers to restart Vault Agent immediately if config changed"
+    - name: "Step D8. Flush handlers to restart Vault Agent immediately if config changed"
       ansible.builtin.meta: flush_handlers
 
-    - name: "Step D8. Wait for Certificates to be generated"
+    - name: "Step D9. Wait for Certificates to be generated"
       ansible.builtin.wait_for:
         path: /etc/postgresql/certs/server.crt
-        timeout: 120
+        timeout: 60
         msg: "Timeout waiting for Vault Agent to generate certificates."
+
+    - name: "Step D10. Verify Certificate Validity"
+      ansible.builtin.command:
+        cmd: "openssl x509 -in /etc/postgresql/certs/server.crt -noout -checkend 0"
+      changed_when: false
 
 - name: "Section E: Configure Patroni Service"
   block:
