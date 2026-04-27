@@ -21,7 +21,7 @@
         - { file: "role_id", content: "{{ vault_agent_role_id }}" }
         - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
       no_log: true
-      notify: Restart Vault Agent
+      register: vault_agent_approle
 
     - name: "Step 3. Deploy Vault CA Certificate"
       ansible.builtin.copy:
@@ -47,7 +47,7 @@
         owner: "{{ vault_agent_config_owner }}"
         group: "{{ vault_agent_config_group }}"
         mode: "0640"
-      notify: Restart Vault Agent
+      register: vault_agent_hcl
 
     - name: "Step 6. Configure Vault Agent Service"
       ansible.builtin.template:
@@ -56,7 +56,7 @@
         owner: "{{ vault_agent_service_owner }}"
         group: "{{ vault_agent_service_group }}"
         mode: "0644"
-      notify: Restart Vault Agent
+      register: vault_agent_service
 
     - name: "Step 7. Enable and Start Vault Agent"
       ansible.builtin.systemd:
@@ -65,8 +65,15 @@
         enabled: true
         daemon_reload: true
 
-    - name: "Step 8. Flush Handlers to restart Vault Agent immediately if config changed"
-      ansible.builtin.meta: flush_handlers
+    - name: "Step 8. Restart Vault Agent immediately if config changed"
+      ansible.builtin.systemd:
+        name: vault-agent
+        state: restarted
+        daemon_reload: "{{ vault_agent_service.changed | default(false) }}"
+      when: >
+        vault_agent_approle.changed or
+        vault_agent_hcl.changed or
+        vault_agent_service.changed
 
     - name: "Step 9. Wait for Certificates to be generated"
       ansible.builtin.wait_for:
