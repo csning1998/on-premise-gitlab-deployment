@@ -1,4 +1,0 @@
----
-# Global Network MTU/MSS Settings
-# Manually synchronized with Terraform Layer 00 Foundation Metadata
-global_mss: 1310

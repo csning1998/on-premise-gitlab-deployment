@@ -116,6 +116,7 @@ locals {
       harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
       terraform_runner_subnet            = local.network_infrastructure_map["default"].network.hostonly.cidr
       vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.lease_durations.agent
+      global_mss                         = local.state.metadata.global_network_baseline.global_mss
     },
     local.state.vault_pki != null ? {
       vault_ca_cert = local.state.vault_pki.bootstrap_ca.content

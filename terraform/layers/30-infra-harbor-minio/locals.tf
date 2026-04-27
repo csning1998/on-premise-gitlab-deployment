@@ -124,5 +124,6 @@ locals {
     minio_root_user         = local.sec_db_creds.minio_root_user
     minio_root_password     = local.sec_db_creds.minio_root_password
     minio_vrrp_secret       = local.sec_db_creds.minio_vrrp_secret
+    global_mss              = local.state.metadata.global_network_baseline.global_mss
   }
 }

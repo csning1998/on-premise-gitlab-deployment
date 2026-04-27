@@ -108,5 +108,6 @@ locals {
     vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.lease_durations.agent
     vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.microk8s_agent.secret_id
     service_name          = "harbor"
+    global_mss            = local.state.metadata.global_network_baseline.global_mss
   }
 }

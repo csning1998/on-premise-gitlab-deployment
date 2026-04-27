@@ -139,5 +139,6 @@ locals {
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+    global_mss          = local.state.metadata.global_network_baseline.global_mss
   }
 }
