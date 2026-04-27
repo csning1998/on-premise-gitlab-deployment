@@ -656,7 +656,7 @@ Configuration related to Vault PKI Rotation:
 #### **Step B.6. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
-> If this repository is cloned for personal use, this step (B.4) can be manually performed by navigating to the `terraform/layers/90-github-meta` directory and executing `tofu apply`. Following instructions detail the manual procedure for reference:
+> If this repository is cloned for personal use, this step can be manually performed by navigating to the `terraform/layers/90-github-meta` directory and executing `tofu apply`. Following instructions detail the manual procedure for reference:
 
 1. Use the Shell Bridge Pattern to inject the Token from Vault. Execute this in the project root to ensure `${PWD}` points to the correct Vault certificate path.
 

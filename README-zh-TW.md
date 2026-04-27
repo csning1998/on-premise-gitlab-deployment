@@ -651,7 +651,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     tofu apply -replace="module.vault_pki_setup.vault_pki_secret_backend_root_cert.prod_root_ca" -auto-approve
     ```
 
-3.  **Leaf Certificate Rotation**：Leaf 憑證由 L25 `terraform.tfvars` 中的 `max_lease_ttl_se根onds` 決定，其中在 Postgres、Redis、MinIO、Bootstrapper Harbor 中，都有佈署 **Vault Agent** 進行 Sidecar 輪替。Vault Agent 會在憑證過期前自動向 Vault 申請新憑證，隨後寫入其內部的 `/etc/vault.d/` 路徑下
+3.  **Leaf Certificate Rotation**：Leaf 憑證由 L25 `terraform.tfvars` 中的 `max_lease_ttl_seonds` 決定，其中在 Postgres、Redis、MinIO、Bootstrapper Harbor 中，都有佈署 **Vault Agent** 進行 Sidecar 輪替。Vault Agent 會在憑證過期前自動向 Vault 申請新憑證，隨後寫入其內部的 `/etc/vault.d/` 路徑下
 
 #### **Step B.6. Provision the GitHub Repository with Terraform:**
 
