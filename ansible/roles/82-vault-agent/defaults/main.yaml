@@ -1,0 +1,46 @@
+---
+# Identity - Config Level
+vault_agent_config_owner: "vault"
+vault_agent_config_group: "vault"
+
+# Identity - Systemd Level
+vault_agent_service_owner: "root"
+vault_agent_service_group: "root"
+
+# Identity - Target Certificate Level (Overridable)
+vault_agent_owner: "root"
+vault_agent_group: "root"
+
+# Paths (Generic Defaults)
+vault_agent_config_dir: "/etc/vault.d"
+vault_agent_cert_base_dir: "{{ vault_agent_config_dir }}/certs"
+vault_agent_cert_dirs:
+  - "{{ vault_agent_cert_base_dir }}"
+vault_agent_cert_mode: "0755"
+
+# Filenames (Generic Defaults)
+vault_agent_cert_name: "server.crt"
+vault_agent_key_name: "server.key"
+vault_agent_ca_name: "ca.crt"
+
+# Internal Content Templates
+vault_agent_cert_content: "{{ '{{ .Data.certificate }}\n{{ .Data.issuing_ca }}' }}"
+vault_agent_key_content: "{{ '{{ .Data.private_key }}' }}"
+vault_agent_ca_content: "{{ '{{ .Data.issuing_ca }}' }}"
+
+# The Abstracted Mapping List
+vault_agent_cert_files:
+  - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_cert_name }}"
+    content: "{{ vault_agent_cert_content }}"
+    mode: "0644"
+  - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_key_name }}"
+    content: "{{ vault_agent_key_content }}"
+    mode: "0600"
+  - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_ca_name }}"
+    content: "{{ vault_agent_ca_content }}"
+    mode: "0644"
+
+# Operational Defaults
+vault_agent_wait_file: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_cert_name }}"
+vault_agent_post_command: "true"
+vault_agent_ip_sans: "" # Corresponding to advertise_ip

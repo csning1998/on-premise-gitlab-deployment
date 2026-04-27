@@ -8,7 +8,7 @@ After=network-online.target
 [Service]
 User=root
 Group=root
-ExecStart=/usr/local/bin/vault agent -config=/etc/vault.d/vault-agent.hcl
+ExecStart=/usr/local/bin/vault agent -config={{ vault_agent_config_dir }}/vault-agent.hcl
 ExecReload=/bin/kill --signal HUP $MAINPID
 KillMode=process
 KillSignal=SIGINT

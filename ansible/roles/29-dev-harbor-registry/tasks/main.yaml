@@ -35,48 +35,21 @@
 - name: "Section C: Configure Vault Agent for PKI Rotation"
   become: true
   block:
-    - name: "Step C1. Ensure Vault Binary is installed"
-      ansible.builtin.include_role:
-        name: 07-base-vault
-      vars:
-        vault_install_only: true
-
-    - name: "Step C2. Ensure Service Domain resolves to Localhost for Vault Agent"
+    - name: "Step C1. Ensure Service Domain resolves to Localhost for Vault Agent"
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "127.0.0.1 {{ dev_harbor_service_domain }}"
         state: present
         regexp: "^127.0.0.1 {{ dev_harbor_service_domain }}$"
 
-    - name: "Step C2.1. Ensure Registry FQDN resolves to VIP for local operations"
+    - name: "Step C2. Ensure Registry FQDN resolves to VIP for local operations"
       ansible.builtin.lineinfile:
         path: /etc/hosts
         line: "{{ dev_harbor_vip }} {{ dev_harbor_fqdn }}"
         state: present
         regexp: "^.* {{ dev_harbor_fqdn | replace('.', '\\.') }}$"
 
-    - name: "Step C3. Create Vault Agent Config Directory"
-      ansible.builtin.file:
-        path: "{{ vault_agent_config_dir }}/approle"
-        state: directory
-        owner: vault
-        group: vault
-        mode: "0750"
-
-    - name: "Step C4. Write AppRole Credentials"
-      ansible.builtin.copy:
-        content: "{{ item.content }}"
-        dest: "{{ vault_agent_config_dir }}/approle/{{ item.file }}"
-        owner: vault
-        group: vault
-        mode: "0600"
-      loop:
-        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
-        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
-      no_log: true
-      notify: Restart Vault Agent
-
-    - name: "Step C5. Distribute Vault PKI Service CA to OS trust store"
+    - name: "Step C3. Distribute Vault PKI Service CA to OS trust store"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt
@@ -85,19 +58,11 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "Step C5.1. Copy Vault CA Certificate for Vault Agent"
-      ansible.builtin.copy:
-        content: "{{ vault_ca_cert_b64 | b64decode }}"
-        dest: "{{ vault_agent_config_dir }}/vault-ca.crt"
-        owner: vault
-        group: vault
-        mode: "0644"
-
-    - name: "Step C5.1.1. Force update CA certificates to validate Vault API"
+    - name: "Step C4. Force update CA certificates before downloading Issuing CA"
       ansible.builtin.command: update-ca-certificates
       changed_when: false
 
-    - name: "Step C5.2. Download Vault PKI Issuing CA to OS trust store"
+    - name: "Step C5. Download Vault PKI Issuing CA to OS trust store"
       ansible.builtin.get_url:
         url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
         dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
@@ -107,57 +72,29 @@
         validate_certs: true
       notify: Update CA Certificates
 
-    - name: "Step C6. Ensure Harbor PKI Directory Exists"
-      ansible.builtin.file:
-        path: "{{ harbor_pki_dir }}"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
+- name: "Section D: Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "root"
+    vault_agent_group: "root"
+    vault_agent_cert_base_dir: "{{ harbor_pki_dir }}"
+    vault_agent_cert_dirs:
+      - "{{ harbor_pki_dir }}"
+      - "{{ harbor_config_cert_dir }}"
+    vault_agent_wait_file: "{{ harbor_cert_path }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ dev_harbor_vip }}"
+    vault_agent_post_command: |
+      cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
+      cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
+      chmod 0644 {{ harbor_config_cert_dir }}/server.crt
+      chmod 0600 {{ harbor_config_cert_dir }}/server.key
+      docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true
 
-    - name: "Step C7. Configure Vault Agent (vault-agent.hcl)"
-      ansible.builtin.template:
-        src: vault-agent.hcl.j2
-        dest: "{{ vault_agent_config_dir }}/vault-agent.hcl"
-        owner: vault
-        group: vault
-        mode: "0640"
-      notify: Restart Vault Agent
-
-    - name: "Step C8. Configure Vault Agent Service"
-      ansible.builtin.template:
-        src: vault-agent.service.j2
-        dest: /etc/systemd/system/vault-agent.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify: Restart Vault Agent
-
-    - name: "Step C9. Start Vault Agent and Wait for Certs"
-      ansible.builtin.systemd:
-        name: vault-agent
-        state: started
-        enabled: true
-        daemon_reload: true
-
-    - name: "Step C10. Flush handlers to restart Vault Agent immediately if config changed"
-      ansible.builtin.meta: flush_handlers
-
-    - name: "Step C11. Wait for Certificates to be generated"
-      ansible.builtin.wait_for:
-        path: "{{ harbor_cert_path }}"
-        timeout: 60
-        msg: "Timeout waiting for Vault Agent to generate Harbor certificates."
-
-    - name: "Step C12. Verify Certificate Validity"
-      ansible.builtin.command:
-        cmd: "openssl x509 -in {{ harbor_cert_path }} -noout -checkend 0"
-      changed_when: false
-
-- name: "Section D: Fetch Secrets from Vault"
+- name: "Section E: Fetch Secrets from Vault"
   become: true
   block:
-    - name: "Step D1. Retrieve Harbor Credentials"
+    - name: "Step E1. Retrieve Harbor Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ vault_addr }}"
         path: "on-premise-gitlab-deployment/harbor-bootstrapper/app"
@@ -168,32 +105,31 @@
         secret_id: "{{ vault_agent_secret_id }}"
         ca_cert: "{{ vault_agent_config_dir }}/vault-ca.crt"
       register: harbor_vault_secrets
-      # no_log: true
 
-- name: "Section E: Configure Harbor"
+- name: "Section F: Configure Harbor"
   become: true
   block:
-    - name: "Step E1. Render harbor.yml"
+    - name: "Step F1. Render harbor.yml"
       ansible.builtin.template:
         src: harbor.yml.j2
         dest: "{{ harbor_install_dir }}/harbor.yml"
         mode: "0644"
       register: harbor_system_config_status
 
-    - name: "Step E2. Run Install Script (First Time Only)"
+    - name: "Step F2. Run Install Script (First Time Only)"
       ansible.builtin.command:
         cmd: "./install.sh --with-trivy"
         chdir: "{{ harbor_install_dir }}"
       args:
         creates: "{{ harbor_install_dir }}/docker-compose.yml"
 
-    - name: "Step E3. Find docker executable"
+    - name: "Step F3. Find docker executable"
       ansible.builtin.command: which docker
       register: docker_exec
       changed_when: false
       check_mode: false
 
-    - name: "Step E4. Deploy Harbor Systemd Service"
+    - name: "Step F4. Deploy Harbor Systemd Service"
       ansible.builtin.template:
         src: harbor.service.j2
         dest: /etc/systemd/system/harbor.service
@@ -204,14 +140,14 @@
         docker_executable: "{{ docker_exec.stdout }}"
       notify: Restart Harbor Service
 
-    - name: "Step E5. Enable and Start Harbor Service"
+    - name: "Step F5. Enable and Start Harbor Service"
       ansible.builtin.systemd:
         name: harbor
         state: started
         enabled: true
         daemon_reload: true
 
-    - name: "Step E6. Reconfigure Harbor (If Config Changed)"
+    - name: "Step F6. Reconfigure Harbor (If Config Changed)"
       ansible.builtin.shell:
         cmd: |
           ./prepare
@@ -222,13 +158,13 @@
       changed_when: true
       notify: Restart Harbor Service
 
-- name: "Section F: Verification"
+- name: "Section G: Verification"
   block:
-    - name: "Step F0. Force update of CA certificates"
+    - name: "Step G0. Force update of CA certificates"
       ansible.builtin.command: update-ca-certificates
       changed_when: false
 
-    - name: "Step F1. Wait for Harbor Health (HTTPS)"
+    - name: "Step G1. Wait for Harbor Health (HTTPS)"
       ansible.builtin.uri:
         url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
         validate_certs: true
@@ -240,17 +176,17 @@
       retries: 30
       delay: 10
 
-- name: "Section G: Install Utilities for Artifact Management"
+- name: "Section H: Install Utilities for Artifact Management"
   become: true
   block:
-    - name: "Step G1. Download Helm installation script"
+    - name: "Step H1. Download Helm installation script"
       ansible.builtin.get_url:
         url: "{{ helm_install_script_url }}"
         dest: /tmp/get_helm.sh
         mode: "0700"
         checksum: "{{ helm_install_script_checksum }}"
 
-    - name: "Step G2. Execute Helm installation script"
+    - name: "Step H2. Execute Helm installation script"
       ansible.builtin.command:
         cmd: /tmp/get_helm.sh
         creates: /usr/local/bin/helm

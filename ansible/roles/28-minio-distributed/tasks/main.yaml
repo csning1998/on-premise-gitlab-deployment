@@ -40,9 +40,16 @@
         recurse: true
       loop: "{{ minio_data_drives }}"
 
-- name: "Section B: Configure Distributed MinIO"
+- name: "Section B: Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ minio_static_routes }}"
+  when: minio_static_routes is defined and minio_static_routes | length > 0
+
+- name: "Section C: Configure Distributed MinIO"
   block:
-    - name: "Step B1. Create MinIO environment file"
+    - name: "Step C1. Create MinIO environment file"
       ansible.builtin.template:
         src: minio-default.j2
         dest: /etc/default/minio
@@ -51,100 +58,22 @@
         mode: "0600"
       notify: Restart MinIO
 
-- name: "Section C: Configure Network Routing"
+- name: "Section D: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
-    name: 81-asymmetric-routing
+    name: 82-vault-agent
   vars:
-    routing_static_routes: "{{ minio_static_routes }}"
-  when: minio_static_routes is defined and minio_static_routes | length > 0
-
-- name: "Section D: Certificate"
-  become: true
-  block:
-    - name: "Step D1. Ensure Vault Binary is installed"
-      ansible.builtin.include_role:
-        name: 07-base-vault
-      vars:
-        vault_install_only: true
-
-    - name: "Step D2. Create Vault Agent Config Directory"
-      ansible.builtin.file:
-        path: "/etc/vault.d/approle"
-        state: directory
-        owner: vault
-        group: vault
-        mode: "0750"
-
-    - name: "Step D3. Write AppRole Credentials"
-      ansible.builtin.copy:
-        content: "{{ item.content }}"
-        dest: "/etc/vault.d/approle/{{ item.file }}"
-        owner: vault
-        group: vault
-        mode: "0600"
-      loop:
-        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
-        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
-      no_log: true
-      notify: Restart Vault Agent
-
-    - name: "Step D4. Deploy Vault CA Certificate"
-      ansible.builtin.copy:
-        content: "{{ vault_ca_cert_b64 | b64decode }}"
-        dest: "/etc/vault.d/vault-ca.crt"
-        owner: vault
-        group: vault
-        mode: "0644"
-
-    - name: "Step D5. Ensure MinIO Cert Directory Exists"
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        owner: "{{ minio_user | default('minio-user') }}"
-        group: "{{ minio_group | default('minio-group') }}"
-        mode: "0755"
-      loop:
-        - /etc/minio/certs
-        - /etc/minio/certs/CAs
-
-    - name: "Step D6. Configure Vault Agent (vault-agent.hcl)"
-      ansible.builtin.template:
-        src: vault-agent.hcl.j2
-        dest: /etc/vault.d/vault-agent.hcl
-        owner: vault
-        group: vault
-        mode: "0640"
-      notify: Restart Vault Agent
-
-    - name: "Step D7. Configure Vault Agent Service"
-      ansible.builtin.template:
-        src: vault-agent.service.j2
-        dest: /etc/systemd/system/vault-agent.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify: Restart Vault Agent
-
-    - name: "Step D8. Enable and Start Vault Agent"
-      ansible.builtin.systemd:
-        name: vault-agent
-        state: started
-        enabled: true
-        daemon_reload: true
-
-    - name: "Step D9. Flush handlers to restart Vault Agent immediately if config changed"
-      ansible.builtin.meta: flush_handlers
-
-    - name: "Step D10. Wait for Certificates to be generated"
-      ansible.builtin.wait_for:
-        path: /etc/minio/certs/public.crt
-        timeout: 60
-        msg: "Timeout waiting for Vault Agent to generate certificates."
-
-    - name: "Step D11. Verify Certificate Validity"
-      ansible.builtin.command:
-        cmd: "openssl x509 -in /etc/minio/certs/public.crt -noout -checkend 0"
-      changed_when: false
+    vault_agent_owner: "{{ minio_user }}"
+    vault_agent_group: "{{ minio_group }}"
+    vault_agent_cert_base_dir: "/etc/minio/certs"
+    vault_agent_cert_dirs:
+      - "/etc/minio/certs"
+      - "/etc/minio/certs/CAs"
+    vault_agent_cert_name: "public.crt"
+    vault_agent_key_name: "private.key"
+    vault_agent_ca_name: "CAs/root_ca.crt"
+    vault_agent_wait_file: "/etc/minio/certs/public.crt"
+    vault_agent_post_command: "systemctl restart minio"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ minio_ha_virtual_ip }}"
 
 - name: "Section E: Start Service"
   ansible.builtin.systemd:

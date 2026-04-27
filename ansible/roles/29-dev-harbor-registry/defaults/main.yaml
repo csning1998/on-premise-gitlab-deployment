@@ -11,6 +11,9 @@ harbor_cert_path: "{{ harbor_pki_dir }}/server.crt"
 harbor_key_path: "{{ harbor_pki_dir }}/server.key"
 harbor_ca_path: "{{ harbor_pki_dir }}/ca.crt"
 
+# Internal Harbor Config PKI Paths (for Nginx)
+harbor_config_cert_dir: "{{ harbor_data_dir }}/secret/cert"
+
 # Vault Agent Configuration
 vault_agent_config_dir: "/etc/vault.d"
 
