@@ -40,9 +40,16 @@
         recurse: true
       loop: "{{ minio_data_drives }}"
 
-- name: "Section B: Configure Distributed MinIO"
+- name: "Section B: Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ minio_static_routes }}"
+  when: minio_static_routes is defined and minio_static_routes | length > 0
+
+- name: "Section C: Configure Distributed MinIO"
   block:
-    - name: "Step B1. Create MinIO environment file"
+    - name: "Step C1. Create MinIO environment file"
       ansible.builtin.template:
         src: minio-default.j2
         dest: /etc/default/minio
@@ -50,13 +57,6 @@
         group: root
         mode: "0600"
       notify: Restart MinIO
-
-- name: "Section C: Configure Network Routing"
-  ansible.builtin.include_role:
-    name: 81-asymmetric-routing
-  vars:
-    routing_static_routes: "{{ minio_static_routes }}"
-  when: minio_static_routes is defined and minio_static_routes | length > 0
 
 - name: "Section D: Configure Vault Agent for PKI Rotation"
   ansible.builtin.include_role:

@@ -31,19 +31,9 @@
     routing_static_routes: "{{ postgres_static_routes }}"
   when: postgres_static_routes is defined and postgres_static_routes | length > 0
 
-- name: "Section D: Configure Vault Agent for PKI Rotation"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "{{ postgres_user }}"
-    vault_agent_group: "{{ postgres_group }}"
-    vault_agent_cert_base_dir: "/etc/postgresql/certs"
-    vault_agent_post_command: "systemctl restart patroni"
-    vault_agent_ip_sans: "{{ advertise_ip }}, {{ postgres_ha_virtual_ip }}"
-
-- name: "Section E: Configure Patroni Service"
+- name: "Section D: Configure Patroni Service"
   block:
-    - name: "Step E1. Create Patroni config file"
+    - name: "Step D1. Create Patroni config file"
       ansible.builtin.template:
         src: patroni.yml.j2
         dest: /etc/patroni.yml
@@ -52,7 +42,7 @@
         mode: "0600"
       notify: Restart Patroni
 
-    - name: "Step E2. Create Patroni systemd service file"
+    - name: "Step D2. Create Patroni systemd service file"
       ansible.builtin.template:
         src: patroni.service.j2
         dest: /etc/systemd/system/patroni.service
@@ -60,6 +50,16 @@
         group: root
         mode: "0644"
       notify: Restart Patroni
+
+- name: "Section E: Configure Vault Agent for PKI Rotation"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "{{ postgres_user }}"
+    vault_agent_group: "{{ postgres_group }}"
+    vault_agent_cert_base_dir: "/etc/postgresql/certs"
+    vault_agent_post_command: "systemctl restart patroni"
+    vault_agent_ip_sans: "{{ advertise_ip }}, {{ postgres_ha_virtual_ip }}"
 
 - name: "Section F: Start and Enable Patroni Service"
   block:

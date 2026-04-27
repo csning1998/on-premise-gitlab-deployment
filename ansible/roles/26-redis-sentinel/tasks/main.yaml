@@ -1,25 +1,5 @@
 ---
-- name: "Section A: Configure Redis Server and Sentinel"
-  block:
-    - name: "Step A1. Create Redis server configuration"
-      ansible.builtin.template:
-        src: redis.conf.j2
-        dest: /etc/redis/redis.conf
-        owner: redis
-        group: redis
-        mode: "0640"
-      notify: Restart redis-server
-
-    - name: "Step A2. Create Redis Sentinel configuration"
-      ansible.builtin.template:
-        src: sentinel.conf.j2
-        dest: /etc/redis/sentinel.conf
-        owner: redis
-        group: redis
-        mode: "0640"
-      notify: Restart redis-sentinel
-
-- name: "Section B: Ensure Redis directories exist"
+- name: "Section A: Ensure Redis directories exist"
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -31,12 +11,32 @@
     - /var/run/redis
     - /var/lib/redis
 
-- name: "Section C: Configure Network Routing"
+- name: "Section B: Configure Network Routing"
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
     routing_static_routes: "{{ redis_static_routes }}"
   when: redis_static_routes is defined and redis_static_routes | length > 0
+
+- name: "Section C: Configure Redis Server and Sentinel"
+  block:
+    - name: "Step C1. Create Redis server configuration"
+      ansible.builtin.template:
+        src: redis.conf.j2
+        dest: /etc/redis/redis.conf
+        owner: redis
+        group: redis
+        mode: "0640"
+      notify: Restart redis-server
+
+    - name: "Step C2. Create Redis Sentinel configuration"
+      ansible.builtin.template:
+        src: sentinel.conf.j2
+        dest: /etc/redis/sentinel.conf
+        owner: redis
+        group: redis
+        mode: "0640"
+      notify: Restart redis-sentinel
 
 - name: "Section D: Configure Vault Agent for PKI Rotation"
   ansible.builtin.include_role:
