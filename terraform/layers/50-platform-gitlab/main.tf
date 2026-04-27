@@ -5,6 +5,7 @@ module "tigera_calico" {
   image_registry = local.harbor_registry
   image_path     = local.harbor_quay_proxy
   chart_project  = local.helm_chart_project
+  mtu            = local.pod_network_mtu - 50
 }
 
 # [REFACTORED] Trust Engine Integration

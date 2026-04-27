@@ -31,6 +31,7 @@ resource "helm_release" "tigera_operator" {
           type = "Calico"
         }
         calicoNetwork = {
+          mtu = var.mtu
           ipPools = [
             {
               cidr          = var.pod_subnet
