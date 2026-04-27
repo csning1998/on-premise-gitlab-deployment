@@ -72,7 +72,7 @@
         validate_certs: true
       notify: Update CA Certificates
 
-- name: "Section D: Configure Vault Agent for PKI Rotation"
+- name: "Section D: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-vault-agent
   vars:
