@@ -18,6 +18,6 @@ module "kubeadm_gitlab" {
   security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Generic Ansible Configuration
-  ansible_template_vars           = local.ansible_template_vars
-  ansible_extra_vars              = local.ansible_extra_vars
+  ansible_template_vars = local.ansible_template_vars
+  ansible_extra_vars    = local.ansible_extra_vars
 }

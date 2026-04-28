@@ -108,7 +108,7 @@ locals {
     # Networking & HA
     dev_harbor_vip              = local.net_physical_infra.lb_config.vip
     dev_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
-    dev_harbor_mtls_node_subnet  = local.net_physical_infra.network.hostonly.cidr
+    dev_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
     vault_vip                   = local.state.vault_sys.service_vip
     global_mss                  = local.state.metadata.global_network_baseline.global_mss
 

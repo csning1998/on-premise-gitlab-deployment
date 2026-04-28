@@ -121,10 +121,10 @@ locals {
     global_mss                = local.state.metadata.global_network_baseline.global_mss
 
     # Registry & Image Config
-    kubeadm_registry_host         = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    kubeadm_registry_vip          = local.state.harbor_registry.service_vip
-    kubeadm_image_repository      = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
-    kubeadm_dns_image_repository  = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
+    kubeadm_registry_host        = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
+    kubeadm_registry_vip         = local.state.harbor_registry.service_vip
+    kubeadm_image_repository     = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
+    kubeadm_dns_image_repository = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
 
     # Port Mappings
     kubeadm_http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
@@ -149,12 +149,12 @@ locals {
   }
 
   ansible_extra_vars = {
-    vault_ca_cert_b64     = local.sec_vault_agent_identity.ca_cert_b64
-    vault_agent_role_id   = local.sec_vault_agent_identity.role_id
-    vault_agent_secret_id = local.sec_vault_agent_identity.secret_id
-    vault_addr            = local.sys_vault_addr
-    vault_role_name       = local.sec_vault_agent_identity.role_name
-    vault_auth_path       = local.sec_vault_agent_identity.auth_path
+    vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
+    vault_agent_role_id     = local.sec_vault_agent_identity.role_id
+    vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
+    vault_addr              = local.sys_vault_addr
+    vault_role_name         = local.sec_vault_agent_identity.role_name
+    vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
     service_name            = local.primary_context.s_name

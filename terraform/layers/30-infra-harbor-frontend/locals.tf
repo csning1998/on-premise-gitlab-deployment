@@ -81,8 +81,8 @@ locals {
 
   ansible_template_vars = {
     # Service Identifiers
-    ansible_user          = local.sec_system_creds.username
-    service_identifier    = local.svc_identity.cluster_name
+    ansible_user       = local.sec_system_creds.username
+    service_identifier = local.svc_identity.cluster_name
 
     # Networking & HA
     microk8s_ingress_vip       = local.net_service_vip
@@ -112,12 +112,12 @@ locals {
   }
 
   ansible_extra_vars = {
-    vault_ca_cert_b64     = local.sec_vault_agent_identity.ca_cert_b64
-    vault_agent_role_id   = local.sec_vault_agent_identity.role_id
-    vault_agent_secret_id = local.sec_vault_agent_identity.secret_id
-    vault_addr            = local.sys_vault_addr
-    vault_role_name       = local.sec_vault_agent_identity.role_name
-    vault_auth_path       = local.sec_vault_agent_identity.auth_path
+    vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
+    vault_agent_role_id     = local.sec_vault_agent_identity.role_id
+    vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
+    vault_addr              = local.sys_vault_addr
+    vault_role_name         = local.sec_vault_agent_identity.role_name
+    vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
     service_name            = "harbor"
