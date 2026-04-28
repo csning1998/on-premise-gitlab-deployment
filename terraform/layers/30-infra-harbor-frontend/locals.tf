@@ -81,7 +81,6 @@ locals {
 
   ansible_template_vars = {
     # Service Identifiers
-    ansible_user       = local.sec_system_creds.username
     service_identifier = local.svc_identity.cluster_name
 
     # Networking & HA

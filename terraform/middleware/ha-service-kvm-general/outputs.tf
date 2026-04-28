@@ -38,8 +38,9 @@ output "network_parameters" {
 }
 
 output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
+  description = "The generated Ansible inventory data and file info."
   value = {
+    data      = local.ansible_inventory_data
     content   = module.ansible_runner.inventory_content
     file_path = module.ansible_runner.inventory_file_path
   }

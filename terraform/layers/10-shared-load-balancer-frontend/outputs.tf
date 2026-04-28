@@ -18,6 +18,6 @@ output "central_lb_info" {
 }
 
 output "ansible_inventory" {
-  description = "The generated Ansible inventory for the Vault cluster."
-  value       = module.vault_cluster.ansible_inventory
+  description = "The generated Ansible inventory for the Central LB cluster."
+  value       = module.central_lb_cluster.ansible_inventory
 }

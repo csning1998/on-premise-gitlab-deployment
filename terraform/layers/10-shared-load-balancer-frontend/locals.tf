@@ -88,9 +88,8 @@ locals {
   }
 
   ansible_template_vars = {
-    ansible_ssh_user = local.sec_vm_creds.username
-    service_domain   = local.svc_fqdn
-    service_name     = local.svc_cluster_name
+    service_domain = local.svc_fqdn
+    service_name   = local.svc_cluster_name
   }
 
   ansible_extra_vars = {
