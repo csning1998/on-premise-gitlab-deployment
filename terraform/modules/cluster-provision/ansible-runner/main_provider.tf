@@ -13,18 +13,17 @@ terraform {
 }
 
 locals {
-  global_vars   = var.inventory_data.all.vars
   playbook_path = [
-    abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
+    # abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
+    # abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
+    # abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
   ]
 }
 
 resource "local_file" "inventory" {
   content = format(
-    "%s\n\n# Terraform Status Trigger: %s",
+    "---\n%s\n# Terraform Status Trigger: %s", # Render YAML opening with terraform status tracking code
     yamlencode(var.inventory_data),
     jsonencode(var.status_trigger)
   )
@@ -60,11 +59,7 @@ resource "local_file" "ansible_cfg" {
 action "ansible_playbook_run" "run_playbook" {
   config {
     playbooks = local.playbook_path
-
-    extra_vars = merge(
-      local.global_vars,
-      var.extra_vars
-    )
+    extra_vars = var.extra_vars
 
     ansible_playbook_binary = "ansible-playbook"
   }

@@ -4,13 +4,12 @@ variable "ansible_config" {
   type = object({
     root_path       = string # e.g. ".../ansible"
     ssh_config_path = string
-    playbook_file   = string # e.g. "playbooks/10-vault-core.yaml"
     inventory_file  = string # e.g. "inventory-10-vault-core.yaml"
   })
 
   validation {
-    condition     = var.ansible_config.root_path != "" && var.ansible_config.playbook_file != ""
-    error_message = "Both root_path and playbook_file must be non-empty strings."
+    condition     = var.ansible_config.root_path != ""
+    error_message = "root_path must be a non-empty string."
   }
 }
 

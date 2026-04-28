@@ -38,7 +38,6 @@ module "ansible_runner" {
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     root_path       = local.ansible.root_path
-    playbook_file   = local.ansible.playbook_file
     inventory_file  = local.ansible.inventory_file
   }
 
