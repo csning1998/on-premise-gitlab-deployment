@@ -25,3 +25,8 @@ output "pki_key" {
   description = "The physical SSoT PKI key associated with the Harbor Bootstrapper service."
   value       = local.svc_context.pki_key
 }
+
+output "ansible_inventory" {
+  description = "The generated Ansible inventory content and file path."
+  value       = module.bootstrap_harbor.ansible_inventory
+}

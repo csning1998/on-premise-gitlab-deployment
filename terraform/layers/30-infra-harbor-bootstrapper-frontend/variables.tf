@@ -25,11 +25,3 @@ variable "harbor_bootstrapper_config" {
     }))
   }))
 }
-
-variable "ansible_files" {
-  description = "Meta configuration of Ansible inventory for Harbor Bootstrapper service."
-  type = object({
-    playbook_file           = string
-    inventory_template_file = string
-  })
-}

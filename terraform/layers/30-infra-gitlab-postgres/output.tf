@@ -20,3 +20,8 @@ output "topology_cluster" {
   description = "The actual provisioned configuration for all Postgres and Etcd nodes."
   value       = module.build_gitlab_postgres_cluster.cluster_nodes
 }
+
+output "ansible_inventory" {
+  description = "The generated Ansible inventory content and file path."
+  value       = module.build_gitlab_postgres_cluster.ansible_inventory
+}

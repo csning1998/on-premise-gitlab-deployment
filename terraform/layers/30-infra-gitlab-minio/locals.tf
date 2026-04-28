@@ -101,30 +101,44 @@ locals {
   }
 }
 
-# Ansible Configuration Rendering
+# 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
-    vault_vip             = local.state.vault_sys.service_vip
-    minio_vip             = local.p_net_config.lb_config.vip
-    access_scope          = local.p_net_config.network.hostonly.cidr
-    api_frontend_port     = local.p_net_config.lb_config.ports["api"].frontend_port
-    console_frontend_port = local.p_net_config.lb_config.ports["console"].frontend_port
-    nat_prefix            = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
-    minio_service_domain  = local.sec_vault_agent_identity.common_name
+    # Service Identifiers
+    service_identifier   = local.svc_identity.cluster_name
+    minio_cluster_name   = "${local.svc_identity.cluster_name}-minio-cluster"
+    minio_service_domain = local.sec_vault_agent_identity.common_name
+
+    # Networking & HA
+    minio_ha_virtual_ip         = local.p_net_config.lb_config.vip
+    minio_tls_node_subnet       = local.p_net_config.network.hostonly.cidr
+    minio_nat_subnet_prefix     = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
+    minio_frontend_port_api     = local.p_net_config.lb_config.ports["api"].frontend_port
+    minio_frontend_port_console = local.p_net_config.lb_config.ports["console"].frontend_port
+    vault_vip                   = local.state.vault_sys.service_vip
+    global_mss                  = local.state.metadata.global_network_baseline.global_mss
+
+    # Cluster Topology
+    minio_cluster_ips = [
+      for node_suffix, node_data in var.service_config["minio"].nodes :
+      cidrhost(local.p_net_config.network.hostonly.cidr, node_data.ip_suffix)
+    ]
+
+    # Asymmetric Routing (Flattened)
+    minio_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    minio_static_route_via    = local.p_net_config.lb_config.vip
+    minio_static_route_metric = 100
+
+    # Compatibility Aliases (Optional)
+    access_scope = local.p_net_config.network.hostonly.cidr
+    minio_vip    = local.p_net_config.lb_config.vip
   }
 
   ansible_extra_vars = {
-    vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
-    vault_agent_role_id     = local.sec_vault_agent_identity.role_id
-    vault_agent_secret_id   = vault_approle_auth_backend_role_secret_id.minio_agent.secret_id
-    vault_addr              = local.sys_vault_addr
-    vault_role_name         = local.sec_vault_agent_identity.role_name
+    minio_root_user         = local.sec_db_creds.minio_root_user
+    minio_root_password     = local.sec_db_creds.minio_root_password
+    minio_vrrp_secret       = local.sec_db_creds.minio_vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
-
-    minio_root_user     = local.sec_db_creds.minio_root_user
-    minio_root_password = local.sec_db_creds.minio_root_password
-    minio_vrrp_secret   = local.sec_db_creds.minio_vrrp_secret
-    global_mss          = local.state.metadata.global_network_baseline.global_mss
   }
 }

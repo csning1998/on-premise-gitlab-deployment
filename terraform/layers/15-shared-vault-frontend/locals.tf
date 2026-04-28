@@ -78,7 +78,8 @@ locals {
 # 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
-    vault_vip = local.net_physical_infra.lb_config.vip
+    vault_vip          = local.net_physical_infra.lb_config.vip
+    vault_cluster_name = local.svc_identity.cluster_name
   }
 
   ansible_extra_vars = merge(

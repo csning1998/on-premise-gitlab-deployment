@@ -16,3 +16,8 @@ output "central_lb_info" {
   description = "Connection details for the Central LB itself."
   value       = data.terraform_remote_state.network.outputs.central_lb_info
 }
+
+output "ansible_inventory" {
+  description = "The generated Ansible inventory for the Central LB cluster."
+  value       = module.central_lb_cluster.ansible_inventory
+}

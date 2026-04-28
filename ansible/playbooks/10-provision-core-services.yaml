@@ -1,37 +1,52 @@
 ---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# Play 1: Configure Vault Nodes (Setup & Config)
 - name: "Play 1: Configure Vault Nodes (Setup & Config)"
-  hosts: vault_leader, vault_follower
+  hosts: "{{ 'vault' if 'vault' in groups else [] }}"
   become: true
   roles:
     - 12-vault-setup
     - 13-vault-configure
 
+# Play 2: Initialize Vault Cluster (Primary Only)
 - name: "Play 2: Initialize Vault Cluster (Primary Only)"
-  hosts: vault_leader
+  hosts: "{{ (groups['vault'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 14-vault-initialize
 
+# Play 3a: Unseal Primary Node
 - name: "Play 3a: Unseal Primary Node"
-  hosts: vault_leader
+  hosts: "{{ (groups['vault'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 15-vault-unseal
 
+# Play 3b: Unseal Standby Nodes
 - name: "Play 3b: Unseal Standby Nodes"
-  hosts: vault_follower
+  hosts: "{{ (groups['vault'] | default([]) | intersect(groups['replica'] | default([]))) }}"
   become: true
   roles:
     - 15-vault-unseal
 
+# Play 3c: Verify Vault Cluster Availability
 - name: "Play 3c: Verify Vault Cluster Availability"
-  hosts: vault_leader
+  hosts: "{{ (groups['vault'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   gather_facts: false
   roles:
     - 15-vault-unseal
 
+# Play 4: Configure Central Load Balancer
 - name: "Play 4: Configure Central Load Balancer"
-  hosts: load_balancer
+  hosts: "{{ 'lb' if 'lb' in groups else [] }}"
   become: true
   roles:
     - 16-central-lb-base

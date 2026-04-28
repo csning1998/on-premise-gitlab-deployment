@@ -28,8 +28,11 @@
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
-    routing_static_routes: "{{ postgres_static_routes }}"
-  when: postgres_static_routes is defined and postgres_static_routes | length > 0
+    routing_static_routes:
+      - to: "{{ postgres_static_route_to }}"
+        via: "{{ postgres_static_route_via }}"
+        metric: "{{ postgres_static_route_metric }}"
+  when: postgres_static_route_to is defined
 
 - name: "Section D: Configure Patroni Service"
   block:

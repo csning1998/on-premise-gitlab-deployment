@@ -15,8 +15,8 @@ vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
     {# Each segment must have its own VRID (computed and passed by Terraform) #}
     virtual_router_id {{ segment.vrid }}
 
-    {# Priority setting: Node-00 (Master) = 100, Node-01 (Backup) = 90 #}
-    priority {{ 100 if 'node-00' in inventory_hostname else 90 }}
+    {# Priority setting: Master (First in lb group) = 100, Others = 90 #}
+    priority {{ 100 if inventory_hostname == groups['load_balancer'][0] else 90 }}
     advert_int 1
 
     unicast_src_ip {{ hostvars[inventory_hostname].ansible_host }}

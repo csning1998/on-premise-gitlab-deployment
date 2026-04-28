@@ -32,16 +32,14 @@ module "ansible_runner" {
   source         = "../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
-  inventory_content = local.ansible_inventory_content
-  credentials_vm    = local.vm_credentials_for_ssh
+  inventory_data = local.ansible_inventory_data
+  credentials_vm = local.vm_credentials_for_ssh
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     root_path       = local.ansible.root_path
-    playbook_file   = local.ansible.playbook_file
     inventory_file  = local.ansible.inventory_file
   }
 
-  extra_vars = nonsensitive(local.ansible_extra_vars)
-  # Note: Use `nonsensitive()` if and only if in development. It must be disabled for production.
+  extra_vars = local.ansible_extra_vars
 }

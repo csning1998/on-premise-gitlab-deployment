@@ -16,6 +16,6 @@ locals {
 
 # 3. Harbor Identity & Secrets (For Provider)
 locals {
-  harbor_hostname      = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
+  harbor_hostname       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
   harbor_admin_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
 }

@@ -1,7 +1,7 @@
 ---
 - name: "Block F: Unseal Vault Node Strategy"
   become: true
-  when: inventory_hostname in groups['vault_leader'] or inventory_hostname in groups['vault_follower']
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['replica']
   block:
     - name: "F1. Check Current Vault Status"
       ansible.builtin.command: vault status -format=json
@@ -20,14 +20,16 @@
       register: vault_init_check
       until:
         - vault_init_check.rc == 2
+        - vault_init_check.stdout | length > 0
         - (vault_init_check.stdout | from_json).initialized
       retries: "{{ vault_unseal_retries }}"
       delay: "{{ vault_unseal_delay_seconds }}"
       changed_when: false
       failed_when: false
       when:
-        - inventory_hostname in groups['vault_follower']
+        - inventory_hostname in groups['replica']
         - vault_status_check.rc == 2
+        - vault_status_check.stdout | length > 0
         - not (vault_status_check.stdout | from_json).initialized
       no_log: true
 
@@ -41,8 +43,17 @@
       delegate_to: localhost
       become: false
       when:
-        - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
-          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed)
+        - >
+          (
+            vault_init_check.changed is defined and
+            vault_init_check.rc is defined and
+            vault_init_check.rc == 2
+          ) or
+          (
+            vault_status_check.rc == 2 and
+            vault_status_check.stdout | length > 0 and
+            (vault_status_check.stdout | from_json).sealed
+          )
       no_log: true
 
     - name: "F4. Set AppRole Credentials"
@@ -65,8 +76,17 @@
       delegate_to: localhost
       become: false
       when:
-        - (vault_init_check.changed is defined and vault_init_check.rc is defined and vault_init_check.rc == 2) or
-          (vault_status_check.rc == 2 and (vault_status_check.stdout | from_json).sealed)
+        - >
+          (
+            vault_init_check.changed is defined and
+            vault_init_check.rc is defined and
+            vault_init_check.rc == 2
+          ) or
+          (
+            vault_status_check.rc == 2 and
+            vault_status_check.stdout | length > 0 and
+            (vault_status_check.stdout | from_json).sealed
+          )
       no_log: true
 
     - name: "F6. Parse Unseal Keys"
@@ -90,14 +110,14 @@
 
 - name: "Block G: Verify Vault Cluster Availability"
   become: true
-  when: inventory_hostname in groups['vault_leader']
+  when: inventory_hostname in groups['primary']
   block:
     - name: "G1. Wait for Vault VIP to be Active (200 OK)"
       ansible.builtin.uri:
-        url: "https://{{ vault_ha_virtual_ip }}:443/v1/sys/health"
+        url: "https://{{ vault_vip }}:443/v1/sys/health"
         validate_certs: false
         status_code: 200
-      when: inventory_hostname in groups['vault_leader']
+      when: inventory_hostname in groups['primary']
       register: health_check
       until: health_check.status == 200
       retries: 60

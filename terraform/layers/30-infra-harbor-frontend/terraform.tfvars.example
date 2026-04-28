@@ -14,8 +14,3 @@ harbor_microk8s_config = {
     }
   }
 }
-
-ansible_files = {
-  inventory_template_file = "inventory-microk8s-cluster.yaml.tftpl"
-  playbook_file           = "30-provision-microk8s.yaml"
-}

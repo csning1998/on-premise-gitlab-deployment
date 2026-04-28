@@ -142,10 +142,10 @@ variable "service_catalog" {
       for s in var.service_catalog : [
         for c in s.components : c.cidr_index
       ]
-    ])) == length(distinct(flatten([
-      for s in var.service_catalog : [
-        for c in s.components : c.cidr_index
-      ]
+      ])) == length(distinct(flatten([
+        for s in var.service_catalog : [
+          for c in s.components : c.cidr_index
+        ]
     ])))
     error_message = "Duplicate 'cidr_index' detected! Every component must have a unique CIDR index to avoid network collision."
   }

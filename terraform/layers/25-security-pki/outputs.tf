@@ -7,9 +7,9 @@ output "vault_service_vip" {
 output "pki_configuration" {
   description = "PKI Configuration Summary"
   value = {
-    path                 = module.vault_pki_setup.vault_pki_path
-    pki_roles            = module.vault_pki_setup.pki_roles
-    ca_cert              = base64encode(module.vault_pki_setup.pki_root_ca_certificate)
+    path      = module.vault_pki_setup.vault_pki_path
+    pki_roles = module.vault_pki_setup.pki_roles
+    ca_cert   = base64encode(module.vault_pki_setup.pki_root_ca_certificate)
     lease_durations = {
       default = format("%dh", var.vault_pki_engine_config.default_lease_ttl_seconds / 3600)
       max     = format("%dh", var.vault_pki_engine_config.max_lease_ttl_seconds / 3600)

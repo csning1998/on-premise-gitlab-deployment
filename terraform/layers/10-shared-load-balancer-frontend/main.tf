@@ -3,7 +3,8 @@ module "central_lb_cluster" {
 
   source = "../../middleware/ha-service-kvm-central-lb"
   svc_identity = merge(local.svc_identity, {
-    service_name = local.svc_cluster_name
+    service_name  = local.svc_cluster_name
+    domain_suffix = local.svc_fqdn
   })
 
   topology_cluster = {
@@ -29,8 +30,8 @@ module "central_lb_cluster" {
   network_service_segments = local.net_service_segments
 
   # Embedded Ansible Configurations
-  ansible_inventory_template_file = "inventory-load-balancer-cluster.yaml.tftpl"
-  ansible_playbook_file           = "10-provision-core-services.yaml"
-  ansible_template_vars           = local.ansible_template_vars
-  ansible_extra_vars              = local.ansible_extra_vars
+  ansible_generic_config = {
+    template_vars = local.ansible_template_vars
+    extra_vars    = local.ansible_extra_vars
+  }
 }

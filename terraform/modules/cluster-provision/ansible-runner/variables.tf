@@ -4,14 +4,18 @@ variable "ansible_config" {
   type = object({
     root_path       = string # e.g. ".../ansible"
     ssh_config_path = string
-    playbook_file   = string # e.g. "playbooks/10-vault-core.yaml"
     inventory_file  = string # e.g. "inventory-10-vault-core.yaml"
   })
+
+  validation {
+    condition     = var.ansible_config.root_path != ""
+    error_message = "root_path must be a non-empty string."
+  }
 }
 
-variable "inventory_content" {
-  description = "The rendered content of the inventory file (string)"
-  type        = string
+variable "inventory_data" {
+  description = "The structured inventory data object (from yamldecode of template)"
+  type        = any
 }
 
 variable "credentials_vm" {
@@ -21,7 +25,7 @@ variable "credentials_vm" {
     ssh_private_key_path = string
   })
   # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
-  # sensitive = true
+  sensitive = true
 }
 
 variable "extra_vars" {
@@ -29,7 +33,7 @@ variable "extra_vars" {
   type        = map(string)
   default     = {}
   # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
-  # sensitive   = true
+  sensitive = true
 }
 
 variable "pre_run_commands" {
