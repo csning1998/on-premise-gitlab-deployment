@@ -41,6 +41,5 @@ module "ansible_runner" {
     inventory_file  = local.ansible.inventory_file
   }
 
-  extra_vars = nonsensitive(local.ansible_extra_vars)
-  # Note: Use `nonsensitive()` if and only if in development. It must be disabled for production.
+  extra_vars = local.ansible_extra_vars
 }

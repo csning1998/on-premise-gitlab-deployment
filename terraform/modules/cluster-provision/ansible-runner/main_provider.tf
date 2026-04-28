@@ -12,6 +12,10 @@ terraform {
   }
 }
 
+data "local_file" "base_ansible_cfg" {
+  filename = "${var.ansible_config.root_path}/../ansible.cfg"
+}
+
 locals {
   playbook_path = [
     abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
@@ -36,10 +40,6 @@ resource "local_file" "inventory" {
       actions = [action.ansible_playbook_run.run_playbook]
     }
   }
-}
-
-data "local_file" "base_ansible_cfg" {
-  filename = "${var.ansible_config.root_path}/../ansible.cfg"
 }
 
 resource "local_file" "ansible_cfg" {

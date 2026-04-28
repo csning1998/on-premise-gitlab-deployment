@@ -25,7 +25,7 @@ variable "credentials_vm" {
     ssh_private_key_path = string
   })
   # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
-  # sensitive = true
+  sensitive = true
 }
 
 variable "extra_vars" {
@@ -33,7 +33,7 @@ variable "extra_vars" {
   type        = map(string)
   default     = {}
   # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
-  # sensitive   = true
+  sensitive = true
 }
 
 variable "pre_run_commands" {
