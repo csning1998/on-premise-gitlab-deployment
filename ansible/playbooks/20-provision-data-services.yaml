@@ -38,7 +38,7 @@
 
 # Dev Harbor Bootstrapper Registry
 - name: "Play [Dev Harbor]: Configure Dev Harbor (Bootstrapper) Cluster"
-  hosts: "{{ 'harbor' if 'harbor' in groups else [] }}"
+  hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
   become: true
   roles:
     - 29-dev-harbor-registry

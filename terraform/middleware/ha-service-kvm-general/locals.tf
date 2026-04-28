@@ -84,9 +84,10 @@ locals {
         primary = {
           hosts = {
             for role, nodes in local.nodes_by_role : keys(nodes)[0] => {
-              advertise_ip = nodes[keys(nodes)[0]].ip
-              node_id      = keys(nodes)[0]
-              node_role    = role
+              advertise_ip     = nodes[keys(nodes)[0]].ip
+              node_id          = keys(nodes)[0]
+              node_role        = role
+              attached_volumes = nodes[keys(nodes)[0]].attached_volumes
             }
           }
         }
@@ -94,9 +95,10 @@ locals {
         replica = {
           hosts = {
             for name, node in local.flat_node_map : name => {
-              advertise_ip = node.ip
-              node_id      = name
-              node_role    = node.role
+              advertise_ip     = node.ip
+              node_id          = name
+              node_role        = node.role
+              attached_volumes = node.attached_volumes
             }
             if name != keys(local.nodes_by_role[node.role])[0]
           }

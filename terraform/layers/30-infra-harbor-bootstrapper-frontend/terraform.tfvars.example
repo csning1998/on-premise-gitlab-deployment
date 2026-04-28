@@ -2,17 +2,12 @@
 target_cluster_name = "core-harbor-bootstrapper-frontend"
 
 harbor_bootstrapper_config = {
-  "bootstrapper" = {
-    role            = "core"
+  "harbor_bootstrapper" = {
+    role            = "harbor_bootstrapper"
     network_tier    = "default"
     base_image_path = "../../../packer/output/docker-harbor/ubuntu-24-docker-harbor.qcow2"
     nodes = {
-      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 4096 }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 3072 }
     }
   }
-}
-
-ansible_files = {
-  playbook_file           = "20-provision-data-services.yaml"
-  inventory_template_file = "inventory-harbor-bootstrapper-docker.yaml.tftpl"
 }

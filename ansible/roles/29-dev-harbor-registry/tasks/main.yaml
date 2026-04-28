@@ -3,8 +3,11 @@
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
-    routing_static_routes: "{{ dev_harbor_static_routes }}"
-  when: dev_harbor_static_routes is defined and dev_harbor_static_routes | length > 0
+    routing_static_routes:
+      - to: "{{ dev_harbor_static_route_to }}"
+        via: "{{ dev_harbor_static_route_via }}"
+        metric: "{{ dev_harbor_static_route_metric }}"
+  when: dev_harbor_static_route_to is defined
 
 - name: "Section B: Configure Data Storage Volume"
   become: true

@@ -100,26 +100,40 @@ locals {
 # 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
-    access_scope        = local.network_infrastructure_map["default"].network.hostonly.cidr
-    dev_harbor_tls_port = local.network_infrastructure_map["default"].lb_config.ports["https"].frontend_port
-    nat_gateway         = local.network_infrastructure_map["default"].network.nat.gateway
-    service_name        = local.svc_name
-    dev_harbor_fqdn     = local.svc_fqdn
-    dev_harbor_vip      = local.net_physical_infra.lb_config.vip
-    vault_vip           = local.state.vault_sys.service_vip
+    # Service Identifiers
+    service_identifier        = local.svc_name
+    dev_harbor_fqdn           = local.svc_fqdn
+    dev_harbor_service_domain = local.svc_identity.cluster_name
+
+    # Networking & HA
+    dev_harbor_vip              = local.net_physical_infra.lb_config.vip
+    dev_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
+    dev_harbor_mtls_node_subnet  = local.net_physical_infra.network.hostonly.cidr
+    vault_vip                   = local.state.vault_sys.service_vip
+    global_mss                  = local.state.metadata.global_network_baseline.global_mss
+
+    # Cluster Topology
+    dev_harbor_cluster_ips = [
+      for comp_name, comp_config in var.harbor_bootstrapper_config : [
+        for node_suffix, node_data in comp_config.nodes :
+        cidrhost(local.net_physical_infra.network.hostonly.cidr, node_data.ip_suffix)
+      ]
+    ][0] # Harbor Bootstrapper is a single component
+
+    # Asymmetric Routing (Flattened)
+    dev_harbor_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    dev_harbor_static_route_via    = local.net_physical_infra.lb_config.vip
+    dev_harbor_static_route_metric = 100
+
+    # Compatibility Aliases
+    access_scope = local.net_physical_infra.network.hostonly.cidr
+    service_name = local.svc_name
   }
 
-  ansible_extra_vars = merge(
-    {
-      ansible_user                       = local.sec_vm_creds.username
-      harbor_bootstrapper_admin_password = local.sec_app_creds.harbor_admin_password
-      harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
-      terraform_runner_subnet            = local.network_infrastructure_map["default"].network.hostonly.cidr
-      vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.lease_durations.agent
-      global_mss                         = local.state.metadata.global_network_baseline.global_mss
-    },
-    local.state.vault_pki != null ? {
-      vault_ca_cert = local.state.vault_pki.bootstrap_ca.content
-    } : {}
-  )
+  ansible_extra_vars = {
+    harbor_bootstrapper_admin_password = local.sec_app_creds.harbor_admin_password
+    harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
+    vault_agent_common_name            = local.sec_vault_agent_identity.common_name
+    vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.lease_durations.agent
+  }
 }
