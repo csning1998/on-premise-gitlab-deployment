@@ -103,10 +103,24 @@ locals {
 # 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
+    # Service Identifiers
+    service_identifier    = local.svc_identity.cluster_name
+    postgres_cluster_name = local.svc_identity.cluster_name
+
+    # Networking & HA
+    postgres_ha_virtual_ip    = local.p_net_config.lb_config.vip
+    postgres_mtls_node_subnet = local.p_net_config.network.hostonly.cidr
+    vault_vip                 = local.state.vault_sys.service_vip
+    global_mss                = local.state.metadata.global_network_baseline.global_mss
+
+    # Asymmetric Routing (Flattened)
+    postgres_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    postgres_static_route_via    = local.p_net_config.lb_config.vip
+    postgres_static_route_metric = 100
+
+    # Compatibility Aliases (Optional)
     access_scope = local.p_net_config.network.hostonly.cidr
     postgres_vip = local.p_net_config.lb_config.vip
-    vault_vip    = local.state.vault_sys.service_vip
-    nat_prefix   = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
   }
 
   ansible_extra_vars = {
@@ -115,6 +129,5 @@ locals {
     pg_vrrp_secret          = local.sec_app_creds.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
-    global_mss              = local.state.metadata.global_network_baseline.global_mss
   }
 }
