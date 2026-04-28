@@ -74,40 +74,52 @@ locals {
   }
 }
 
-# Ansible Infrastructure Template Variables
+# 5. Ansible Configuration (Dynamic Inventory)
 locals {
   # Dependency discovery: Use the physical SSoT key for the Harbor registry.
   registry_pki_key = local.state.harbor_registry.pki_key
 
   ansible_template_vars = {
-    ansible_user               = local.sec_system_creds.username
+    # Service Identifiers
+    ansible_user          = local.sec_system_creds.username
+    service_identifier    = local.svc_identity.cluster_name
+
+    # Networking & HA
     microk8s_ingress_vip       = local.net_service_vip
     microk8s_allowed_subnet    = local.p_net_config.network.hostonly.cidr
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
+    metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
+    global_mss                 = local.state.metadata.global_network_baseline.global_mss
 
-    registry_host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    registry_vip  = local.state.harbor_registry.service_vip
+    # Cluster Topology
+    microk8s_cluster_ips = [
+      for node_suffix, node_data in var.service_config["frontend"].nodes :
+      cidrhost(local.p_net_config.network.hostonly.cidr, node_data.ip_suffix)
+    ]
 
-    # Injected Host Overrides
+    # Registry & Proxy Config
+    registry_host       = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
+    registry_vip        = local.state.harbor_registry.service_vip
+    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
+    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
+    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+
+    # Host Overrides
     node_extra_hosts = [
       { host = local.svc_fqdn, ip = local.net_service_vip },
       { host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0], ip = local.state.harbor_registry.service_vip }
     ]
-
-    # Mirroring Paths
-    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
-    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
-    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
   }
 
   ansible_extra_vars = {
     vault_ca_cert_b64     = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id   = local.sec_vault_agent_identity.role_id
+    vault_agent_secret_id = local.sec_vault_agent_identity.secret_id
     vault_addr            = local.sys_vault_addr
     vault_role_name       = local.sec_vault_agent_identity.role_name
-    vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.lease_durations.agent
-    vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.microk8s_agent.secret_id
-    service_name          = "harbor"
-    global_mss            = local.state.metadata.global_network_baseline.global_mss
+    vault_auth_path       = local.sec_vault_agent_identity.auth_path
+    vault_agent_common_name = local.sec_vault_agent_identity.common_name
+    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
+    service_name            = "harbor"
   }
 }

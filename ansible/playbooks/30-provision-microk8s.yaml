@@ -12,6 +12,7 @@
 - name: "Play 0: Setup Infrastructure Prerequisites & Trust Store"
   hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
   become: true
+  gather_facts: true
   roles:
     - 30-microk8s-prerequisites
 
