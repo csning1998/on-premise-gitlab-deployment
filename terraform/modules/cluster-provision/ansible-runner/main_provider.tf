@@ -43,6 +43,7 @@ locals {
 
   global_vars   = var.inventory_data.all.vars
   playbook_path = [
+    abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
