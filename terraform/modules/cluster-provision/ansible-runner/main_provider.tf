@@ -41,9 +41,12 @@ locals {
     }
   }
 
-  global_vars = var.inventory_data.all.vars
-  # playbook_path = "${var.ansible_config.root_path}/${var.ansible_config.playbook_file}"
-  playbook_path = "/home/csning1998/GitHub/on-premise-gitlab-deployment/ansible/playbooks/20-provision-data-services.yaml"
+  global_vars   = var.inventory_data.all.vars
+  playbook_path = [
+    abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
+  ]
 }
 
 resource "ansible_group" "groups" {
@@ -103,7 +106,7 @@ resource "local_file" "ansible_cfg" {
 
 action "ansible_playbook_run" "run_playbook" {
   config {
-    playbooks = [local.playbook_path]
+    playbooks = local.playbook_path
 
     extra_vars = merge(
       local.global_vars,
