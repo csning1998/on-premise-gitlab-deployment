@@ -78,18 +78,17 @@ variable "network_infrastructure_map" {
   }
 }
 
-variable "ansible_template_vars" {
-  description = "A generic map of non-sensitive variables customized for the application's inventory rendering."
-  type        = any
-  default     = {}
+variable "ansible_generic_config" {
+  description = "Consolidated Ansible configuration including template and extra variables."
+  type = object({
+    template_vars = any
+    extra_vars    = any
+  })
+  default = {
+    template_vars = {}
+    extra_vars    = {}
+  }
 }
-
-variable "ansible_extra_vars" {
-  description = "A generic map of sensitive variables for the application, merged with common system variables."
-  type        = any
-  default     = {}
-}
-
 
 # System Credentials
 variable "credentials_system" {

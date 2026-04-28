@@ -134,7 +134,7 @@ locals {
   ansible_inventory_data = {
     all = {
       vars = merge(
-        var.ansible_template_vars,
+        var.ansible_generic_config.template_vars,
         {
           service_identifier = var.svc_identity.service_name
           service_domain     = var.svc_identity.domain_suffix
@@ -187,7 +187,7 @@ locals {
   }
 
   ansible_extra_vars = merge(
-    var.ansible_extra_vars,
+    var.ansible_generic_config.extra_vars,
     {
       haproxy_stats_pass   = local.credentials_haproxy_for_ansible.haproxy_stats_pass
       keepalived_auth_pass = local.credentials_haproxy_for_ansible.keepalived_auth_pass

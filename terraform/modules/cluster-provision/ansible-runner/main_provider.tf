@@ -14,10 +14,10 @@ terraform {
 
 locals {
   playbook_path = [
-    # abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
-    # abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
-    # abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
   ]
 }
 
@@ -58,9 +58,9 @@ resource "local_file" "ansible_cfg" {
 
 action "ansible_playbook_run" "run_playbook" {
   config {
-    playbooks = local.playbook_path
-    extra_vars = var.extra_vars
-
+    playbooks               = local.playbook_path
+    extra_vars              = var.extra_vars
+    verbosity               = 2
     ansible_playbook_binary = "ansible-playbook"
   }
 }

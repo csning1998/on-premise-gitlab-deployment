@@ -117,14 +117,16 @@ variable "network_infrastructure_map" {
   }
 }
 
-variable "ansible_template_vars" {
-  description = "Template variables mapping for Ansible inventory generation"
-  type        = any
-}
-
-variable "ansible_extra_vars" {
-  description = "Extra variables mapping for the Ansible execution"
-  type        = any
+variable "ansible_generic_config" {
+  description = "Consolidated Ansible configuration including template and extra variables."
+  type = object({
+    template_vars = any
+    extra_vars    = any
+  })
+  default = {
+    template_vars = {}
+    extra_vars    = {}
+  }
 }
 
 # Credentials Injection

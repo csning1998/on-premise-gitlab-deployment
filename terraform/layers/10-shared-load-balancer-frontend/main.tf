@@ -30,6 +30,8 @@ module "central_lb_cluster" {
   network_service_segments = local.net_service_segments
 
   # Embedded Ansible Configurations
-  ansible_template_vars = local.ansible_template_vars
-  ansible_extra_vars    = local.ansible_extra_vars
+  ansible_generic_config = {
+    template_vars = local.ansible_template_vars
+    extra_vars    = local.ansible_extra_vars
+  }
 }

@@ -18,6 +18,8 @@ module "build_gitlab_minio_cluster" {
   security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Generic Ansible Configuration
-  ansible_template_vars = local.ansible_template_vars
-  ansible_extra_vars    = local.ansible_extra_vars
+  ansible_generic_config = {
+    template_vars = local.ansible_template_vars
+    extra_vars    = local.ansible_extra_vars
+  }
 }

@@ -72,7 +72,7 @@ locals {
   ansible_inventory_data = {
     all = {
       vars = merge(
-        var.ansible_template_vars,
+        var.ansible_generic_config.template_vars,
         {
           cluster_name               = var.svc_identity.cluster_name
           ansible_python_interpreter = "/usr/bin/python3"
@@ -131,7 +131,7 @@ locals {
     local.ansible_extra_vars_base,
     local.ansible_extra_vars_vault,
     local.ansible_extra_vars_pki,
-    var.ansible_extra_vars
+    var.ansible_generic_config.extra_vars
   )
 }
 
