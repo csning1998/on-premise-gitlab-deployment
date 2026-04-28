@@ -5,6 +5,6 @@ output "ansible_log" {
 }
 
 output "provision_id" {
-  description = "ID of the null_resource, useful for depends_on"
-  value       = null_resource.run_playbook.id
+  description = "IDs of the ansible_playbook resources"
+  value       = jsonencode([for p in ansible_playbook.run_playbook : p.id])
 }
