@@ -1,30 +1,44 @@
 ---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# Play 0: Setup Infrastructure Prerequisites & Trust Store
 - name: "Play 0: Setup Infrastructure Prerequisites & Trust Store"
-  hosts: "{{ (groups['nodes'] | default([])) }}"
+  hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
   become: true
   roles:
     - 30-microk8s-prerequisites
 
+# Play 1: Clean up stale nodes from base image
 - name: "Play 1: Clean up stale nodes from base image"
-  hosts: "{{ (groups['nodes'] | default([])) }}"
+  hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
   become: true
   roles:
     - 31-microk8s-nodes
 
+# Play 2: Configure High Availability MicroK8s Cluster (Replicas Only)
 - name: "Play 2: Configure High Availability MicroK8s Cluster"
-  hosts: "{{ (groups['nodes'] | default([])) | difference((groups['nodes'] | default([]))[:1]) }}"
+  hosts: "{{ (groups['microk8s'] | default([]) | intersect(groups['replica'] | default([]))) }}"
   become: true
   roles:
     - 32-microk8s-ha
 
+# Play 3: Configure MicroK8s Addons (Primary Only)
 - name: "Play 3: Configure MicroK8s Addons"
-  hosts: "{{ groups['nodes'][0] | default([]) }}"
+  hosts: "{{ (groups['microk8s'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 33-microk8s-addons
 
+# Play 4: Setup Kubeconfig for all nodes
 - name: "Play 4: Setup Kubeconfig for all nodes"
-  hosts: nodes
+  hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
   become: true
   roles:
     - 34-microk8s-kubeconfig
