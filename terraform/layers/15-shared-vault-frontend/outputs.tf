@@ -20,3 +20,8 @@ output "ca_cert_path" {
   description = "The absolute path to the local Bootstrap CA certificate."
   value       = abspath(local_file.bootstrap_ca.filename)
 }
+
+output "ansible_inventory" {
+  description = "The generated Ansible inventory for the Vault cluster."
+  value       = module.vault_cluster.ansible_inventory
+}

@@ -1,12 +1,15 @@
+---
 - name: "Block A: System & Service Configuration"
   become: true
   block:
-    - name: "A1. Create Vault system group & user"
+    - name: "A1.1 Create Vault system group"
       ansible.builtin.group:
         name: "{{ vault_owner }}"
         system: true
         state: present
-    - ansible.builtin.user:
+
+    - name: "A1.2. Ensure Vault system user exists"
+      ansible.builtin.user:
         name: "{{ vault_owner }}"
         system: true
         shell: /usr/sbin/nologin
@@ -78,8 +81,6 @@
         content: "{{ vault_ca_cert | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt
         mode: "0644"
-      register: trust_ca
-
-    - name: "Step B6. Update OS CA trust store"
-      ansible.builtin.command: update-ca-certificates
-      when: trust_ca.changed
+        owner: root
+        group: root
+      notify: Update CA Trust
