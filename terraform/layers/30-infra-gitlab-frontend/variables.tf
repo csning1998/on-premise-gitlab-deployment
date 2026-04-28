@@ -36,11 +36,3 @@ variable "kubernetes_cluster_configuration" {
     pod_subnet = string
   })
 }
-
-variable "ansible_files" {
-  description = "Meta configuration of Ansible inventory for Vault Core service."
-  type = object({
-    playbook_file           = string
-    inventory_template_file = string
-  })
-}

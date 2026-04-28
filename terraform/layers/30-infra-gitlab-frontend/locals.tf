@@ -97,48 +97,66 @@ locals {
   }
 }
 
-# 6. Ansible Infrastructure Template Variables
+# 6. Ansible Configuration (Dynamic Inventory)
 locals {
   # Dependency discovery: Use the physical SSoT key for the Harbor registry.
   registry_pki_key = local.state.harbor_registry.pki_key
 
   ansible_template_vars = {
-    vip        = local.p_net_config.lb_config.vip
-    pod_subnet = var.kubernetes_cluster_configuration.pod_subnet
-    nat_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
+    # Service Identifiers
+    service_identifier = "${local.svc_identity.cluster_name}-kubeadm-cluster"
 
-    registry_host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    registry_vip  = local.state.harbor_registry.service_vip
+    # Cluster Topology (Master/Worker Maps)
+    kubeadm_master_nodes = var.service_config["master"].nodes
+    kubeadm_worker_nodes = var.service_config["worker"].nodes
 
-    image_repository = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
-    hostonly_gateway = local.p_net_config.network.hostonly.gateway
+    # Networking & HA
+    kubeadm_master_ips = [
+      for node_suffix, node_data in var.service_config["master"].nodes :
+      cidrhost(local.p_net_config.network.hostonly.cidr, node_data.ip_suffix)
+    ]
+    kubeadm_ha_virtual_ip     = local.p_net_config.lb_config.vip
+    kubeadm_pod_subnet        = var.kubernetes_cluster_configuration.pod_subnet
+    kubeadm_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
+    global_mss                = local.state.metadata.global_network_baseline.global_mss
+
+    # Registry & Image Config
+    kubeadm_registry_host         = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
+    kubeadm_registry_vip          = local.state.harbor_registry.service_vip
+    kubeadm_image_repository      = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
+    kubeadm_dns_image_repository  = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
 
     # Port Mappings
-    http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
-    https_nodeport = local.p_net_config.lb_config.ports["ingress-https"].backend_port
+    kubeadm_http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
+    kubeadm_https_nodeport = local.p_net_config.lb_config.ports["ingress-https"].backend_port
 
-    # Injected Host Overrides (Generic approach for PR 1)
+    # Host Overrides
     node_extra_hosts = [
       {
         host = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
         ip   = local.state.network.infrastructure_map["core-harbor-frontend"].lb_config.vip
       }
     ]
+
+    # Mirroring Paths (Template Compatibility)
+    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
+    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
+    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+
+    # Compatibility Aliases (Optional)
+    vip        = local.p_net_config.lb_config.vip
+    pod_subnet = var.kubernetes_cluster_configuration.pod_subnet
   }
 
   ansible_extra_vars = {
     vault_ca_cert_b64     = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id   = local.sec_vault_agent_identity.role_id
-    vault_agent_secret_id = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
+    vault_agent_secret_id = local.sec_vault_agent_identity.secret_id
     vault_addr            = local.sys_vault_addr
     vault_role_name       = local.sec_vault_agent_identity.role_name
-    vault_agent_cert_ttl  = local.state.vault_pki.pki_configuration.lease_durations.agent
-    service_name          = local.primary_context.s_name
-
-    # Mirroring Paths
-    harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
-    harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
-    harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
-    global_mss          = local.state.metadata.global_network_baseline.global_mss
+    vault_auth_path       = local.sec_vault_agent_identity.auth_path
+    vault_agent_common_name = local.sec_vault_agent_identity.common_name
+    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
+    service_name            = local.primary_context.s_name
   }
 }

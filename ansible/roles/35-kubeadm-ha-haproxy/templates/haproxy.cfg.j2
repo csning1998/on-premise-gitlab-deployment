@@ -24,8 +24,8 @@ backend gitlab_http_backend
     mode tcp
     balance roundrobin
     option tcp-check
-{% for host in groups['workers'] %}
-    server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ kubeadm_http_nodeport }} check
+{% for host in groups['worker'] | default([]) %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ kubeadm_http_nodeport }} check
 {% endfor %}
 
 # GitLab HTTPS Ingress (Port 443 -> NodePort 30443)
@@ -38,6 +38,6 @@ backend gitlab_https_backend
     mode tcp
     balance roundrobin
     option tcp-check
-{% for host in groups['workers'] %}
-    server {{ host }} {{ hostvars[host]['kubeadm_advertise_ip'] }}:{{ kubeadm_https_nodeport }} check
+{% for host in groups['worker'] | default([]) %}
+    server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ kubeadm_https_nodeport }} check
 {% endfor %}

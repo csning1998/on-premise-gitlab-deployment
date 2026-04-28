@@ -12,6 +12,7 @@
 - name: "Play 1: Setup HA Load Balancer on all master nodes"
   hosts: "{{ 'master' if 'master' in groups else [] }}"
   become: true
+  gather_facts: true
   roles:
     - 34-kubeadm-prerequisites
     - 35-kubeadm-ha-haproxy
@@ -34,6 +35,7 @@
 - name: "Play 4: Join secondary master nodes to the cluster"
   hosts: "{{ (groups['master'] | default([]) | intersect(groups['replica'] | default([]))) }}"
   become: true
+  gather_facts: true
   serial: 1
   roles:
     - 38-kubeadm-join-secondary
@@ -42,6 +44,7 @@
 - name: "Play 5: Join worker nodes to the cluster"
   hosts: "{{ 'worker' if 'worker' in groups else [] }}"
   become: true
+  gather_facts: true
   serial: 5 # ~30MiB/worker; 5 workers ≈ 1 master (175MiB) in pull bandwidth
   roles:
     - 34-kubeadm-prerequisites

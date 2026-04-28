@@ -1,10 +1,6 @@
 ---
 - name: "Block A: Prepare primary master node for initialization"
   block:
-    - name: "Step 1. Set advertise_ip fact for this node"
-      ansible.builtin.set_fact:
-        kubeadm_advertise_ip: "{{ kubeadm_master_ips[0] }}"
-
     - name: "Step 2. Ensure journald persistent storage directory exists"
       ansible.builtin.file:
         path: "/var/log/journal"
@@ -16,10 +12,9 @@
         name: systemd-journald
         state: restarted
 
-    - name: "Step 4. Ensure kubelet service is enabled and running"
+    - name: "Step 4. Ensure kubelet service is enabled"
       ansible.builtin.systemd:
         name: kubelet
-        state: started
         enabled: true
 
     - name: "Step 5. Ensure /etc/kubernetes directory exists"
