@@ -1,53 +1,65 @@
 
 terraform {
   required_providers {
-    null = {
-      source  = "hashicorp/null"
-      version = "3.2.2"
+    ansible = {
+      source  = "ansible/ansible"
+      version = "~> 1.4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.8.0"
     }
   }
 }
 
+data "local_file" "base_ansible_cfg" {
+  filename = "${var.ansible_config.root_path}/../ansible.cfg"
+}
+
+locals {
+  playbook_path = [
+    abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
+  ]
+}
+
 resource "local_file" "inventory" {
-  content         = var.inventory_content
+  content = format(
+    "---\n%s\n# Terraform Status Trigger: %s", # Render YAML opening with terraform status tracking code
+    yamlencode(var.inventory_data),
+    jsonencode(var.status_trigger)
+  )
   filename        = "${var.ansible_config.root_path}/${var.ansible_config.inventory_file}"
   file_permission = "0644"
-}
 
-resource "null_resource" "run_playbook" {
-  triggers = {
-    vm_status         = jsonencode(var.status_trigger)
-    inventory_content = var.inventory_content
-    playbook          = var.ansible_config.playbook_file
-    extra_vars        = jsonencode(var.extra_vars)
-  }
-
-  depends_on = [local_file.inventory]
-
-  provisioner "local-exec" {
-    working_dir = abspath("${path.module}/../../../../")
-
-    command = <<-EOT
-      set -e
-%{for cmd in var.pre_run_commands~}
-      echo ">>> Executing pre-run command: ${cmd}"
-      ${cmd}
-%{endfor~}
-
-      echo ">>> Running Ansible Playbook: ${var.ansible_config.playbook_file}"
-      ansible-playbook \
-        -i ${local_file.inventory.filename} \
-        --private-key ${nonsensitive(var.credentials_vm.ssh_private_key_path)} \
-        --ssh-common-args='-F ${var.ansible_config.ssh_config_path}' \
-        --extra-vars "ansible_ssh_user=${nonsensitive(var.credentials_vm.username)}" \
-%{for k, v in var.extra_vars~}
-        --extra-vars "${k}=${nonsensitive(v)}" \
-%{endfor~}
-        -v \
-        ${var.ansible_config.root_path}/${var.ansible_config.playbook_file}
-    EOT
-
-    interpreter = ["/bin/bash", "-c"]
+  lifecycle {
+    action_trigger {
+      events  = [after_create, after_update]
+      actions = [action.ansible_playbook_run.run_playbook]
+    }
   }
 }
-# Note: Use `nonsensitive()` if and only if in development. It must be disabled for production.
+
+resource "local_file" "ansible_cfg" {
+  content = replace(
+    replace(
+      data.local_file.base_ansible_cfg.content,
+      "roles_path = ansible/roles",
+      "roles_path = ${var.ansible_config.root_path}/roles"
+    ),
+    "inventory = ansible/inventory.yaml",
+    "inventory = ${local_file.inventory.filename}"
+  )
+  filename = "${path.cwd}/ansible.cfg"
+}
+
+action "ansible_playbook_run" "run_playbook" {
+  config {
+    playbooks               = local.playbook_path
+    extra_vars              = var.extra_vars
+    verbosity               = 2
+    ansible_playbook_binary = "ansible-playbook"
+  }
+}

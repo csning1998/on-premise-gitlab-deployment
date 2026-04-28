@@ -34,8 +34,8 @@
       ansible.builtin.command:
         cmd: >
           ip route replace {{ item.item }}
-          via {{ ansible_default_ipv4.gateway }}
-          dev {{ ansible_default_ipv4.interface }}
+          via {{ ansible_facts['default_ipv4']['gateway'] }}
+          dev {{ ansible_facts['default_ipv4']['interface'] }}
           advmss 1300
       changed_when: item.rc != 0
       loop: "{{ route_check.results }}"

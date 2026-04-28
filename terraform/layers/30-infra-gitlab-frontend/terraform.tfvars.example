@@ -32,8 +32,3 @@ gitlab_kubeadm_config = {
 kubernetes_cluster_configuration = {
   pod_subnet = "10.244.0.0/16" # default
 }
-
-ansible_files = {
-  playbook_file           = "30-provision-kubeadm.yaml"
-  inventory_template_file = "inventory-kubeadm-cluster.yaml.tftpl"
-}

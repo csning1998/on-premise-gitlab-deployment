@@ -122,7 +122,7 @@
 
     - name: "Step B5: Identify stale nodes (nodes in k8s but not in inventory)"
       ansible.builtin.set_fact:
-        stale_nodes: "{{ kube_nodes_result.stdout.split() | difference(groups['nodes']) }}"
+        stale_nodes: "{{ kube_nodes_result.stdout.split() | difference(groups['microk8s']) }}"
 
     - name: "Step B6: Remove stale nodes from the cluster"
       ansible.builtin.command:

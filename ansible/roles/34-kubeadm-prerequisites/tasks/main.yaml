@@ -1,4 +1,26 @@
 ---
+- name: "Block 0: Dynamically discover the Host-only network interface for Kubeadm"
+  block:
+    - name: "Step 0.1. Identify Host-only interface from facts"
+      ansible.builtin.set_fact:
+        kubeadm_ha_interface: "{{ item }}"
+      loop: "{{ ansible_facts.interfaces }}"
+      when:
+        - item != 'lo'
+        - ansible_facts[item]['ipv4'] is defined
+        - not (ansible_facts[item]['ipv4']['address'].startswith(kubeadm_nat_subnet_prefix | default('10.0.2')))
+      no_log: true
+
+    - name: "Step 0.2. Set kubeadm_advertise_ip fact"
+      ansible.builtin.set_fact:
+        kubeadm_advertise_ip: "{{ ansible_facts[kubeadm_ha_interface]['ipv4']['address'] }}"
+      when: kubeadm_ha_interface is defined
+
+    - name: "Step 0.3. Fail if advertisement IP could not be determined"
+      ansible.builtin.fail:
+        msg: "Could not dynamically determine the advertisement IP using prefix exclusion."
+      when: kubeadm_advertise_ip is not defined
+
 - name: "Block A: Establish Certificate Trust for Containerd & OS"
   become: true
   block:

@@ -103,11 +103,34 @@ locals {
 # 5. Ansible Configuration (Dynamic Inventory)
 locals {
   ansible_template_vars = {
-    access_scope         = local.p_net_config.network.hostonly.cidr
-    redis_tls_port       = local.p_net_config.lb_config.ports["main"].frontend_port
-    redis_vip            = local.p_net_config.lb_config.vip
-    vault_vip            = local.state.vault_sys.service_vip
+    # Service Identifiers
+    service_identifier   = local.svc_identity.cluster_name
     redis_service_domain = local.sec_vault_agent_identity.common_name
+
+    # Networking & HA
+    redis_ha_virtual_ip   = local.p_net_config.lb_config.vip
+    redis_tls_node_subnet = local.p_net_config.network.hostonly.cidr
+    redis_tls_port        = local.p_net_config.lb_config.ports["main"].frontend_port
+    vault_vip             = local.state.vault_sys.service_vip
+    global_mss            = local.state.metadata.global_network_baseline.global_mss
+
+    # Cluster Topology
+    redis_cluster_ips = join(",", [
+      for node_suffix, node_data in var.service_config["redis"].nodes :
+      cidrhost(local.p_net_config.network.hostonly.cidr, node_data.ip_suffix)
+    ])
+    redis_initial_master_ip = cidrhost(local.p_net_config.network.hostonly.cidr, var.service_config["redis"].nodes["00"].ip_suffix)
+    sentinel_quorum         = floor(length(var.service_config["redis"].nodes) / 2) + 1
+
+    # Asymmetric Routing
+    redis_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    redis_static_route_via    = local.p_net_config.lb_config.vip
+    redis_static_route_metric = 100
+
+    # Compatibility Aliases
+    access_scope = local.p_net_config.network.hostonly.cidr
+    redis_vip    = local.p_net_config.lb_config.vip
+    cluster_name = local.svc_identity.cluster_name
   }
 
   ansible_extra_vars = {
@@ -116,6 +139,5 @@ locals {
     redis_vrrp_secret       = local.sec_app_creds.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
-    global_mss              = local.state.metadata.global_network_baseline.global_mss
   }
 }

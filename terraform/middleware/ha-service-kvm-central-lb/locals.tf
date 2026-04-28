@@ -127,19 +127,67 @@ locals {
 
   # 4. Ansible & Orchestration Context
   ansible = {
-    root_path          = abspath("${path.module}/../../../ansible")
-    playbook_file      = "playbooks/${var.ansible_playbook_file}"
-    inventory_file     = var.svc_identity.ansible_inventory
-    inventory_template = "${path.module}/../../templates/${var.ansible_inventory_template_file}"
+    root_path      = abspath("${path.module}/../../../ansible")
+    inventory_file = var.svc_identity.ansible_inventory
+  }
 
-    inventory_contents = templatefile("${path.module}/../../templates/${var.ansible_inventory_template_file}", merge(var.ansible_template_vars, {
-      load_balancer_nodes = local.nodes_map_for_template
-      service_segments    = var.network_service_segments
-    }))
+  ansible_inventory_data = {
+    all = {
+      vars = merge(
+        var.ansible_generic_config.template_vars,
+        {
+          service_identifier = var.svc_identity.service_name
+          service_domain     = var.svc_identity.domain_suffix
+
+          lb_service_segments = [
+            for seg in var.network_service_segments : {
+              name            = seg.name
+              vip             = seg.vip
+              cidr            = seg.cidr
+              vrid            = seg.vrid
+              interface_alias = seg.interface_name
+              ports = {
+                for p_key, p_val in seg.ports : p_key => {
+                  frontend                 = p_val.frontend_port
+                  backend                  = p_val.backend_port
+                  health_check_type        = p_val.health_check_type
+                  health_check_http_path   = p_val.health_check_http_path
+                  health_check_http_expect = p_val.health_check_http_expect
+                  health_check_ssl         = p_val.health_check_ssl
+                }
+              }
+              tags = seg.tags
+              backend_servers = [
+                for srv in seg.backend_servers : {
+                  name = srv.name
+                  ip   = srv.ip
+                }
+              ]
+            }
+          ]
+        }
+      )
+
+      children = {
+        lb = {
+          hosts = {
+            for name, node in local.lb_cluster_vm_config.nodes : name => {
+              ansible_host = split("/", node["interfaces"][1].addresses[0])[0]
+              advertise_ip = split("/", node["interfaces"][1].addresses[0])[0]
+              node_id      = name
+              node_role    = "load_balancer"
+              service_ips = {
+                for seg in var.network_service_segments : seg.name => seg.node_ips[name]
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   ansible_extra_vars = merge(
-    var.ansible_extra_vars,
+    var.ansible_generic_config.extra_vars,
     {
       haproxy_stats_pass   = local.credentials_haproxy_for_ansible.haproxy_stats_pass
       keepalived_auth_pass = local.credentials_haproxy_for_ansible.keepalived_auth_pass

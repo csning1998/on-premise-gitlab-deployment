@@ -3,8 +3,8 @@ module "microk8s_harbor" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Core Identifier & Topology
-  svc_identity    = local.svc_identity
-  node_identities = local.node_identities
+  svc_identity               = local.svc_identity
+  node_identities            = local.node_identities
   topology_cluster           = local.topology_cluster
   storage_infrastructure_map = local.state.volume.storage_infrastructure_map
 
@@ -16,8 +16,8 @@ module "microk8s_harbor" {
   security_vault_agent_identity = local.sec_vault_agent_identity
 
   # Generic Ansible Configuration
-  ansible_inventory_template_file = var.ansible_files.inventory_template_file
-  ansible_playbook_file           = var.ansible_files.playbook_file
-  ansible_template_vars           = local.ansible_template_vars
-  ansible_extra_vars              = local.ansible_extra_vars
+  ansible_generic_config = {
+    template_vars = local.ansible_template_vars
+    extra_vars    = local.ansible_extra_vars
+  }
 }

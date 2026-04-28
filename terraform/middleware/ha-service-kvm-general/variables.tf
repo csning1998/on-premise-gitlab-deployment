@@ -78,27 +78,16 @@ variable "network_infrastructure_map" {
   }
 }
 
-# Generic Ansible Injections
-variable "ansible_inventory_template_file" {
-  description = "The filename of the Ansible inventory template to render internally (resolved against shared templates directory)."
-  type        = string
-}
-
-variable "ansible_template_vars" {
-  description = "A generic map of non-sensitive variables customized for the application's inventory rendering."
-  type        = any
-  default     = {}
-}
-
-variable "ansible_extra_vars" {
-  description = "A generic map of sensitive variables for the application, merged with common system variables."
-  type        = any
-  default     = {}
-}
-
-variable "ansible_playbook_file" {
-  description = "The name of the Ansible playbook file to execute."
-  type        = string
+variable "ansible_generic_config" {
+  description = "Consolidated Ansible configuration including template and extra variables."
+  type = object({
+    template_vars = any
+    extra_vars    = any
+  })
+  default = {
+    template_vars = {}
+    extra_vars    = {}
+  }
 }
 
 # System Credentials

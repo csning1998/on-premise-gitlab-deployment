@@ -26,9 +26,9 @@ locals {
    */
   network_topology = {
     for key, item in local._flat_catalog : key => {
-      segment_key    = key
-      cidr_block     = cidrsubnet(var.network_baseline.cidr_block, 8, item.config.cidr_index)
-      
+      segment_key = key
+      cidr_block  = cidrsubnet(var.network_baseline.cidr_block, 8, item.config.cidr_index)
+
       # NAT calculation (Internal logic for gateway isolation)
       nat_gateway    = cidrhost(cidrsubnet(var.network_baseline.cidr_block, 8, item.config.cidr_index - 124), 1)
       nat_cidr_block = cidrsubnet(var.network_baseline.cidr_block, 8, item.config.cidr_index - 124)

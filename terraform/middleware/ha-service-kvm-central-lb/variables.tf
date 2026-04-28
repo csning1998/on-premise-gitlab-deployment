@@ -7,6 +7,7 @@ variable "svc_identity" {
     node_name_prefix  = string
     ansible_inventory = string
     ssh_config        = string
+    domain_suffix     = string
   })
 }
 
@@ -116,24 +117,16 @@ variable "network_infrastructure_map" {
   }
 }
 
-variable "ansible_inventory_template_file" {
-  description = "Template filename for the Ansible inventory"
-  type        = string
-}
-
-variable "ansible_template_vars" {
-  description = "Template variables mapping for Ansible inventory generation"
-  type        = any
-}
-
-variable "ansible_playbook_file" {
-  description = "Playbook filename for the Ansible orchestration"
-  type        = string
-}
-
-variable "ansible_extra_vars" {
-  description = "Extra variables mapping for the Ansible execution"
-  type        = any
+variable "ansible_generic_config" {
+  description = "Consolidated Ansible configuration including template and extra variables."
+  type = object({
+    template_vars = any
+    extra_vars    = any
+  })
+  default = {
+    template_vars = {}
+    extra_vars    = {}
+  }
 }
 
 # Credentials Injection

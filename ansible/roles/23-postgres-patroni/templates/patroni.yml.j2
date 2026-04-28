@@ -12,7 +12,7 @@ restapi:
 # DCS Configuration (etcd)
 etcd3:
   hosts:
-{% for host in groups['postgres_etcd_nodes'] %}
+{% for host in groups['etcd'] %}
     - {{ hostvars[host]['advertise_ip'] }}:2379
 {% endfor %}
   ttl: 30
@@ -31,16 +31,11 @@ bootstrap:
     - auth-host: "{{ password_encryption }}"
     - auth-local: "{{ password_encryption }}"
   pg_hba:
-    # HAProxy does not need mTLS
-{% for host in groups['postgres_haproxy_nodes'] | default([]) %}
-    - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
-{% endfor %}
-
     # Patroni does not need mTLS
     - host all all {{ advertise_ip }}/32 "{{ password_encryption }}"
 
     # Allow other nodes in the cluster to replicate (no mTLS)
-{% for host in groups['postgres_db_nodes'] %}
+{% for host in groups['postgres'] %}
     - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
     - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
     - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"

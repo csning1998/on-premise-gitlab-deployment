@@ -1,40 +1,58 @@
 ---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# Play 1: Setup HA Load Balancer on all master nodes
 - name: "Play 1: Setup HA Load Balancer on all master nodes"
-  hosts: master
+  hosts: "{{ 'master' if 'master' in groups else [] }}"
   become: true
+  gather_facts: true
   roles:
     - 34-kubeadm-prerequisites
     - 35-kubeadm-ha-haproxy
 
+# Play 2: Initialize the primary master node
 - name: "Play 2: Initialize the primary master node"
-  hosts: "{{ groups['master'][0] | default([]) }}"
+  hosts: "{{ (groups['master'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 36-kubeadm-init-primary
 
+# Play 3: Generate and fetch join commands from primary master
 - name: "Play 3: Generate and fetch join commands from primary master"
-  hosts: "{{ groups['master'][0] | default([]) }}"
+  hosts: "{{ (groups['master'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 37-kubeadm-get-join-token
 
+# Play 4: Join secondary master nodes to the cluster
 - name: "Play 4: Join secondary master nodes to the cluster"
-  hosts: "{{ groups['master'] | default([]) | difference([ (groups['master'] | default(['placeholder']))[0] ]) }}"
+  hosts: "{{ (groups['master'] | default([]) | intersect(groups['replica'] | default([]))) }}"
   become: true
+  gather_facts: true
   serial: 1
   roles:
     - 38-kubeadm-join-secondary
 
+# Play 5: Join worker nodes to the cluster
 - name: "Play 5: Join worker nodes to the cluster"
-  hosts: workers
+  hosts: "{{ 'worker' if 'worker' in groups else [] }}"
   become: true
+  gather_facts: true
   serial: 5 # ~30MiB/worker; 5 workers ≈ 1 master (175MiB) in pull bandwidth
   roles:
     - 34-kubeadm-prerequisites
     - 39-kubeadm-join-workers
 
+# Play 6: Setup Kubeconfig Vault Storage
 - name: "Play 6: Setup Kubeconfig Vault Storage"
-  hosts: "{{ groups['master'][0] | default([]) }}"
+  hosts: "{{ (groups['master'] | default([]) | intersect(groups['primary'] | default([]))) }}"
   become: true
   roles:
     - 40-kubeadm-kubeconfig

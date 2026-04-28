@@ -4,7 +4,7 @@
   block:
     - name: "Step 1. Define the primary node from inventory"
       ansible.builtin.set_fact:
-        primary_node: "{{ (groups['nodes'] | default([])) | first }}"
+        primary_node: "{{ (groups['microk8s'] | default([]) | intersect(groups['primary'] | default([]))) | first }}"
 
     - name: "Step 2. Wait for MicroK8s to be ready on the primary node"
       ansible.builtin.command:

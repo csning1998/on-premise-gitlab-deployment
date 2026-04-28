@@ -19,3 +19,8 @@ output "gitlab_minio_cluster_name" {
   description = "GitLab MinIO cluster name."
   value       = local.svc_identity.cluster_name
 }
+
+output "ansible_inventory" {
+  description = "The generated Ansible inventory content and file path."
+  value       = module.build_gitlab_minio_cluster.ansible_inventory
+}

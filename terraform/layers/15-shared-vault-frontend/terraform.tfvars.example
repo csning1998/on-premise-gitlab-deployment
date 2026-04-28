@@ -21,7 +21,3 @@ vault_config = {
   }
 }
 
-ansible_files = {
-  playbook_file           = "10-provision-core-services.yaml"
-  inventory_template_file = "inventory-vault-cluster.yaml.tftpl"
-}

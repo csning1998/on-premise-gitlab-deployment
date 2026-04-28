@@ -2,6 +2,14 @@
 - name: "Block D: Configure and Start"
   become: true
   block:
+    - name: "D0. Debug Configuration Variables (Diagnostic)"
+      ansible.builtin.debug:
+        msg:
+          - "node_id: {{ node_id | default('UNDEFINED') }}"
+          - "advertise_ip: {{ advertise_ip | default('UNDEFINED') }}"
+          - "vault_cluster_name: {{ vault_cluster_name | default('UNDEFINED') }}"
+          - "vault_leader_group_exists: {{ 'vault_leader' in groups }}"
+
     - name: "D1. Configure Vault using Raft"
       ansible.builtin.template:
         src: vault.hcl.j2

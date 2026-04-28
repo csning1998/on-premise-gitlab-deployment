@@ -66,16 +66,46 @@ locals {
 locals {
   ansible = {
     root_path      = abspath("${path.module}/../../../ansible")
-    playbook_file  = "playbooks/${var.ansible_playbook_file}"
     inventory_file = var.svc_identity.ansible_inventory
   }
 
-  ansible_inventory_content = templatefile("${path.module}/../../templates/${var.ansible_inventory_template_file}", {
-    nodes_by_role    = local.nodes_by_role
-    all_nodes        = local.flat_node_map
-    cluster_identity = var.svc_identity
-    custom_vars      = var.ansible_template_vars
-  })
+  ansible_inventory_data = {
+    all = {
+      vars = merge(
+        var.ansible_generic_config.template_vars,
+        {
+          cluster_name               = var.svc_identity.cluster_name
+          ansible_python_interpreter = "/usr/bin/python3"
+        }
+      )
+
+      children = {
+        # Primary Group: contains the leading node of each role.
+        primary = {
+          hosts = {
+            for role, nodes in local.nodes_by_role : keys(nodes)[0] => {
+              advertise_ip     = nodes[keys(nodes)[0]].ip
+              node_id          = keys(nodes)[0]
+              node_role        = role
+              attached_volumes = nodes[keys(nodes)[0]].attached_volumes
+            }
+          }
+        }
+        # Replica Group: contains all standby/follower nodes across all roles.
+        replica = {
+          hosts = {
+            for name, node in local.flat_node_map : name => {
+              advertise_ip     = node.ip
+              node_id          = name
+              node_role        = node.role
+              attached_volumes = node.attached_volumes
+            }
+            if name != keys(local.nodes_by_role[node.role])[0]
+          }
+        }
+      }
+    }
+  }
 
   ansible_extra_vars_base = {
     ansible_user = var.credentials_system.username
@@ -101,7 +131,7 @@ locals {
     local.ansible_extra_vars_base,
     local.ansible_extra_vars_vault,
     local.ansible_extra_vars_pki,
-    var.ansible_extra_vars
+    var.ansible_generic_config.extra_vars
   )
 }
 

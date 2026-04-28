@@ -44,8 +44,11 @@
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
-    routing_static_routes: "{{ minio_static_routes }}"
-  when: minio_static_routes is defined and minio_static_routes | length > 0
+    routing_static_routes:
+      - to: "{{ minio_static_route_to }}"
+        via: "{{ minio_static_route_via }}"
+        metric: "{{ minio_static_route_metric }}"
+  when: minio_static_route_to is defined
 
 - name: "Section C: Configure Distributed MinIO"
   block:

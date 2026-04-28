@@ -3,8 +3,11 @@
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
-    routing_static_routes: "{{ dev_harbor_static_routes }}"
-  when: dev_harbor_static_routes is defined and dev_harbor_static_routes | length > 0
+    routing_static_routes:
+      - to: "{{ dev_harbor_static_route_to }}"
+        via: "{{ dev_harbor_static_route_via }}"
+        metric: "{{ dev_harbor_static_route_metric }}"
+  when: dev_harbor_static_route_to is defined
 
 - name: "Section B: Configure Data Storage Volume"
   become: true
@@ -73,23 +76,35 @@
       notify: Update CA Certificates
 
 - name: "Section D: Prepare Environment for Vault Agent"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "root"
-    vault_agent_group: "root"
-    vault_agent_cert_base_dir: "{{ harbor_pki_dir }}"
-    vault_agent_cert_dirs:
-      - "{{ harbor_pki_dir }}"
-      - "{{ harbor_config_cert_dir }}"
-    vault_agent_wait_file: "{{ harbor_cert_path }}"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ dev_harbor_vip }}"
-    vault_agent_post_command: |
-      cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
-      cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
-      chmod 0644 {{ harbor_config_cert_dir }}/server.crt
-      chmod 0600 {{ harbor_config_cert_dir }}/server.key
-      docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true
+  block:
+    - name: "Step D1. Discover Harbor UID/GID from existing directory"
+      ansible.builtin.stat:
+        path: "{{ harbor_pki_dir }}"
+      register: harbor_dir_stat
+
+    - name: "Step D2. Set Harbor ID Facts"
+      ansible.builtin.set_fact:
+        _harbor_uid: "{{ harbor_dir_stat.stat.uid }}"
+        _harbor_gid: "{{ harbor_dir_stat.stat.gid }}"
+
+    - name: "Step D3. Include Vault Agent Role"
+      ansible.builtin.include_role:
+        name: 82-vault-agent
+      vars:
+        vault_agent_owner: "{{ _harbor_uid }}"
+        vault_agent_group: "{{ _harbor_gid }}"
+        vault_agent_cert_base_dir: "{{ harbor_pki_dir }}"
+        vault_agent_cert_dirs:
+          - "{{ harbor_pki_dir }}"
+          - "{{ harbor_config_cert_dir }}"
+        vault_agent_wait_file: "{{ harbor_cert_path }}"
+        vault_agent_ip_sans: "{{ advertise_ip }},{{ dev_harbor_vip }}"
+        vault_agent_post_command: |
+          cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
+          cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
+          chmod 0644 {{ harbor_config_cert_dir }}/server.crt
+          chmod 0600 {{ harbor_config_cert_dir }}/server.key
+          docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true
 
 - name: "Section E: Fetch Secrets from Vault"
   become: true
