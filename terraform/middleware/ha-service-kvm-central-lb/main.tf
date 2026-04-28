@@ -26,14 +26,13 @@ module "ansible_runner" {
   source         = "../../modules/cluster-provision/ansible-runner"
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
-  inventory_content = local.ansible.inventory_contents
-  credentials_vm    = local.credentials_vm_for_ssh
-  extra_vars        = local.ansible_extra_vars
+  inventory_data = local.ansible_inventory_data
+  credentials_vm = local.credentials_vm_for_ssh
+  extra_vars     = local.ansible_extra_vars
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path
     root_path       = local.ansible.root_path
-    playbook_file   = local.ansible.playbook_file
     inventory_file  = local.ansible.inventory_file
   }
 }
