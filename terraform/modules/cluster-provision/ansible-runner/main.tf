@@ -55,7 +55,6 @@ resource "local_file" "ansible_cfg" {
   filename = "${path.cwd}/ansible.cfg"
 }
 
-
 action "ansible_playbook_run" "run_playbook" {
   config {
     playbooks               = local.playbook_path
