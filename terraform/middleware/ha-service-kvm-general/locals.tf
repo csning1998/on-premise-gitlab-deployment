@@ -70,12 +70,14 @@ locals {
     inventory_file = var.svc_identity.ansible_inventory
   }
 
-  ansible_inventory_content = templatefile("${path.module}/../../templates/${var.ansible_inventory_template_file}", {
+  ansible_inventory_data = yamldecode(templatefile("${path.module}/../../templates/${var.ansible_inventory_template_file}", {
     nodes_by_role    = local.nodes_by_role
     all_nodes        = local.flat_node_map
     cluster_identity = var.svc_identity
     custom_vars      = var.ansible_template_vars
-  })
+  }))
+
+  ansible_inventory_content = yamlencode(local.ansible_inventory_data)
 
   ansible_extra_vars_base = {
     ansible_user = var.credentials_system.username

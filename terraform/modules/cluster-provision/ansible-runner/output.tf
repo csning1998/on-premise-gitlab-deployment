@@ -1,10 +1,12 @@
 
 output "ansible_log" {
   description = "Path to Ansible execution log (standard convention)"
-  value       = "${var.ansible_config.root_path}/logs/ansible-latest.log"
+  value       = "${path.cwd}/ansible-deployment.log"
 }
 
+/*
 output "provision_id" {
   description = "IDs of the ansible_playbook resources"
-  value       = jsonencode([for p in ansible_playbook.run_playbook : p.id])
+  value       = jsonencode([ansible_playbook_run.run_playbook.id])
 }
+*/

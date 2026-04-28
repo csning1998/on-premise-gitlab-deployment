@@ -7,11 +7,16 @@ variable "ansible_config" {
     playbook_file   = string # e.g. "playbooks/10-vault-core.yaml"
     inventory_file  = string # e.g. "inventory-10-vault-core.yaml"
   })
+
+  validation {
+    condition     = var.ansible_config.root_path != "" && var.ansible_config.playbook_file != ""
+    error_message = "Both root_path and playbook_file must be non-empty strings."
+  }
 }
 
-variable "inventory_content" {
-  description = "The rendered content of the inventory file (string)"
-  type        = string
+variable "inventory_data" {
+  description = "The structured inventory data object (from yamldecode of template)"
+  type        = any
 }
 
 variable "credentials_vm" {

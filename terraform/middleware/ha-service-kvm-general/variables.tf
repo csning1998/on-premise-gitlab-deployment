@@ -99,6 +99,11 @@ variable "ansible_extra_vars" {
 variable "ansible_playbook_file" {
   description = "The name of the Ansible playbook file to execute."
   type        = string
+
+  validation {
+    condition     = var.ansible_playbook_file != ""
+    error_message = "ansible_playbook_file must be a non-empty string."
+  }
 }
 
 # System Credentials
