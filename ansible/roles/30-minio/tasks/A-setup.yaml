@@ -1,0 +1,51 @@
+---
+# Section A: Prepare Data Drives
+- name: "A1. Install XFS progs"
+  ansible.builtin.apt:
+    name: xfsprogs
+    state: present
+    update_cache: true
+
+- name: "A2. Create XFS filesystem on data drives"
+  community.general.filesystem:
+    fstype: xfs
+    dev: "{{ item.device }}"
+  loop: "{{ minio_data_drives }}"
+
+- name: "A3. Create mount points"
+  ansible.builtin.file:
+    path: "{{ item.mount_point }}"
+    state: directory
+    owner: "{{ minio_user }}"
+    group: "{{ minio_group }}"
+    mode: "0750"
+  loop: "{{ minio_data_drives }}"
+
+- name: "A4. Mount drives and persist in fstab"
+  ansible.posix.mount:
+    path: "{{ item.mount_point }}"
+    src: "{{ item.device }}"
+    fstype: xfs
+    opts: noatime
+    state: mounted
+  loop: "{{ minio_data_drives }}"
+
+- name: "A5. Ensure ownership of mount points (Recursive)"
+  ansible.builtin.file:
+    path: "{{ item.mount_point }}"
+    state: directory
+    owner: "{{ minio_user }}"
+    group: "{{ minio_group }}"
+    recurse: true
+  loop: "{{ minio_data_drives }}"
+
+# Section B: Configure Network Routing
+- name: "B1. Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ minio_static_route_to }}"
+        via: "{{ minio_static_route_via }}"
+        metric: "{{ minio_static_route_metric }}"
+  when: minio_static_route_to is defined

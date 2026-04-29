@@ -34,7 +34,7 @@
   hosts: "{{ 'minio' if 'minio' in groups else [] }}"
   become: true
   roles:
-    - 28-minio-distributed
+    - 30-minio
 
 # Dev Harbor Bootstrapper Registry
 - name: "Play [Dev Harbor]: Configure Dev Harbor (Bootstrapper) Cluster"

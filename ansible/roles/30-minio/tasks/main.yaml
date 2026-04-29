@@ -1,0 +1,12 @@
+---
+- name: "Section A. Setup MinIO Environment"
+  ansible.builtin.include_tasks: A-setup.yaml
+
+- name: "Section B. Configure MinIO Instance"
+  ansible.builtin.include_tasks: B-configure.yaml
+
+- name: "Section C. Manage MinIO Service"
+  ansible.builtin.include_tasks: C-service.yaml
+
+- name: "Section D. Verify MinIO Cluster"
+  ansible.builtin.include_tasks: D-verification.yaml
