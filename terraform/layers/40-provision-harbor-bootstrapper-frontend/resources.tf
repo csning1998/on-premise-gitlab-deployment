@@ -71,7 +71,9 @@ module "ansible_sync_oci" {
 
   depends_on = [
     vault_kv_secret_v2.robot_helm_creds,
-    harbor_project.proxy_oci
+    harbor_project.proxy_oci,
+    harbor_project.proxy_projects,
+    harbor_registry.proxy_registries
   ]
 
   status_trigger = local.state.harbor_bootstrapper.topology_node
