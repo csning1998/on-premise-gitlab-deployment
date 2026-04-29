@@ -1,0 +1,27 @@
+---
+- name: "Section A. Setup Kubeadm Prerequisites"
+  ansible.builtin.include_tasks: A-prerequisites.yaml
+
+- name: "Section B. Configure HAProxy (Masters)"
+  ansible.builtin.include_tasks: B-haproxy.yaml
+  when: inventory_hostname in (groups['master'] | default([]))
+
+- name: "Section C. Initialize Primary Master"
+  ansible.builtin.include_tasks: C-kubeadm-init.yaml
+  when: inventory_hostname in (groups['master'] | default([]) | intersect(groups['primary'] | default([])))
+
+- name: "Section D. Generate Join Tokens"
+  ansible.builtin.include_tasks: D-join-token.yaml
+  when: inventory_hostname in (groups['master'] | default([]) | intersect(groups['primary'] | default([])))
+
+- name: "Section E. Join Secondary Masters"
+  ansible.builtin.include_tasks: E-join-secondary.yaml
+  when: inventory_hostname in (groups['master'] | default([]) | intersect(groups['replica'] | default([])))
+
+- name: "Section F. Join Worker Nodes"
+  ansible.builtin.include_tasks: F-join-workers.yaml
+  when: inventory_hostname in (groups['worker'] | default([]))
+
+- name: "Section G. Setup Kubeconfig Vault Storage"
+  ansible.builtin.include_tasks: G-kubeconfig.yaml
+  when: inventory_hostname in (groups['master'] | default([]) | intersect(groups['primary'] | default([])))

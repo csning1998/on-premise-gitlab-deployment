@@ -1,0 +1,42 @@
+---
+# 34-kubeadm-prerequisites Defaults
+# kubeadm_registry_host is injected from inventory template
+kubeadm_registry_host: ""
+
+# 35-kubeadm-ha-haproxy Defaults
+# HAProxy Tuning
+haproxy_maxconn: 4096
+haproxy_timeout_connect: 5000
+haproxy_timeout_client: 50000
+haproxy_timeout_server: 50000
+
+# Keepalived Tuning
+keepalived_router_id: "k8s_master"
+keepalived_vrrp_id: 51
+keepalived_advert_int: 1
+
+# Kubernetes Version & CRI
+kubeadm_version: "v1.32.0"
+kubeadm_cri_socket: "unix:///var/run/containerd/containerd.sock"
+kubeadm_cgroup_driver: "systemd"
+k8s_cgroup_driver: "systemd"
+
+# Networking Defaults
+kubeadm_pod_subnet: "{{ kubeadm_pod_subnet | default('10.244.0.0/16') }}"
+kubeadm_ha_virtual_ip: "{{ kubeadm_ha_virtual_ip | default('') }}"
+kubeadm_master_ips: "{{ kubeadm_master_ips | default([]) }}"
+
+# API Server Cert SANs
+kubeadm_extra_sans:
+  - "kubernetes"
+  - "kubernetes.default"
+  - "kubernetes.default.svc"
+  - "kubernetes.default.svc.cluster.local"
+
+# Local path to save the fetched kubeconfig
+kubeadm_fetched_kubeconfig_path: "{{ playbook_dir }}/../fetched/{{ service_identifier | default('default') }}/kubeconfig"
+
+# Join Configuration
+k8s_join_skip_ca_verification: false
+k8s_join_ignore_preflight_errors:
+  - "Port-6443"

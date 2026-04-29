@@ -22,3 +22,11 @@
   gather_facts: true
   roles:
     - 30-microk8s
+
+# 3. Kubeadm Cluster
+- name: "Play [Kubernetes]: Provision and Configure Kubeadm Cluster"
+  hosts: "{{ (groups['master'] | default([])) + (groups['worker'] | default([])) }}"
+  become: true
+  gather_facts: true
+  roles:
+    - 30-kubeadm

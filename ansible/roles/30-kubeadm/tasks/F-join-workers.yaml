@@ -16,7 +16,7 @@
   block:
     - name: "Step 0. Create kubeadm join config file from template"
       ansible.builtin.template:
-        src: kubeadm-join-config.yaml.j2
+        src: kubeadm-join-workers-config.yaml.j2
         dest: "/tmp/kubeadm-join-config.yaml"
         mode: "0644"
 
