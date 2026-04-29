@@ -27,7 +27,7 @@
   hosts: "{{ 'redis' if 'redis' in groups else [] }}"
   become: true
   roles:
-    - 26-redis-sentinel
+    - 30-redis
 
 # MinIO Distributed
 - name: "Play [MinIO]: Configure MinIO High Availability Cluster"

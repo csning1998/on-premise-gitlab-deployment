@@ -1,0 +1,9 @@
+---
+- name: "Section A. Setup Redis Environment"
+  ansible.builtin.include_tasks: A-setup.yaml
+
+- name: "Section B. Configure Redis Instance"
+  ansible.builtin.include_tasks: B-configure.yaml
+
+- name: "Section C. Manage Redis Services"
+  ansible.builtin.include_tasks: C-service.yaml
