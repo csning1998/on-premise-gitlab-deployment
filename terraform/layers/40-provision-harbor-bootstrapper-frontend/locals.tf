@@ -9,34 +9,36 @@ locals {
   sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
 }
 
-locals {
-  ansible_extra_vars = {
-    vault_addr      = local.sys_vault_addr
-    harbor_registry = "harbor-bootstrapper.production.iac.local" # Or dynamic if available
-  }
+# locals {
+#   ansible_extra_vars = {
+#     vault_addr              = local.sys_vault_addr
+#     harbor_registry         = "harbor-bootstrapper.production.iac.local"
+#     vault_approle_role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
+#     vault_approle_secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
+#   }
 
-  ansible_config = {
-    root_path       = abspath("${path.root}/../../../ansible")
-    ssh_config_path = local.state.harbor_bootstrapper.ssh_config_file_path
-    inventory_file  = "inventory-provision-harbor-bootstrapper-frontend.yaml"
-  }
+#   ansible_config = {
+#     root_path       = abspath("${path.root}/../../../ansible")
+#     ssh_config_path = local.state.harbor_bootstrapper.ssh_config_file_path
+#     inventory_file  = "inventory-provision-harbor-bootstrapper-frontend.yaml"
+#   }
 
-  # Re-wrap Layer 30 inventory into a specific group for L40 business logic
-  inventory_data = {
-    all = {
-      children = {
-        harbor_bootstrapper_oci = {
-          hosts = local.state.harbor_bootstrapper.ansible_inventory.data.all.children.primary.hosts
-        }
-      }
-    }
-  }
+#   # Re-wrap Layer 30 inventory into a specific group for L40 business logic
+#   inventory_data = {
+#     all = {
+#       children = {
+#         harbor_bootstrapper_oci = {
+#           hosts = local.state.harbor_bootstrapper.ansible_inventory.data.all.children.primary.hosts
+#         }
+#       }
+#     }
+#   }
 
-  credentials_vm = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
-  }
-}
+#   credentials_vm = {
+#     username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+#     ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+#   }
+# }
 
 locals {
   proxy_oci = {
