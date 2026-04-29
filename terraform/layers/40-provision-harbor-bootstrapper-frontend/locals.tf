@@ -21,7 +21,16 @@ locals {
     inventory_file  = "inventory-provision-harbor-bootstrapper-frontend.yaml"
   }
 
-  inventory_data = local.state.harbor_bootstrapper.ansible_inventory.data
+  # Re-wrap Layer 30 inventory into a specific group for L40 business logic
+  inventory_data = {
+    all = {
+      children = {
+        harbor_bootstrapper_oci = {
+          hosts = local.state.harbor_bootstrapper.ansible_inventory.data.all.children.primary.hosts
+        }
+      }
+    }
+  }
 
   credentials_vm = {
     username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
