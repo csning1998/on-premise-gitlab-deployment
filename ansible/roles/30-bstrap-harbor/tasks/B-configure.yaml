@@ -46,21 +46,3 @@
     _harbor_uid: "{{ harbor_dir_stat.stat.uid | default(0) }}"
     _harbor_gid: "{{ harbor_dir_stat.stat.gid | default(0) }}"
 
-- name: "B8. Include Vault Agent Role"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "{{ _harbor_uid }}"
-    vault_agent_group: "{{ _harbor_gid }}"
-    vault_agent_cert_base_dir: "{{ harbor_pki_dir }}"
-    vault_agent_cert_dirs:
-      - "{{ harbor_pki_dir }}"
-      - "{{ harbor_config_cert_dir }}"
-    vault_agent_wait_file: "{{ harbor_cert_path }}"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ dev_harbor_vip }}"
-    vault_agent_post_command: |
-      cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
-      cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
-      chmod 0644 {{ harbor_config_cert_dir }}/server.crt
-      chmod 0600 {{ harbor_config_cert_dir }}/server.key
-      docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true

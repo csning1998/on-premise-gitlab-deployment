@@ -17,12 +17,3 @@
     mode: "0640"
   notify: Restart redis-sentinel
 
-- name: "B3. Prepare Environment for Vault Agent"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "{{ redis_user }}"
-    vault_agent_group: "{{ redis_group }}"
-    vault_agent_cert_base_dir: "/etc/redis/certs"
-    vault_agent_post_command: "systemctl restart redis-server redis-sentinel"
-    vault_agent_ip_sans: "{{ advertise_ip }}"
