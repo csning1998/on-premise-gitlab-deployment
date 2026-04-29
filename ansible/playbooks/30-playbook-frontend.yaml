@@ -9,11 +9,11 @@
         key: "{{ node_role }}"
 
 # 1. Harbor Bootstrapper Registry
-- name: "Play [Harbor]: Configure Harbor Bootstrapper Cluster"
-  hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
-  become: true
-  roles:
-    - 30-bstrap-harbor
+# - name: "Play [Harbor]: Configure Harbor Bootstrapper Cluster"
+#   hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
+#   become: true
+#   roles:
+#     - 30-bstrap-harbor
 
 # 2. MicroK8s Cluster
 - name: "Play [Kubernetes]: Provision and Configure MicroK8s Cluster"

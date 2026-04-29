@@ -1,0 +1,66 @@
+---
+- name: Step 1. Authenticate with Vault via AppRole
+  community.hashi_vault.vault_login:
+    url: "{{ vault_addr }}"
+    auth_method: approle
+    role_id: "{{ vault_approle_role_id }}"
+    secret_id: "{{ vault_approle_secret_id }}"
+  register: vault_auth
+  # no_log: true
+
+- name: Step 2. Retrieve Harbor Robot credentials from Vault (Standard KV2)
+  community.hashi_vault.vault_kv2_get:
+    url: "{{ vault_addr }}"
+    engine_mount_point: "secret"
+    auth_method: "approle"
+    path: "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+    role_id: "{{ vault_approle_role_id }}"
+    secret_id: "{{ vault_approle_secret_id }}"
+  register: harbor_creds
+  # no_log: true
+
+- name: Step 3. Force local DNS resolution for Harbor FQDN
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 {{ harbor_registry }}"
+    state: present
+  become: true
+
+- name: Step 4. Verify Harbor OCI Login
+  kubernetes.core.helm_registry_auth:
+    host: "{{ harbor_registry }}"
+    username: "{{ harbor_robot_user }}"
+    password: "{{ harbor_creds.secret.password_pusher }}"
+  register: harbor_login
+
+- name: Step 5. Synchronize Helm Charts (Pull and Push)
+  ansible.builtin.shell: |
+    set -eo pipefail
+
+    {% set is_oci_chart = item.is_oci | default(false) | bool %}
+
+    {% if is_oci_chart %}
+    helm pull {{ item.repo }}/{{ item.name }} --version {{ item.version }}
+    {% else %}
+    helm pull {{ item.name }} --version {{ item.version }} --repo {{ item.repo }}
+    {% endif %}
+
+    CHART_FILE_CLEAN="{{ item.name }}-{{ item.version | regex_replace('^v', '') }}.tgz"
+    CHART_FILE_RAW="{{ item.name }}-{{ item.version }}.tgz"
+
+    if [ -f "$CHART_FILE_CLEAN" ]; then
+        TARGET_FILE="$CHART_FILE_CLEAN"
+    elif [ -f "$CHART_FILE_RAW" ]; then
+        TARGET_FILE="$CHART_FILE_RAW"
+    else
+        echo "Error: Chart file not found for {{ item.name }}" >&2
+        exit 1
+    fi
+
+    helm push "$TARGET_FILE" oci://{{ harbor_registry }}/{{ harbor_project }}
+    rm -f "$TARGET_FILE"
+  args:
+    executable: /bin/bash
+  loop: "{{ helm_charts_to_sync }}"
+  register: sync_results
+  changed_when: "'Pushed' in sync_results.stdout"
