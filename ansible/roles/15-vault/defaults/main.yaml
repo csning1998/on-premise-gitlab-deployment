@@ -1,13 +1,13 @@
 ---
-# Section B: Configuration (from 13-vault-configure)
+# Section B: Configuration
 vault_ui_enabled: true
 vault_disable_mlock: true # Set to true to avoid memory locking issues
 
-# Section C: Initialization (from 14-vault-initialize)
+# Section C: Initialization
 vault_init_key_shares: 1
 vault_init_key_threshold: 1
 vault_wait_delay_seconds: 10
 
-# Section D: Unseal (from 15-vault-unseal)
+# Section D: Unseal
 vault_unseal_retries: 24
 vault_unseal_delay_seconds: 5
