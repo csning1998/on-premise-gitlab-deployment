@@ -1,7 +1,7 @@
 ---
-- name: "Block 0: Dynamically discover the Host-only network interface for Kubeadm"
+- name: "Block A1: Dynamically discover the Host-only network interface for Kubeadm"
   block:
-    - name: "Step 0.1. Identify Host-only interface from facts"
+    - name: "A1a. Identify Host-only interface from facts"
       ansible.builtin.set_fact:
         kubeadm_ha_interface: "{{ item }}"
       loop: "{{ ansible_facts.interfaces }}"
@@ -11,26 +11,26 @@
         - not (ansible_facts[item]['ipv4']['address'].startswith(kubeadm_nat_subnet_prefix | default('10.0.2')))
       no_log: true
 
-    - name: "Step 0.2. Set kubeadm_advertise_ip fact"
+    - name: "A1b. Set kubeadm_advertise_ip fact"
       ansible.builtin.set_fact:
         kubeadm_advertise_ip: "{{ ansible_facts[kubeadm_ha_interface]['ipv4']['address'] }}"
       when: kubeadm_ha_interface is defined
 
-    - name: "Step 0.3. Fail if advertisement IP could not be determined"
+    - name: "A1c. Fail if advertisement IP could not be determined"
       ansible.builtin.fail:
         msg: "Could not dynamically determine the advertisement IP using prefix exclusion."
       when: kubeadm_advertise_ip is not defined
 
-- name: "Block A: Establish Certificate Trust for Containerd & OS"
+- name: "Block A2: Establish Certificate Trust for Containerd & OS"
   become: true
   block:
-    - name: "Step A1. Ensure ca-certificates package is installed"
+    - name: "A2a. Ensure ca-certificates package is installed"
       ansible.builtin.apt:
         name: ca-certificates
         state: present
         update_cache: true
 
-    - name: "Step A2. Distribute Vault PKI Service CA to OS trust store"
+    - name: "A2b. Distribute Vault PKI Service CA to OS trust store"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt
@@ -39,12 +39,12 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "Step A2.4.1. Force update CA certificates to validate Vault API"
+    - name: "A2c. Force update CA certificates to validate Vault API"
       ansible.builtin.command: update-ca-certificates
       register: ca_update_result
       changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
 
-    - name: "Step A2.5. Download Vault PKI Issuing CA directly from Vault API"
+    - name: "A2d. Download Vault PKI Issuing CA directly from Vault API"
       ansible.builtin.get_url:
         url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
         dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
@@ -54,22 +54,22 @@
         validate_certs: true
       notify: Update CA Certificates
 
-    - name: "Step A3. Force update of CA certificates"
+    - name: "A2e. Force update of CA certificates"
       ansible.builtin.command: update-ca-certificates
       changed_when: false
       notify: Restart containerd service
 
-- name: "Block B: Configure Containerd Registry endpoint"
+- name: "Block A3: Configure Containerd Registry endpoint"
   become: true
   block:
-    - name: "Step B1. Pre-calculate Registry Configurations"
+    - name: "A3a. Pre-calculate Registry Configurations"
       ansible.builtin.set_fact:
         _etc_hosts_list: >-
           {{ ([{'host': kubeadm_registry_host, 'ip': kubeadm_registry_vip}] +
               (node_extra_hosts | default([]))) | unique(attribute='host') }}
         _containerd_registry_configs: "{{ lookup('template', 'containerd_registry_configs.j2') | from_yaml }}"
 
-    - name: "Step B2. Ensure local DNS overrides for Registries in /etc/hosts"
+    - name: "A3b. Ensure local DNS overrides for Registries in /etc/hosts"
       ansible.builtin.lineinfile:
         path: /etc/hosts
         regexp: '^.*\s+{{ item.host | regex_escape() }}(\s+|$)'
@@ -77,7 +77,7 @@
         state: present
       loop: "{{ _etc_hosts_list }}"
 
-    - name: "Step B3. Ensure Mirror Directories Exist"
+    - name: "A3c. Ensure Mirror Directories Exist"
       ansible.builtin.file:
         path: "/etc/containerd/certs.d/{{ item.domain }}"
         state: directory
@@ -86,7 +86,7 @@
         mode: "0755"
       loop: "{{ _containerd_registry_configs }}"
 
-    - name: "Step B4. Deploy hosts.toml for Harbor Registry"
+    - name: "A3d. Deploy hosts.toml for Harbor Registry"
       ansible.builtin.template:
         src: hosts.toml.j2
         dest: "/etc/containerd/certs.d/{{ item.domain }}/hosts.toml"

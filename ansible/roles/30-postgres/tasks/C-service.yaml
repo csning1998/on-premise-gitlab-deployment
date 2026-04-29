@@ -1,12 +1,12 @@
 ---
-- name: "Section F: Start and Enable Patroni Service"
+- name: "Block C1: Start and Enable Patroni Service"
   block:
-    - name: "Step F1. Check if UFW is installed"
+    - name: "C1a. Check if UFW is installed"
       ansible.builtin.stat:
         path: /usr/sbin/ufw
       register: patroni_ufw_stat
 
-    - name: "Step F2. Allow PostgreSQL and Patroni ports"
+    - name: "C1b. Allow PostgreSQL and Patroni ports"
       community.general.ufw:
         rule: allow
         port: "{{ item }}"
@@ -17,7 +17,7 @@
         - "{{ patroni_restapi_port }}"
       when: patroni_ufw_stat.stat.exists
 
-    - name: "Step F3. Reload systemd and start Patroni"
+    - name: "C1c. Reload systemd and start Patroni"
       ansible.builtin.systemd:
         name: patroni
         state: started

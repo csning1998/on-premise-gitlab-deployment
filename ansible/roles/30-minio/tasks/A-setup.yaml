@@ -1,5 +1,4 @@
 ---
-# Section A: Prepare Data Drives
 - name: "A1. Install XFS progs"
   ansible.builtin.apt:
     name: xfsprogs
@@ -38,4 +37,3 @@
     group: "{{ minio_group }}"
     recurse: true
   loop: "{{ minio_data_drives }}"
-

@@ -1,20 +1,19 @@
 ---
-# Section C: Configure Vault Agent for PKI Rotation
-- name: "C1. Ensure Service Domain resolves to Localhost for Vault Agent"
+- name: "B1. Ensure Service Domain resolves to Localhost for Vault Agent"
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "127.0.0.1 {{ dev_harbor_service_domain }}"
     state: present
     regexp: "^127.0.0.1 {{ dev_harbor_service_domain }}$"
 
-- name: "C2. Ensure Registry FQDN resolves to VIP for local operations"
+- name: "B2. Ensure Registry FQDN resolves to VIP for local operations"
   ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ dev_harbor_vip }} {{ dev_harbor_fqdn }}"
     state: present
     regexp: "^.* {{ dev_harbor_fqdn | replace('.', '\\.') }}$"
 
-- name: "C3. Distribute Vault PKI Service CA to OS trust store"
+- name: "B3. Distribute Vault PKI Service CA to OS trust store"
   ansible.builtin.copy:
     content: "{{ vault_ca_cert_b64 | b64decode }}"
     dest: /usr/local/share/ca-certificates/vault-ca.crt
@@ -23,11 +22,11 @@
     group: root
   notify: Update CA Certificates
 
-- name: "C4. Force update CA certificates before downloading Issuing CA"
+- name: "B4. Force update CA certificates before downloading Issuing CA"
   ansible.builtin.command: update-ca-certificates
   changed_when: false
 
-- name: "C5. Download Vault PKI Issuing CA to OS trust store"
+- name: "B5. Download Vault PKI Issuing CA to OS trust store"
   ansible.builtin.get_url:
     url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
     dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
@@ -37,18 +36,17 @@
     validate_certs: true
   notify: Update CA Certificates
 
-# Section D: Prepare Environment for Vault Agent
-- name: "D1. Discover Harbor UID/GID from existing directory"
+- name: "B6. Discover Harbor UID/GID from existing directory"
   ansible.builtin.stat:
     path: "{{ harbor_pki_dir }}"
   register: harbor_dir_stat
 
-- name: "D2. Set Harbor ID Facts"
+- name: "B7. Set Harbor ID Facts"
   ansible.builtin.set_fact:
     _harbor_uid: "{{ harbor_dir_stat.stat.uid | default(0) }}"
     _harbor_gid: "{{ harbor_dir_stat.stat.gid | default(0) }}"
 
-- name: "D3. Include Vault Agent Role"
+- name: "B8. Include Vault Agent Role"
   ansible.builtin.include_role:
     name: 82-vault-agent
   vars:

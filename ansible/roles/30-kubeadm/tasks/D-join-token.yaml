@@ -1,23 +1,23 @@
 ---
-- name: "Block A: Generate and register cluster join parameters"
+- name: "Block D1: Generate and register cluster join parameters"
   block:
-    - name: "Step 1. Check if admin.conf exists on the primary master"
+    - name: "D1a. Check if admin.conf exists on the primary master"
       ansible.builtin.stat:
         path: "/etc/kubernetes/admin.conf"
       register: kubeconfig
 
-    - name: "Step 2. Assert that kubeadm init was successful before proceeding"
+    - name: "D1b. Assert that kubeadm init was successful before proceeding"
       ansible.builtin.assert:
         that: kubeconfig.stat.exists
         fail_msg: "Cannot generate join parameters because kubeadm init seems to have failed (/etc/kubernetes/admin.conf not found)."
 
-    - name: "Step 3. Create a new token"
+    - name: "D1c. Create a new token"
       ansible.builtin.command:
         cmd: "kubeadm token create"
       register: kubeadm_token_result
       changed_when: kubeadm_token_result.rc == 0
 
-    - name: "Step 4. Get the CA certificate hash"
+    - name: "D1d. Get the CA certificate hash"
       ansible.builtin.shell:
         cmd: |
           set -o pipefail
@@ -28,7 +28,7 @@
       register: kubeadm_ca_hash_result
       changed_when: false
 
-    - name: "Step 5. Upload certs and get the certificate key"
+    - name: "D1e. Upload certs and get the certificate key"
       ansible.builtin.command:
         cmd: "kubeadm init phase upload-certs --upload-certs"
       environment:
@@ -36,7 +36,7 @@
       register: cert_key_result
       changed_when: "'certificate key' in cert_key_result.stdout"
 
-    - name: "Step 6. Register join parameters as facts"
+    - name: "D1f. Register join parameters as facts"
       ansible.builtin.set_fact:
         kubeadm_token: "{{ kubeadm_token_result.stdout }}"
         kubeadm_ca_hash: "{{ kubeadm_ca_hash_result.stdout }}"

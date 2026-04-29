@@ -1,14 +1,14 @@
 ---
-- name: "Block A: System & Service Configuration"
+- name: "Block A1: System & Service Configuration"
   become: true
   block:
-    - name: "A1.1 Create Vault system group"
+    - name: "A1a. Create Vault system group"
       ansible.builtin.group:
         name: "{{ vault_owner }}"
         system: true
         state: present
 
-    - name: "A1.2. Ensure Vault system user exists"
+    - name: "A1b. Ensure Vault system user exists"
       ansible.builtin.user:
         name: "{{ vault_owner }}"
         system: true
@@ -16,7 +16,7 @@
         create_home: false
         home: /etc/vault.d
 
-    - name: "A2. Create Vault Config & TLS Directories"
+    - name: "A1c. Create Vault Config & TLS Directories"
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -28,7 +28,7 @@
         - "{{ vault_dir_tls }}"
         - "{{ vault_dir_data }}"
 
-    - name: "A3. Create Vault Systemd Service"
+    - name: "A1d. Create Vault Systemd Service"
       ansible.builtin.template:
         src: vault.service.j2
         dest: "/etc/systemd/system/vault.service"
@@ -37,11 +37,11 @@
         mode: "0644"
       notify: Reload Systemd
 
-- name: "Block B: Deploy Vault TLS Certificates"
+- name: "Block A2: Deploy Vault TLS Certificates"
   become: true
   when: vault_server_cert is defined
   block:
-    - name: "Step B1. Ensure Vault TLS directory exists with secure permissions"
+    - name: "A2a. Ensure Vault TLS directory exists with secure permissions"
       ansible.builtin.file:
         path: "{{ vault_dir_tls }}"
         state: directory
@@ -49,7 +49,7 @@
         group: vault
         mode: "0750"
 
-    - name: "Step B2. Deploy Vault Server Certificate"
+    - name: "A2b. Deploy Vault Server Certificate"
       ansible.builtin.copy:
         content: "{{ vault_server_cert | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.crt"
@@ -58,7 +58,7 @@
         mode: "0640"
       notify: Restart Vault Service
 
-    - name: "Step B3. Deploy Vault Server Private Key"
+    - name: "A2c. Deploy Vault Server Private Key"
       ansible.builtin.copy:
         content: "{{ vault_server_key | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.key"
@@ -67,7 +67,7 @@
         mode: "0600"
       notify: Restart Vault Service
 
-    - name: "Step B4. Deploy Vault CA Certificate"
+    - name: "A2d. Deploy Vault CA Certificate"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault-ca.crt"
@@ -76,7 +76,7 @@
         mode: "0644"
       notify: Restart Vault Service
 
-    - name: "Step B5. Trust Vault Root CA on OS level"
+    - name: "A2e. Trust Vault Root CA on OS level"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt

@@ -1,14 +1,14 @@
 ---
-- name: "Block B: Install and Configure HA Services"
+- name: "Block B1: Install and Configure HA Services"
   block:
-    - name: "Step 1. Enable non-local binding (Required for VIP)"
+    - name: "B1a. Enable non-local binding (Required for VIP)"
       ansible.posix.sysctl:
         name: "net.ipv4.ip_nonlocal_bind"
         value: "1"
         state: present
         reload: true
 
-    - name: "Step 2. Install HAProxy and Keepalived"
+    - name: "B1b. Install HAProxy and Keepalived"
       ansible.builtin.apt:
         name:
           - keepalived
@@ -17,7 +17,7 @@
         state: present
         update_cache: true
 
-    - name: "Step 3. Create keepalived_script user"
+    - name: "B1c. Create keepalived_script user"
       ansible.builtin.user:
         name: "keepalived_script"
         system: true
@@ -25,9 +25,9 @@
         state: present
         create_home: false
 
-- name: "Block C: Configure Services"
+- name: "Block B2: Configure Services"
   block:
-    - name: "Step 1. Configure Keepalived"
+    - name: "B2a. Configure Keepalived"
       ansible.builtin.template:
         src: keepalived.conf.j2
         dest: /etc/keepalived/keepalived.conf
@@ -35,7 +35,7 @@
         validate: keepalived --config-test %s
       notify: Restart keepalived
 
-    - name: "Step 2. Configure HAProxy"
+    - name: "B2b. Configure HAProxy"
       ansible.builtin.template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
@@ -43,7 +43,7 @@
         validate: haproxy -c -f %s
       notify: Restart haproxy
 
-    - name: "Step 3. Configure Rsyslog for Keepalived"
+    - name: "B2c. Configure Rsyslog for Keepalived"
       ansible.builtin.lineinfile:
         path: /etc/rsyslog.conf
         line: "local0.* /var/log/keepalived.log"
@@ -52,7 +52,7 @@
       notify: Restart rsyslog
       changed_when: false
 
-    - name: "4. Ensure services are started and enabled"
+    - name: "B2d. Ensure services are started and enabled"
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: started

@@ -1,6 +1,5 @@
 ---
-# Section C: Configure Distributed MinIO
-- name: "C1. Create MinIO environment file"
+- name: "B1. Create MinIO environment file"
   ansible.builtin.template:
     src: minio-default.j2
     dest: /etc/default/minio
@@ -9,8 +8,7 @@
     mode: "0600"
   notify: Restart MinIO
 
-# Section D: Prepare Environment for Vault Agent
-- name: "D1. Prepare Environment for Vault Agent"
+- name: "B2. Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-vault-agent
   vars:

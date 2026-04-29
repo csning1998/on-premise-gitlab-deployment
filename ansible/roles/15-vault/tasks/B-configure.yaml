@@ -1,8 +1,8 @@
 ---
-- name: "Block D: Configure and Start"
+- name: "Block B1: Configure and Start"
   become: true
   block:
-    - name: "D1. Configure Vault using Raft"
+    - name: "B1a. Configure Vault using Raft"
       ansible.builtin.template:
         src: vault.hcl.j2
         dest: /etc/vault.d/vault.hcl
@@ -11,11 +11,11 @@
         mode: "0644"
       notify: Restart Vault Service
 
-    - name: "D2. Start and Enable Vault Service"
+    - name: "B1b. Start and Enable Vault Service"
       ansible.builtin.systemd:
         name: vault
         state: started
         enabled: true
 
-- name: "Flush Handlers (Restart Vault Service)"
+- name: "B2. Flush Handlers (Restart Vault Service)"
   ansible.builtin.meta: flush_handlers
