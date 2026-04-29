@@ -18,10 +18,8 @@ data "local_file" "base_ansible_cfg" {
 
 locals {
   playbook_path = [
-    abspath("${path.module}/../../../../ansible/playbooks/10-provision-core-services.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/20-provision-data-services.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-provision-kubeadm.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-provision-microk8s.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/10-playbook-shared.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/30-playbook-infra-statesful-sets.yaml"),
   ]
 }
 

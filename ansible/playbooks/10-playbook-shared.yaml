@@ -1,0 +1,40 @@
+---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# Phase 1: Central Load Balancer (Refactored)
+- name: "Play [LB]: Configure Central Load Balancer"
+  hosts: "{{ 'lb' if 'lb' in groups else [] }}"
+  become: true
+  roles:
+    - 10-load-balancer
+
+# Phase 2: Vault (Wait for Refactoring)
+#   Currently using legacy roles until Phase 2 is initiated.
+#   Play 1: Configure Vault Nodes (Setup & Config)
+- name: "Play [Vault]: Configure Vault Nodes (Setup & Config)"
+  hosts: "{{ 'vault' if 'vault' in groups else [] }}"
+  become: true
+  roles:
+    - 12-vault-setup
+    - 13-vault-configure
+
+#   Play 2: Initialize Vault Cluster (Primary Only)
+- name: "Play [Vault]: Initialize Vault Cluster (Primary Only)"
+  hosts: "{{ (groups['vault'] | default([]) | intersect(groups['primary'] | default([]))) }}"
+  become: true
+  roles:
+    - 14-vault-initialize
+
+#   Play 3: Unseal Vault Cluster
+- name: "Play [Vault]: Unseal Vault Cluster"
+  hosts: "{{ 'vault' if 'vault' in groups else [] }}"
+  become: true
+  roles:
+    - 15-vault-unseal
