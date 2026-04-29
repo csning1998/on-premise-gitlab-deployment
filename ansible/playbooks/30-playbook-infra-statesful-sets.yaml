@@ -35,10 +35,3 @@
   become: true
   roles:
     - 30-minio
-
-# Dev Harbor Bootstrapper Registry
-- name: "Play [Dev Harbor]: Configure Dev Harbor (Bootstrapper) Cluster"
-  hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
-  become: true
-  roles:
-    - 30-bstrap-harbor
