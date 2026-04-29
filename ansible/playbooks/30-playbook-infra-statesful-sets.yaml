@@ -13,14 +13,14 @@
   hosts: "{{ 'etcd' if 'etcd' in groups else [] }}"
   become: true
   roles:
-    - 22-postgres-etcd
+    - 30-etcd
 
 # Patroni
 - name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
   hosts: "{{ 'postgres' if 'postgres' in groups else [] }}"
   become: true
   roles:
-    - 23-postgres-patroni
+    - 30-postgres
 
 # Redis Sentinel
 - name: "Play [Redis]: Configure Redis High Availability Cluster"

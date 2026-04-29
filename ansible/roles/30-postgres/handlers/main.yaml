@@ -1,12 +1,10 @@
 ---
 - name: Restart Patroni
-  listen: "Restart Patroni"
   ansible.builtin.systemd:
     name: patroni
     state: restarted
 
 - name: Restart Vault Agent
-  listen: "Restart Vault Agent"
   ansible.builtin.systemd:
     name: vault-agent
     state: restarted
