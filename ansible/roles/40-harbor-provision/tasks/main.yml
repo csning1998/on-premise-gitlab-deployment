@@ -6,7 +6,7 @@
     role_id: "{{ vault_approle_role_id }}"
     secret_id: "{{ vault_approle_secret_id }}"
   register: vault_auth
-  # no_log: true
+  no_log: true
 
 - name: Step 2. Retrieve Harbor Robot credentials from Vault (Standard KV2)
   community.hashi_vault.vault_kv2_get:
@@ -17,7 +17,7 @@
     role_id: "{{ vault_approle_role_id }}"
     secret_id: "{{ vault_approle_secret_id }}"
   register: harbor_creds
-  # no_log: true
+  no_log: true
 
 - name: Step 3. Force local DNS resolution for Harbor FQDN
   ansible.builtin.lineinfile:

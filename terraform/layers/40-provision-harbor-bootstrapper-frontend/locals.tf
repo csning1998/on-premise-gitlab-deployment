@@ -11,8 +11,10 @@ locals {
 
 locals {
   ansible_extra_vars = {
+    harbor_robot_user       = harbor_robot_account.helm_pusher.full_name
+    harbor_registry         = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
+    harbor_project          = local.proxy_oci["helm_charts"].name
     vault_addr              = local.sys_vault_addr
-    harbor_registry         = "harbor-bootstrapper.production.iac.local"
     vault_approle_role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
     vault_approle_secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
   }
@@ -28,7 +30,11 @@ locals {
     all = {
       children = {
         harbor_bootstrapper_oci = {
-          hosts = local.state.harbor_bootstrapper.ansible_inventory.data.all.children.primary.hosts
+          hosts = {
+            for k, v in local.state.harbor_bootstrapper.ansible_inventory.data.all.children.primary.hosts : k => merge(v, {
+              node_role = "harbor_bootstrapper_oci"
+            })
+          }
         }
       }
     }

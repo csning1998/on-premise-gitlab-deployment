@@ -13,3 +13,11 @@ output "service_vip" {
   description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
   value       = data.terraform_remote_state.harbor_bootstrapper.outputs.service_vip
 }
+
+output "harbor_registry_fqdn" {
+  value = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
+}
+
+output "helm_pusher_robot_username" {
+  value = harbor_robot_account.helm_pusher.full_name
+}

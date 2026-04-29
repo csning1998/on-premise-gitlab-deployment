@@ -1,4 +1,9 @@
 
+output "bstrap_harbor_fqdn" {
+  description = "The FQDN of the Bootstrap Harbor service."
+  value       = local.svc_fqdn
+}
+
 output "service_vip" {
   description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
   value       = local.net_physical_infra.lb_config.vip
