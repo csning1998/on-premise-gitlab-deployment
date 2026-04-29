@@ -41,4 +41,4 @@
   hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
   become: true
   roles:
-    - 29-dev-harbor-registry
+    - 30-bstrap-harbor

@@ -1,0 +1,12 @@
+---
+- name: "Section A. Setup Harbor Environment"
+  ansible.builtin.include_tasks: A-setup.yaml
+
+- name: "Section B. Configure PKI and Vault Agent"
+  ansible.builtin.include_tasks: B-configure.yaml
+
+- name: "Section C. Deploy Harbor Instance"
+  ansible.builtin.include_tasks: C-deploy.yaml
+
+- name: "Section D. Verify Harbor Readiness"
+  ansible.builtin.include_tasks: D-verify.yaml
