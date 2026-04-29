@@ -45,7 +45,6 @@
     creates: "/etc/kubernetes/admin.conf"
   when: not admin_conf_stat.stat.exists
   register: kubeadm_pri_result
-  changed_when: kubeadm_pri_result.rc == 0
   notify: Restart haproxy on primary master
 
 - name: "B3. Verify that admin.conf was created"
@@ -74,19 +73,19 @@
 
 - name: "C3. Create .kube directory for the SSH user"
   ansible.builtin.file:
-    path: "/home/{{ ansible_ssh_user }}/.kube"
+    path: "/home/{{ ansible_user }}/.kube"
     state: directory
-    owner: "{{ ansible_ssh_user }}"
-    group: "{{ ansible_ssh_user }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0755"
 
 - name: "C4. Copy admin.conf to user's kube config"
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf"
-    dest: "/home/{{ ansible_ssh_user }}/.kube/config"
+    dest: "/home/{{ ansible_user }}/.kube/config"
     remote_src: true
-    owner: "{{ ansible_ssh_user }}"
-    group: "{{ ansible_ssh_user }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: "0644"
 
 # Section D: Register kubeconfig content as a fact
