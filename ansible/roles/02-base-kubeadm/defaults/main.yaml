@@ -62,11 +62,13 @@ kubeadm_base:
 # Binaries (crictl)
 _kubeadm_base_crictl_data: "{{ kubeadm_base.binaries | selectattr('name', 'equalto', 'crictl') | first }}"
 _kubeadm_base_crictl_archive_name: "crictl-{{ kubeadm_base.versions.binary_full }}-linux-amd64.tar.gz"
-_kubeadm_base_crictl_download_url: "{{ _kubeadm_base_crictl_data.url_base }}/{{ kubeadm_base.versions.binary_full }}/{{ _kubeadm_base_crictl_archive_name }}"
+_kubeadm_base_crictl_download_url: >-
+  {{ _kubeadm_base_crictl_data.url_base }}/{{ kubeadm_base.versions.binary_full }}/{{ _kubeadm_base_crictl_archive_name }}
 _kubeadm_base_crictl_temp_path: "/tmp/{{ _kubeadm_base_crictl_archive_name }}"
 
 # Apt Repos (Data Lookups)
-_kubeadm_base_repo_community_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'ubuntu_community') | first }}"
+_kubeadm_base_repo_community_data: >-
+  {{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'ubuntu_community') | first }}
 _kubeadm_base_repo_docker_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'docker') | first }}"
 _kubeadm_base_repo_k8s_data: "{{ kubeadm_base.apt_repositories | selectattr('id', 'equalto', 'kubernetes') | first }}"
 
@@ -93,5 +95,9 @@ _kubeadm_base_repo_k8s_string: >
   {{ _kubeadm_base_repo_k8s_data.distribution }}
   {{ _kubeadm_base_repo_k8s_data.components }}
 
-_kubeadm_base_k8s_versioned_packages: >
-  {{ kubeadm_base.packages.apt.kubernetes | map('regex_replace', '^(.*)$', '\1=' + kubeadm_base.versions.package_spec) | list }}
+_kubeadm_base_k8s_versioned_packages: >-
+  {{
+    kubeadm_base.packages.apt.kubernetes |
+    map('regex_replace', '^(.*)$', '\1=' + kubeadm_base.versions.package_spec) |
+    list
+  }}

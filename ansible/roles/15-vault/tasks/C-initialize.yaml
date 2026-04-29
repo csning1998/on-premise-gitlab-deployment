@@ -1,14 +1,14 @@
 ---
-- name: "Block E: Initialize Vault Cluster (Primary Only)"
+- name: "Block C1: Initialize Vault Cluster (Primary Only)"
   become: true
   run_once: true
   block:
-    - name: "E1. Wait for Vault"
+    - name: "C1a. Wait for Vault"
       ansible.builtin.wait_for:
         port: "{{ vault_port_api }}"
         delay: "{{ vault_wait_delay_seconds }}"
 
-    - name: "E2. Initialize Vault"
+    - name: "C1b. Initialize Vault"
       ansible.builtin.command: >
         vault operator init \
         -key-shares={{ vault_init_key_shares }} \
@@ -21,7 +21,7 @@
       changed_when: init_result.rc == 0
       ignore_errors: true
 
-    - name: "E3. Fetch Administrative AppRole Credentials"
+    - name: "C1c. Fetch Administrative AppRole Credentials"
       community.hashi_vault.vault_kv2_get:
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
@@ -31,12 +31,12 @@
       delegate_to: localhost
       become: false
 
-    - name: "E4. Set AppRole Credentials"
+    - name: "C1d. Set AppRole Credentials"
       ansible.builtin.set_fact:
         vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
         vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
 
-    - name: "E5. Write Merged Secrets back to Vault"
+    - name: "C1e. Write Merged Secrets back to Vault"
       community.hashi_vault.vault_kv2_write:
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"

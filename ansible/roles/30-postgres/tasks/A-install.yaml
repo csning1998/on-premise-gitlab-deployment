@@ -1,12 +1,12 @@
 ---
-- name: "Section A: Prepare Python Environment and Install Patroni"
+- name: "Block A1: Prepare Python Environment and Install Patroni"
   block:
-    - name: "Step A1. Create Python virtual environment for Patroni"
+    - name: "A1a. Create Python virtual environment for Patroni"
       ansible.builtin.command:
         cmd: python3 -m venv /opt/patroni-venv
         creates: /opt/patroni-venv/bin/activate
 
-    - name: "Step A2. Install Patroni and dependencies"
+    - name: "A1b. Install Patroni and dependencies"
       ansible.builtin.pip:
         name:
           - patroni[etcd3]
@@ -14,9 +14,9 @@
         virtualenv: /opt/patroni-venv
         virtualenv_command: /usr/bin/python3 -m venv
 
-- name: "Section B: Stop and Disable default PostgreSQL service"
+- name: "Block A2: Stop and Disable default PostgreSQL service"
   block:
-    - name: "Step B1. Ensure default postgresql service is stopped"
+    - name: "A2a. Ensure default postgresql service is stopped"
       ansible.builtin.systemd:
         name: postgresql
         state: stopped

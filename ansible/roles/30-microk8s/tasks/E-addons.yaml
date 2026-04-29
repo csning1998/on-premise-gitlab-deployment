@@ -1,13 +1,13 @@
 ---
-- name: "Block 1: Configure and enable MicroK8s addons"
+- name: "Block E1: Configure and enable MicroK8s addons"
   become: true
   block:
-    - name: "Step 0. Wait for MicroK8s API stability"
+    - name: "E1a. Wait for MicroK8s API stability"
       ansible.builtin.command:
         cmd: "microk8s status --wait-ready"
       changed_when: false
 
-    - name: "Step 1. Enable core addons for MicroK8s"
+    - name: "E1b. Enable core addons for MicroK8s"
       ansible.builtin.command:
         cmd: "microk8s enable {{ item }}"
       loop: "{{ microk8s_addons }}"
@@ -17,7 +17,7 @@
       delay: 10
       until: enable_result.rc == 0
 
-    - name: "Step 2. Enable MetalLB with defined VIP range"
+    - name: "E1c. Enable MetalLB with defined VIP range"
       ansible.builtin.command:
         cmd: "microk8s enable metallb:{{ metallb_ip_range }}"
       register: metallb_result

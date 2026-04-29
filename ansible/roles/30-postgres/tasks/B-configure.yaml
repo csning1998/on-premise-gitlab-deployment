@@ -1,7 +1,7 @@
 ---
-- name: "Section D: Configure Patroni Service"
+- name: "Block B1: Configure Patroni Service"
   block:
-    - name: "Step D1. Create Patroni config file"
+    - name: "B1a. Create Patroni config file"
       ansible.builtin.template:
         src: patroni.yml.j2
         dest: /etc/patroni.yml
@@ -10,7 +10,7 @@
         mode: "0600"
       notify: Restart Patroni
 
-    - name: "Step D2. Create Patroni systemd service file"
+    - name: "B1b. Create Patroni systemd service file"
       ansible.builtin.template:
         src: patroni.service.j2
         dest: /etc/systemd/system/patroni.service
@@ -18,13 +18,3 @@
         group: root
         mode: "0644"
       notify: Restart Patroni
-
-- name: "Section E: Prepare Environment for Vault Agent"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "{{ postgres_user }}"
-    vault_agent_group: "{{ postgres_group }}"
-    vault_agent_cert_base_dir: "/etc/postgresql/certs"
-    vault_agent_post_command: "systemctl restart patroni"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"

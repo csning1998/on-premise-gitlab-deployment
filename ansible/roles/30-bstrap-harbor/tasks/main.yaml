@@ -1,22 +1,41 @@
 ---
-- name: "Section A. Configure Network Routing (R81)"
+- name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
     routing_static_routes:
-      - to: "{{ dev_harbor_static_route_to }}"
-        via: "{{ dev_harbor_static_route_via }}"
-        metric: "{{ dev_harbor_static_route_metric }}"
-  when: dev_harbor_static_route_to is defined
+      - to: "{{ bstrap_harbor_static_route_to }}"
+        via: "{{ bstrap_harbor_static_route_via }}"
+        metric: "{{ bstrap_harbor_static_route_metric }}"
+  when: bstrap_harbor_static_route_to is defined
 
-- name: "Section B. Setup Harbor Environment"
+- name: "Section A. Setup Harbor Environment"
   ansible.builtin.include_tasks: A-setup.yaml
 
-- name: "Section C. Configure PKI and Vault Agent"
+- name: "Section B. Configure PKI and Vault Agent"
   ansible.builtin.include_tasks: B-configure.yaml
 
-- name: "Section D. Deploy Harbor Instance"
+- name: "Role 82: Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "{{ _harbor_uid }}"
+    vault_agent_group: "{{ _harbor_gid }}"
+    vault_agent_cert_base_dir: "{{ harbor_pki_dir }}"
+    vault_agent_cert_dirs:
+      - "{{ harbor_pki_dir }}"
+      - "{{ harbor_config_cert_dir }}"
+    vault_agent_wait_file: "{{ harbor_cert_path }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ bstrap_harbor_vip }}"
+    vault_agent_post_command: |
+      cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
+      cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
+      chmod 0644 {{ harbor_config_cert_dir }}/server.crt
+      chmod 0600 {{ harbor_config_cert_dir }}/server.key
+      docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true
+
+- name: "Section C. Deploy Harbor Instance"
   ansible.builtin.include_tasks: C-deploy.yaml
 
-- name: "Section E. Verify Harbor Readiness"
+- name: "Section D. Verify Harbor Readiness"
   ansible.builtin.include_tasks: D-verify.yaml

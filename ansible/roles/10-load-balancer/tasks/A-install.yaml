@@ -1,14 +1,14 @@
 ---
-- name: "Section A: Kernel Parameter Tuning"
+- name: "Block A1: Kernel Parameter Tuning"
   block:
-    - name: "Step A1. Enable non-local binding (Essential for VIP)"
+    - name: "A1a. Enable non-local binding (Essential for VIP)"
       ansible.posix.sysctl:
         name: net.ipv4.ip_nonlocal_bind
         value: "1"
         state: present
         reload: true
 
-    - name: "Step A2. Configure ARP Ignore to Prevent ARP Flux"
+    - name: "A1b. Configure ARP Ignore to Prevent ARP Flux"
       ansible.posix.sysctl:
         name: "net.ipv4.conf.{{ item }}.arp_ignore"
         value: "1"
@@ -18,7 +18,7 @@
         - all
         - default
 
-    - name: "Step A3. Configure ARP Announce to Prevent ARP Flux"
+    - name: "A1c. Configure ARP Announce to Prevent ARP Flux"
       ansible.posix.sysctl:
         name: "net.ipv4.conf.{{ item }}.arp_announce"
         value: "2"
@@ -28,14 +28,14 @@
         - all
         - default
 
-    - name: "Step A4. Enable IP Forwarding that Required for L3 Traffic"
+    - name: "A1d. Enable IP Forwarding that Required for L3 Traffic"
       ansible.posix.sysctl:
         name: net.ipv4.ip_forward
         value: "1"
         state: present
         reload: true
 
-    - name: "Step A5. Harden Network Stack for High Concurrency (SYN Backlog)"
+    - name: "A1e. Harden Network Stack for High Concurrency (SYN Backlog)"
       ansible.posix.sysctl:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
@@ -43,14 +43,14 @@
         reload: true
       loop: "{{ central_lb_sysctl_hardening }}"
 
-    - name: "Step A5. Disable Systemd Socket Activation for SSH (Ubuntu specific)"
+    - name: "A1f. Disable Systemd Socket Activation for SSH (Ubuntu specific)"
       ansible.builtin.systemd:
         name: ssh.socket
         state: stopped
         enabled: false
       failed_when: false
 
-    - name: "Step A6. Configure SSHD to listen only on Management IP"
+    - name: "A1g. Configure SSHD to listen only on Management IP"
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?ListenAddress "
@@ -58,9 +58,9 @@
         state: present
       notify: Restart sshd Service
 
-- name: "Section B: Package Installation & User Prep"
+- name: "Block A2: Package Installation & User Prep"
   block:
-    - name: "Step B1. Ensure Service Groups exist"
+    - name: "A2a. Ensure Service Groups exist"
       ansible.builtin.group:
         name: "{{ item }}"
         state: present
@@ -69,7 +69,7 @@
         - haproxy
         - keepalived
 
-    - name: "Step B2. Ensure Service Users exist (Fixed Identity)"
+    - name: "A2b. Ensure Service Users exist (Fixed Identity)"
       ansible.builtin.user:
         name: "{{ item }}"
         group: "{{ item }}"
