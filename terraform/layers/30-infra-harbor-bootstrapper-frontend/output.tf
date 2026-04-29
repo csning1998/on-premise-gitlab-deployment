@@ -30,3 +30,8 @@ output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
   value       = module.bootstrap_harbor.ansible_inventory
 }
+
+output "ssh_config_file_path" {
+  description = "The path to the generated SSH configuration file."
+  value       = module.bootstrap_harbor.ssh_config_file_path
+}
