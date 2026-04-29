@@ -94,12 +94,17 @@
       register: bootstrapper_creds
       delegate_to: localhost
       become: false
+      when:
+        - vault_init_check.rc == 2
+        - vault_init_check.stdout | length > 0
+        - (vault_init_check.stdout | from_json).sealed
       no_log: true
 
     - name: "D2c. Set AppRole Credentials"
       ansible.builtin.set_fact:
         vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
         vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
+      when: bootstrapper_creds is not skipped
       no_log: true
 
     - name: "D2d. Fetch Unseal Keys from Bootstrap Vault"
@@ -114,6 +119,7 @@
       register: unseal_secrets
       delegate_to: localhost
       become: false
+      when: bootstrapper_creds is not skipped
       no_log: true
 
     - name: "D2e. Parse Unseal Keys"
