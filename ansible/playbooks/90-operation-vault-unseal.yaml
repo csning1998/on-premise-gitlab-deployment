@@ -3,6 +3,8 @@
   hosts: primary, replica
   become: true
   gather_facts: true
-
-  roles:
-    - 15-vault-unseal
+  tasks:
+    - name: "Execute Vault Unseal only"
+      ansible.builtin.include_role:
+        name: 15-vault
+        tasks_from: D-unseal.yaml
