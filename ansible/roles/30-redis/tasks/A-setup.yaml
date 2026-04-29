@@ -1,5 +1,4 @@
 ---
-# Section A: Ensure Redis directories exist
 - name: "A1. Ensure Redis directories exist"
   ansible.builtin.file:
     path: "{{ item }}"
@@ -11,4 +10,3 @@
     - /var/log/redis
     - /var/run/redis
     - /var/lib/redis
-

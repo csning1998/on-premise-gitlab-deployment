@@ -1,5 +1,5 @@
 ---
-- name: "Section A. Configure Network Routing (R81)"
+- name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
@@ -9,11 +9,21 @@
         metric: "{{ postgres_static_route_metric }}"
   when: postgres_static_route_to is defined
 
-- name: "Section B. Install Patroni and Environment"
+- name: "Section A. Install Patroni and Environment"
   ansible.builtin.include_tasks: A-install.yaml
 
-- name: "Section C. Configure Patroni and Vault"
+- name: "Section B. Configure Patroni and Vault"
   ansible.builtin.include_tasks: B-configure.yaml
 
-- name: "Section D. Manage Patroni Service"
+- name: "Role 82: Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "{{ postgres_user }}"
+    vault_agent_group: "{{ postgres_group }}"
+    vault_agent_cert_base_dir: "/etc/postgresql/certs"
+    vault_agent_post_command: "systemctl restart patroni"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"
+
+- name: "Section C. Manage Patroni Service"
   ansible.builtin.include_tasks: C-service.yaml

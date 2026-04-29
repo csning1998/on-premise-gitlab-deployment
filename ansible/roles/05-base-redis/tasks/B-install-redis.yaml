@@ -31,4 +31,4 @@
         state: stopped
         enabled: false
       loop: "{{ redis_base.services_to_disable }}"
-      ignore_errors: true
+      failed_when: false

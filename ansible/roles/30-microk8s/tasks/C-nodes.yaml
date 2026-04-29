@@ -1,16 +1,16 @@
 ---
-- name: "Block A: Fix MicroK8s Network & Certificates (Host-only)"
+- name: "Block C1: Fix MicroK8s Network & Certificates (Host-only)"
   become: true
   block:
-    - name: "Step A1. Detect Host-only IP"
+    - name: "C1a. Detect Host-only IP"
       ansible.builtin.set_fact:
         hostonly_ip: "{{ advertise_ip }}"
 
-    - name: "Step A2. Debug Host-only IP"
+    - name: "C1b. Debug Host-only IP"
       ansible.builtin.debug:
         msg: "Detected Host-only IP: {{ hostonly_ip }}"
 
-    - name: "Step A3. Configure Kubelet node-ip arg"
+    - name: "C1c. Configure Kubelet node-ip arg"
       ansible.builtin.lineinfile:
         path: /var/snap/microk8s/current/args/kubelet
         line: "--node-ip={{ hostonly_ip }}"
@@ -18,7 +18,7 @@
         create: true
         mode: "0644"
 
-    - name: "Step A4. Configure API Server advertise-address arg"
+    - name: "C1d. Configure API Server advertise-address arg"
       ansible.builtin.lineinfile:
         path: /var/snap/microk8s/current/args/kube-apiserver
         regexp: "^--advertise-address="
@@ -26,14 +26,14 @@
         create: true
         mode: "0644"
 
-    - name: "Step A5. Add Host-only IP to CSR template"
+    - name: "C1e. Add Host-only IP to CSR template"
       ansible.builtin.lineinfile:
         path: /var/snap/microk8s/current/certs/csr.conf.template
         insertafter: "^IP.2 ="
         line: "IP.100 = {{ hostonly_ip }}"
         regexp: "^IP.100 ="
 
-    - name: "Step A6. Check if Kubelet Certificate includes Host-only IP in SAN"
+    - name: "C1f. Check if Kubelet Certificate includes Host-only IP in SAN"
       ansible.builtin.shell: |
         set -o pipefail
         openssl x509 -in /var/snap/microk8s/current/certs/kubelet.crt -text -noout \
@@ -44,25 +44,26 @@
       failed_when: false
       changed_when: false
 
-    - name: "Step A7. Ensure MicroK8s is stopped if certificate fix is needed"
+    - name: "C1g. Ensure MicroK8s is stopped if certificate fix is needed"
       ansible.builtin.command:
         cmd: "microk8s stop"
       when: kubelet_cert_check.rc != 0
       changed_when: true
 
-    - name: "Step A8. Generate OpenSSL config for Kubelet (Force IP SAN)"
+    - name: "C1h. Generate OpenSSL config for Kubelet (Force IP SAN)"
       ansible.builtin.template:
         src: microk8s-kubelet.conf.j2
         dest: "/var/snap/microk8s/current/certs/kubelet.conf"
         mode: "0644"
       when: kubelet_cert_check.rc != 0
 
-    - name: "Step A9. Ensure Kubelet Private Key exists"
+    - name: "C1i. Ensure Kubelet Private Key exists"
       ansible.builtin.command: >-
         openssl genrsa -out /var/snap/microk8s/current/certs/kubelet.key 2048
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
-    - name: "Step A10. Secure Kubelet Private Key permissions"
+    - name: "C1j. Secure Kubelet Private Key permissions"
       ansible.builtin.file:
         path: /var/snap/microk8s/current/certs/kubelet.key
         mode: "0600"
@@ -70,14 +71,15 @@
         group: root
       when: kubelet_cert_check.rc != 0
 
-    - name: "Step A11. Generate Kubelet CSR"
+    - name: "C1k. Generate Kubelet CSR"
       ansible.builtin.command: >-
         openssl req -new -key /var/snap/microk8s/current/certs/kubelet.key
         -out /var/snap/microk8s/current/certs/kubelet.csr
         -config /var/snap/microk8s/current/certs/kubelet.conf
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
-    - name: "Step A12. Sign Kubelet Certificate with Cluster CA"
+    - name: "C1l. Sign Kubelet Certificate with Cluster CA"
       ansible.builtin.command: >-
         openssl x509 -req -in /var/snap/microk8s/current/certs/kubelet.csr
         -CA /var/snap/microk8s/current/certs/ca.crt
@@ -87,11 +89,12 @@
         -days 3650 -extensions v3_req
         -extfile /var/snap/microk8s/current/certs/kubelet.conf
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
-- name: "Block B: Stabilize MicroK8s & Built-in Calico"
+- name: "Block C2: Stabilize MicroK8s & Built-in Calico"
   become: true
   block:
-    - name: "Step B1. Ensure CNI configuration directory exists"
+    - name: "C2a. Ensure CNI configuration directory exists"
       ansible.builtin.file:
         path: /var/snap/microk8s/current/args/cni-network
         state: directory
@@ -99,13 +102,13 @@
         owner: root
         group: root
 
-    - name: "Step B2. Ensure MicroK8s service is started"
+    - name: "C2b. Ensure MicroK8s service is started"
       ansible.builtin.command:
         cmd: "microk8s start"
       register: microk8s_start
       changed_when: "'Started' in microk8s_start.stdout"
 
-    - name: "Step B3: Wait for Kubernetes API to be available"
+    - name: "C2c: Wait for Kubernetes API to be available"
       ansible.builtin.command:
         cmd: "kubectl get nodes"
       register: kubectl_check
@@ -114,17 +117,17 @@
       delay: 6
       changed_when: false
 
-    - name: "Step B4: Get list of all node names known to Kubernetes"
+    - name: "C2d: Get list of all node names known to Kubernetes"
       ansible.builtin.command:
         cmd: "kubectl get nodes -o jsonpath='{.items[*].metadata.name}'"
       register: kube_nodes_result
       changed_when: false
 
-    - name: "Step B5: Identify stale nodes (nodes in k8s but not in inventory)"
+    - name: "C2e: Identify stale nodes (nodes in k8s but not in inventory)"
       ansible.builtin.set_fact:
         stale_nodes: "{{ kube_nodes_result.stdout.split() | difference(groups['microk8s']) }}"
 
-    - name: "Step B6: Remove stale nodes from the cluster"
+    - name: "C2f: Remove stale nodes from the cluster"
       ansible.builtin.command:
         cmd: "kubectl delete node {{ item }}"
       loop: "{{ stale_nodes }}"

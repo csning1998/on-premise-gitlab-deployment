@@ -1,18 +1,17 @@
 ---
-# Section F: Configure MinIO Client Trust & Verification
-- name: "F0. Copy Vault CA to system-wide trust store"
+- name: "D1. Copy Vault CA to system-wide trust store"
   ansible.builtin.copy:
     src: "/etc/minio/certs/CAs/root_ca.crt"
     dest: "/usr/local/share/ca-certificates/vault-root-ca.crt"
     remote_src: true
     mode: "0644"
 
-- name: "F1. Force update CA certificates"
+- name: "D2. Force update CA certificates"
   ansible.builtin.command: update-ca-certificates
   register: ca_update_result
   changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
 
-- name: "F2. Ensure Root .mc directory exists"
+- name: "D3. Ensure Root .mc directory exists"
   ansible.builtin.file:
     path: "/root/.mc/certs/CAs"
     state: directory
@@ -20,7 +19,7 @@
     group: root
     mode: "0700"
 
-- name: "F3. Trust CA for Root mc"
+- name: "D4. Trust CA for Root mc"
   ansible.builtin.copy:
     src: "/etc/minio/certs/CAs/root_ca.crt"
     dest: "/root/.mc/certs/CAs/root_ca.crt"
@@ -29,7 +28,7 @@
     group: root
     mode: "0644"
 
-- name: "F4. Ensure Ansible User .mc directory exists"
+- name: "D5. Ensure Ansible User .mc directory exists"
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/.mc/certs/CAs"
     state: directory
@@ -38,7 +37,7 @@
     mode: "0700"
   when: ansible_user != 'root'
 
-- name: "F5. Trust CA for Ansible User mc"
+- name: "D6. Trust CA for Ansible User mc"
   ansible.builtin.copy:
     src: "/etc/minio/certs/CAs/root_ca.crt"
     dest: "/home/{{ ansible_user }}/.mc/certs/CAs/root_ca.crt"
@@ -48,7 +47,7 @@
     mode: "0644"
   when: ansible_user != 'root'
 
-- name: "F6. Wait for MinIO Cluster Readiness"
+- name: "D7. Wait for MinIO Cluster Readiness"
   ansible.builtin.uri:
     url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/ready"
     validate_certs: true
@@ -58,7 +57,7 @@
   retries: 30
   delay: 5
 
-- name: "F7. Configure local alias 'myminio' for Root"
+- name: "D8. Configure local alias 'myminio' for Root"
   ansible.builtin.command:
     cmd: >-
       mc alias set myminio
@@ -72,7 +71,7 @@
   changed_when: false
   no_log: true
 
-- name: "F8. Verify MinIO Cluster Status (Deep Check)"
+- name: "D9. Verify MinIO Cluster Status (Deep Check)"
   ansible.builtin.command:
     cmd: mc admin info myminio
   register: mc_info

@@ -16,8 +16,10 @@
   become: true
   block:
     - name: "Step B1. Download and Unarchive Vault (v{{ vault_target_version }})"
+      vars:
+        vault_zip: "vault_{{ vault_target_version }}_{{ vault_target_os }}_{{ vault_target_arch }}.zip"
       ansible.builtin.unarchive:
-        src: "https://releases.hashicorp.com/vault/{{ vault_target_version }}/vault_{{ vault_target_version }}_{{ vault_target_os }}_{{ vault_target_arch }}.zip"
+        src: "https://releases.hashicorp.com/vault/{{ vault_target_version }}/{{ vault_zip }}"
         dest: "/usr/local/bin"
         remote_src: true
         mode: "0755"

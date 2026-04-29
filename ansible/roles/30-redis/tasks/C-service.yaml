@@ -1,6 +1,5 @@
 ---
-# Section E: Start Services
-- name: "E1. Enable and start Redis services"
+- name: "C1. Enable and start Redis services"
   ansible.builtin.systemd:
     name: "{{ item }}"
     state: started

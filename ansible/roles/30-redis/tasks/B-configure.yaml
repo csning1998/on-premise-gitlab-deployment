@@ -1,6 +1,5 @@
 ---
-# Section C: Configure Redis Server and Sentinel
-- name: "C1. Create Redis server configuration"
+- name: "B1. Create Redis server configuration"
   ansible.builtin.template:
     src: redis.conf.j2
     dest: /etc/redis/redis.conf
@@ -9,7 +8,7 @@
     mode: "0640"
   notify: Restart redis-server
 
-- name: "C2. Create Redis Sentinel configuration"
+- name: "B2. Create Redis Sentinel configuration"
   ansible.builtin.template:
     src: sentinel.conf.j2
     dest: /etc/redis/sentinel.conf
@@ -17,14 +16,3 @@
     group: redis
     mode: "0640"
   notify: Restart redis-sentinel
-
-# Section D: Prepare Environment for Vault Agent
-- name: "D1. Prepare Environment for Vault Agent"
-  ansible.builtin.include_role:
-    name: 82-vault-agent
-  vars:
-    vault_agent_owner: "{{ redis_user }}"
-    vault_agent_group: "{{ redis_group }}"
-    vault_agent_cert_base_dir: "/etc/redis/certs"
-    vault_agent_post_command: "systemctl restart redis-server redis-sentinel"
-    vault_agent_ip_sans: "{{ advertise_ip }}"

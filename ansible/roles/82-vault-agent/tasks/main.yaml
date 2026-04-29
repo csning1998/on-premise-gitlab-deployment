@@ -1,87 +1,94 @@
 ---
-- name: "Section: Configure Vault Agent for PKI Rotation"
+- name: "Step 1. Create Vault Agent Config Directory"
   become: true
-  block:
-    - name: "Step 1. Create Vault Agent Config Directory"
-      ansible.builtin.file:
-        path: "{{ vault_agent_config_dir }}/approle"
-        state: directory
-        owner: "{{ vault_agent_config_owner }}"
-        group: "{{ vault_agent_config_group }}"
-        mode: "0750"
+  ansible.builtin.file:
+    path: "{{ vault_agent_config_dir }}/approle"
+    state: directory
+    owner: "{{ vault_agent_config_owner }}"
+    group: "{{ vault_agent_config_group }}"
+    mode: "0750"
 
-    - name: "Step 2. Write AppRole Credentials"
-      ansible.builtin.copy:
-        content: "{{ item.content }}"
-        dest: "{{ vault_agent_config_dir }}/approle/{{ item.file }}"
-        owner: "{{ vault_agent_config_owner }}"
-        group: "{{ vault_agent_config_group }}"
-        mode: "0600"
-      loop:
-        - { file: "role_id", content: "{{ vault_agent_role_id }}" }
-        - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
-      no_log: true
-      register: vault_agent_approle
+- name: "Step 2. Write AppRole Credentials"
+  become: true
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "{{ vault_agent_config_dir }}/approle/{{ item.file }}"
+    owner: "{{ vault_agent_config_owner }}"
+    group: "{{ vault_agent_config_group }}"
+    mode: "0600"
+  loop:
+    - { file: "role_id", content: "{{ vault_agent_role_id }}" }
+    - { file: "secret_id", content: "{{ vault_agent_secret_id }}" }
+  no_log: true
+  register: vault_agent_approle
 
-    - name: "Step 3. Deploy Vault CA Certificate"
-      ansible.builtin.copy:
-        content: "{{ vault_ca_cert_b64 | b64decode }}"
-        dest: "{{ vault_agent_config_dir }}/vault-ca.crt"
-        owner: "{{ vault_agent_config_owner }}"
-        group: "{{ vault_agent_config_group }}"
-        mode: "0644"
+- name: "Step 3. Deploy Vault CA Certificate"
+  become: true
+  ansible.builtin.copy:
+    content: "{{ vault_ca_cert_b64 | b64decode }}"
+    dest: "{{ vault_agent_config_dir }}/vault-ca.crt"
+    owner: "{{ vault_agent_config_owner }}"
+    group: "{{ vault_agent_config_group }}"
+    mode: "0644"
 
-    - name: "Step 4. Ensure Target Certificate Directory Exists"
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        owner: "{{ vault_agent_owner }}"
-        group: "{{ vault_agent_group }}"
-        mode: "{{ vault_agent_cert_mode }}"
-      loop: "{{ vault_agent_cert_dirs }}"
+- name: "Step 4. Ensure Target Certificate Directory Exists"
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ vault_agent_owner }}"
+    group: "{{ vault_agent_group }}"
+    mode: "{{ vault_agent_cert_mode }}"
+  loop: "{{ vault_agent_cert_dirs }}"
 
-    - name: "Step 5. Configure Vault Agent (vault-agent.hcl)"
-      ansible.builtin.template:
-        src: vault-agent.hcl.j2
-        dest: "{{ vault_agent_config_dir }}/vault-agent.hcl"
-        owner: "{{ vault_agent_config_owner }}"
-        group: "{{ vault_agent_config_group }}"
-        mode: "0640"
-      register: vault_agent_hcl
+- name: "Step 5. Configure Vault Agent (vault-agent.hcl)"
+  become: true
+  ansible.builtin.template:
+    src: vault-agent.hcl.j2
+    dest: "{{ vault_agent_config_dir }}/vault-agent.hcl"
+    owner: "{{ vault_agent_config_owner }}"
+    group: "{{ vault_agent_config_group }}"
+    mode: "0640"
+  register: vault_agent_hcl
 
-    - name: "Step 6. Configure Vault Agent Service"
-      ansible.builtin.template:
-        src: vault-agent.service.j2
-        dest: /etc/systemd/system/vault-agent.service
-        owner: "{{ vault_agent_service_owner }}"
-        group: "{{ vault_agent_service_group }}"
-        mode: "0644"
-      register: vault_agent_service
+- name: "Step 6. Configure Vault Agent Service"
+  become: true
+  ansible.builtin.template:
+    src: vault-agent.service.j2
+    dest: /etc/systemd/system/vault-agent.service
+    owner: "{{ vault_agent_service_owner }}"
+    group: "{{ vault_agent_service_group }}"
+    mode: "0644"
+  register: vault_agent_service
 
-    - name: "Step 7. Enable and Start Vault Agent"
-      ansible.builtin.systemd:
-        name: vault-agent
-        state: started
-        enabled: true
-        daemon_reload: true
+- name: "Step 7. Enable and Start Vault Agent"
+  become: true
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: started
+    enabled: true
+    daemon_reload: true
 
-    - name: "Step 8. Restart Vault Agent immediately if config changed"
-      ansible.builtin.systemd:
-        name: vault-agent
-        state: restarted
-        daemon_reload: "{{ vault_agent_service.changed | default(false) }}"
-      when: >
-        vault_agent_approle.changed or
-        vault_agent_hcl.changed or
-        vault_agent_service.changed
+- name: "Step 8. Restart Vault Agent immediately if config changed"
+  become: true
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted
+    daemon_reload: "{{ vault_agent_service.changed | default(false) }}"
+  when: >
+    vault_agent_approle.changed or
+    vault_agent_hcl.changed or
+    vault_agent_service.changed
 
-    - name: "Step 9. Wait for Certificates to be generated"
-      ansible.builtin.wait_for:
-        path: "{{ vault_agent_wait_file }}"
-        timeout: 60
-        msg: "Timeout waiting for Vault Agent to generate certificates."
+- name: "Step 9. Wait for Certificates to be generated"
+  become: true
+  ansible.builtin.wait_for:
+    path: "{{ vault_agent_wait_file }}"
+    timeout: 60
+    msg: "Timeout waiting for Vault Agent to generate certificates."
 
-    - name: "Step 10. Verify Certificate Validity"
-      ansible.builtin.command:
-        cmd: "openssl x509 -in {{ vault_agent_wait_file }} -noout -checkend 0"
-      changed_when: false
+- name: "Step 10. Verify Certificate Validity"
+  become: true
+  ansible.builtin.command:
+    cmd: "openssl x509 -in {{ vault_agent_wait_file }} -noout -checkend 0"
+  changed_when: false
