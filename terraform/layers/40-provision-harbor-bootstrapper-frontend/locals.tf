@@ -1,12 +1,32 @@
 
-# State Object
 locals {
   state = {
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
+    vault_pki           = data.terraform_remote_state.vault_pki.outputs
+    vault_sys           = data.terraform_remote_state.vault_sys.outputs
+    harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
   }
 
   sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
+}
+
+locals {
+  ansible_extra_vars = {
+    vault_addr      = local.sys_vault_addr
+    harbor_registry = "harbor-bootstrapper.production.iac.local" # Or dynamic if available
+  }
+
+  ansible_config = {
+    root_path       = abspath("${path.root}/../../../ansible")
+    ssh_config_path = local.state.harbor_bootstrapper.ssh_config_file_path
+    inventory_file  = "inventory-provision-harbor-bootstrapper-frontend.yaml"
+  }
+
+  inventory_data = local.state.harbor_bootstrapper.ansible_inventory.data
+
+  credentials_vm = {
+    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+  }
 }
 
 locals {

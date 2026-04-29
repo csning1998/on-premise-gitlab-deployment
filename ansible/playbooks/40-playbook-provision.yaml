@@ -1,0 +1,7 @@
+---
+- name: Harbor OCI Chart Synchronization
+  hosts: "{{ 'harbor_bootstrapper_oci' if 'harbor_bootstrapper_oci' in groups else [] }}"
+  gather_facts: false
+  become: true
+  roles:
+    - role: 40-harbor-provision
