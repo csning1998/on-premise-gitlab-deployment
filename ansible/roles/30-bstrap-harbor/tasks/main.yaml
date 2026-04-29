@@ -1,12 +1,22 @@
 ---
-- name: "Section A. Setup Harbor Environment"
+- name: "Section A. Configure Network Routing (R81)"
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ dev_harbor_static_route_to }}"
+        via: "{{ dev_harbor_static_route_via }}"
+        metric: "{{ dev_harbor_static_route_metric }}"
+  when: dev_harbor_static_route_to is defined
+
+- name: "Section B. Setup Harbor Environment"
   ansible.builtin.include_tasks: A-setup.yaml
 
-- name: "Section B. Configure PKI and Vault Agent"
+- name: "Section C. Configure PKI and Vault Agent"
   ansible.builtin.include_tasks: B-configure.yaml
 
-- name: "Section C. Deploy Harbor Instance"
+- name: "Section D. Deploy Harbor Instance"
   ansible.builtin.include_tasks: C-deploy.yaml
 
-- name: "Section D. Verify Harbor Readiness"
+- name: "Section E. Verify Harbor Readiness"
   ansible.builtin.include_tasks: D-verify.yaml

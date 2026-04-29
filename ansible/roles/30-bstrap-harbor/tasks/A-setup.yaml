@@ -1,15 +1,4 @@
 ---
-# Section A: Configure Network Routing
-- name: "A1. Configure Network Routing"
-  ansible.builtin.include_role:
-    name: 81-asymmetric-routing
-  vars:
-    routing_static_routes:
-      - to: "{{ dev_harbor_static_route_to }}"
-        via: "{{ dev_harbor_static_route_via }}"
-        metric: "{{ dev_harbor_static_route_metric }}"
-  when: dev_harbor_static_route_to is defined
-
 # Section B: Configure Data Storage Volume
 - name: "B1. Configure Data Storage Volume"
   become: true
