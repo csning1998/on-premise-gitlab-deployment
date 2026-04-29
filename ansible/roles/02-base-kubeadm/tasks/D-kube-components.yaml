@@ -9,7 +9,9 @@
 
     - name: "Step 2. Dearmor Kubernetes GPG key"
       ansible.builtin.command:
-        cmd: "gpg --dearmor -o {{ _kubeadm_base_repo_k8s_data.gpg_keyring_path }} {{ _kubeadm_base_repo_k8s_data.gpg_key_temp_path }}"
+        cmd: >-
+          gpg --dearmor -o {{ _kubeadm_base_repo_k8s_data.gpg_keyring_path }}
+          {{ _kubeadm_base_repo_k8s_data.gpg_key_temp_path }}
       args:
         creates: "{{ _kubeadm_base_repo_k8s_data.gpg_keyring_path }}"
       register: gpg_dearmor_k8s_result
