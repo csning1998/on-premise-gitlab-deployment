@@ -1,0 +1,27 @@
+---
+# Section B: Configure Data Storage Volume
+- name: "B1. Configure Data Storage Volume"
+  become: true
+  vars:
+    data_device: "{{ hostvars[inventory_hostname].attached_volumes[0].device_name }}"
+  block:
+    - name: "Step B1.1 Format to ext4: {{ data_device }}"
+      community.general.filesystem:
+        fstype: ext4
+        dev: "{{ data_device }}"
+
+    - name: "Step B1.2 Ensure Harbor Data Directory Exists"
+      ansible.builtin.file:
+        path: "{{ harbor_data_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "Step B1.3 Mount to Harbor Data Directory: {{ data_device }}"
+      ansible.posix.mount:
+        path: "{{ harbor_data_dir }}"
+        src: "{{ data_device }}"
+        fstype: ext4
+        opts: defaults,noatime,nodiratime
+        state: mounted

@@ -1,0 +1,28 @@
+---
+# Section C: Configure Distributed MinIO
+- name: "C1. Create MinIO environment file"
+  ansible.builtin.template:
+    src: minio-default.j2
+    dest: /etc/default/minio
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart MinIO
+
+# Section D: Prepare Environment for Vault Agent
+- name: "D1. Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-vault-agent
+  vars:
+    vault_agent_owner: "{{ minio_user }}"
+    vault_agent_group: "{{ minio_group }}"
+    vault_agent_cert_base_dir: "/etc/minio/certs"
+    vault_agent_cert_dirs:
+      - "/etc/minio/certs"
+      - "/etc/minio/certs/CAs"
+    vault_agent_cert_name: "public.crt"
+    vault_agent_key_name: "private.key"
+    vault_agent_ca_name: "CAs/root_ca.crt"
+    vault_agent_wait_file: "/etc/minio/certs/public.crt"
+    vault_agent_post_command: "systemctl restart minio"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ minio_ha_virtual_ip }}"

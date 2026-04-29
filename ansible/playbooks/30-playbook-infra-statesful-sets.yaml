@@ -1,0 +1,37 @@
+---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# (HA) ETCD
+- name: "Play [ETCD]: Configure etcd Cluster"
+  hosts: "{{ 'etcd' if 'etcd' in groups else [] }}"
+  become: true
+  roles:
+    - 30-etcd
+
+# Patroni
+- name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
+  hosts: "{{ 'postgres' if 'postgres' in groups else [] }}"
+  become: true
+  roles:
+    - 30-postgres
+
+# Redis Sentinel
+- name: "Play [Redis]: Configure Redis High Availability Cluster"
+  hosts: "{{ 'redis' if 'redis' in groups else [] }}"
+  become: true
+  roles:
+    - 30-redis
+
+# MinIO Distributed
+- name: "Play [MinIO]: Configure MinIO High Availability Cluster"
+  hosts: "{{ 'minio' if 'minio' in groups else [] }}"
+  become: true
+  roles:
+    - 30-minio

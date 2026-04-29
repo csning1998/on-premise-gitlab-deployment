@@ -1,0 +1,20 @@
+---
+- name: Restart Patroni
+  ansible.builtin.systemd:
+    name: patroni
+    state: restarted
+
+- name: Restart Vault Agent
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted
+
+- name: Reload Netplan
+  ansible.builtin.command: netplan apply
+  changed_when: false
+
+- name: Restart Route Service
+  ansible.builtin.systemd:
+    name: fix-vault-routes.service
+    state: restarted
+    daemon_reload: true

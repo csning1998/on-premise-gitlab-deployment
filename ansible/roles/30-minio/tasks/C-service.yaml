@@ -1,0 +1,8 @@
+---
+# Section E: Start Service
+- name: "E1. Enable and start MinIO service"
+  ansible.builtin.systemd:
+    name: minio
+    state: started
+    enabled: true
+    daemon_reload: true

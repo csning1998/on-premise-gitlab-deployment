@@ -1,6 +1,6 @@
 ---
 - name: "Play: Operation - Unseal All Vault Nodes"
-  hosts: vault_leader, vault_follower
+  hosts: primary, replica
   become: true
   gather_facts: true
 
