@@ -9,7 +9,9 @@
     - name: "D1b. Assert that kubeadm init was successful before proceeding"
       ansible.builtin.assert:
         that: kubeconfig.stat.exists
-        fail_msg: "Cannot generate join parameters because kubeadm init seems to have failed (/etc/kubernetes/admin.conf not found)."
+        fail_msg: >-
+          Cannot generate join parameters because kubeadm init seems to have failed
+          (/etc/kubernetes/admin.conf not found).
 
     - name: "D1c. Create a new token"
       ansible.builtin.command:

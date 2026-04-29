@@ -45,4 +45,3 @@
   ansible.builtin.set_fact:
     _harbor_uid: "{{ harbor_dir_stat.stat.uid | default(0) }}"
     _harbor_gid: "{{ harbor_dir_stat.stat.gid | default(0) }}"
-

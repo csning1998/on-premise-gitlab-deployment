@@ -38,7 +38,7 @@
       delay: 5
 
     - name: "D1g. Check if node is already joined (Idempotency Check)"
-      ansible.builtin.shell: microk8s status
+      ansible.builtin.command: microk8s status
       register: microk8s_status_check
       changed_when: false
       until: microk8s_status_check.rc == 0
@@ -49,6 +49,7 @@
       ansible.builtin.command:
         cmd: "{{ join_command }}"
       register: join_command_output
+      changed_when: true
       when:
         - microk8s_status_check.rc == 0
         - hostvars[primary_node]['advertise_ip'] not in microk8s_status_check.stdout

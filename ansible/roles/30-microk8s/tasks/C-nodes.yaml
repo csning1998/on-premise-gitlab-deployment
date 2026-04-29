@@ -61,6 +61,7 @@
       ansible.builtin.command: >-
         openssl genrsa -out /var/snap/microk8s/current/certs/kubelet.key 2048
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
     - name: "C1j. Secure Kubelet Private Key permissions"
       ansible.builtin.file:
@@ -76,6 +77,7 @@
         -out /var/snap/microk8s/current/certs/kubelet.csr
         -config /var/snap/microk8s/current/certs/kubelet.conf
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
     - name: "C1l. Sign Kubelet Certificate with Cluster CA"
       ansible.builtin.command: >-
@@ -87,6 +89,7 @@
         -days 3650 -extensions v3_req
         -extfile /var/snap/microk8s/current/certs/kubelet.conf
       when: kubelet_cert_check.rc != 0
+      changed_when: true
 
 - name: "Block C2: Stabilize MicroK8s & Built-in Calico"
   become: true

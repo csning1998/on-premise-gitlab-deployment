@@ -9,18 +9,22 @@
   become: true
   ansible.builtin.command: snap restart microk8s
   listen: "Restart MicroK8s"
+  changed_when: true
 
 - name: Restart microk8s service
   listen: "Restart microk8s service"
   become: true
   ansible.builtin.command:
     cmd: "snap restart microk8s"
+  changed_when: true
 
 - name: Restart MicroK8s Containerd
   ansible.builtin.command: snap restart microk8s.daemon-containerd
   listen: "Restart MicroK8s Containerd"
+  changed_when: true
 
 - name: Refresh MicroK8s Server Certs
   become: true
   ansible.builtin.command: microk8s refresh-certs --cert server.crt
   listen: "Refresh MicroK8s Server Certs"
+  changed_when: true
