@@ -52,7 +52,7 @@
     daemon_reload: true
 
 - name: "F6. Reconfigure Harbor (If Config Changed)"
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "./prepare"
     chdir: "{{ harbor_install_dir }}"
   when:
