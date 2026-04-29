@@ -2,7 +2,7 @@
 - name: "Section A. Setup Redis Environment"
   ansible.builtin.include_tasks: A-setup.yaml
 
-- name: "Section B. Configure Network Routing"
+- name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
@@ -12,10 +12,10 @@
         metric: "{{ redis_static_route_metric }}"
   when: redis_static_route_to is defined
 
-- name: "Section C. Configure Redis Instance"
+- name: "Section B. Configure Redis Instance"
   ansible.builtin.include_tasks: B-configure.yaml
 
-- name: "Section D. Prepare Environment for Vault Agent"
+- name: "Role 82: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-vault-agent
   vars:
@@ -25,5 +25,5 @@
     vault_agent_post_command: "systemctl restart redis-server redis-sentinel"
     vault_agent_ip_sans: "{{ advertise_ip }}"
 
-- name: "Section E. Manage Redis Services"
+- name: "Section C. Manage Redis Services"
   ansible.builtin.include_tasks: C-service.yaml

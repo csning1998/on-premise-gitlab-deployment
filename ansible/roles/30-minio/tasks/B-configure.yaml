@@ -7,4 +7,3 @@
     group: root
     mode: "0600"
   notify: Restart MinIO
-

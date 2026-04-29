@@ -2,7 +2,7 @@
 - name: "Section A. Setup MinIO Environment"
   ansible.builtin.include_tasks: A-setup.yaml
 
-- name: "Section B. Configure Network Routing"
+- name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
     name: 81-asymmetric-routing
   vars:
@@ -12,10 +12,10 @@
         metric: "{{ minio_static_route_metric }}"
   when: minio_static_route_to is defined
 
-- name: "Section C. Configure MinIO Instance"
+- name: "Section B. Configure MinIO Instance"
   ansible.builtin.include_tasks: B-configure.yaml
 
-- name: "Section D. Prepare Environment for Vault Agent"
+- name: "Role 82: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-vault-agent
   vars:
@@ -32,8 +32,8 @@
     vault_agent_post_command: "systemctl restart minio"
     vault_agent_ip_sans: "{{ advertise_ip }},{{ minio_ha_virtual_ip }}"
 
-- name: "Section E. Manage MinIO Service"
+- name: "Section C. Manage MinIO Service"
   ansible.builtin.include_tasks: C-service.yaml
 
-- name: "Section E. Verify MinIO Cluster"
+- name: "Section D. Verify MinIO Cluster"
   ansible.builtin.include_tasks: D-verification.yaml

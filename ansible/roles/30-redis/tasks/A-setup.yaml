@@ -10,4 +10,3 @@
     - /var/log/redis
     - /var/run/redis
     - /var/lib/redis
-
