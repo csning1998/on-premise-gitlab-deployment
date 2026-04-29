@@ -2,16 +2,16 @@
 - name: "B1. Ensure Service Domain resolves to Localhost for Vault Agent"
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "127.0.0.1 {{ dev_harbor_service_domain }}"
+    line: "127.0.0.1 {{ bstrap_harbor_service_domain }}"
     state: present
-    regexp: "^127.0.0.1 {{ dev_harbor_service_domain }}$"
+    regexp: "^127.0.0.1 {{ bstrap_harbor_service_domain }}$"
 
 - name: "B2. Ensure Registry FQDN resolves to VIP for local operations"
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "{{ dev_harbor_vip }} {{ dev_harbor_fqdn }}"
+    line: "{{ bstrap_harbor_vip }} {{ bstrap_harbor_fqdn }}"
     state: present
-    regexp: "^.* {{ dev_harbor_fqdn | replace('.', '\\.') }}$"
+    regexp: "^.* {{ bstrap_harbor_fqdn | replace('.', '\\.') }}$"
 
 - name: "B3. Distribute Vault PKI Service CA to OS trust store"
   ansible.builtin.copy:

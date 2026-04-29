@@ -101,19 +101,19 @@ locals {
 locals {
   ansible_template_vars = {
     # Service Identifiers
-    service_identifier        = local.svc_name
-    dev_harbor_fqdn           = local.svc_fqdn
-    dev_harbor_service_domain = local.svc_identity.cluster_name
+    service_identifier           = local.svc_name
+    bstrap_harbor_fqdn           = local.svc_fqdn
+    bstrap_harbor_service_domain = local.svc_identity.cluster_name
 
     # Networking & HA
-    dev_harbor_vip              = local.net_physical_infra.lb_config.vip
-    dev_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
-    dev_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
-    vault_vip                   = local.state.vault_sys.service_vip
-    global_mss                  = local.state.metadata.global_network_baseline.global_mss
+    bstrap_harbor_vip              = local.net_physical_infra.lb_config.vip
+    bstrap_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
+    bstrap_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
+    vault_vip                      = local.state.vault_sys.service_vip
+    global_mss                     = local.state.metadata.global_network_baseline.global_mss
 
     # Cluster Topology
-    dev_harbor_cluster_ips = [
+    bstrap_harbor_cluster_ips = [
       for comp_name, comp_config in var.harbor_bootstrapper_config : [
         for node_suffix, node_data in comp_config.nodes :
         cidrhost(local.net_physical_infra.network.hostonly.cidr, node_data.ip_suffix)
@@ -121,9 +121,9 @@ locals {
     ][0] # Harbor Bootstrapper is a single component
 
     # Asymmetric Routing (Flattened)
-    dev_harbor_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    dev_harbor_static_route_via    = local.net_physical_infra.lb_config.vip
-    dev_harbor_static_route_metric = 100
+    bstrap_harbor_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    bstrap_harbor_static_route_via    = local.net_physical_infra.lb_config.vip
+    bstrap_harbor_static_route_metric = 100
 
     # Compatibility Aliases
     access_scope = local.net_physical_infra.network.hostonly.cidr

@@ -4,10 +4,10 @@
     name: 81-asymmetric-routing
   vars:
     routing_static_routes:
-      - to: "{{ dev_harbor_static_route_to }}"
-        via: "{{ dev_harbor_static_route_via }}"
-        metric: "{{ dev_harbor_static_route_metric }}"
-  when: dev_harbor_static_route_to is defined
+      - to: "{{ bstrap_harbor_static_route_to }}"
+        via: "{{ bstrap_harbor_static_route_via }}"
+        metric: "{{ bstrap_harbor_static_route_metric }}"
+  when: bstrap_harbor_static_route_to is defined
 
 - name: "Section A. Setup Harbor Environment"
   ansible.builtin.include_tasks: A-setup.yaml
@@ -26,7 +26,7 @@
       - "{{ harbor_pki_dir }}"
       - "{{ harbor_config_cert_dir }}"
     vault_agent_wait_file: "{{ harbor_cert_path }}"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ dev_harbor_vip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ bstrap_harbor_vip }}"
     vault_agent_post_command: |
       cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
       cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key

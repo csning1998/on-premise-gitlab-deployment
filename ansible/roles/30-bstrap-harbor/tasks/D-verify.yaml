@@ -5,7 +5,7 @@
 
 - name: "D2. Wait for Harbor Health (HTTPS)"
   ansible.builtin.uri:
-    url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
+    url: "https://{{ bstrap_harbor_fqdn }}/api/v2.0/health"
     validate_certs: true
     ca_path: "/etc/vault.d/vault-ca.crt"
     status_code: 200
