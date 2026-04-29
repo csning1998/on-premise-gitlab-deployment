@@ -12,12 +12,15 @@ resource "harbor_replication" "charts" {
   action      = "pull"
   registry_id = harbor_registry.external[each.value.registry_key].registry_id
 
-  dest_namespace = harbor_project.proxy_oci["helm_charts"].name
+  # Destination is the central helm-charts project
+  dest_namespace = "helm-charts"
 
   filters {
     name = each.value.resource_name
   }
 
-  schedule = "manual"
+  # Cron schedule: every 12 hours to keep it automated but not noisy
+  schedule = "0 0 0,12 * * *"
+
   override = true
 }

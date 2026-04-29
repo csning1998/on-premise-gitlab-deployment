@@ -43,7 +43,7 @@ locals {
     }
     cert_manager = {
       registry_key  = "quay_io"
-      resource_name = "jetstack/cert-manager"
+      resource_name = "jetstack/charts/cert-manager"
     }
     tigera = {
       registry_key  = "quay_io"
