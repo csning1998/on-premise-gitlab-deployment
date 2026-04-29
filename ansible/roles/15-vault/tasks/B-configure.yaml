@@ -2,14 +2,6 @@
 - name: "Block D: Configure and Start"
   become: true
   block:
-    - name: "D0. Debug Configuration Variables (Diagnostic)"
-      ansible.builtin.debug:
-        msg:
-          - "node_id: {{ node_id | default('UNDEFINED') }}"
-          - "advertise_ip: {{ advertise_ip | default('UNDEFINED') }}"
-          - "vault_cluster_name: {{ vault_cluster_name | default('UNDEFINED') }}"
-          - "primary_group_exists: {{ 'primary' in groups }}"
-
     - name: "D1. Configure Vault using Raft"
       ansible.builtin.template:
         src: vault.hcl.j2
@@ -24,3 +16,6 @@
         name: vault
         state: started
         enabled: true
+
+- name: "Flush Handlers (Restart Vault Service)"
+  ansible.builtin.meta: flush_handlers
