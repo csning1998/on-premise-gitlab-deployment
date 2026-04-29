@@ -70,6 +70,7 @@
   retries: 10
   delay: 3
   changed_when: false
+  no_log: true
 
 - name: "F8. Verify MinIO Cluster Status (Deep Check)"
   ansible.builtin.command:
