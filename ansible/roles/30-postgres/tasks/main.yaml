@@ -1,0 +1,19 @@
+---
+- name: "Section A. Configure Network Routing (R81)"
+  ansible.builtin.include_role:
+    name: 81-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ postgres_static_route_to }}"
+        via: "{{ postgres_static_route_via }}"
+        metric: "{{ postgres_static_route_metric }}"
+  when: postgres_static_route_to is defined
+
+- name: "Section B. Install Patroni and Environment"
+  ansible.builtin.include_tasks: A-install.yaml
+
+- name: "Section C. Configure Patroni and Vault"
+  ansible.builtin.include_tasks: B-configure.yaml
+
+- name: "Section D. Manage Patroni Service"
+  ansible.builtin.include_tasks: C-service.yaml

@@ -1,0 +1,6 @@
+---
+- name: "Section A. Install and Configure Base Environment"
+  ansible.builtin.include_tasks: A-install.yaml
+
+- name: "Section B. Configure Load Balancer Services"
+  ansible.builtin.include_tasks: B-service-config.yaml

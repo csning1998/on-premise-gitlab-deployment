@@ -1,0 +1,8 @@
+---
+postgres_user: "postgres"
+postgres_group: "postgres"
+postgres_version: 18
+postgres_mtls_pod_subnet: "10.1.0.0/16"
+password_encryption: "scram-sha-256"
+postgres_port: 5432
+patroni_restapi_port: 8008

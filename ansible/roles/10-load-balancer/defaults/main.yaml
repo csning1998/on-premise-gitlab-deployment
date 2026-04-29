@@ -1,0 +1,18 @@
+---
+# Section A: Base Kernel Tuning (from 16-central-lb-base)
+central_lb_sysctl_hardening:
+  - { name: "net.core.somaxconn", value: "4096" }
+  - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+  - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
+  - { name: "net.ipv4.ip_local_port_range", value: "1024 65535" }
+  - { name: "net.ipv4.tcp_slow_start_after_idle", value: "0" }
+  - { name: "net.core.rmem_max", value: "16777216" }
+  - { name: "net.core.wmem_max", value: "16777216" }
+  - { name: "net.ipv4.tcp_rmem", value: "4096 87380 16777216" }
+  - { name: "net.ipv4.tcp_wmem", value: "4096 65536 16777216" }
+  - { name: "net.ipv4.tcp_mtu_probing", value: "1" }
+
+# Section B: Service Timings (from 17-central-lb-service)
+haproxy_health_check_inter: "10s"
+haproxy_health_check_fall: "5"
+haproxy_health_check_rise: "3"

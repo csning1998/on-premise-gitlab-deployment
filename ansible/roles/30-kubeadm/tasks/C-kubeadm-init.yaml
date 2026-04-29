@@ -1,0 +1,96 @@
+---
+# Section A: Prepare primary master node for initialization
+- name: "A1. Ensure journald persistent storage directory exists"
+  ansible.builtin.file:
+    path: "/var/log/journal"
+    state: directory
+    mode: "0755"
+
+- name: "A2. Restart systemd-journald to apply persistent storage"
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+
+- name: "A3. Ensure kubelet service is enabled"
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+
+- name: "A4. Ensure /etc/kubernetes directory exists"
+  ansible.builtin.file:
+    path: "/etc/kubernetes"
+    state: directory
+    mode: "0755"
+
+- name: "A5. Create kubeadm config file from template"
+  ansible.builtin.template:
+    src: kubeadm-config.yaml.j2
+    dest: "/etc/kubernetes/kubeadm-config.yaml"
+    mode: "0644"
+
+# Section B: Run kubeadm init to bootstrap the cluster
+- name: "B1. Check if admin.conf already exists"
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/admin.conf"
+  register: admin_conf_stat
+
+- name: "B2. Run kubeadm init command"
+  ansible.builtin.shell: >-
+    kubeadm init
+    --config="/etc/kubernetes/kubeadm-config.yaml"
+    --upload-certs
+    --ignore-preflight-errors=Port-6443
+    > /tmp/kubeadm-init.log 2>&1
+  args:
+    creates: "/etc/kubernetes/admin.conf"
+  when: not admin_conf_stat.stat.exists
+  register: kubeadm_pri_result
+  notify: Restart haproxy on primary master
+
+- name: "B3. Verify that admin.conf was created"
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/admin.conf"
+  register: admin_conf_stat_post_init
+
+- name: "B4. Fail if kubeadm init did not create admin.conf"
+  ansible.builtin.fail:
+    msg: "kubeadm init failed to create /etc/kubernetes/admin.conf. Check /tmp/kubeadm-init.log for details."
+  when: not admin_conf_stat_post_init.stat.exists and kubeadm_pri_result is changed
+
+# Section C: Set up kubeconfig to enable kubectl
+- name: "C1. Create .kube directory for the root user"
+  ansible.builtin.file:
+    path: "/root/.kube"
+    state: directory
+    mode: "0755"
+
+- name: "C2. Copy admin.conf to root's kube config"
+  ansible.builtin.copy:
+    src: "/etc/kubernetes/admin.conf"
+    dest: "/root/.kube/config"
+    remote_src: true
+    mode: "0600"
+
+- name: "C3. Create .kube directory for the SSH user"
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: "C4. Copy admin.conf to user's kube config"
+  ansible.builtin.copy:
+    src: "/etc/kubernetes/admin.conf"
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    remote_src: true
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
+# Section D: Register kubeconfig content as a fact
+- name: "D1. Fetch admin.conf to a predictable local path"
+  ansible.builtin.fetch:
+    src: "/etc/kubernetes/admin.conf"
+    dest: "{{ kubeadm_fetched_kubeconfig_path }}"
+    flat: true

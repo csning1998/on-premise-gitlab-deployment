@@ -1,0 +1,62 @@
+---
+# Section E: Fetch Secrets from Vault
+- name: "E1. Retrieve Harbor Credentials"
+  community.hashi_vault.vault_kv2_get:
+    url: "{{ vault_addr }}"
+    path: "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+    engine_mount_point: "secret"
+    auth_method: approle
+    mount_point: "{{ vault_auth_path }}"
+    role_id: "{{ vault_agent_role_id }}"
+    secret_id: "{{ vault_agent_secret_id }}"
+    ca_cert: "{{ vault_agent_config_dir }}/vault-ca.crt"
+  register: harbor_vault_secrets
+
+# Section F: Configure Harbor
+- name: "F1. Render harbor.yml"
+  ansible.builtin.template:
+    src: harbor.yml.j2
+    dest: "{{ harbor_install_dir }}/harbor.yml"
+    mode: "0644"
+  register: harbor_system_config_status
+
+- name: "F2. Run Install Script (First Time Only)"
+  ansible.builtin.command:
+    cmd: "./install.sh --with-trivy"
+    chdir: "{{ harbor_install_dir }}"
+  args:
+    creates: "{{ harbor_install_dir }}/docker-compose.yml"
+
+- name: "F3. Find docker executable"
+  ansible.builtin.command: which docker
+  register: docker_exec
+  changed_when: false
+  check_mode: false
+
+- name: "F4. Deploy Harbor Systemd Service"
+  ansible.builtin.template:
+    src: harbor.service.j2
+    dest: /etc/systemd/system/harbor.service
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    docker_executable: "{{ docker_exec.stdout }}"
+  notify: Restart Harbor Service
+
+- name: "F5. Enable and Start Harbor Service"
+  ansible.builtin.systemd:
+    name: harbor
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: "F6. Reconfigure Harbor (If Config Changed)"
+  ansible.builtin.command:
+    cmd: "./prepare"
+    chdir: "{{ harbor_install_dir }}"
+  when:
+    - harbor_system_config_status.changed
+    - not (ansible_check_mode | bool)
+  changed_when: true
+  notify: Restart Harbor Service

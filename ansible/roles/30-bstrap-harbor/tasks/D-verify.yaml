@@ -1,0 +1,32 @@
+---
+# Section G: Verification
+- name: "G1. Force update of CA certificates"
+  ansible.builtin.command: update-ca-certificates
+  changed_when: false
+
+- name: "G2. Wait for Harbor Health (HTTPS)"
+  ansible.builtin.uri:
+    url: "https://{{ dev_harbor_fqdn }}/api/v2.0/health"
+    validate_certs: true
+    ca_path: "/etc/vault.d/vault-ca.crt"
+    status_code: 200
+    return_content: true
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 10
+
+# Section H: Install Utilities for Artifact Management
+- name: "H1. Download Helm installation script"
+  ansible.builtin.get_url:
+    url: "{{ helm_install_script_url }}"
+    dest: /tmp/get_helm.sh
+    mode: "0700"
+    checksum: "{{ helm_install_script_checksum }}"
+
+- name: "H2. Execute Helm installation script"
+  ansible.builtin.command:
+    cmd: /tmp/get_helm.sh
+    creates: /usr/local/bin/helm
+  environment:
+    DESIRED_VERSION: "{{ helm_version }}"

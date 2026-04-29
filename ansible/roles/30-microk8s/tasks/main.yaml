@@ -1,0 +1,17 @@
+---
+- name: "Section A. Setup MicroK8s Prerequisites"
+  ansible.builtin.include_tasks: B-prerequisites.yaml
+
+- name: "Section B. Cleanup and Prepare Nodes"
+  ansible.builtin.include_tasks: C-nodes.yaml
+
+- name: "Section C. Configure High Availability (Replicas)"
+  ansible.builtin.include_tasks: D-high-availability.yaml
+  when: inventory_hostname in (groups['replica'] | default([]))
+
+- name: "Section D. Configure Addons (Primary)"
+  ansible.builtin.include_tasks: E-addons.yaml
+  when: inventory_hostname in (groups['primary'] | default([]))
+
+- name: "Section E. Setup Kubeconfig"
+  ansible.builtin.include_tasks: F-kubeconfig.yaml

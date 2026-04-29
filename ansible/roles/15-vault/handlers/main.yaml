@@ -1,0 +1,14 @@
+---
+- name: Reload Systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Update CA Trust
+  ansible.builtin.command:
+    cmd: update-ca-certificates
+  changed_when: false
+
+- name: Restart Vault Service
+  ansible.builtin.systemd:
+    name: vault
+    state: restarted

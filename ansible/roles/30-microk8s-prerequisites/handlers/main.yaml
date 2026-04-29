@@ -1,8 +1,0 @@
----
-- name: Update CA Certificates
-  ansible.builtin.command: update-ca-certificates
-  changed_when: true
-
-- name: Restart MicroK8s Containerd
-  ansible.builtin.command: snap restart microk8s.daemon-containerd
-  changed_when: true
