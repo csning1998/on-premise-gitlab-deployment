@@ -3,6 +3,10 @@
 harbor_install_dir: "/opt/harbor-install"
 harbor_data_dir: "/data/harbor"
 
+# Harbor Container User IDs (Harbor 2.x uses 10000)
+harbor_uid: 10000
+harbor_gid: 10000
+
 # PKI Paths (Host Side)
 # Vault Agent will write certs here.
 # Harbor will mount these files into the container.

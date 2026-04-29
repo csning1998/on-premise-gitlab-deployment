@@ -30,6 +30,8 @@
     vault_agent_post_command: |
       cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
       cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key
+      chown {{ _harbor_uid }}:{{ _harbor_gid }} {{ harbor_config_cert_dir }}/server.crt
+      chown {{ _harbor_uid }}:{{ _harbor_gid }} {{ harbor_config_cert_dir }}/server.key
       chmod 0644 {{ harbor_config_cert_dir }}/server.crt
       chmod 0600 {{ harbor_config_cert_dir }}/server.key
       docker ps -q -f name=^nginx$ | grep -q . && docker exec -i nginx nginx -s reload || true
