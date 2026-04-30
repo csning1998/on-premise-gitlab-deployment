@@ -1,4 +1,9 @@
 
+output "bstrap_harbor_fqdn" {
+  description = "The FQDN of the Bootstrap Harbor service."
+  value       = local.svc_fqdn
+}
+
 output "service_vip" {
   description = "The virtual IP assigned to the Bootstrap Harbor service from Central LB topology."
   value       = local.net_physical_infra.lb_config.vip
@@ -29,4 +34,9 @@ output "pki_key" {
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
   value       = module.bootstrap_harbor.ansible_inventory
+}
+
+output "ssh_config_file_path" {
+  description = "The path to the generated SSH configuration file."
+  value       = module.bootstrap_harbor.ssh_config_file_path
 }

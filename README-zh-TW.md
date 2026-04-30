@@ -539,13 +539,14 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
     或者如 B.1-2 所述使用容器，較為簡便
 
-6.  由於 Layer 50 相關的 Helm Chart 一律都採用 OCI 與 Bootstrapper Harbor 進行連線，因此需要先從遠端 `helm pull` 相關 Artifacts 並且推送到 Bootstrapper Harbor 中。要先確保 `30-infra-harbor-bootstrapper-frontend` 與 `40-provision-harbor-bootstrapper-frontend` 都有成功執行
+6.  **更新**：以下內容已經整合在 `40-provision-harbor-bootstrapper-frontend` 中透過 Ansible Provider 驅動，可以直接執行 `terraform apply` 完成本項目內容
+
+    由於 Layer 50 相關的 Helm Chart 一律都採用 OCI 與 Bootstrapper Harbor 進行連線，因此需要先從遠端 `helm pull` 相關 Artifacts 並且推送到 Bootstrapper Harbor 中。要先確保 `30-infra-harbor-bootstrapper-frontend` 與 `40-provision-harbor-bootstrapper-frontend` 都有成功執行
 
     在確定 L30 與 L40 有關 Bootstrapper Harbor 已執行之後，可以直接執行以下指令（這之後會整合為透過 Ansible Provider 驅動）：
     1. **環境變數相關以及登入**
 
         ```bash
-        # 1. Environments
         export VAULT_ADDR="https://172.16.136.250:443"
         export VAULT_SKIP_VERIFY=true
 

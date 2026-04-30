@@ -133,8 +133,8 @@ locals {
     # Host Overrides
     node_extra_hosts = [
       {
-        host = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_map["core-harbor-frontend"].lb_config.vip
+        host = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+        ip   = local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip
       }
     ]
 
