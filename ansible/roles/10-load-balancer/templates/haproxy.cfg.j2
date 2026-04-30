@@ -44,38 +44,25 @@ listen stats
 # Service: {{ segment.name }}
 {% if segment.ports %}
 {% for port_name, port_cfg in segment.ports.items() %}
+{% set port_suffix = port_name | replace('-', '_') %}
+{% set backend_name = "be_" ~ (segment.name | replace('-', '_')) ~ "_" ~ port_suffix %}
 
-    # Frontend for {{ port_name }}
-frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_name }}
-    {# TCP Passthrough for all services — TLS termination is the responsibility of each application #}
+frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_suffix }}
     bind {{ segment.vip }}:{{ port_cfg.frontend }}
     mode tcp
     option tcplog
-    default_backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+    default_backend {{ backend_name }}
 
-# Backend for {{ port_name }} (Saturation Slots)
-backend be_{{ segment.name | replace('-', '_') }}_{{ port_name }}
+backend {{ backend_name }}
     mode tcp
     balance roundrobin
-
-    {# Dynamic Health Check Logic #}
     {% if port_cfg.health_check_type == 'http' %}
     option httpchk GET {{ port_cfg.health_check_http_path | default('/') }}
     http-check expect {{ port_cfg.health_check_http_expect | default('status 200') }}
-    {% else %}
-    option tcp-check
-    {% endif %}
-
+    {% endif %} 
     {% for server in segment.backend_servers %}
-    {# If Vault then TCP Passthrough (no ssl), else if Health Check then HTTPS (check-ssl) #}
-    {% if 'vault' in segment.name %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }} check-ssl verify none
-    {% else %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{{ ' check-ssl verify none' if port_cfg.health_check_ssl | default(false) else '' }}
-    {% endif %}
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check{% if port_cfg.health_check_port %} port {{ port_cfg.health_check_port }}{% endif %} inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{% if port_cfg.health_check_ssl | default(false) or 'vault' in segment.name %} check-ssl verify none{% endif %} {% if port_cfg.send_proxy_v2 | default(false) %} send-proxy-v2{% endif %} 
     {% endfor %}
-
-    {# close port loop #}
 {% endfor %}
 {% endif %}
 {% endfor %}
