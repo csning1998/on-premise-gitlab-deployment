@@ -176,6 +176,9 @@ resource "helm_release" "gitlab" {
           image = var.image_registry != null ? {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-webservice-${var.gitlab_config.edition}"
           } : null
+          workhorse = {
+            image = var.image_registry != null ? "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-workhorse-${var.gitlab_config.edition}" : null
+          }
           deployment = {
             hostAliases = var.external_services.minio.ip != null ? [
               {
