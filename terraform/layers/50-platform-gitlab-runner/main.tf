@@ -56,15 +56,61 @@ module "metric_server" {
   depends_on = [module.platform_trust_engine]
 }
 
-# resource "kubernetes_secret" "gitlab_root_ca" {
-#   metadata {
-#     name      = local.ca_bundle_config.secret_name
-#     namespace = "gitlab"
-#   }
+# [PHASE 2] GitLab Runner Deployment
+resource "kubernetes_secret" "gitlab_ca_bundle" {
+  metadata {
+    name      = local.ca_bundle_config.name
+    namespace = kubernetes_namespace.gitlab.metadata[0].name
+  }
 
-#   data = {
-#     "ca.crt" = local.ca_bundle_config.content
-#   }
+  data = {
+    "ca.crt" = local.ca_bundle_config.content
+  }
+}
 
-#   type = "Opaque"
-# }
+resource "helm_release" "gitlab_runner" {
+  name       = "gitlab-runner"
+  repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  chart      = "gitlab-runner"
+  version    = var.gitlab_runner_config.version
+  namespace  = kubernetes_namespace.gitlab.metadata[0].name
+
+  values = [
+    yamlencode({
+      gitlabUrl = local.gitlab_url
+      rbac = {
+        create = true
+      }
+      runnerToken     = local.runner_token
+      certsSecretName = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
+
+      image = {
+        registry   = local.harbor_registry
+        image      = "${local.harbor_docker_proxy}/gitlab/gitlab-runner"
+        tag        = "alpine-v16.8.0"
+        pullPolicy = "IfNotPresent"
+      }
+
+      runners = {
+        config = <<-EOT
+          [[runners]]
+            [runners.kubernetes]
+              namespace = "${kubernetes_namespace.gitlab.metadata[0].name}"
+              image = "${local.harbor_registry}/${local.harbor_docker_proxy}/alpine:latest"
+              helper_image = "${local.runner_helper_image}"
+              privileged = true
+        EOT
+      }
+
+      securityContext = {
+        fsGroup = 65533
+        runAsUser = 100
+      }
+    })
+  ]
+
+  depends_on = [
+    module.platform_trust_engine,
+    kubernetes_secret.gitlab_ca_bundle
+  ]
+}

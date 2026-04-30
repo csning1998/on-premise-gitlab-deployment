@@ -65,4 +65,12 @@ locals {
       base64decode(local.state.vault_pki.bootstrap_ca.content)
     ])
   }
+
+  # 5. GitLab Runner Configuration
+  gitlab_url   = "https://${local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]}"
+  runner_token = random_password.runner_token.result
+
+  # Image Paths (Routed through Harbor Proxy)
+  runner_image        = "${local.harbor_registry}/${local.harbor_docker_proxy}/gitlab/gitlab-runner:alpine-v16.8.0"
+  runner_helper_image = "${local.harbor_registry}/${local.harbor_docker_proxy}/gitlab/gitlab-runner-helper:x86_64-v16.8.0"
 }
