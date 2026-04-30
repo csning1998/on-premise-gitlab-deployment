@@ -5,6 +5,21 @@ global_defs {
     script_user root
 }
 
+vrrp_script chk_haproxy {
+    script "/usr/bin/killall -0 haproxy"
+    interval 2
+    weight -20
+}
+
+{# Sync Group ensures all VIPs failover together #}
+vrrp_sync_group VG_ALL {
+    group {
+{% for segment in lb_service_segments %}
+        VI_{{ segment.name | upper | replace('-', '_') }}
+{% endfor %}
+    }
+}
+
 {# Iterate to generate VRRP Instance #}
 {% for segment in lb_service_segments %}
 vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
@@ -18,12 +33,14 @@ vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
     {# Priority setting: Master (First in lb group) = 100, Others = 90 #}
     priority {{ 100 if inventory_hostname == groups['load_balancer'][0] else 90 }}
     advert_int 1
+    nopreempt
 
-    unicast_src_ip {{ hostvars[inventory_hostname].ansible_host }}
+    {# Use specific segment IPs instead of the global ansible_host #}
+    unicast_src_ip {{ hostvars[inventory_hostname]['service_ips'][segment.name] }}
     unicast_peer {
 {% for host in groups['load_balancer'] %}
 {% if host != inventory_hostname %}
-        {{ hostvars[host].ansible_host }}
+        {{ hostvars[host]['service_ips'][segment.name] }}
 {% endif %}
 {% endfor %}
     }
@@ -35,6 +52,11 @@ vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
 
     virtual_ipaddress {
         {{ segment.vip }}
+    }
+
+    {# Bind HAProxy health state to VIP ownership #}
+    track_script {
+        chk_haproxy
     }
 }
 {% endfor %}

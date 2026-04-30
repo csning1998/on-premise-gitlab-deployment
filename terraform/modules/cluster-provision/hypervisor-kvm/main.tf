@@ -203,7 +203,8 @@ resource "libvirt_domain" "nodes" {
         source = {
           network = var.libvirt_infrastructure[each.value.network_tier].network.nat.name_network
         }
-        mac = local.nodes_config[each.key].nat_mac
+        mac   = local.nodes_config[each.key].nat_mac
+        model = "virtio"
       },
       # 2. HostOnly Interface
       {
@@ -211,7 +212,8 @@ resource "libvirt_domain" "nodes" {
         source = {
           network = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.name_network
         }
-        mac = local.nodes_config[each.key].hostonly_mac
+        mac   = local.nodes_config[each.key].hostonly_mac
+        model = "virtio"
       }
     ]
 
