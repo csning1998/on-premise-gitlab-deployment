@@ -63,5 +63,8 @@ locals {
     "gitlab-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
     }
+    "gitlab-runner" = {
+      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
+    }
   }
 }
