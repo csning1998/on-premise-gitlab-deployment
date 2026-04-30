@@ -13,7 +13,7 @@ output "pki_configuration" {
     lease_durations = {
       default = format("%dh", var.vault_pki_engine_config.default_lease_ttl_seconds / 3600)
       max     = format("%dh", var.vault_pki_engine_config.max_lease_ttl_seconds / 3600)
-      agent   = var.environment == "production" ? "12h" : "5m"
+      agent   = var.environment == "production" ? "24h" : "12h"
     }
   }
 }

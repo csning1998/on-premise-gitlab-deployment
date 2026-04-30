@@ -198,6 +198,7 @@ resource "libvirt_domain" "nodes" {
         type   = "network"
         source = { network = iface.network_name }
         mac    = iface.mac
+        model  = "virtio"
       }
     ]
 
