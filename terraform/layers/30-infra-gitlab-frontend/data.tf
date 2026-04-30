@@ -55,11 +55,6 @@ data "terraform_remote_state" "harbor_proxy" {
   }
 }
 
-data "vault_generic_secret" "infrastructure" {
-  provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/infrastructure"
-}
-
 data "vault_generic_secret" "guest_vm" {
   provider = vault.production
   path     = "secret/on-premise-gitlab-deployment/guest_vm"
