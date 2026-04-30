@@ -154,6 +154,8 @@ locals {
                   health_check_http_path   = p_val.health_check_http_path
                   health_check_http_expect = p_val.health_check_http_expect
                   health_check_ssl         = p_val.health_check_ssl
+                  health_check_port        = p_val.health_check_port
+                  send_proxy_v2            = p_val.send_proxy_v2
                 }
               }
               tags = seg.tags

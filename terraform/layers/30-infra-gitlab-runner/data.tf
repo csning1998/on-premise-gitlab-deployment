@@ -13,7 +13,7 @@ data "terraform_remote_state" "volume" {
   }
 }
 
-data "terraform_remote_state" "network" {
+data "terraform_remote_state" "load_balancer" {
   backend = "local"
   config = {
     path = "${path.root}/../10-shared-load-balancer-frontend/terraform.tfstate"
@@ -41,6 +41,12 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
+
+data "vault_generic_secret" "guest_vm" {
+  provider = vault.production
+  path     = "secret/on-premise-gitlab-deployment/guest_vm"
+}
+
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
   config = {
@@ -53,9 +59,4 @@ data "terraform_remote_state" "harbor_proxy" {
   config = {
     path = "${path.root}/../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
   }
-}
-
-data "vault_generic_secret" "guest_vm" {
-  provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }

@@ -84,6 +84,8 @@ variable "service_catalog" {
         health_check_http_path   = optional(string, "/")
         health_check_http_expect = optional(string, "status 200")
         health_check_ssl         = optional(bool, false)
+        health_check_port        = optional(number)
+        send_proxy_v2            = optional(bool, false)
       })), {})
       data_disks = optional(list(object({
         name_suffix  = string
