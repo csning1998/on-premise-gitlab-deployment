@@ -21,6 +21,7 @@ locals {
     abspath("${path.module}/../../../../ansible/playbooks/10-playbook-shared.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/30-playbook-infra-statesful-sets.yaml"),
     abspath("${path.module}/../../../../ansible/playbooks/30-playbook-frontend.yaml"),
+    abspath("${path.module}/../../../../ansible/playbooks/40-playbook-provision.yaml"),
   ]
 }
 

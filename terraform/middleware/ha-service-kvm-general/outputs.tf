@@ -45,3 +45,8 @@ output "ansible_inventory" {
     file_path = module.ansible_runner.inventory_file_path
   }
 }
+
+output "ssh_config_file_path" {
+  description = "The path to the generated SSH configuration file."
+  value       = module.ssh_manager.ssh_config_file_path
+}

@@ -539,13 +539,14 @@ Successful execution and the display of virtual machines—regardless of whether
 
     Alternatively, containerized approach described in B.1-2 is more streamlined.
 
-6. Since Helm Charts related to Layer 50 consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `30-infra-harbor-bootstrapper-frontend` and `40-provision-harbor-bootstrapper-frontend` have been executed successfully.
+6. **UPDATE**: The following has been integrated into `40-provision-harbor-bootstrapper-frontend` via the Ansible Provider. Executing `terraform apply` automates the requirements described below.
+
+    Since Helm Charts related to Layer 50 consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `30-infra-harbor-bootstrapper-frontend` and `40-provision-harbor-bootstrapper-frontend` have been executed successfully.
 
     Once it is confirmed that the Bootstrapper Harbor related L30 and L40 have been executed, you can directly run the following commands (This will be integrated into L40 triggered by Ansible Provider):
     1. **Environment Variables and Login**
 
         ```bash
-        # 1. Environments
         export VAULT_ADDR="https://172.16.136.250:443"
         export VAULT_SKIP_VERIFY=true
 
