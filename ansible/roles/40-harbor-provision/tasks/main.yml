@@ -22,6 +22,7 @@
 - name: Step 3. Force local DNS resolution for Harbor FQDN
   ansible.builtin.lineinfile:
     path: /etc/hosts
+    regexp: '^.*\\s+{{ harbor_registry | regex_escape }}$'
     line: "127.0.0.1 {{ harbor_registry }}"
     state: present
   become: true
@@ -36,31 +37,21 @@
 - name: Step 5. Synchronize Helm Charts (Pull and Push)
   ansible.builtin.shell: |
     set -eo pipefail
+    WORK_DIR=$(mktemp -d)
+    trap 'rm -rf "$WORK_DIR"' EXIT
+    cd "$WORK_DIR"
 
-    {% set is_oci_chart = item.is_oci | default(false) | bool %}
+    {% set is_oci = item.is_oci | default(false) | bool %}
 
-    {% if is_oci_chart %}
+    {% if is_oci %}
     helm pull {{ item.repo }}/{{ item.name }} --version {{ item.version }}
     {% else %}
     helm pull {{ item.name }} --version {{ item.version }} --repo {{ item.repo }}
     {% endif %}
 
-    CHART_FILE_CLEAN="{{ item.name }}-{{ item.version | regex_replace('^v', '') }}.tgz"
-    CHART_FILE_RAW="{{ item.name }}-{{ item.version }}.tgz"
-
-    if [ -f "$CHART_FILE_CLEAN" ]; then
-        TARGET_FILE="$CHART_FILE_CLEAN"
-    elif [ -f "$CHART_FILE_RAW" ]; then
-        TARGET_FILE="$CHART_FILE_RAW"
-    else
-        echo "Error: Chart file not found for {{ item.name }}" >&2
-        exit 1
-    fi
-
-    helm push "$TARGET_FILE" oci://{{ harbor_registry }}/{{ harbor_project }}
-    rm -f "$TARGET_FILE"
+    helm push *.tgz oci://{{ harbor_registry }}/{{ harbor_project }}
   args:
     executable: /bin/bash
   loop: "{{ helm_charts_to_sync }}"
   register: sync_results
-  changed_when: "'Pushed' in sync_results.stdout"
+  changed_when: "'Pushed' in (stderr | default(''))"
