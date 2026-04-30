@@ -68,6 +68,8 @@ variable "network_service_segments" {
       health_check_http_path   = optional(string, "/")
       health_check_http_expect = optional(string, "")
       health_check_ssl         = optional(bool, false)
+      health_check_port        = optional(number)
+      send_proxy_v2            = optional(bool, false)
     })))
 
     backend_servers = optional(list(object({
