@@ -100,6 +100,32 @@ service_catalog = {
       }
     }
   },
+  "keycloak" = {
+    owner        = "secops"
+    project_code = "core"
+    stage        = "production"
+    components = {
+      "frontend" = {
+        provider   = "kvm"
+        runtime    = "docker"
+        cidr_index = 142
+        tags       = []
+        ip_range   = { start_ip = 200, end_ip = 200 }
+        ports = {
+          "http" = {
+            frontend_port          = 443,
+            backend_port           = 8080
+            health_check_type      = "http"
+            health_check_http_path = "/health/ready"
+          }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 20 }]
+        ingress = {
+          "frontend" = { subdomains = ["sso"] }
+        }
+      }
+    }
+  },
   "gitlab" = {
     owner        = "devops"
     project_code = "core"
@@ -114,8 +140,8 @@ service_catalog = {
         ip_range = { start_ip = 200, end_ip = 220 }
         ports = {
           "api-server"    = { frontend_port = 6443, backend_port = 6443 }
-          "ingress-http"  = { frontend_port = 80, backend_port = 30080 }
-          "ingress-https" = { frontend_port = 443, backend_port = 30443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 30080, send_proxy_v2 = true }
+          "ingress-https" = { frontend_port = 443, backend_port = 30443, send_proxy_v2 = true }
         }
         ingress = {
           "frontend" = { subdomains = ["gitlab", "kas"], node_groups = ["master", "worker"] }
@@ -129,8 +155,9 @@ service_catalog = {
         tags       = ["with-128-etcd"]
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "rw-proxy" = { frontend_port = 5000, backend_port = 5432 }
-          "ro-proxy" = { frontend_port = 5001, backend_port = 5432 }
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
+          "api"      = { frontend_port = 8008, backend_port = 8008 }
           "stats"    = { frontend_port = 7000, backend_port = 7000 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
@@ -202,7 +229,7 @@ service_catalog = {
       #   tags       = ["with-140-praefact"]
       #   ip_range   = { start_ip = 200, end_ip = 202 }
       #   ports = {
-      #     "rw-proxy" = { frontend_port = 5432, backend_port = 5432 }
+      #     "rw-proxy" = { frontend_port = 5432, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
       #     "api"      = { frontend_port = 8008, backend_port = 8008 }
       #     "etcd"     = { frontend_port = 2379, backend_port = 2379 }
       #   }
@@ -215,8 +242,9 @@ service_catalog = {
         tags       = []
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "metrics" = { frontend_port = 9252, backend_port = 9252 }
-          "session" = { frontend_port = 8093, backend_port = 8093 }
+          "api-server" = { frontend_port = 16443, backend_port = 16443 }
+          "metrics"    = { frontend_port = 9252, backend_port = 9252 }
+          "session"    = { frontend_port = 8093, backend_port = 8093 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
       }
@@ -257,8 +285,8 @@ service_catalog = {
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
           "api-server"    = { frontend_port = 16443, backend_port = 16443 }
-          "ingress-http"  = { frontend_port = 80, backend_port = 80 }
-          "ingress-https" = { frontend_port = 443, backend_port = 443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 80, send_proxy_v2 = true }
+          "ingress-https" = { frontend_port = 443, backend_port = 443, send_proxy_v2 = true }
         }
         ingress = {
           "frontend" = { subdomains = ["harbor", "notary"] }
@@ -271,8 +299,9 @@ service_catalog = {
         tags       = ["with-133-etcd"]
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "rw-proxy" = { frontend_port = 5000, backend_port = 5432 }
-          "ro-proxy" = { frontend_port = 5001, backend_port = 5432 }
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
+          "api"      = { frontend_port = 8008, backend_port = 8008 }
           "stats"    = { frontend_port = 7000, backend_port = 7000 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
