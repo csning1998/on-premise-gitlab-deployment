@@ -17,6 +17,9 @@
 - **RAM：** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
 - **SSD：** WD PC SN560 SDDPNQE-1T00-1032
 
+> [!WARNING]
+> 目前因為專案在 Ansible Provider 中使用 `action` Block 宣告資源，在目前 2026 年 5 月 1 日的狀態下，需要用 Terraform 1.14 版本以上的 Binary 執行。OpenTofu 社群目前未見相關實做。如後續有支援，會再修改回 OpenTofu。相關指令請使用者自行使用 `terraform` 取代 `tofu` 或使用 alias 進行 CLI 操作
+
 可透過以下指令 clone 這個專案：
 
 ```shell
@@ -84,8 +87,10 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 4. MinIO (S3) / Distributed MinIO
 5. Harbor 作為映像檔 GitLab 的 Registry
 6. GitLab Webapp 本體
-7. **[ONGOING]** 修正 Harbor 與 GitLab 的 Rediss 問題
-8. **[WIP]** GitLab Runner (on Microk8s) / Gitaly (Praefact) 等
+7. 修正 Harbor 與 GitLab 的 Rediss 問題
+    - MTU/MSS：[#102](https://github.com/csning1998/on-premise-gitlab-deployment/pull/102), [#104](https://github.com/csning1998/on-premise-gitlab-deployment/pull/104)
+    - Virtio：[#110](https://github.com/csning1998/on-premise-gitlab-deployment/pull/110)
+8. **[Ongoing]** GitLab Runner (on Microk8s) / Gitaly (Praefact) 等
 9. Private Key Encryption
 10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration 對於 `*.tfstates` 檔案的加密
 
@@ -247,7 +252,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 0. **環境變數檔案：** `entry.sh` 會自動產生 `.env` 環境變數檔案，主要是給其他 shell script 使用，可以忽略不管
 1. **產生 SSH Key：** 在 Terraform 與 Ansible 執行過程中，SSH key 主要是讓服務可以登入虛擬機進行自動化設定。在執行 `./entry.sh` 的選項 `5` _"Generate SSH Key"_ 就可以產生 SSH Key，預設名稱為 `id_ed25519_on-premise-gitlab-deployment`。這步驟產生的公鑰與私鑰會儲存於 `~/.ssh/` 目錄下
-2. **切換環境：** 可透過 `./entry.sh` 的選項 `13` 在 _"Container"_ 與 _"Native"_ 環境之間切換
+2. **切換環境：** 可透過 `./entry.sh` 的選項 `9` 在 _"Container"_ 與 _"Native"_ 環境之間切換
 
     其中此 repo 以 Podman 作為 container runtime。之所以避開使用 Docker，主要就是避免 SELinux 權限衝突問題。在啟用 SELinux 的系統（例如 Fedora、RHEL、CentOS Stream 等）上，Docker 容器預設執行在 `container_t` 的 SELinux domain。這樣即使正確 mount `/var/run/libvirt/libvirt-sock` 後，SELinux policy 仍會禁止 `container_t` 連線到 `virt_var_run_t` 的 UNIX socket，從而導致 Terraform libvirt provider 或 `virsh` 出現 **Permission denied** 錯誤，即便檔案權限含 `0770` 與 `libvirt` 群組已經正確設定亦同
 

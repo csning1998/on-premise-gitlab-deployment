@@ -17,6 +17,9 @@ The hardware specifications used for development are as follows (for reference o
 - **RAM:** Micron Crucial Pro 64GB Kit (32GBx2) DDR5-5600 UDIMM
 - **SSD:** WD PC SN560 SDDPNQE-1T00-1032
 
+> [!WARNING]
+> As of May 1, 2026, this repo requires Terraform 1.14 or higher because it utilizes the `action` block in the Ansible Provider to declare resources. Currently, there is no equivalent implementation in the OpenTofu community. This repo will be migrated back to OpenTofu once such support becomes available. Users are advised to manually substitute `tofu` with `terraform` commands or use an alias for all CLI operations.
+
 The project can be cloned using the following command:
 
 ```shell
@@ -84,8 +87,10 @@ This project currently provisions the following services (Items 1–5 are config
 4. MinIO (S3) / Distributed MinIO.
 5. Harbor as a Registry for GitLab Images.
 6. GitLab Webapp Core.
-7. **[ONGOING]** Resolve Redis configuration issues for Harbor and GitLab.
-8. **[WIP]** GitLab Runner (on Microk8s) / Gitaly (Praefact) etc.
+7. Resolved Redis configuration issues for Harbor and GitLab.
+    - MTU/MSS：[#102](https://github.com/csning1998/on-premise-gitlab-deployment/pull/102), [#104](https://github.com/csning1998/on-premise-gitlab-deployment/pull/104)
+    - Virtio：[#110](https://github.com/csning1998/on-premise-gitlab-deployment/pull/110)
+8. **[ONGOING]** GitLab Runner (on Microk8s) / Gitaly (Praefact) etc.
 9. Private Key Encryption.
 10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration for the feature of `*.tfstate` files encryption.
 
@@ -247,7 +252,7 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 0. **Environment Variables File:** `entry.sh` automatically generates a `.env` file for internal shell script use. This file typically requires no manual intervention.
 1. **SSH Key Generation:** SSH keys enable automated configuration by allowing services to authenticate with virtual machines during Terraform and Ansible execution. Use option `5` _"Generate SSH Key"_ in `./entry.sh` to create a key pair. The default name is `id_ed25519_on-premise-gitlab-deployment`, and keys are stored in the `~/.ssh/` directory.
-2. **Environment Switching:** Option `13` in `./entry.sh` toggles between "Container" and "Native" environments.
+2. **Environment Switching:** Option `9` in `./entry.sh` toggles between "Container" and "Native" environments.
 
     This repo utilizes Podman as the container runtime to prevent SELinux permission conflicts. On systems with SELinux enabled (e.g., Fedora, RHEL, CentOS Stream), Docker containers run within the `container_t` domain by default. In such environments, the SELinux policy prohibits `container_t` from connecting to the `virt_var_run_t` UNIX socket, even if `/var/run/libvirt/libvirt-sock` is correctly mounted with `0770` permissions and proper group ownership. This results in **Permission denied** errors for `virsh` or the Terraform libvirt provider.
 
