@@ -44,3 +44,8 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "0.85.0"
     repo: "https://charts.gitlab.io/"
     is_oci: false
+
+  - name: "kubelet-csr-approver"
+    version: "1.2.14"
+    repo: "oci://ghcr.io/postfinance/charts"
+    is_oci: true
