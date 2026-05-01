@@ -16,6 +16,7 @@ variable "vm_config" {
       os_disk_capacity_gib = optional(number, 40) # Typically `vda.vda2`
       base_image_path      = string
       network_tier         = string
+      cpu_mode             = optional(string, null)
 
       attached_volumes = optional(list(object({
         pool        = string

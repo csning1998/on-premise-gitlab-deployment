@@ -10,6 +10,7 @@ locals {
         vcpu                 = node_data.vcpu
         ram_size             = node_data.ram_size
         os_disk_capacity_gib = node_data.os_disk_capacity_gib
+        cpu_mode             = node_data.cpu_mode
 
         # Auto-Discovery of Attached Volumes from SSoT Volume Map
         attached_volumes = [
@@ -57,6 +58,7 @@ locals {
         base_image_path      = v.base_image_path
         attached_volumes     = v.attached_volumes
         network_tier         = v.network_tier
+        cpu_mode             = v.cpu_mode
       }
     }
   }

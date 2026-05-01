@@ -152,6 +152,11 @@ resource "libvirt_domain" "nodes" {
     arch = "x86_64"
   }
 
+  # [Technical Debt] CPU Configuration
+  cpu = each.value.cpu_mode != null ? {
+    mode = each.value.cpu_mode
+  } : null
+
   # 3. Hardware Device Configuration (Attributes)
   devices = {
     disks = concat(

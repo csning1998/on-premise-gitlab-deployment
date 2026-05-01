@@ -22,6 +22,7 @@ variable "keycloak_config" {
       vcpu                 = number
       ram_size             = number
       os_disk_capacity_gib = optional(number)
+      cpu_mode             = optional(string, null)
     }))
   }))
 }
