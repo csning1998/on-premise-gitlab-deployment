@@ -6,21 +6,7 @@ locals {
   ssh_password        = vault(var.secrets_path, "ssh_password")
   ssh_password_hash   = vault(var.secrets_path, "ssh_password_hash")
 
-  # Service-Specific Secrets Mapping (Isolation Layer)
-  service_credentials = {
-    "docker-keycloak" = {
-      keycloak_admin_user     = var.build_name == "docker-keycloak" ? vault(var.vault_service_path, "keycloak_admin_user") : null
-      keycloak_admin_password = var.build_name == "docker-keycloak" ? vault(var.vault_service_path, "keycloak_admin_password") : null
-    }
-    # Future services can be added here following the same pattern
-  }
-
-  current_service_vars = lookup(local.service_credentials, var.build_name, {})
-  ansible_extra_vars = flatten([
-    for k, v in local.current_service_vars : ["--extra-vars", "${k}=${v}"] if v != null
-  ])
-
-  # [4] VM Metadata
+  # The final hostname is simple.
   final_hostname = var.build_name
   final_vm_name = "${var.os_spec.distro}-${var.os_spec.version}-${var.build_name}.qcow2"
 

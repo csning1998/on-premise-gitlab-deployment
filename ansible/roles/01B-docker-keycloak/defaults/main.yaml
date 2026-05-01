@@ -2,6 +2,6 @@
 keycloak:
   version: "26.6.1"
   image: "quay.io/keycloak/keycloak"
-  admin_user: "admin"
-  admin_password: "admin"
-  http_port: 8080
+postgres:
+  version: "18-alpine"
+  image: "postgres"
