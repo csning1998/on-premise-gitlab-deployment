@@ -4,6 +4,11 @@
   ansible.builtin.command: update-ca-certificates
   changed_when: false
 
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+
 - name: Restart containerd service
   ansible.builtin.systemd:
     name: containerd
@@ -25,3 +30,8 @@
     name: haproxy
     state: restarted
   listen: "Restart haproxy on primary master"
+
+- name: Restart kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    state: restarted

@@ -43,6 +43,20 @@ variable "metric_server_config" {
   }
 }
 
+variable "csr_approver_config" {
+  description = "Configuration for Kubelet CSR Approver"
+  type = object({
+    version        = string
+    namespace      = string
+    provider_regex = string
+  })
+  default = {
+    version        = "1.2.14"
+    namespace      = "kube-system"
+    provider_regex = ""
+  }
+}
+
 variable "ingress_nginx_config" {
   description = "Configuration for Ingress Nginx"
   type = object({
