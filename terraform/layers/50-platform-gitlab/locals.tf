@@ -112,15 +112,19 @@ locals {
 
 # 5. DNS Configuration (Standardized)
 locals {
-  dns_hosts = {
-    "${local.state.kubeadm.service_vip}"         = local.fqdn_gitlab
-    "${local.state.vault_pki.vault_service_vip}" = local.fqdn_vault
+  dns_hosts = merge(
+    {
+      "${local.state.kubeadm.service_vip}"         = local.fqdn_gitlab
+      "${local.state.vault_pki.vault_service_vip}" = local.fqdn_vault
 
-    # Dependency Roles
-    "${local.state.redis.service_vip}"    = local.fqdn_redis
-    "${local.state.postgres.service_vip}" = local.fqdn_postgres
-    "${local.state.minio.service_vip}"    = local.fqdn_minio
-  }
+      # Dependency Roles
+      "${local.state.redis.service_vip}"    = local.fqdn_redis
+      "${local.state.postgres.service_vip}" = local.fqdn_postgres
+      "${local.state.minio.service_vip}"    = local.fqdn_minio
+    },
+    # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
+    { for node_name, node in local.state.kubeadm.topology_cluster : node.ip => node_name }
+  )
 }
 
 # 6. CA Bundle Configuration
