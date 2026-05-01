@@ -56,6 +56,8 @@ locals {
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
   harbor_gitlab_proxy = local.state.harbor_bootstrapper.proxy_caches.gitlab_com.project_name
+  harbor_ghcr_proxy   = local.state.harbor_bootstrapper.proxy_caches.ghcr_io.project_name
+  harbor_gcr_proxy    = local.state.harbor_bootstrapper.proxy_caches.gcr_io.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   # GitLab CNG image registry and repository routed through Harbor Bootstrapper proxy
@@ -79,6 +81,9 @@ locals {
   vault_role_name   = local.state.metadata.global_pki_map["gitlab-frontend"].role_name
   vault_auth_path   = local.state.metadata.global_pki_map["gitlab-frontend"].auth_config.path
   vault_policy_name = "${local.vault_role_name}-pki-policy"
+
+  # Kubelet Serving Certificate Approval Configuration
+  node_serving_cert_regex = "^${local.state.kubeadm.cluster_name}-.*$"
 }
 
 # 4. External Service Address & Ports

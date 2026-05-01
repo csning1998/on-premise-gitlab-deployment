@@ -13,10 +13,6 @@ resource "helm_release" "metrics_server" {
     {
       name  = "image.repository"
       value = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/metrics-server"
-    },
-    {
-      name  = "args[0]"
-      value = "--kubelet-insecure-tls"
     }
   ]
 }
