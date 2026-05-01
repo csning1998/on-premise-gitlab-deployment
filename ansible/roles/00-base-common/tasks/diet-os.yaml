@@ -32,4 +32,7 @@
     - motd-news.timer
     - motd-news.service
 
-  ignore_errors: true # Ignore if service is not found on specific version
+  register: svc_mask_result
+  failed_when:
+    - svc_mask_result is failed
+    - "'Could not find the requested service' not in svc_mask_result.msg"
