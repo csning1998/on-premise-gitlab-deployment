@@ -56,8 +56,8 @@ locals {
     if k != local.central_lb_key && length(v.network.ports) > 0
   ])
 
-  net_service_segments = [
-    for key in local.net_sorted_segment_keys : {
+  net_service_segments = {
+    for key in local.net_sorted_segment_keys : key => {
       name           = key
       bridge_name    = local.segments[key].identity.bridge_name_host
       cidr           = local.segments[key].network.cidr_block
@@ -79,5 +79,5 @@ locals {
         }
       ]
     }
-  ]
+  }
 }

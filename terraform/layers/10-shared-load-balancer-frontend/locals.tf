@@ -59,7 +59,7 @@ locals {
 locals {
   # Service Segments: augment from Layer 05 with local node_ips (depends on `var.node_config`)
   net_service_segments = [
-    for seg in local.state.network.service_segments : merge(seg, {
+    for name, seg in local.state.network.service_segments : merge(seg, {
       node_ips = {
         for node_name, node_spec in var.node_config : local.net_node_naming_map[node_name] =>
         cidrhost(seg.cidr, node_spec.ip_suffix)
