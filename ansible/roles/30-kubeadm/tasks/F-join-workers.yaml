@@ -1,36 +1,50 @@
 ---
-- name: "Block F1: Prepare worker node for joining"
+- name: "F1. Check if node is already joined"
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/kubelet.conf"
+  register: kubelet_conf_stat
+
+- name: "F2. Prepare worker node for joining"
+  when: not kubelet_conf_stat.stat.exists
   block:
-    - name: "F1a. Reset any previous kubeadm configuration"
+    - name: "F2a. Reset any previous kubeadm configuration"
       ansible.builtin.command:
         cmd: "kubeadm reset -f"
       changed_when: true
 
-    - name: "F1b. Ensure kubelet service is enabled and started"
+    - name: "F2b. Ensure kubelet service is enabled and started"
       ansible.builtin.systemd:
         name: "kubelet"
         state: started
         enabled: true
 
-- name: "Block F2: Join this worker node to the cluster"
+- name: "F3. Join this worker node to the cluster"
+  when: not kubelet_conf_stat.stat.exists
   block:
-    - name: "F2a. Create kubeadm join config file from template"
+    - name: "F3a. Create kubeadm join config file from template"
       ansible.builtin.template:
         src: kubeadm-join-workers-config.yaml.j2
         dest: "/tmp/kubeadm-join-config.yaml"
         mode: "0644"
 
-    - name: "F2b. Execute the worker join command"
+    - name: "F3b. Execute the worker join command"
       ansible.builtin.command: >-
         kubeadm join --config=/tmp/kubeadm-join-config.yaml
       args:
         creates: "/etc/kubernetes/kubelet.conf"
       register: kubeadm_join_result
 
-    - name: "F2c. Fail if kubeadm join command failed"
+    - name: "F3c. Fail if kubeadm join command failed"
       ansible.builtin.fail:
         msg: |
           kubeadm join failed on {{ inventory_hostname }}.
           STDOUT: {{ kubeadm_join_result.stdout | default('N/A') }}
           STDERR: {{ kubeadm_join_result.stderr | default('N/A') }}
       when: kubeadm_join_result.rc is defined and kubeadm_join_result.rc != 0
+
+- name: "F4. Upgrade local kubelet configuration from cluster ConfigMap"
+  ansible.builtin.command: >-
+    kubeadm upgrade node phase kubelet-config
+  changed_when: true
+  notify: "Restart kubelet"
+  when: kubelet_conf_stat.stat.exists and hostvars[groups['master'][0]]['kubeadm_config_result'].changed | default(false)

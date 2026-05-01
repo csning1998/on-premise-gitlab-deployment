@@ -59,6 +59,21 @@ module "platform_trust_engine" {
   depends_on = [module.tigera_calico]
 }
 
+module "kubelet_csr_approver" {
+  source = "../../modules/kubernetes-addons/kubelet-csr-approver"
+  helm_config = {
+    install          = true
+    create_namespace = false # Already in kube-system
+    version          = var.csr_approver_config.version
+    namespace        = var.csr_approver_config.namespace
+    image_tag        = "v${var.csr_approver_config.version}"
+    image_repository = "${local.harbor_ghcr_proxy}/postfinance"
+    image_registry   = local.harbor_registry
+    chart_project    = local.helm_chart_project
+    provider_regex   = local.node_serving_cert_regex
+  }
+}
+
 module "metric_server" {
   source = "../../modules/kubernetes-addons/metric-server"
   helm_config = {
@@ -70,7 +85,7 @@ module "metric_server" {
     image_repository = "${local.harbor_k8s_proxy}/metrics-server"
     chart_project    = local.helm_chart_project
   }
-  depends_on = [module.platform_trust_engine]
+  depends_on = [module.kubelet_csr_approver]
 }
 
 module "ingress_nginx" {

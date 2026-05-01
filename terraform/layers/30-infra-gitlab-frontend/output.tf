@@ -4,6 +4,11 @@ output "service_vip" {
   value       = local.p_net_config.lb_config.vip
 }
 
+output "cluster_name" {
+  description = "The name of the Cluster from the metadata"
+  value       = local.svc_identity.cluster_name
+}
+
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
   value       = local.sec_vm_creds
