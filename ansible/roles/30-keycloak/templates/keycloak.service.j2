@@ -1,0 +1,14 @@
+[Unit]
+Description=Keycloak Docker Compose Service
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/keycloak
+ExecStart={{ docker_executable }} compose up
+ExecStop={{ docker_executable }} compose down
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

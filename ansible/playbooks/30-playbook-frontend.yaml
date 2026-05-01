@@ -8,14 +8,21 @@
       ansible.builtin.group_by:
         key: "{{ node_role }}"
 
-# 1. Harbor Bootstrapper Registry
+# 1. Harbor Bootstrapper Container and OCI Registry
 - name: "Play [Harbor]: Configure Harbor Bootstrapper Cluster"
   hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
   become: true
   roles:
     - 30-bstrap-harbor
 
-# 2. MicroK8s Cluster
+# 2. Keycloak for OIDC
+- name: "Play [Keycloak]: Configure Keycloak Container"
+  hosts: "{{ 'keycloak' if 'keycloak' in groups else [] }}"
+  become: true
+  roles:
+    - 30-keycloak
+
+# 3. Generic MicroK8s Cluster
 - name: "Play [Kubernetes]: Provision and Configure MicroK8s Cluster"
   hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
   become: true
@@ -23,7 +30,7 @@
   roles:
     - 30-microk8s
 
-# 3. Kubeadm Cluster
+# 4. Generic Kubeadm Cluster
 - name: "Play [Kubernetes]: Provision and Configure Kubeadm Cluster"
   hosts: "{{ (groups['master'] | default([])) + (groups['worker'] | default([])) }}"
   become: true

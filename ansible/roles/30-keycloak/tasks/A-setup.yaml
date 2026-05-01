@@ -1,0 +1,20 @@
+---
+- name: "A1. Create base directory for Keycloak stack"
+  ansible.builtin.file:
+    path: "/opt/keycloak"
+    state: directory
+    mode: "0755"
+
+- name: "A2. Create persistent subdirectories"
+  ansible.builtin.file:
+    path: "/opt/keycloak/{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0750"
+  loop:
+    - "data"
+    - "conf"
+    - "providers"
+    - "certs"
+    - "postgres_data"

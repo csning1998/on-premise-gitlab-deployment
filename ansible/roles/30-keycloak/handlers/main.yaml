@@ -1,0 +1,21 @@
+---
+- name: Restart Keycloak
+  ansible.builtin.systemd:
+    name: keycloak
+    state: restarted
+    daemon_reload: true
+
+- name: Update CA Certificates
+  ansible.builtin.command: update-ca-certificates
+  changed_when: true
+
+- name: Restart Asymmetric Route Service
+  ansible.builtin.systemd:
+    name: fix-vault-routes.service
+    state: restarted
+    daemon_reload: true
+
+- name: Restart Vault Agent
+  ansible.builtin.systemd:
+    name: vault-agent
+    state: restarted

@@ -1,0 +1,12 @@
+---
+# Default Versions
+keycloak_version: "26.6.1"
+postgres_version: "18-alpine"
+
+# Default Images
+keycloak_image: "quay.io/keycloak/keycloak"
+postgres_image: "postgres"
+
+# Operational Defaults
+keycloak_static_route_metric: 100
+vault_ca_cert_b64: "" # Expected from Terraform
