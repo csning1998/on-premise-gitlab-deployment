@@ -18,7 +18,7 @@ module "platform_trust_engine" {
 
   issuer_config = {
     name             = "vault-issuer"
-    bound_namespaces = ["gitlab", "default"]
+    bound_namespaces = [var.gitlab_runner_config.namespace, "default"]
     issue_path       = "sign"
     vault_role_name  = local.vault_role_name
     pki_mount_path   = local.vault_pki_path
@@ -32,8 +32,8 @@ module "platform_trust_engine" {
 
   helm_config = {
     install          = true
-    version          = "v1.14.0"
-    namespace        = "cert-manager"
+    version          = var.cert_manager_config.version
+    namespace        = var.cert_manager_config.namespace
     create_namespace = true
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_quay_proxy}/jetstack"
@@ -45,8 +45,8 @@ module "metric_server" {
   source = "../../modules/kubernetes-addons/metric-server"
   helm_config = {
     install          = true
-    version          = "3.13.0"
-    namespace        = "kube-system"
+    version          = var.metric_server_config.version
+    namespace        = var.metric_server_config.namespace
     create_namespace = false
     image_registry   = local.harbor_registry
     image_repository = "${local.harbor_k8s_proxy}/metrics-server"
