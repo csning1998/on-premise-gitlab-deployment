@@ -39,3 +39,8 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "1.18.0"
     repo: "https://helm.goharbor.io"
     is_oci: false
+
+  - name: "gitlab-runner"
+    version: "0.85.0"
+    repo: "https://charts.gitlab.io/"
+    is_oci: false

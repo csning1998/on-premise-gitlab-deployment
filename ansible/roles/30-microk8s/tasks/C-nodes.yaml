@@ -48,6 +48,10 @@
       ansible.builtin.command:
         cmd: "microk8s stop"
       when: kubelet_cert_check.rc != 0
+      register: microk8s_stop_result
+      until: microk8s_stop_result is success
+      retries: 12
+      delay: 5
       changed_when: true
 
     - name: "C1h. Generate OpenSSL config for Kubelet (Force IP SAN)"
