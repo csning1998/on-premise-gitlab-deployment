@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: {{ keycloak_db_user }}
       POSTGRES_PASSWORD: {{ keycloak_db_password }}
     volumes:
-      - /opt/keycloak/postgres_data:/var/lib/postgresql/data
+      - /opt/keycloak/postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U {{ keycloak_db_user }} -d keycloak"]
       interval: 10s
@@ -20,13 +20,18 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.1
     container_name: keycloak
-    command: start --optimized
+    command: start
     env_file: .env
     depends_on:
       keycloak-db:
         condition: service_healthy
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - /opt/keycloak/data:/opt/keycloak/data
       - /opt/keycloak/conf:/opt/keycloak/conf
