@@ -56,6 +56,14 @@ module "metric_server" {
   depends_on = [module.platform_trust_engine]
 }
 
+# [PHASE 1.5] Internal DNS Configuration
+module "coredns_config" {
+  source     = "../../modules/kubernetes-addons/coredns-config"
+  depends_on = [module.platform_trust_engine]
+
+  hosts = local.dns_hosts
+}
+
 # [PHASE 2] GitLab Runner Deployment
 resource "kubernetes_secret" "gitlab_ca_bundle" {
   metadata {
@@ -64,53 +72,6 @@ resource "kubernetes_secret" "gitlab_ca_bundle" {
   }
 
   data = {
-    "ca.crt" = local.ca_bundle_config.content
+    "${local.fqdn_gitlab}.crt" = local.ca_bundle_config.content
   }
-}
-
-resource "helm_release" "gitlab_runner" {
-  name       = "gitlab-runner"
-  repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
-  chart      = "gitlab-runner"
-  version    = var.gitlab_runner_config.version
-  namespace  = kubernetes_namespace.gitlab.metadata[0].name
-
-  values = [
-    yamlencode({
-      gitlabUrl = local.gitlab_url
-      rbac = {
-        create = true
-      }
-      runnerToken     = local.runner_token
-      certsSecretName = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
-
-      image = {
-        registry   = local.harbor_registry
-        image      = "${local.harbor_docker_proxy}/gitlab/gitlab-runner"
-        tag        = "alpine-v16.8.0"
-        pullPolicy = "IfNotPresent"
-      }
-
-      runners = {
-        config = <<-EOT
-          [[runners]]
-            [runners.kubernetes]
-              namespace = "${kubernetes_namespace.gitlab.metadata[0].name}"
-              image = "${local.harbor_registry}/${local.harbor_docker_proxy}/alpine:latest"
-              helper_image = "${local.runner_helper_image}"
-              privileged = true
-        EOT
-      }
-
-      securityContext = {
-        fsGroup = 65533
-        runAsUser = 100
-      }
-    })
-  ]
-
-  depends_on = [
-    module.platform_trust_engine,
-    kubernetes_secret.gitlab_ca_bundle
-  ]
 }

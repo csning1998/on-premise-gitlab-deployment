@@ -3,6 +3,7 @@
 locals {
   state = {
     metadata                = data.terraform_remote_state.metadata.outputs
+    network                 = data.terraform_remote_state.network.outputs
     vault_pki               = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap    = data.terraform_remote_state.vault_prod_bootstrap.outputs
     gitlab_frontend         = data.terraform_remote_state.gitlab_frontend.outputs
@@ -28,12 +29,23 @@ locals {
 
 # 3. Trust Engine & Infrastructure Context
 locals {
+  # Network Context
+  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+
+  # FQDNs
+  fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
+  fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
+  fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  fqdn_minio               = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
+  fqdn_postgres            = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
+  fqdn_redis               = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
+
   # OCI & Harbor Context
-  harbor_registry     = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
+  harbor_registry     = local.fqdn_harbor_bootstrapper
   harbor_quay_proxy   = local.state.harbor_bootstrapper_oci.proxy_caches["quay_io"].project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper_oci.proxy_caches["k8s_io"].project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["docker_hub"].project_name
-  helm_chart_project  = "helm-charts"
+  helm_chart_project  = local.state.harbor_bootstrapper_oci.proxy_oci["helm_charts"].name
 
   # API Endpoint for Vault Callback
   api_port     = local.state.metadata.global_topology_network["gitlab"]["runner"].ports["api-server"].frontend_port
@@ -54,11 +66,12 @@ locals {
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 }
 
-# 4. CA Bundle for Runner Trust
+# 4. CA Bundle & DNS Mapping (SSoT Alignment)
 locals {
+  # 5. CA Bundle Configuration (SSoT from Vault PKI)
   ca_bundle_config = {
-    name        = "gitlab-ca-bundle"
-    secret_name = "gitlab-ca-bundle"
+    name        = "gitlab-ca-bundle" # K8s Secret Name
+    secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
 
     content = join("\n", [
       base64decode(local.state.vault_pki.pki_configuration.ca_cert),
@@ -66,11 +79,15 @@ locals {
     ])
   }
 
-  # 5. GitLab Runner Configuration
-  gitlab_url   = "https://${local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]}"
-  runner_token = random_password.runner_token.result
+  # 6. DNS Configuration (Standardized Alignment)
+  # Standardized mapping for local resolution (K8s / LB)
+  dns_hosts = {
+    "${local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.vip}" = local.fqdn_gitlab
+    "${local.state.vault_pki.vault_service_vip}"                                      = local.fqdn_vault
 
-  # Image Paths (Routed through Harbor Proxy)
-  runner_image        = "${local.harbor_registry}/${local.harbor_docker_proxy}/gitlab/gitlab-runner:alpine-v16.8.0"
-  runner_helper_image = "${local.harbor_registry}/${local.harbor_docker_proxy}/gitlab/gitlab-runner-helper:x86_64-v16.8.0"
+    # Dependency Roles
+    "${local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip}"    = local.fqdn_redis
+    "${local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip}" = local.fqdn_postgres
+    "${local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip}"    = local.fqdn_minio
+  }
 }

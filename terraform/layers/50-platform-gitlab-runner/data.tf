@@ -48,6 +48,13 @@ data "terraform_remote_state" "harbor_bootstrapper_oci" {
   }
 }
 
+data "terraform_remote_state" "network" {
+  backend = "local"
+  config = {
+    path = "../10-shared-load-balancer-frontend/terraform.tfstate"
+  }
+}
+
 data "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
