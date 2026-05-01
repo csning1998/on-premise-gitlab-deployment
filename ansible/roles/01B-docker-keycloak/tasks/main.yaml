@@ -1,0 +1,37 @@
+---
+- name: "Step 1. Pull Keycloak Docker image"
+  community.docker.docker_image:
+    name: "{{ keycloak.image }}:{{ keycloak.version }}"
+    source: pull
+
+- name: "Step 2. Create Keycloak configuration directory"
+  ansible.builtin.file:
+    path: "/etc/keycloak"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: "0750"
+
+- name: "Step 3. Generate Keycloak admin environment file"
+  ansible.builtin.copy:
+    content: |
+      KEYCLOAK_ADMIN={{ keycloak_admin_user }}
+      KEYCLOAK_ADMIN_PASSWORD={{ keycloak_admin_password }}
+    dest: "/etc/keycloak/admin.env"
+    owner: "root"
+    group: "root"
+    mode: "0600"
+
+- name: "Step 4. Create Keycloak systemd service"
+  ansible.builtin.template:
+    src: "keycloak.service.j2"
+    dest: "/etc/systemd/system/keycloak.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: "Step 5. Enable Keycloak service"
+  ansible.builtin.systemd:
+    name: "keycloak"
+    enabled: true
+    daemon_reload: true
