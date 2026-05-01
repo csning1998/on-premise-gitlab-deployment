@@ -16,8 +16,8 @@ locals {
 # 2. K8s Provider Authentication Context (Lossless from L50 GitLab)
 locals {
   kubeconfig_raw = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
-  cluster_info   = local.kubeconfig_raw.clusters[0].cluster
-  user_info      = local.kubeconfig_raw.users[0].user
+  cluster_info   = element(local.kubeconfig_raw.clusters, 0).cluster
+  user_info      = element(local.kubeconfig_raw.users, 0).user
 
   api_server_connection = {
     host               = local.cluster_info.server
@@ -49,7 +49,7 @@ locals {
 
   # API Endpoint for Vault Callback
   api_port     = local.state.metadata.global_topology_network["gitlab"]["runner"].ports["api-server"].frontend_port
-  api_endpoint = "https://${local.state.runner_cluster.runner_microk8s_ip_list[0]}:${local.api_port}"
+  api_endpoint = "https://${element(local.state.runner_cluster.runner_microk8s_ip_list, 0)}:${local.api_port}"
 
   # Cluster CA from ConfigMap (SSoT for K8s API verification)
   cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]

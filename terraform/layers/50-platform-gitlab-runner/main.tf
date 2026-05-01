@@ -1,4 +1,10 @@
 
+resource "kubernetes_namespace" "gitlab" {
+  metadata {
+    name = var.gitlab_runner_config.namespace
+  }
+}
+
 module "platform_trust_engine" {
   source = "../../modules/kubernetes-addons/platform-trust-engine"
   providers = {
@@ -17,8 +23,8 @@ module "platform_trust_engine" {
   }
 
   issuer_config = {
-    name             = "vault-issuer"
-    bound_namespaces = [var.gitlab_runner_config.namespace, "default"]
+    name             = var.trust_engine_config.issuer_name
+    bound_namespaces = var.trust_engine_config.authorized_namespaces
     issue_path       = "sign"
     vault_role_name  = local.vault_role_name
     pki_mount_path   = local.vault_pki_path
@@ -27,7 +33,7 @@ module "platform_trust_engine" {
 
   reviewer_service_account = {
     name      = "vault-reviewer"
-    namespace = "default"
+    namespace = var.cert_manager_config.namespace
   }
 
   helm_config = {

@@ -9,7 +9,7 @@ variable "trust_engine_config" {
   default = {
     issuer_name           = "vault-issuer"
     issuer_kind           = "ClusterIssuer"
-    authorized_namespaces = ["cert-manager", "gitlab"]
+    authorized_namespaces = ["gitlab"] # Restricted to GitLab application namespace
   }
 }
 

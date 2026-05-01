@@ -68,9 +68,3 @@ data "kubernetes_config_map" "kube_root_ca" {
   }
 }
 
-# 11. Namespace Management
-resource "kubernetes_namespace" "gitlab" {
-  metadata {
-    name = var.gitlab_runner_config.namespace
-  }
-}
