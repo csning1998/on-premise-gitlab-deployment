@@ -51,7 +51,7 @@
 
 - name: "C7. Reconfigure Harbor (If Config Changed)"
   ansible.builtin.command:
-    cmd: "./prepare"
+    cmd: "./prepare --with-trivy"
     chdir: "{{ harbor_install_dir }}"
   when:
     - harbor_system_config_status.changed
