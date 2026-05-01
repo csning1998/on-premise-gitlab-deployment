@@ -20,7 +20,7 @@
 
 - name: "C3. Run Install Script (First Time Only)"
   ansible.builtin.command:
-    cmd: "./install.sh --with-trivy"
+    cmd: "./install.sh {{ harbor_installer_flags }}"
     chdir: "{{ harbor_install_dir }}"
   args:
     creates: "{{ harbor_install_dir }}/docker-compose.yml"
@@ -51,7 +51,7 @@
 
 - name: "C7. Reconfigure Harbor (If Config Changed)"
   ansible.builtin.command:
-    cmd: "./prepare --with-trivy"
+    cmd: "./prepare {{ harbor_installer_flags }}"
     chdir: "{{ harbor_install_dir }}"
   when:
     - harbor_system_config_status.changed
