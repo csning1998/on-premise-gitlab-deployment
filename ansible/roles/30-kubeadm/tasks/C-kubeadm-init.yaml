@@ -4,36 +4,32 @@
     path: "/var/log/journal"
     state: directory
     mode: "0755"
+  notify: "Restart journald"
 
-- name: "C2. Restart systemd-journald to apply persistent storage"
-  ansible.builtin.systemd:
-    name: systemd-journald
-    state: restarted
-
-- name: "C3. Ensure kubelet service is enabled"
+- name: "C2. Ensure kubelet service is enabled"
   ansible.builtin.systemd:
     name: kubelet
     enabled: true
 
-- name: "C4. Ensure /etc/kubernetes directory exists"
+- name: "C3. Ensure /etc/kubernetes directory exists"
   ansible.builtin.file:
     path: "/etc/kubernetes"
     state: directory
     mode: "0755"
 
-- name: "C5. Create kubeadm config file from template"
+- name: "C4. Create kubeadm config file from template"
   ansible.builtin.template:
     src: kubeadm-config.yaml.j2
     dest: "/etc/kubernetes/kubeadm-config.yaml"
     mode: "0644"
   register: kubeadm_config_result
 
-- name: "C6. Check if admin.conf already exists"
+- name: "C5. Check if admin.conf already exists"
   ansible.builtin.stat:
     path: "/etc/kubernetes/admin.conf"
   register: admin_conf_stat
 
-- name: "C7. Check current cluster kubelet configuration"
+- name: "C6. Check current cluster kubelet configuration"
   ansible.builtin.command: >-
     kubectl get configmap -n kube-system kubelet-config -o yaml
   register: current_kubelet_cm
@@ -41,24 +37,24 @@
   failed_when: false
   when: admin_conf_stat.stat.exists
 
-- name: "C8. Update cluster configuration if needed (Day 2)"
+- name: "C7. Update cluster configuration if needed (Day 2)"
   when: >
     admin_conf_stat.stat.exists and
     (kubeadm_config_result.changed | default(false) or
     ('serverTLSBootstrap: true' not in (current_kubelet_cm.stdout | default(''))))
   block:
-    - name: "C8a. Force upload new kubelet configuration to cluster ConfigMap"
+    - name: "C7a. Force upload new kubelet configuration to cluster ConfigMap"
       ansible.builtin.command: >-
         kubeadm init phase upload-config kubelet --config /etc/kubernetes/kubeadm-config.yaml
       changed_when: true
 
-    - name: "C8b. Apply uploaded kubelet configuration to local node"
+    - name: "C7b. Apply uploaded kubelet configuration to local node"
       ansible.builtin.command: >-
         kubeadm upgrade node phase kubelet-config
       changed_when: true
       notify: "Restart kubelet"
 
-- name: "C9. Run kubeadm init command"
+- name: "C8. Run kubeadm init command"
   ansible.builtin.command: >-
     kubeadm init
     --config="/etc/kubernetes/kubeadm-config.yaml"
@@ -72,30 +68,30 @@
     - Restart haproxy on primary master
     - Restart kubelet
 
-- name: "C10. Verify that admin.conf was created"
+- name: "C9. Verify that admin.conf was created"
   ansible.builtin.stat:
     path: "/etc/kubernetes/admin.conf"
   register: admin_conf_stat_post_init
 
-- name: "C11. Fail if kubeadm init did not create admin.conf"
+- name: "C10. Fail if kubeadm init did not create admin.conf"
   ansible.builtin.fail:
     msg: "kubeadm init failed to create /etc/kubernetes/admin.conf. Check /tmp/kubeadm-init.log for details."
   when: not admin_conf_stat_post_init.stat.exists and kubeadm_pri_result is changed
 
-- name: "C12. Create .kube directory for the root user"
+- name: "C11. Create .kube directory for the root user"
   ansible.builtin.file:
     path: "/root/.kube"
     state: directory
     mode: "0755"
 
-- name: "C13. Copy admin.conf to root's kube config"
+- name: "C12. Copy admin.conf to root's kube config"
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf"
     dest: "/root/.kube/config"
     remote_src: true
     mode: "0600"
 
-- name: "C14. Create .kube directory for the SSH user"
+- name: "C13. Create .kube directory for the SSH user"
   ansible.builtin.file:
     path: "/home/{{ ansible_user }}/.kube"
     state: directory
@@ -103,7 +99,7 @@
     group: "{{ ansible_user }}"
     mode: "0755"
 
-- name: "C15. Copy admin.conf to user's kube config"
+- name: "C14. Copy admin.conf to user's kube config"
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf"
     dest: "/home/{{ ansible_user }}/.kube/config"
@@ -112,7 +108,7 @@
     group: "{{ ansible_user }}"
     mode: "0644"
 
-- name: "C16. Fetch admin.conf to a predictable local path"
+- name: "C15. Fetch admin.conf to a predictable local path"
   ansible.builtin.fetch:
     src: "/etc/kubernetes/admin.conf"
     dest: "{{ kubeadm_fetched_kubeconfig_path }}"
