@@ -12,7 +12,10 @@ In this instance, the primary driver of disk usage was the `helm-charts/tigera/o
 
 ## Resolution Steps
 
-### 1. Manual Filesystem Recovery
+### Step A. Manual Filesystem Recovery
+
+> [!CAUTION]
+> **LAST RESORT ONLY**: Manually deleting blobs from the filesystem bypasses Harbor's metadata management and can lead to database inconsistencies or "manifest unknown" errors. This action should **only** be performed as an emergency measure when disk exhaustion (100%) prevents services (Postgres/Redis) from starting. The preferred method for reclaiming space is deleting artifacts via the Harbor UI/API followed by a formal **Garbage Collection** run.
 
 To restore service health, the largest OCI blobs in `/data/harbor/registry/docker/registry/v2/blobs/sha256/` were identified using the `du` and `find` commands.
 
@@ -32,23 +35,39 @@ To restore service health, the largest OCI blobs in `/data/harbor/registry/docke
 
     Manual deletion of these blobs freed approximately 1.5GB of space, enabling PostgreSQL to complete its crash recovery process.
 
-### 2. Disabling Automated Replication
+### Step B. Disabling Automated Replication
 
 The L40 configuration was modified to disable the aggressive replication schedule defined in `replication.tf`:
 
 - The `schedule` attribute was removed from `harbor_replication` resources.
 - The `sync-tigera` policy was set to `Disabled` via the API.
 
-**API Execution Command:** # Disable replication policy (Example: Policy ID 2). Note that the full policy object must be sent in PUT request
+**Step 0: List all replication policies to find the correct ID:**
+
+```bash
+curl -s -k -u admin:<password> \
+    https://localhost/api/v2.0/replication/policies | jq '.[].id, .[].name'
+```
+
+**Step 1: Fetch existing policy configuration:**
+
+```bash
+# Get current policy details using the ID found in Step 0
+curl -s -k -u admin:<password> \
+    https://localhost/api/v2.0/replication/policies/<ID> > policy.json
+```
+
+**Step 2: Update and Disable the policy:**
+Edit `policy.json` to set `"enabled": false` and `"trigger": {"type": "manual"}`, then send it back:
 
 ```bash
 curl -s -k -X PUT -u admin:<password> \
     -H 'Content-Type: application/json' \
-    -d '{"id":2, "name":"sync-tigera", "enabled":false, "trigger":{"type":"manual"}, ...}' \
-    https://localhost/api/v2.0/replication/policies/2
+    -d @policy.json \
+    https://localhost/api/v2.0/replication/policies/<ID>
 ```
 
-### 3. Direct PostgreSQL Intervention
+### Step C. Direct PostgreSQL Intervention
 
 During the cleanup process, it was observed that `harbor-jobservice` persistently re-created the `tigera/operator` artifacts despite API deletion attempts. To terminate this cycle, direct database operations were performed on the `harbor-db` container.
 
