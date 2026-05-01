@@ -67,4 +67,3 @@ data "kubernetes_config_map" "kube_root_ca" {
     namespace = "default"
   }
 }
-

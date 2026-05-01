@@ -19,7 +19,5 @@ resource "harbor_replication" "charts" {
     name = each.value.resource_name
   }
 
-  # Cron schedule: every 12 hours to keep it automated but not noisy
-  schedule = "0 0 0,12 * * *"
   override = true
 }
