@@ -25,3 +25,8 @@
     name: haproxy
     state: restarted
   listen: "Restart haproxy on primary master"
+
+- name: Restart kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    state: restarted
