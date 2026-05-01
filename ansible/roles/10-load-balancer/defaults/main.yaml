@@ -16,3 +16,4 @@ central_lb_sysctl_hardening:
 haproxy_health_check_inter: "10s"
 haproxy_health_check_fall: "5"
 haproxy_health_check_rise: "3"
+haproxy_ca_path: "/etc/haproxy/certs/ca.crt"
