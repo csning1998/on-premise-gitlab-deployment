@@ -23,7 +23,7 @@
     - name: "B1c. Deploy Root CA (For Backend Verification)"
       ansible.builtin.copy:
         content: "{{ vault_ca_cert | b64decode }}"
-        dest: /etc/haproxy/certs/ca.crt
+        dest: "{{ haproxy_ca_path }}"
         owner: haproxy
         group: haproxy
         mode: "0644"

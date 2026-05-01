@@ -59,9 +59,10 @@ backend {{ backend_name }}
     {% if port_cfg.health_check_type == 'http' %}
     option httpchk GET {{ port_cfg.health_check_http_path | default('/') }}
     http-check expect {{ port_cfg.health_check_http_expect | default('status 200') }}
-    {% endif %} 
+    {% endif %}
     {% for server in segment.backend_servers %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check{% if port_cfg.health_check_port %} port {{ port_cfg.health_check_port }}{% endif %} inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{% if port_cfg.health_check_ssl | default(false) or 'vault' in segment.name %} check-ssl verify none{% endif %} {% if port_cfg.send_proxy_v2 | default(false) %} send-proxy-v2{% endif %} 
+    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check{% if port_cfg.health_check_port %} port {{ port_cfg.health_check_port }}{% endif %} inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{% if port_cfg.health_check_ssl | default(false) %} check-ssl verify required ca-file {{ haproxy_ca_path }}{% endif %}{% if port_cfg.send_proxy_v2 | default(false) %} send-proxy-v2{% endif %}
+
     {% endfor %}
 {% endfor %}
 {% endif %}
