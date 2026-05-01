@@ -27,12 +27,15 @@ build {
     ansible_env_vars = [
       "ANSIBLE_CONFIG=../../ansible.cfg"
     ]
-    extra_arguments = [
-      "--extra-vars", "expected_hostname=${local.final_hostname}",
-      "--extra-vars", "public_key_file=${vault(var.secrets_path, "ssh_public_key_path")}",
-      "--extra-vars", "ssh_user=${local.ssh_username}",
-      "--extra-vars", "ansible_ssh_transfer_method=piped",
-      "-v",
-    ]
+    extra_arguments = concat(
+      [
+        "--extra-vars", "expected_hostname=${local.final_hostname}",
+        "--extra-vars", "public_key_file=${vault(var.secrets_path, "ssh_public_key_path")}",
+        "--extra-vars", "ssh_user=${local.ssh_username}",
+        "--extra-vars", "ansible_ssh_transfer_method=piped"
+      ],
+      local.ansible_extra_vars,
+      ["-v"]
+    )
   }
 }

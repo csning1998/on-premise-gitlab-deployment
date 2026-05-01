@@ -57,3 +57,9 @@ variable "secrets_path" {
   type = string
   default = "secret/data/on-premise-gitlab-deployment/guest_vm"
 }
+
+variable "vault_service_path" {
+  type    = string
+  default = ""
+  description = "The Vault path for service-specific secrets."
+}

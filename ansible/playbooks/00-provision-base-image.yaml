@@ -13,6 +13,14 @@
     - 07-base-vault
     - 01A-docker-harbor
 
+- name: "Play: Provision Docker Base Image for Keycloak for OIDC"
+  hosts: "docker-keycloak"
+  become: true
+  roles:
+    - 01-base-docker
+    - 07-base-vault
+    - 01B-docker-keycloak
+
 - name: "Play: Provision Kubernetes (Kubeadm) Base Image"
   hosts: "base-kubeadm"
   become: true
