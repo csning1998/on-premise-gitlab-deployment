@@ -58,16 +58,16 @@ module "platform_trust_engine" {
 }
 
 # K8s Infrastructure Secrets (Dynamic via Cert-Manager)
-module "gitlab_postgres_cert" {
+module "platform-mtls-certificate" {
   source = "../../modules/kubernetes-addons/platform-mtls-certificate"
 
   name         = "gitlab-postgres-tls"
   namespace    = kubernetes_namespace.gitlab_ns.metadata[0].name
-  common_name  = "gitlab.production.iac.local"
+  common_name  = local.fqdn_gitlab
   issuer_name  = var.trust_engine_config.issuer_name
   issuer_kind  = var.trust_engine_config.issuer_kind
-  duration     = local.state.vault_pki.pki_configuration.lease_durations.default
-  renew_before = local.state.vault_pki.pki_configuration.lease_durations.agent
+  duration     = local.vault_pki_lease_default
+  renew_before = local.vault_pki_lease_agent
 }
 
 module "kubelet_csr_approver" {
@@ -136,8 +136,6 @@ module "coredns_config" {
   hosts = local.dns_hosts
 }
 
-# terraform/layers/60-gitlab-service/main.tf
-
 resource "kubernetes_namespace" "gitlab_ns" {
   metadata {
     name = var.gitlab_helm_config.namespace
@@ -147,7 +145,7 @@ resource "kubernetes_namespace" "gitlab_ns" {
 module "gitlab_core" {
   source = "../../modules/kubernetes-addons/helm-chart-gitlab"
   depends_on = [
-    module.gitlab_postgres_cert,
+    module.platform-mtls-certificate,
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
     module.platform_trust_engine,
@@ -196,7 +194,7 @@ module "gitlab_core" {
       password   = local.gitlab_db.password
       username   = local.gitlab_db.username
       database   = local.gitlab_db.database
-      ssl_secret = module.gitlab_postgres_cert.secret_name
+      ssl_secret = module.platform-mtls-certificate.secret_name
     }
 
     redis = {
