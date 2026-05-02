@@ -32,4 +32,8 @@
     - motd-news.timer
     - motd-news.service
 
-  ignore_errors: true # Ignore if service is not found on specific version
+  register: service_stop_result
+  failed_when:
+    - service_stop_result.failed
+    - "'Could not find the requested service' not in service_stop_result.msg"
+    - "'not found' not in service_stop_result.msg"
