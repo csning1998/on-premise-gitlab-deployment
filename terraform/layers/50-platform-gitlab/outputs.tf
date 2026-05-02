@@ -23,7 +23,3 @@ output "cert_manager_info" {
     issuer_name = module.platform_trust_engine.issuer_name
   }
 }
-
-output "test" {
-  value = local.fqdn_gitlab
-}
