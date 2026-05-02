@@ -55,7 +55,7 @@ locals {
   # Vault Connection
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_ca_cert  = local.state.vault_pki.bootstrap_ca.content
+  vault_ca_cert  = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path = local.state.vault_pki.pki_configuration.path
 
   # Dependency Ports
@@ -83,7 +83,7 @@ locals {
   ca_bundle_config = {
     name        = "harbor-ca-bundle" # K8s Secret Name
     secret_name = "harbor-ca-bundle" # Helm Chart Reference Name
-    content     = base64decode(local.state.vault_pki.pki_configuration.ca_cert)
+    content     = base64decode(local.state.vault_pki.pki_configuration.ca_cert_b64)
   }
 }
 
