@@ -41,12 +41,14 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
-data "vault_generic_secret" "guest_vm" {
+data "vault_kv_secret_v2" "guest_vm" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/guest_vm"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/guest_vm"
 }
 
-data "vault_generic_secret" "db_vars" {
+data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/gitlab/databases"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/databases"
 }

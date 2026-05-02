@@ -64,17 +64,17 @@ locals {
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
   }
 
   # Database Credentials (MinIO)
   sec_db_creds = {
-    minio_root_user     = data.vault_generic_secret.db_vars.data["minio_root_user"]
-    minio_root_password = data.vault_generic_secret.db_vars.data["minio_root_password"]
-    minio_vrrp_secret   = data.vault_generic_secret.db_vars.data["minio_vrrp_secret"]
+    minio_root_user     = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
+    minio_root_password = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
+    minio_vrrp_secret   = data.vault_kv_secret_v2.db_vars.data["minio_vrrp_secret"]
   }
 
   # Vault Agent Identity Prep

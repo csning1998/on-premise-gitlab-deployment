@@ -17,7 +17,7 @@ locals {
 
 # 2. K8s Provider Authentication Context
 locals {
-  kubeconfig   = yamldecode(base64decode(data.vault_generic_secret.kubeconfig.data["content_b64"]))
+  kubeconfig   = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info = local.kubeconfig.clusters[0].cluster
   user_info    = local.kubeconfig.users[0].user
 
