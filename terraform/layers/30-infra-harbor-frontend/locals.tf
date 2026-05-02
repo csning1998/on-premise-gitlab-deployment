@@ -43,10 +43,10 @@ locals {
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Identity Prep (Harbor Frontend SANs)
@@ -57,7 +57,7 @@ locals {
     auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].auth_path
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
     secret_id     = vault_approle_auth_backend_role_secret_id.microk8s_agent.secret_id
     common_name   = local.svc_fqdn
   }

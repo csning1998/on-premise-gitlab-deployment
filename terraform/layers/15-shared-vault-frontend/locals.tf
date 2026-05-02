@@ -49,7 +49,7 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca = local.state.metadata.global_vault_pki # PKI Artifacts
+  pki_global_ca_b64 = local.state.metadata.global_vault_pki_b64 # PKI Artifacts
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
@@ -110,10 +110,10 @@ locals {
       dev_vault_url      = var.vault_dev_addr
       dev_vault_api_path = "on-premise-gitlab-deployment/credentials"
     },
-    local.pki_global_ca != null && length(keys(local.pki_global_ca)) > 0 ? {
-      vault_server_cert = local.pki_global_ca.server_cert
-      vault_server_key  = local.pki_global_ca.server_key
-      vault_ca_cert     = local.pki_global_ca.ca_cert
+    local.pki_global_ca_b64 != null && length(keys(local.pki_global_ca_b64)) > 0 ? {
+      vault_server_cert_b64 = local.pki_global_ca_b64.server_cert_b64
+      vault_server_key_b64  = local.pki_global_ca_b64.server_key_b64
+      vault_ca_cert_b64     = local.pki_global_ca_b64.ca_cert_b64
     } : {}
   )
 }

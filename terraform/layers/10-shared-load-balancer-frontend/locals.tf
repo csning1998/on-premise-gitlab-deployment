@@ -72,7 +72,7 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca = local.state.metadata.global_vault_pki
+  pki_global_ca_b64 = local.state.metadata.global_vault_pki_b64
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {

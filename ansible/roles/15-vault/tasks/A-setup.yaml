@@ -39,7 +39,7 @@
 
 - name: "Block A2: Deploy Vault TLS Certificates"
   become: true
-  when: vault_server_cert is defined
+  when: vault_server_cert_b64 is defined
   block:
     - name: "A2a. Ensure Vault TLS directory exists with secure permissions"
       ansible.builtin.file:
@@ -51,7 +51,7 @@
 
     - name: "A2b. Deploy Vault Server Certificate"
       ansible.builtin.copy:
-        content: "{{ vault_server_cert | b64decode }}"
+        content: "{{ vault_server_cert_b64 | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.crt"
         owner: vault
         group: vault
@@ -60,7 +60,7 @@
 
     - name: "A2c. Deploy Vault Server Private Key"
       ansible.builtin.copy:
-        content: "{{ vault_server_key | b64decode }}"
+        content: "{{ vault_server_key_b64 | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault.key"
         owner: vault
         group: vault
@@ -69,7 +69,7 @@
 
     - name: "A2d. Deploy Vault CA Certificate"
       ansible.builtin.copy:
-        content: "{{ vault_ca_cert | b64decode }}"
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "{{ vault_dir_tls }}/vault-ca.crt"
         owner: vault
         group: vault
@@ -78,7 +78,7 @@
 
     - name: "A2e. Trust Vault Root CA on OS level"
       ansible.builtin.copy:
-        content: "{{ vault_ca_cert | b64decode }}"
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: /usr/local/share/ca-certificates/vault-ca.crt
         mode: "0644"
         owner: root

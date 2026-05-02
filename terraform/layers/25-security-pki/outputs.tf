@@ -7,9 +7,9 @@ output "vault_service_vip" {
 output "pki_configuration" {
   description = "PKI Configuration Summary"
   value = {
-    path      = module.vault_pki_setup.vault_pki_path
-    pki_roles = module.vault_pki_setup.pki_roles
-    ca_cert   = base64encode(module.vault_pki_setup.pki_root_ca_certificate)
+    path        = module.vault_pki_setup.vault_pki_path
+    pki_roles   = module.vault_pki_setup.pki_roles
+    ca_cert_b64 = module.vault_pki_setup.pki_root_ca_certificate_b64
     lease_durations = {
       default = format("%dh", var.vault_pki_engine_config.default_lease_ttl_seconds / 3600)
       max     = format("%dh", var.vault_pki_engine_config.max_lease_ttl_seconds / 3600)
@@ -45,10 +45,10 @@ output "auth_backend_paths" {
   value       = module.vault_pki_setup.auth_backend_paths
 }
 
-output "bootstrap_ca" {
+output "bootstrap_ca_b64" {
   description = "Aggregated Trust Bundle (Bootstrap CA + PKI CA)"
   value = {
-    path    = local_file.trust_bundle.filename
-    content = base64encode(local_file.trust_bundle.content)
+    path        = local_file.trust_bundle.filename
+    content_b64 = base64encode(local_file.trust_bundle.content)
   }
 }

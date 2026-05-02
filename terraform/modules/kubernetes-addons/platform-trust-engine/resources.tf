@@ -116,7 +116,7 @@ resource "kubectl_manifest" "cluster_issuer" {
       vault = {
         path     = "${var.issuer_config.pki_mount_path}/${var.issuer_config.issue_path}/${var.issuer_config.vault_role_name}"
         server   = var.vault_config.address
-        caBundle = var.vault_config.ca_cert
+        caBundle = base64encode(var.vault_config.ca_cert)
 
         auth = {
           kubernetes = {

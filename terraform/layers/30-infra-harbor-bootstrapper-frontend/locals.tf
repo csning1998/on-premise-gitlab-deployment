@@ -52,28 +52,27 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca  = local.state.metadata.global_vault_pki # PKI Artifacts
   sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
+    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
   }
 
   # Service Specific Credentials
   sec_app_creds = {
-    harbor_admin_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_admin_password"]
-    harbor_pg_db_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_pg_db_password"]
+    harbor_admin_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_admin_password"]
+    harbor_pg_db_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_pg_db_password"]
   }
 
   # Component Specific Vault Identities
   sec_vault_role_key = local.svc_pki_role.key
   sec_vault_agent_identity = {
     common_name   = local.svc_fqdn
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
     auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
