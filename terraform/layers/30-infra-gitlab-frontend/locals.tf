@@ -2,12 +2,11 @@
 # 1. State Hub (Cross-Layer SSoT)
 locals {
   state = {
-    metadata  = data.terraform_remote_state.metadata.outputs
-    volume    = data.terraform_remote_state.volume.outputs
-    network   = data.terraform_remote_state.network.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
-    # Dependencies
+    metadata        = data.terraform_remote_state.metadata.outputs
+    volume          = data.terraform_remote_state.volume.outputs
+    network         = data.terraform_remote_state.network.outputs
+    vault_sys       = data.terraform_remote_state.vault_sys.outputs
+    vault_pki       = data.terraform_remote_state.vault_pki.outputs
     harbor_registry = data.terraform_remote_state.harbor_bootstrapper.outputs
     harbor_proxy    = data.terraform_remote_state.harbor_proxy.outputs
   }
@@ -76,7 +75,7 @@ locals {
     role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_identity_key].role_id
     role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_identity_key].name
     secret_id     = vault_approle_auth_backend_role_secret_id.kubeadm_agent.secret_id
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca.content
+    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
     common_name   = local.svc_fqdn
   }
 
