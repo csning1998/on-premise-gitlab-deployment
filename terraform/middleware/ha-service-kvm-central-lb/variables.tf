@@ -82,7 +82,7 @@ variable "network_service_segments" {
   }))
 }
 
-variable "security_pki_bundle" {
+variable "security_pki_bundle_b64" {
   description = "PKI certificates passed from Layer 00 via Layer 05"
   type        = any
   default     = null

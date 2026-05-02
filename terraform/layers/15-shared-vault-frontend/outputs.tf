@@ -10,9 +10,9 @@ output "credentials_system" {
   sensitive   = true
 }
 
-output "security_pki_bundle" {
+output "security_pki_bundle_b64" {
   description = "The PKI bundle for the Vault server."
-  value       = local.pki_global_ca
+  value       = local.pki_global_ca_b64
   sensitive   = true
 }
 

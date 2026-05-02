@@ -121,10 +121,10 @@ locals {
     vault_auth_path         = var.security_vault_agent_identity.auth_path
   } : {}
 
-  ansible_extra_vars_pki = var.security_pki_bundle != null && length(keys(var.security_pki_bundle)) > 0 ? {
-    vault_server_cert = var.security_pki_bundle.server_cert
-    vault_server_key  = var.security_pki_bundle.server_key
-    vault_ca_cert     = var.security_pki_bundle.ca_cert
+  ansible_extra_vars_pki = var.security_pki_bundle_b64 != null && length(keys(var.security_pki_bundle_b64)) > 0 ? {
+    vault_server_cert_b64 = var.security_pki_bundle_b64.server_cert_b64
+    vault_server_key_b64  = var.security_pki_bundle_b64.server_key_b64
+    vault_ca_cert_b64     = var.security_pki_bundle_b64.ca_cert_b64
   } : {}
 
   ansible_extra_vars = merge(
