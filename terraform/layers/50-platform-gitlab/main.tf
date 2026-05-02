@@ -10,10 +10,9 @@ module "tigera_calico" {
 
 # [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
-  source = "../../modules/kubernetes-addons/platform-trust-engine"
-  providers = {
-    vault = vault.production
-  }
+  source     = "../../modules/kubernetes-addons/platform-trust-engine"
+  depends_on = [module.tigera_calico] # Ensure CNI is ready before installing Cert-Manager
+  providers  = { vault = vault.production }
 
   # 1. K8s Cluster Connection (for Vault to call back)
   api_server_connection = {
@@ -30,12 +29,10 @@ module "platform_trust_engine" {
 
   # 3. Issuer Configuration (The "Contract" between K8s and Vault)
   issuer_config = {
-    name             = var.trust_engine_config.issuer_name
-    bound_namespaces = var.trust_engine_config.authorized_namespaces
-    issue_path       = "sign"
-    vault_role_name  = local.vault_role_name
-    pki_mount_path   = local.vault_pki_path
-    token_policies   = [local.vault_policy_name]
+    name            = var.trust_engine_config.issuer_name
+    issue_path      = "sign"
+    vault_role_name = local.vault_role_name
+    pki_mount_path  = local.vault_pki_path
   }
 
   # 4. Reviewer Identity (The entity that validates tokens)
@@ -55,8 +52,20 @@ module "platform_trust_engine" {
     chart_project    = local.helm_chart_project
   }
 
-  # Ensure CNI is ready before installing Cert-Manager
-  depends_on = [module.tigera_calico]
+}
+
+# K8s Infrastructure Secrets (Dynamic via Cert-Manager)
+module "platform_mtls_certificate" {
+  source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
+  depends_on = [module.platform_trust_engine]
+
+  name         = "gitlab-postgres-tls"
+  namespace    = kubernetes_namespace.gitlab_ns.metadata[0].name
+  common_name  = local.fqdn_gitlab
+  issuer_name  = var.trust_engine_config.issuer_name
+  issuer_kind  = var.trust_engine_config.issuer_kind
+  duration     = local.vault_pki_lease_default
+  renew_before = local.vault_pki_lease_agent
 }
 
 module "kubelet_csr_approver" {
@@ -75,7 +84,9 @@ module "kubelet_csr_approver" {
 }
 
 module "metric_server" {
-  source = "../../modules/kubernetes-addons/metric-server"
+  source     = "../../modules/kubernetes-addons/metric-server"
+  depends_on = [module.kubelet_csr_approver]
+
   helm_config = {
     install          = true
     version          = var.metric_server_config.version
@@ -85,11 +96,12 @@ module "metric_server" {
     image_repository = "${local.harbor_k8s_proxy}/metrics-server"
     chart_project    = local.helm_chart_project
   }
-  depends_on = [module.kubelet_csr_approver]
 }
 
 module "ingress_nginx" {
-  source = "../../modules/kubernetes-addons/ingress-nginx"
+  source     = "../../modules/kubernetes-addons/ingress-nginx"
+  depends_on = [module.platform_trust_engine]
+
   helm_config = {
     install          = true
     version          = var.ingress_nginx_config.version
@@ -99,11 +111,12 @@ module "ingress_nginx" {
     image_repository = "${local.harbor_k8s_proxy}/ingress-nginx"
     chart_project    = local.helm_chart_project
   }
-  depends_on = [module.platform_trust_engine]
 }
 
 module "storage_local_path" {
-  source = "../../modules/kubernetes-addons/local-path-provisioner"
+  source     = "../../modules/kubernetes-addons/local-path-provisioner"
+  depends_on = [module.tigera_calico]
+
   helm_config = {
     install                 = true
     version                 = var.local_path_config.version
@@ -114,7 +127,6 @@ module "storage_local_path" {
     helper_image_repository = "${local.harbor_docker_proxy}/library"
     chart_project           = local.helm_chart_project
   }
-  depends_on = [module.tigera_calico]
 }
 
 # CoreDNS Configuration
@@ -125,8 +137,6 @@ module "coredns_config" {
   hosts = local.dns_hosts
 }
 
-# terraform/layers/60-gitlab-service/main.tf
-
 resource "kubernetes_namespace" "gitlab_ns" {
   metadata {
     name = var.gitlab_helm_config.namespace
@@ -136,7 +146,7 @@ resource "kubernetes_namespace" "gitlab_ns" {
 module "gitlab_core" {
   source = "../../modules/kubernetes-addons/helm-chart-gitlab"
   depends_on = [
-    kubernetes_secret.gitlab_postgres_tls,
+    module.platform_mtls_certificate,
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
     module.platform_trust_engine,
@@ -185,7 +195,7 @@ module "gitlab_core" {
       password   = local.gitlab_db.password
       username   = local.gitlab_db.username
       database   = local.gitlab_db.database
-      ssl_secret = kubernetes_secret.gitlab_postgres_tls.metadata[0].name
+      ssl_secret = module.platform_mtls_certificate.secret_name
     }
 
     redis = {

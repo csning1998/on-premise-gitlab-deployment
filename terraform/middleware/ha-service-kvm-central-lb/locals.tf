@@ -145,6 +145,9 @@ locals {
               vip             = seg.vip
               cidr            = seg.cidr
               vrid            = seg.vrid
+              runtime         = seg.runtime
+              mtu             = seg.mtu
+              mss             = seg.mss
               interface_alias = seg.interface_name
               ports = {
                 for p_key, p_val in seg.ports : p_key => {

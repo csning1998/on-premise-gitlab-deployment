@@ -83,11 +83,7 @@ locals {
   ca_bundle_config = {
     name        = "harbor-ca-bundle" # K8s Secret Name
     secret_name = "harbor-ca-bundle" # Helm Chart Reference Name
-
-    content = join("\n", [
-      base64decode(local.state.vault_pki.pki_configuration.ca_cert),
-      base64decode(local.state.vault_pki.bootstrap_ca.content)
-    ])
+    content     = base64decode(local.state.vault_pki.pki_configuration.ca_cert)
   }
 }
 

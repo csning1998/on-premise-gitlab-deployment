@@ -101,18 +101,6 @@ resource "kubernetes_secret" "issuer_token" {
   type = "kubernetes.io/service-account-token"
 }
 
-# Create Vault Role (Server Permission) to bind the Issuer SA and restrict it to only issue certificates with specific policies
-resource "vault_kubernetes_auth_backend_role" "issuer" {
-  backend   = var.vault_config.auth_path
-  role_name = var.issuer_config.vault_role_name
-
-  bound_service_account_names      = [kubernetes_service_account.issuer.metadata[0].name]
-  bound_service_account_namespaces = [kubernetes_service_account.issuer.metadata[0].namespace]
-
-  token_policies    = var.issuer_config.token_policies
-  alias_name_source = "serviceaccount_name"
-}
-
 # Create ClusterIssuer Resource (K8s Resource) that Layer 60 will reference as "issuerRef"
 resource "kubectl_manifest" "cluster_issuer" {
 
