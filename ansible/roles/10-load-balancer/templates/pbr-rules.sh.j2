@@ -30,8 +30,8 @@ ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scop
 
 # 4. Network Performance: MSS Clamping for ALL Service VIPs
 #    Ensures stability for cross-environment traffic (K8s <-> Baremetal).
-#    Standardizes on 1260 (Baseline MTU 1350 - 90 Overhead) to prevent fragmentation drops.
+#    Standardized on global_mss from L00 metadata.
 {% for seg in lb_service_segments %}
-iptables -t mangle -D FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ (seg.mtu | int) - 90 }} 2>/dev/null || true
-iptables -t mangle -A FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ (seg.mtu | int) - 90 }}
+iptables -t mangle -D FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }} 2>/dev/null || true
+iptables -t mangle -A FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }}
 {% endfor %}
