@@ -12,22 +12,22 @@
 
     - name: "B1b. Deploy Vault HAProxy Bundle (Cert + Key)"
       ansible.builtin.copy:
-        content: "{{ vault_haproxy_bundle | b64decode }}"
+        content: "{{ vault_haproxy_bundle_b64 | b64decode }}"
         dest: /etc/haproxy/certs/vault.pem
         owner: haproxy
         group: haproxy
         mode: "0600"
-      when: vault_haproxy_bundle is defined
+      when: vault_haproxy_bundle_b64 is defined
       notify: Restart HAProxy
 
     - name: "B1c. Deploy Root CA (For Backend Verification)"
       ansible.builtin.copy:
-        content: "{{ vault_ca_cert | b64decode }}"
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
         dest: "{{ haproxy_ca_path }}"
         owner: haproxy
         group: haproxy
         mode: "0644"
-      when: vault_ca_cert is defined
+      when: vault_ca_cert_b64 is defined
       notify: Restart HAProxy
 
 - name: "Block B2: Configure Keepalived and HAProxy"

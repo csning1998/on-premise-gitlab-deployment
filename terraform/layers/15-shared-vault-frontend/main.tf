@@ -3,7 +3,7 @@
 # This ensures downstream layers (e.g. 20-vault-pki) can reference it
 # as ca_cert_file without a circular dependency during provider initialization.
 resource "local_file" "bootstrap_ca" {
-  content         = base64decode(local.pki_global_ca.ca_cert)
+  content         = base64decode(local.pki_global_ca_b64.ca_cert_b64)
   filename        = "${path.root}/tls/bootstrap-ca.crt"
   file_permission = "0644"
 }

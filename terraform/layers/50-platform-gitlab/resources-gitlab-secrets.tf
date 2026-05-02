@@ -22,9 +22,9 @@ resource "vault_kv_secret_v2" "gitlab_db_keys" {
 
     # TLS Context for the application
     tls = {
-      crt = local.state.provision_databases.postgres_client_cert.crt
-      key = local.state.provision_databases.postgres_client_cert.key
-      ca  = local.state.provision_databases.postgres_client_cert.ca
+      crt = local.state.provision_databases.postgres_client_cert_b64.crt_b64
+      key = local.state.provision_databases.postgres_client_cert_b64.key_b64
+      ca  = local.state.provision_databases.postgres_client_cert_b64.ca_b64
     }
   })
 }
