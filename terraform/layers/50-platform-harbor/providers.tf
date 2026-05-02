@@ -13,10 +13,6 @@ terraform {
       source  = "hashicorp/helm"
       version = "3.0.2"
     }
-    harbor = {
-      source  = "goharbor/harbor"
-      version = "3.11.3"
-    }
     vault = {
       source  = "hashicorp/vault"
       version = "5.5.0"
@@ -70,10 +66,4 @@ provider "helm" {
       password = data.vault_kv_secret_v2.harbor_bootstrapper_robot.data["password_puller"]
     }
   ]
-}
-
-provider "harbor" {
-  url      = "https://${local.harbor_fqdn}"
-  username = "admin"
-  password = local.harbor_admin_password
 }
