@@ -72,10 +72,12 @@ locals {
   cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
 
   # Vault Connection (Standardized)
-  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
-  vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_ca_cert  = local.state.vault_pki.bootstrap_ca.content
-  vault_pki_path = local.state.vault_pki.pki_configuration.path
+  vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_ca_cert           = local.state.vault_pki.bootstrap_ca.content
+  vault_pki_path          = local.state.vault_pki.pki_configuration.path
+  vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default
+  vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent
 
   # Map to the specific component identity in Vault PKI (SSoT Driven)
   vault_role_name   = local.state.metadata.global_pki_map["gitlab-frontend"].role_name
@@ -133,10 +135,8 @@ locals {
     name        = "gitlab-ca-bundle" # K8s Secret Name
     secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
 
-    content = join("\n", [
-      base64decode(local.state.vault_pki.pki_configuration.ca_cert),
-      base64decode(local.state.vault_pki.bootstrap_ca.content)
-    ])
+    # Use the current active CA from Vault PKI directly
+    content = base64decode(local.state.vault_pki.pki_configuration.ca_cert)
   }
 }
 

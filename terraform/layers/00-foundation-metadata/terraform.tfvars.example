@@ -7,7 +7,7 @@ network_baseline = {
   node_ip_start = 200        # node ip from .200
   mac_prefix    = "52:54:00" # KVM/Libvirt common prefix
   global_mtu    = 1350
-  global_mss    = 1310
+  global_mss    = 1260
 }
 
 # The Single Source of Truth for the Root CA Identity

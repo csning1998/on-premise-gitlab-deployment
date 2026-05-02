@@ -34,13 +34,13 @@ variable "topology_cluster" {
     error_message = "High Availability architecture requires at least one Load Balancer Class node."
   }
 
-  # Load Balancer Node specification (vCPU >= 2, RAM >= 1024)
+  # Load Balancer Node specification (vCPU >= 2, RAM >= 512)
   validation {
     condition = alltrue([
       for k, node in var.topology_cluster.load_balancer_config.nodes :
-      node.vcpu >= 2 && node.ram >= 1024
+      node.vcpu >= 2 && node.ram >= 512
     ])
-    error_message = "Load Balancer nodes require at least 2 vCPUs and 1024MB RAM."
+    error_message = "Load Balancer nodes require at least 2 vCPUs and 512MB RAM."
   }
 }
 
@@ -59,6 +59,9 @@ variable "network_service_segments" {
     cidr           = optional(string)
     vrid           = optional(number)
     vip            = optional(string)
+    runtime        = optional(string)
+    mtu            = optional(number)
+    mss            = optional(number)
     node_ips       = optional(map(string))
 
     ports = optional(map(object({
