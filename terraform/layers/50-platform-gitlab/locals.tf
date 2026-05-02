@@ -74,7 +74,7 @@ locals {
   # Vault Connection (Standardized)
   vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_ca_cert           = local.state.vault_pki.bootstrap_ca.content
+  vault_ca_cert           = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
   vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default
   vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent
@@ -136,7 +136,7 @@ locals {
     secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
 
     # Use the current active CA from Vault PKI directly
-    content = base64decode(local.state.vault_pki.pki_configuration.ca_cert)
+    content = base64decode(local.state.vault_pki.pki_configuration.ca_cert_b64)
   }
 }
 
