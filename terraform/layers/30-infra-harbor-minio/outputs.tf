@@ -22,5 +22,5 @@ output "harbor_minio_cluster_name" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.minio_harbor.ansible_inventory
+  value       = module.infra_harbor_minio.ansible_inventory
 }

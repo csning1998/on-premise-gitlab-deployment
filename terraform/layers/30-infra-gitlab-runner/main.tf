@@ -1,5 +1,5 @@
 
-module "microk8s_runner" {
+module "infra_gitlab_runner" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Core Identifier & Topology

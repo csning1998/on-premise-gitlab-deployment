@@ -1,5 +1,5 @@
 
-module "kubeadm_gitlab" {
+module "infra_gitlab_frontend" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

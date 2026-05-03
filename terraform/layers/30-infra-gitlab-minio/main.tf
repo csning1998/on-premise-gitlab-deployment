@@ -1,5 +1,5 @@
 
-module "build_gitlab_minio_cluster" {
+module "infra_gitlab_minio" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

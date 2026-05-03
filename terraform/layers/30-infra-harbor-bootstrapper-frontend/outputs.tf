@@ -23,7 +23,7 @@ output "credentials_app" {
 
 output "topology_node" {
   description = "The actual provisioned configuration for Bootstrap Harbor node."
-  value       = module.bootstrap_harbor.cluster_nodes
+  value       = module.infra_harbor_bootstrapper.cluster_nodes
 }
 
 output "pki_key" {
@@ -33,10 +33,10 @@ output "pki_key" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.bootstrap_harbor.ansible_inventory
+  value       = module.infra_harbor_bootstrapper.ansible_inventory
 }
 
 output "ssh_config_file_path" {
   description = "The path to the generated SSH configuration file."
-  value       = module.bootstrap_harbor.ssh_config_file_path
+  value       = module.infra_harbor_bootstrapper.ssh_config_file_path
 }

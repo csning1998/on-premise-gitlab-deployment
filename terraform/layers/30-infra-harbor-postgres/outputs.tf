@@ -18,10 +18,10 @@ output "credentials_postgres" {
 
 output "topology_cluster" {
   description = "The actual provisioned configuration for all Postgres and Etcd nodes."
-  value       = module.build_harbor_postgres_cluster.cluster_nodes
+  value       = module.infra_harbor_postgres.cluster_nodes
 }
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.build_harbor_postgres_cluster.ansible_inventory
+  value       = module.infra_harbor_postgres.ansible_inventory
 }

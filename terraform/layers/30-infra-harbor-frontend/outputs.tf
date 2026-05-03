@@ -11,5 +11,5 @@ output "harbor_microk8s_virtual_ip" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.microk8s_harbor.ansible_inventory
+  value       = module.infra_harbor_frontend.ansible_inventory
 }

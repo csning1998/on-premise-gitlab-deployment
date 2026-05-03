@@ -23,10 +23,10 @@ output "kubernetes_config" {
 
 output "topology_cluster" {
   description = "The full provisioned compute topology."
-  value       = module.kubeadm_gitlab.cluster_nodes
+  value       = module.infra_gitlab_frontend.cluster_nodes
 }
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.kubeadm_gitlab.ansible_inventory
+  value       = module.infra_gitlab_frontend.ansible_inventory
 }

@@ -18,10 +18,10 @@ output "credentials_redis" {
 
 output "topology_cluster" {
   description = "The actual provisioned configuration for all Redis nodes."
-  value       = module.build_gitlab_redis_cluster.cluster_nodes
+  value       = module.infra_gitlab_redis.cluster_nodes
 }
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory content and file path."
-  value       = module.build_gitlab_redis_cluster.ansible_inventory
+  value       = module.infra_gitlab_redis.ansible_inventory
 }

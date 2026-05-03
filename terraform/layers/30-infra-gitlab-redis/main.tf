@@ -1,5 +1,5 @@
 
-module "build_gitlab_redis_cluster" {
+module "infra_gitlab_redis" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
