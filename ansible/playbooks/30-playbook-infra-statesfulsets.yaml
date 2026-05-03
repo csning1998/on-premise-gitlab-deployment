@@ -13,25 +13,25 @@
   hosts: "{{ 'etcd' if 'etcd' in groups else [] }}"
   become: true
   roles:
-    - 30-etcd
+    - 30-infra-etcd
 
 # Patroni
 - name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
   hosts: "{{ 'postgres' if 'postgres' in groups else [] }}"
   become: true
   roles:
-    - 30-postgres
+    - 30-infra-postgres
 
 # Redis Sentinel
 - name: "Play [Redis]: Configure Redis High Availability Cluster"
   hosts: "{{ 'redis' if 'redis' in groups else [] }}"
   become: true
   roles:
-    - 30-redis
+    - 30-infra-redis
 
 # MinIO Distributed
 - name: "Play [MinIO]: Configure MinIO High Availability Cluster"
   hosts: "{{ 'minio' if 'minio' in groups else [] }}"
   become: true
   roles:
-    - 30-minio
+    - 30-infra-minio

@@ -13,11 +13,11 @@
   hosts: "{{ 'lb' if 'lb' in groups else [] }}"
   become: true
   roles:
-    - 10-load-balancer
+    - 10-infra-load-balancer
 
 # Phase 2: Vault (Refactored)
 - name: "Play [Vault]: Provision Vault Cluster"
   hosts: "{{ 'vault' if 'vault' in groups else [] }}"
   become: true
   roles:
-    - 15-vault
+    - 15-infra-vault

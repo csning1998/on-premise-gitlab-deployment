@@ -13,7 +13,7 @@
   hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
   become: true
   roles:
-    - 30-bstrap-harbor
+    - 30-infra-harbor-bootstrapper
 
 # 2. MicroK8s Cluster
 - name: "Play [Kubernetes]: Provision and Configure MicroK8s Cluster"
@@ -21,7 +21,7 @@
   become: true
   gather_facts: true
   roles:
-    - 30-microk8s
+    - 30-infra-microk8s
 
 # 3. Kubeadm Cluster
 - name: "Play [Kubernetes]: Provision and Configure Kubeadm Cluster"
@@ -29,4 +29,4 @@
   become: true
   gather_facts: true
   roles:
-    - 30-kubeadm
+    - 30-infra-kubeadm
