@@ -125,11 +125,19 @@ locals {
     core = {
       podAnnotations = {
         "reloader.stakater.com/auto" = "true"
+        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
       }
     }
     jobservice = {
       podAnnotations = {
         "reloader.stakater.com/auto" = "true"
+        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
+      }
+    }
+    registry = {
+      podAnnotations = {
+        "reloader.stakater.com/auto" = "true"
+        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
       }
     }
   }

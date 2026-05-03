@@ -11,19 +11,17 @@ resource "helm_release" "reloader" {
 
   create_namespace = true
 
-  # Using attribute syntax [ { name = ..., value = ... } ] to match project standards
-  set = [
-    {
-      name  = "reloader.watchGlobally"
-      value = "true"
-    },
-    {
-      name  = "rbac.enabled"
-      value = "true"
-    }
-  ]
-
+  # Using yamlencode to ensure Booleans and structure are correctly typed
   values = [
+    yamlencode({
+      reloader = {
+        watchGlobally = true
+        logLevel      = "debug"
+        rbac = {
+          enabled = true
+        }
+      }
+    }),
     yamlencode(var.values_override)
   ]
 }

@@ -155,13 +155,19 @@ locals {
   gitlab_reloader_annotations = {
     gitlab = {
       webservice = {
-        annotations = {
-          "reloader.stakater.com/auto" = "true"
+        deployment = {
+          annotations = {
+            "reloader.stakater.com/auto" = "true"
+            "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
+          }
         }
       }
       sidekiq = {
-        annotations = {
-          "reloader.stakater.com/auto" = "true"
+        deployment = {
+          annotations = {
+            "reloader.stakater.com/auto" = "true"
+            "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
+          }
         }
       }
     }
