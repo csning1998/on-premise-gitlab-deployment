@@ -21,10 +21,10 @@ module "platform_trust_engine" {
 
   # 3. Issuer Configuration (The "Contract" between K8s and Vault)
   issuer_config = {
-    name             = var.trust_engine_config.issuer_name
-    issue_path       = "sign"
-    vault_role_name  = local.vault_role_name
-    pki_mount_path   = local.vault_pki_path
+    name            = var.trust_engine_config.issuer_name
+    issue_path      = "sign"
+    vault_role_name = local.vault_role_name
+    pki_mount_path  = local.vault_pki_path
   }
 
   # 4. Reviewer Identity (The entity that validates tokens)
@@ -60,6 +60,13 @@ module "coredns_config" {
   source = "../../modules/kubernetes-addons/coredns-config"
 
   hosts = local.dns_hosts
+}
+
+module "reloader" {
+  source = "../../modules/kubernetes-addons/reloader"
+  harbor_oci_config = {
+    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  }
 }
 
 resource "kubernetes_namespace" "harbor" {
@@ -127,5 +134,21 @@ module "harbor_core" {
     }
   }
 
-  depends_on = [module.platform_trust_engine]
+  helm_values_override = {
+    core = {
+      podAnnotations = {
+        "reloader.stakater.com/auto" = "true"
+      }
+    }
+    jobservice = {
+      podAnnotations = {
+        "reloader.stakater.com/auto" = "true"
+      }
+    }
+  }
+
+  depends_on = [
+    module.platform_trust_engine,
+    module.reloader
+  ]
 }

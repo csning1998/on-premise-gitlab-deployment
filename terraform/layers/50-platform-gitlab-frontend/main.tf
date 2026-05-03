@@ -137,6 +137,13 @@ module "coredns_config" {
   hosts = local.dns_hosts
 }
 
+module "reloader" {
+  source = "../../modules/kubernetes-addons/reloader"
+  harbor_oci_config = {
+    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  }
+}
+
 resource "kubernetes_namespace" "gitlab_ns" {
   metadata {
     name = var.gitlab_helm_config.namespace
@@ -150,7 +157,8 @@ module "gitlab_core" {
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
     module.platform_trust_engine,
-    module.ingress_nginx
+    module.ingress_nginx,
+    module.reloader
   ]
 
   # Helm Deployment Configuration
@@ -160,6 +168,22 @@ module "gitlab_core" {
     timeout        = 1500
     image_registry = local.harbor_registry
     chart_project  = local.helm_chart_project
+  }
+
+  # HCL declaration for Reloader annotations
+  helm_values_override = {
+    gitlab = {
+      webservice = {
+        annotations = {
+          "reloader.stakater.com/auto" = "true"
+        }
+      }
+      sidekiq = {
+        annotations = {
+          "reloader.stakater.com/auto" = "true"
+        }
+      }
+    }
   }
 
   # GitLab Application Configuration
