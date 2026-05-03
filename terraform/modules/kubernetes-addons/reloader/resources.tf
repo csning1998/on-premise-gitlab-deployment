@@ -16,7 +16,7 @@ resource "helm_release" "reloader" {
     yamlencode({
       reloader = {
         watchGlobally = true
-        logLevel      = "debug"
+        logLevel      = "info"
         rbac = {
           enabled = true
         }
