@@ -152,24 +152,20 @@ locals {
     repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
   }
 
+  # Internal helper for reloader annotations to avoid duplication across components
+  _gitlab_reloader_common = {
+    deployment = {
+      annotations = {
+        "reloader.stakater.com/auto"          = "true"
+        "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
+      }
+    }
+  }
+
   gitlab_reloader_annotations = {
     gitlab = {
-      webservice = {
-        deployment = {
-          annotations = {
-            "reloader.stakater.com/auto" = "true"
-            "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
-          }
-        }
-      }
-      sidekiq = {
-        deployment = {
-          annotations = {
-            "reloader.stakater.com/auto" = "true"
-            "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
-          }
-        }
-      }
+      webservice = local._gitlab_reloader_common
+      sidekiq    = local._gitlab_reloader_common
     }
   }
 }

@@ -121,24 +121,17 @@ locals {
     repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
   }
 
+  # Internal helper for reloader annotations to avoid duplication across components
+  _harbor_reloader_common = {
+    deploymentAnnotations = {
+      "reloader.stakater.com/auto"          = "true"
+      "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
+    }
+  }
+
   harbor_reloader_annotations = {
-    core = {
-      podAnnotations = {
-        "reloader.stakater.com/auto" = "true"
-        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
-      }
-    }
-    jobservice = {
-      podAnnotations = {
-        "reloader.stakater.com/auto" = "true"
-        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
-      }
-    }
-    registry = {
-      podAnnotations = {
-        "reloader.stakater.com/auto" = "true"
-        "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
-      }
-    }
+    core       = local._harbor_reloader_common
+    jobservice = local._harbor_reloader_common
+    registry   = local._harbor_reloader_common
   }
 }
