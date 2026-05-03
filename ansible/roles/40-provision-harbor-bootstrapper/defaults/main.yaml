@@ -40,6 +40,11 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     repo: "https://helm.goharbor.io"
     is_oci: false
 
+  - name: "reloader"
+    version: "2.2.11"
+    repo: "https://stakater.github.io/stakater-charts"
+    is_oci: false
+
   - name: "gitlab-runner"
     version: "0.85.0"
     repo: "https://charts.gitlab.io/"

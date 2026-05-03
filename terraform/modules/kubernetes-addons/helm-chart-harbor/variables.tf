@@ -69,3 +69,9 @@ variable "ca_bundle" {
     secret_name = string
   })
 }
+
+variable "helm_values_override" {
+  description = "Extra Helm values to override or add in HCL format"
+  type        = any
+  default     = {}
+}

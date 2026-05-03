@@ -59,7 +59,7 @@ module "platform_mtls_certificate" {
   source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
   depends_on = [module.platform_trust_engine]
 
-  name         = "gitlab-postgres-tls"
+  name         = local.postgres_ca
   namespace    = kubernetes_namespace.gitlab_ns.metadata[0].name
   common_name  = local.fqdn_gitlab
   issuer_name  = var.trust_engine_config.issuer_name
@@ -137,6 +137,11 @@ module "coredns_config" {
   hosts = local.dns_hosts
 }
 
+module "reloader" {
+  source            = "../../modules/kubernetes-addons/reloader"
+  harbor_oci_config = local.reloader_oci_config
+}
+
 resource "kubernetes_namespace" "gitlab_ns" {
   metadata {
     name = var.gitlab_helm_config.namespace
@@ -150,7 +155,8 @@ module "gitlab_core" {
     kubernetes_namespace.gitlab_ns,
     module.coredns_config,
     module.platform_trust_engine,
-    module.ingress_nginx
+    module.ingress_nginx,
+    module.reloader
   ]
 
   # Helm Deployment Configuration
@@ -161,6 +167,9 @@ module "gitlab_core" {
     image_registry = local.harbor_registry
     chart_project  = local.helm_chart_project
   }
+
+  # HCL declaration for Reloader annotations
+  helm_values_override = local.gitlab_reloader_annotations
 
   # GitLab Application Configuration
   gitlab_config = {
