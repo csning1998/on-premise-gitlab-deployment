@@ -6,5 +6,5 @@
   tasks:
     - name: "Execute Vault Unseal only"
       ansible.builtin.include_role:
-        name: 15-vault
+        name: 15-infra-vault
         tasks_from: D-unseal.yaml

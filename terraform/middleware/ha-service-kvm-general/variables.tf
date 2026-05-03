@@ -121,7 +121,7 @@ variable "security_vault_agent_identity" {
 }
 
 
-variable "security_pki_bundle" {
+variable "security_pki_bundle_b64" {
   description = "PKI artifacts passed from vault_pki."
   type        = any
   default     = null

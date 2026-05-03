@@ -66,10 +66,12 @@ locals {
       vrid           = local.segments[key].network.vrid
       vip            = local.segments[key].network.vip
       interface_name = local.segments[key].network.interface_alias
+      ip_range       = local.segments[key].network.ip_range
       ports          = local.segments[key].network.ports
       tags           = local.segments[key].network.tags
-
-      ip_range = local.segments[key].network.ip_range
+      runtime        = local.segments[key].network.runtime
+      mtu            = local.state.metadata.global_network_baseline.global_mtu
+      mss            = local.state.metadata.global_network_baseline.global_mss
 
       # Use node_ips derived from Layer 00 directly to avoid re-calculation
       backend_servers = [

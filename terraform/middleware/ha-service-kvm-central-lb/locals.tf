@@ -145,6 +145,9 @@ locals {
               vip             = seg.vip
               cidr            = seg.cidr
               vrid            = seg.vrid
+              runtime         = seg.runtime
+              mtu             = seg.mtu
+              mss             = seg.mss
               interface_alias = seg.interface_name
               ports = {
                 for p_key, p_val in seg.ports : p_key => {
@@ -194,9 +197,9 @@ locals {
       haproxy_stats_pass   = local.credentials_haproxy_for_ansible.haproxy_stats_pass
       keepalived_auth_pass = local.credentials_haproxy_for_ansible.keepalived_auth_pass
     },
-    var.security_pki_bundle != null ? {
-      vault_haproxy_bundle = var.security_pki_bundle.haproxy_bundle
-      vault_ca_cert        = var.security_pki_bundle.ca_cert
+    var.security_pki_bundle_b64 != null ? {
+      vault_haproxy_bundle_b64 = var.security_pki_bundle_b64.haproxy_bundle_b64
+      vault_ca_cert_b64        = var.security_pki_bundle_b64.ca_cert_b64
     } : {}
   )
 }

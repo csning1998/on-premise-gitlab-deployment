@@ -1,5 +1,5 @@
 
-module "bootstrap_harbor" {
+module "infra_harbor_bootstrapper" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

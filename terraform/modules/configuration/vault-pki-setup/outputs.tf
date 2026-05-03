@@ -4,9 +4,9 @@ output "vault_pki_path" {
   value       = vault_mount.pki_prod.path
 }
 
-output "pki_root_ca_certificate" {
+output "pki_root_ca_certificate_b64" {
   description = "The root CA certificate of the PKI engine"
-  value       = vault_pki_secret_backend_root_cert.prod_root_ca.certificate
+  value       = base64encode(vault_pki_secret_backend_root_cert.prod_root_ca.certificate)
 }
 
 output "pki_roles" {

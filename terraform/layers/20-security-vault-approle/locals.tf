@@ -30,7 +30,7 @@ locals {
       # [1] Data Plane (Business Data): Maintain strict least privilege,
       #     precisely scoped to specific projects and mount points.
       "secret/data/on-premise-gitlab-deployment/*"     = { capabilities = ["create", "read", "update", "delete"] }
-      "secret/metadata/on-premise-gitlab-deployment/*" = { capabilities = ["read", "list", "delete"] }
+      "secret/metadata/on-premise-gitlab-deployment/*" = { capabilities = ["create", "read", "update", "delete", "list"] }
       "secret/delete/on-premise-gitlab-deployment/*"   = { capabilities = ["update"] }
       "secret/destroy/on-premise-gitlab-deployment/*"  = { capabilities = ["update"] }
 

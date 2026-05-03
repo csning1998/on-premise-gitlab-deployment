@@ -10,9 +10,9 @@ output "credentials_system" {
   sensitive   = true
 }
 
-output "security_pki_bundle" {
+output "security_pki_bundle_b64" {
   description = "The PKI bundle for the Vault server."
-  value       = local.pki_global_ca
+  value       = local.pki_global_ca_b64
   sensitive   = true
 }
 
@@ -23,5 +23,5 @@ output "ca_cert_path" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory for the Vault cluster."
-  value       = module.vault_cluster.ansible_inventory
+  value       = module.shared_vault.ansible_inventory
 }

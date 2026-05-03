@@ -1,5 +1,5 @@
 
-module "central_lb_cluster" {
+module "shared_load_balancer" {
 
   source = "../../middleware/ha-service-kvm-central-lb"
   svc_identity = merge(local.svc_identity, {
@@ -19,7 +19,7 @@ module "central_lb_cluster" {
   svc_network_map = local.network_map
 
   # Secrets & PKI
-  security_pki_bundle     = local.pki_global_ca
+  security_pki_bundle_b64 = local.pki_global_ca_b64
   credentials_vm          = local.sec_vm_creds
   credentials_application = local.sec_haproxy_creds
 

@@ -28,12 +28,12 @@ output "postgres_connection_info" {
   sensitive = true
 }
 
-output "postgres_client_cert" {
+output "postgres_client_cert_b64" {
   description = "Postgres client certificate for Layer 50 credentials"
   value = {
-    crt = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.certificate)
-    key = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.private_key)
-    ca  = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.ca_chain)
+    crt_b64 = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.certificate)
+    key_b64 = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.private_key)
+    ca_b64  = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.ca_chain)
   }
   sensitive = true
 }

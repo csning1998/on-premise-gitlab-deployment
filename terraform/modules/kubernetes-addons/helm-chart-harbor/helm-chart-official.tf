@@ -87,6 +87,8 @@ resource "helm_release" "harbor" {
           }
         }
       }
-    })
+    }),
+
+    yamlencode(var.helm_values_override)
   ]
 }

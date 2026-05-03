@@ -1,4 +1,7 @@
 ---
+- name: "Gather service facts"
+  ansible.builtin.service_facts:
+
 - name: "Minimal: Stop and Mask unnecessary services (Keep binaries)"
   become: true
   ansible.builtin.systemd:
@@ -31,8 +34,7 @@
     - ua-timer.service
     - motd-news.timer
     - motd-news.service
-
-  register: svc_mask_result
-  failed_when:
-    - svc_mask_result is failed
-    - "'Could not find the requested service' not in svc_mask_result.msg"
+  when: >
+    item in ansible_facts.services or
+    item ~ '.service' in ansible_facts.services or
+    item | regex_replace('\.service$', '') in ansible_facts.services

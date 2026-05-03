@@ -72,7 +72,7 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca = local.state.metadata.global_vault_pki
+  pki_global_ca_b64 = local.state.metadata.global_vault_pki_b64
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
@@ -95,6 +95,7 @@ locals {
   ansible_extra_vars = {
     terraform_runner_subnet = local.net_lb_config.hostonly.cidr
     global_mss              = local.state.metadata.global_network_baseline.global_mss
+    global_mtu              = local.state.metadata.global_network_baseline.global_mtu
   }
 }
 

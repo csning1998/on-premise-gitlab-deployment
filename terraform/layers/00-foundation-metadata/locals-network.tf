@@ -6,16 +6,16 @@
 
 /**
  * Layer 00: Foundation Metadata - Network Topology
- * 
- * This file computes the exact IPv4 addresses, subnets, and MAC addresses 
+ *
+ * This file computes the exact IPv4 addresses, subnets, and MAC addresses
  * for all components defined in the service_catalog.
- * 
+ *
  * Logic:
- * 1. Subnets: Each component is assigned a /24 subnet calculated from 
- *    the base CIDR and component's cidr_index. 
- * 2. Source: References the unified _flat_catalog (from locals-naming.tf) 
+ * 1. Subnets: Each component is assigned a /24 subnet calculated from
+ *    the base CIDR and component's cidr_index.
+ * 2. Source: References the unified _flat_catalog (from locals-naming.tf)
  *    to ensure a single point of iteration for all metadata layers.
- * 3. IPs: Node IPs are calculated based on node_ip_start and iteration counts. 
+ * 3. IPs: Node IPs are calculated based on node_ip_start and iteration counts.
  * 4. VIPs: A fixed VIP (.250) is assigned to each segment for LB usage.
  */
 
@@ -43,6 +43,7 @@ locals {
       # References the pre-calculated hash prefix from _flat_catalog
       interface_alias = "v_${substr(replace(key, "-", ""), 0, 8)}_${substr(item.hash_prefix, 0, 4)}"
       vrid            = item.config.cidr_index
+      runtime         = item.config.runtime
       ip_range        = item.config.ip_range
       ports           = coalesce(item.config.ports, {})
       tags            = coalesce(item.config.tags, [])

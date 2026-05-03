@@ -59,6 +59,9 @@ variable "network_service_segments" {
     cidr           = optional(string)
     vrid           = optional(number)
     vip            = optional(string)
+    runtime        = optional(string)
+    mtu            = optional(number)
+    mss            = optional(number)
     node_ips       = optional(map(string))
 
     ports = optional(map(object({
@@ -79,7 +82,7 @@ variable "network_service_segments" {
   }))
 }
 
-variable "security_pki_bundle" {
+variable "security_pki_bundle_b64" {
   description = "PKI certificates passed from Layer 00 via Layer 05"
   type        = any
   default     = null

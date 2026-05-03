@@ -1,0 +1,102 @@
+---
+- name: "Block B1: Deploy SSL Certificates"
+  become: true
+  block:
+    - name: "B1a. Ensure Certificate Directory Exists"
+      ansible.builtin.file:
+        path: /etc/haproxy/certs
+        state: directory
+        owner: haproxy
+        group: haproxy
+        mode: "0700"
+
+    - name: "B1b. Deploy Vault HAProxy Bundle (Cert + Key)"
+      ansible.builtin.copy:
+        content: "{{ vault_haproxy_bundle_b64 | b64decode }}"
+        dest: /etc/haproxy/certs/vault.pem
+        owner: haproxy
+        group: haproxy
+        mode: "0600"
+      when: vault_haproxy_bundle_b64 is defined
+      notify: Restart HAProxy
+
+    - name: "B1c. Deploy Root CA (For Backend Verification)"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: "{{ haproxy_ca_path }}"
+        owner: haproxy
+        group: haproxy
+        mode: "0644"
+      when: vault_ca_cert_b64 is defined
+      notify: Restart HAProxy
+
+- name: "Block B2: Configure Keepalived and HAProxy"
+  block:
+    - name: "B2a. Render Keepalived configuration"
+      ansible.builtin.template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Keepalived
+
+    - name: "B2b. Render HAProxy configuration"
+      ansible.builtin.template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: "0640"
+      notify: Restart HAProxy
+
+    - name: "B2c. Verify HAProxy configuration"
+      ansible.builtin.command:
+        cmd: haproxy -c -f /etc/haproxy/haproxy.cfg
+      changed_when: false
+
+- name: "Block B3: Service Lifecycle"
+  block:
+    - name: "B3a. Enable and start Keepalived"
+      ansible.builtin.systemd:
+        name: keepalived
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: "B3b. Enable and start HAProxy"
+      ansible.builtin.systemd:
+        name: haproxy
+        state: started
+        enabled: true
+        daemon_reload: true
+
+- name: "Block B4: Configure Policy-Based Routing for VIPs"
+  block:
+    - name: "B4a. Ensure custom routing tables exist"
+      ansible.builtin.lineinfile:
+        path: /etc/iproute2/rt_tables
+        line: "{{ item.vrid }} rt_{{ item.name | replace('-', '_') }}"
+        regexp: "^{{ item.vrid }} "
+      loop: "{{ lb_service_segments }}"
+
+    - name: "B4b. Generate PBR bash script"
+      ansible.builtin.template:
+        src: "pbr-rules.sh.j2"
+        dest: "/usr/local/bin/pbr-rules.sh"
+        mode: "0755"
+      notify: Restart PBR
+
+    - name: "B4c. Generate PBR Service"
+      ansible.builtin.template:
+        src: "pbr-rules.service.j2"
+        dest: "/etc/systemd/system/pbr-rules.service"
+        mode: "0644"
+      notify: Restart PBR
+
+    - name: "B4d. Start and enable PBR Service"
+      ansible.builtin.systemd:
+        name: pbr-rules.service
+        state: started
+        enabled: true
+        daemon_reload: true

@@ -23,7 +23,7 @@ terraform {
 provider "vault" {
   alias        = "production"
   address      = local.vault_address
-  ca_cert_file = local.state.vault_pki.bootstrap_ca.path
+  ca_cert_file = local.state.vault_pki.bootstrap_ca_b64.path
 
   auth_login {
     path = "auth/approle/login"

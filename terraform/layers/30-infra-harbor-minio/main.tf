@@ -1,5 +1,5 @@
 
-module "minio_harbor" {
+module "infra_harbor_minio" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

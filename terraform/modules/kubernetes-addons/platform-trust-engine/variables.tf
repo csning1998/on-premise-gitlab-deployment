@@ -28,8 +28,6 @@ variable "issuer_config" {
     vault_role_name  = string       # Role name in Vault, e.g., "k8s-issuer-role"
     pki_mount_path   = string       # PKI Engine mount path in Vault, e.g., "pki/prod"
     issue_path       = string       # Issue path, usually "issue" or "sign"
-    bound_namespaces = list(string) # K8s Namespaces allowed to use this Role, e.g., ["cert-manager", "harbor"]
-    token_policies   = list(string) # Vault Policies owned by the Token dispatched by this Role
   })
 }
 

@@ -289,6 +289,8 @@ resource "helm_release" "gitlab" {
           }
         }
       }
-    })
+    }),
+
+    yamlencode(var.helm_values_override)
   ]
 }
