@@ -1,7 +1,7 @@
 ---
 - name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
-    name: 81-asymmetric-routing
+    name: 81-utils-asymmetric-routing
   vars:
     routing_static_routes: "{{ vault_static_routes }}"
   when: vault_static_routes is defined
