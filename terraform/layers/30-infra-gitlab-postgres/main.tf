@@ -1,5 +1,5 @@
 
-module "build_gitlab_postgres_cluster" {
+module "infra_gitlab_postgres" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

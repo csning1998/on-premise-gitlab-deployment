@@ -1,5 +1,5 @@
 
-module "microk8s_harbor" {
+module "infra_harbor_frontend" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Core Identifier & Topology

@@ -4,4 +4,4 @@
   gather_facts: false
   become: true
   roles:
-    - role: 40-harbor-provision
+    - role: 40-provision-harbor-bootstrapper

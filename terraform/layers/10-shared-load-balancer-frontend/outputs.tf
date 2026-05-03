@@ -19,5 +19,5 @@ output "central_lb_info" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory for the Central LB cluster."
-  value       = module.central_lb_cluster.ansible_inventory
+  value       = module.shared_load_balancer.ansible_inventory
 }

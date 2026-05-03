@@ -1,5 +1,5 @@
 
-module "build_harbor_postgres_cluster" {
+module "infra_harbor_postgres" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions

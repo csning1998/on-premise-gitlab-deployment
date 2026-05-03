@@ -1,5 +1,5 @@
 
-module "redis_harbor" {
+module "infra_harbor_redis" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
