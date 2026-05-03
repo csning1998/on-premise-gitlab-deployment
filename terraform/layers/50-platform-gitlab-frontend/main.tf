@@ -59,7 +59,7 @@ module "platform_mtls_certificate" {
   source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
   depends_on = [module.platform_trust_engine]
 
-  name         = "gitlab-postgres-tls"
+  name         = local.postgres_ca
   namespace    = kubernetes_namespace.gitlab_ns.metadata[0].name
   common_name  = local.fqdn_gitlab
   issuer_name  = var.trust_engine_config.issuer_name
@@ -138,7 +138,7 @@ module "coredns_config" {
 }
 
 module "reloader" {
-  source = "../../modules/kubernetes-addons/reloader"
+  source            = "../../modules/kubernetes-addons/reloader"
   harbor_oci_config = local.reloader_oci_config
 }
 

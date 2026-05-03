@@ -69,7 +69,8 @@ locals {
   api_endpoint = "https://${local.state.kubeadm.service_vip}:${local.api_port}"
 
   # Cluster CA from ConfigMap
-  cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
+  cluster_ca  = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
+  postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
   vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
@@ -157,7 +158,7 @@ locals {
     deployment = {
       annotations = {
         "reloader.stakater.com/auto"          = "true"
-        "secret.reloader.stakater.com/reload" = "gitlab-postgres-tls"
+        "secret.reloader.stakater.com/reload" = local.postgres_ca
       }
     }
   }
