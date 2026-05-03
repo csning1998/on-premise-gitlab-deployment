@@ -124,8 +124,7 @@ locals {
   # Internal helper for reloader annotations to avoid duplication across components
   _harbor_reloader_common = {
     podAnnotations = {
-      "reloader.stakater.com/auto"          = "true"
-      "secret.reloader.stakater.com/reload" = "harbor-ingress-cert,harbor-ca-bundle"
+      "secret.reloader.stakater.com/reload" = local.ca_bundle_config.name
     }
   }
 
