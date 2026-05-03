@@ -1,5 +1,5 @@
 
-module "central_lb_cluster" {
+module "shared_load_balancer" {
 
   source = "../../middleware/ha-service-kvm-central-lb"
   svc_identity = merge(local.svc_identity, {

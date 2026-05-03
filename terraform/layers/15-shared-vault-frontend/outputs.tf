@@ -23,5 +23,5 @@ output "ca_cert_path" {
 
 output "ansible_inventory" {
   description = "The generated Ansible inventory for the Vault cluster."
-  value       = module.vault_cluster.ansible_inventory
+  value       = module.shared_vault.ansible_inventory
 }

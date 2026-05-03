@@ -1,0 +1,32 @@
+---
+# 1. Dynamic Grouping: Map node_role to Ansible groups
+- name: "Play [Setup]: Dynamic Grouping based on node_role"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Create dynamic groups from node_role variable"
+      ansible.builtin.group_by:
+        key: "{{ node_role }}"
+
+# 1. Harbor Bootstrapper Registry
+- name: "Play [Harbor]: Configure Harbor Bootstrapper Cluster"
+  hosts: "{{ 'harbor_bootstrapper' if 'harbor_bootstrapper' in groups else [] }}"
+  become: true
+  roles:
+    - 30-infra-harbor-bootstrapper
+
+# 2. MicroK8s Cluster
+- name: "Play [Kubernetes]: Provision and Configure MicroK8s Cluster"
+  hosts: "{{ 'microk8s' if 'microk8s' in groups else [] }}"
+  become: true
+  gather_facts: true
+  roles:
+    - 30-infra-microk8s
+
+# 3. Kubeadm Cluster
+- name: "Play [Kubernetes]: Provision and Configure Kubeadm Cluster"
+  hosts: "{{ (groups['master'] | default([])) + (groups['worker'] | default([])) }}"
+  become: true
+  gather_facts: true
+  roles:
+    - 30-infra-kubeadm

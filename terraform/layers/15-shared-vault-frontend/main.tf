@@ -8,7 +8,7 @@ resource "local_file" "bootstrap_ca" {
   file_permission = "0644"
 }
 
-module "vault_cluster" {
+module "shared_vault" {
   source = "../../middleware/ha-service-kvm-general"
 
   # Identity & Service Definitions
