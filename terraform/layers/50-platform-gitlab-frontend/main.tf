@@ -139,9 +139,7 @@ module "coredns_config" {
 
 module "reloader" {
   source = "../../modules/kubernetes-addons/reloader"
-  harbor_oci_config = {
-    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
-  }
+  harbor_oci_config = local.reloader_oci_config
 }
 
 resource "kubernetes_namespace" "gitlab_ns" {
@@ -171,20 +169,7 @@ module "gitlab_core" {
   }
 
   # HCL declaration for Reloader annotations
-  helm_values_override = {
-    gitlab = {
-      webservice = {
-        annotations = {
-          "reloader.stakater.com/auto" = "true"
-        }
-      }
-      sidekiq = {
-        annotations = {
-          "reloader.stakater.com/auto" = "true"
-        }
-      }
-    }
-  }
+  helm_values_override = local.gitlab_reloader_annotations
 
   # GitLab Application Configuration
   gitlab_config = {

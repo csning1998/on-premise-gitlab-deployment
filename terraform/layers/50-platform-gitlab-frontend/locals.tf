@@ -145,3 +145,25 @@ locals {
   s3_region          = "us-east-1"
   minio_function_map = local.state.provision_databases.minio_function_map
 }
+
+# 8. Addons Configuration (Reloader)
+locals {
+  reloader_oci_config = {
+    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  }
+
+  gitlab_reloader_annotations = {
+    gitlab = {
+      webservice = {
+        annotations = {
+          "reloader.stakater.com/auto" = "true"
+        }
+      }
+      sidekiq = {
+        annotations = {
+          "reloader.stakater.com/auto" = "true"
+        }
+      }
+    }
+  }
+}

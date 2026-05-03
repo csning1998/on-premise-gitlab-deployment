@@ -63,10 +63,8 @@ module "coredns_config" {
 }
 
 module "reloader" {
-  source = "../../modules/kubernetes-addons/reloader"
-  harbor_oci_config = {
-    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
-  }
+  source            = "../../modules/kubernetes-addons/reloader"
+  harbor_oci_config = local.reloader_oci_config
 }
 
 resource "kubernetes_namespace" "harbor" {
@@ -108,6 +106,8 @@ module "harbor_core" {
     dns_sans       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san
   }
 
+  helm_values_override = local.harbor_reloader_annotations
+
   ingress_config = {
     class_name      = var.harbor_helm_config.ingress_class
     tls_secret_name = var.harbor_helm_config.tls_secret_name
@@ -131,19 +131,6 @@ module "harbor_core" {
       access_key = local.minio_access_key
       secret_key = local.minio_secret_key
       endpoint   = "https://${local.minio_fqdn}" # Harbor chart uses this
-    }
-  }
-
-  helm_values_override = {
-    core = {
-      podAnnotations = {
-        "reloader.stakater.com/auto" = "true"
-      }
-    }
-    jobservice = {
-      podAnnotations = {
-        "reloader.stakater.com/auto" = "true"
-      }
     }
   }
 
