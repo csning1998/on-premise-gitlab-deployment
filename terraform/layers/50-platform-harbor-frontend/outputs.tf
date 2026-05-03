@@ -23,3 +23,13 @@ output "cert_manager_info" {
     issuer_name = module.platform_trust_engine.issuer_name
   }
 }
+
+output "harbor_helm_metadata" {
+  description = "Detailed metadata of the deployed Harbor Helm release"
+  value       = module.harbor_core.helm_release_metadata
+}
+
+output "reloader_helm_metadata" {
+  description = "Detailed metadata of the deployed Reloader Helm release"
+  value       = module.reloader.helm_release_metadata
+}

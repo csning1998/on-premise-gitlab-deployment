@@ -69,7 +69,8 @@ locals {
   api_endpoint = "https://${local.state.kubeadm.service_vip}:${local.api_port}"
 
   # Cluster CA from ConfigMap
-  cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
+  cluster_ca  = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
+  postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
   vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
@@ -144,4 +145,28 @@ locals {
 locals {
   s3_region          = "us-east-1"
   minio_function_map = local.state.provision_databases.minio_function_map
+}
+
+# 8. Addons Configuration (Reloader)
+locals {
+  reloader_oci_config = {
+    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  }
+
+  # Internal helper for reloader annotations to avoid duplication across components
+  _gitlab_reloader_common = {
+    deployment = {
+      annotations = {
+        "reloader.stakater.com/auto"          = "true"
+        "secret.reloader.stakater.com/reload" = local.postgres_ca
+      }
+    }
+  }
+
+  gitlab_reloader_annotations = {
+    gitlab = {
+      webservice = local._gitlab_reloader_common
+      sidekiq    = local._gitlab_reloader_common
+    }
+  }
 }

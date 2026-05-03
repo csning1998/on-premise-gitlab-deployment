@@ -114,3 +114,23 @@ locals {
     "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_registry
   }
 }
+
+# 7. Addons Configuration (Reloader)
+locals {
+  reloader_oci_config = {
+    repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
+  }
+
+  # Internal helper for reloader annotations to avoid duplication across components
+  _harbor_reloader_common = {
+    podAnnotations = {
+      "secret.reloader.stakater.com/reload" = local.ca_bundle_config.name
+    }
+  }
+
+  harbor_reloader_annotations = {
+    core       = local._harbor_reloader_common
+    jobservice = local._harbor_reloader_common
+    registry   = local._harbor_reloader_common
+  }
+}
