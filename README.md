@@ -360,7 +360,82 @@ Successful execution and the display of virtual machines—regardless of whether
     sudo sysctl -w net.ipv4.conf.default.rp_filter=2
     ```
 
-2.  Libvirt's bridge network sends traffic to the Host machine's `iptables` by default. Therefore, bridge network traffic must be disabled from entering the Host's `iptables` to prevent the Host's firewall (`ufw` or `firewalld`) from interfering with internal Guest communication. Failure to do so may cause mTLS failures between Guests (e.g., between GitLab and Vault). This also ensures that `conntrack` does not take effect on these packets, as they do not enter `netfilter`.
+    Enabling IP forwarding. This primarily allows Guests to access the internet through the Host. This setting is typically enabled by default.
+
+    ```shell
+    sudo sysctl -w net.ipv4.ip_forward=1
+    ```
+
+    The architecture is illustrated as follow:
+
+    ```mermaid
+    sequenceDiagram
+        autonumber
+        participant Client as External Client (Internet)
+        participant VIP as CLB VM (VIP Address)
+        participant App as Backend Services (GitLab/Harbor)
+        participant Host as Host OS (Kernel Tuning)
+
+        Note over Client, Host: [Scenario 1: Asymmetric Routing]
+
+        Client->>VIP: Ingress Request (via VIP)
+        VIP->>App: Load Balance and Forward Request
+        App-->>Host: Direct Return Packet to Client (Different Return Path)
+
+        Note right of Host: Verify Path Validity (rp_filter=2)
+        Host->>Client: Packet Successfully Sent (Route Success)
+
+        Note over Client, Host: [Scenario 2: IP Forwarding]
+
+        App->>Host: System Update / External Resource Request
+        Host->>Client: Forward to Internet via Host (ip_forward=1)
+        Client-->>Host: Data Return
+        Host-->>App: Forward to Virtual Machine
+    ```
+
+2.  Libvirt's bridge network sends traffic to the Host machine's `iptables` by default. Therefore, bridge network traffic must be disabled from entering the Host's `iptables` to prevent the Host's firewall (`ufw` or `firewalld`) from interfering with internal Guest communication.
+
+    ```mermaid
+    graph LR
+        subgraph Host ["Host OS (L2 Bridge Isolation)"]
+            Bridge["Linux Bridge"]
+            Bypass["bridge-nf-call-iptables=0<br/>bridge-nf-call-ip6tables=0"]
+            NF["Netfilter<br/>(firewalld / ufw)"]
+        end
+
+        subgraph GitLab_VM ["GitLab VM (Client)"]
+            GitLab["GitLab"]
+            G_Bundle["Trust Bundle"]
+        end
+
+        subgraph CLB_VM ["CLB VM (Traffic Hub)"]
+            VIP["VIP (Keepalived)"]
+            HAProxy["HAProxy<br/>(TCP Passthrough)"]
+        end
+
+        subgraph Vault_VM ["Vault VM (Server)"]
+            Vault["Vault"]
+            V_Bundle["Trust Bundle"]
+        end
+
+        GitLab -- "1. mTLS Handshake Request" --> Bridge
+        Bridge -- "2. Bypass Netfilter" --> VIP
+        VIP --> HAProxy
+        HAProxy -- "3. Forward Packet" --> Bridge
+        Bridge -- "4. Bypass Netfilter Again" --> Vault
+
+        Bridge -. "If bridge-nf-call=0 is not set" .-> NF
+        NF -. "Block or Interrupt" .-> Fail["TLS Handshake Failed<br/>(Handshake Timeout / Connection Reset)"]
+
+        GitLab <==>|"End-to-End mTLS Tunnel<br/>(Success)"| Vault
+
+        classDef bypass fill:#90EE90,stroke:#2E8B57,color:black
+        classDef fail fill:#FF9999,stroke:#CC0000,color:black
+        class Bypass bypass
+        class Fail fail
+    ```
+
+    Failure to do so may cause mTLS failures between Guests (e.g., between GitLab and Vault). This also ensures that `conntrack`does not take effect on these packets, as they do not enter`netfilter`.
 
     ```shell
     sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
@@ -377,12 +452,6 @@ Successful execution and the display of virtual machines—regardless of whether
     ```
 
     Generally, low-traffic environments may not encounter significant issues even if `firewalld` is left unmanaged. However, in high-traffic scenarios, the firewall may fail to process complex internal TLS handshakes or the `conntrack` table may reach capacity, leading to immediate connection termination and subsequent mTLS handshake failures.
-
-3.  Enabling IP forwarding. This primarily allows Guests to access the internet through the Host. This setting is typically enabled by default.
-
-    ```shell
-    sudo sysctl -w net.ipv4.ip_forward=1
-    ```
 
 #### **Step B.2. Prepare GitHub Credentials for Self-Management**
 

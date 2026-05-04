@@ -353,6 +353,43 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!IMPORTANT]
 > 因為系統是運作在 Centralized Load Balancer 架構之下，節點之間通訊原則上以 **非對稱路由 (Asymmetric Routing)** 形式運作，所以為了確保 **VIP（Keepalived）**、**PKI**、以及 **OCI** 等能正常運作，Host 機必須進行以下設定
 
+```mermaid
+graph TD
+    subgraph Host ["Host OS (宿主機網路層)"]
+        subgraph Netfilter ["Netfilter / Conntrack 堆疊"]
+            RH["Raw Hook (NOTRACK)"]
+            CT["Conntrack 連線追蹤表"]
+        end
+        Bridge["Libvirt Bridge (L2 橋接)"]
+        Fwd["IP Forwarding (路由轉發)"]
+        RP["Reverse Path Filter (路徑過濾)"]
+    end
+
+    subgraph Guests ["Guest VMs (虛擬機群)"]
+        LB["Load Balancer (VIP)"]
+        App["GitLab / Harbor"]
+    end
+
+    %% 情境 1: 虛擬機互聯
+    LB -- "1. mTLS 流量 (L2)" --> Bridge
+    Bridge -- "bridge-nf-call-iptables=0" --> Bypassed["繞過 Netfilter/CT (防止誤殺)"]
+    Bypassed --> App
+
+    %% 情境 2: 宿主機與虛擬機通訊
+    Host -- "2. 本地/管理流量" --> RH
+    RH -- "NOTRACK 規則" --> CT_Bypass["跳過 Conntrack (效能優化)"]
+    CT_Bypass --> LB
+
+    %% 情境 3: 非對稱路由
+    Internet["外部網路 / VIP Ingress"] -- "3. 請求進入" --> LB
+    LB -- "回程路徑不同" --> RP
+    RP -- "rp_filter=2 (Loose Mode)" --> Success["驗證通過 (不掉包)"]
+
+    %% 情境 4: 上網
+    App -- "4. 出站流量" --> Fwd
+    Fwd -- "ip_forward=1" --> Internet
+```
+
 1. 將反向路徑過濾設定為 **loose mode** 防止因非對稱路由架構之下，Linux Kernel 將合法流量判定為 IP 欺騙被丟棄的狀況
 
     ```shell
@@ -360,7 +397,82 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     sudo sysctl -w net.ipv4.conf.default.rp_filter=2
     ```
 
-2. Libvirt 的 bridge 網路預設將流量送往 host 機的 iptables，因此要禁用 bridge 網路流量進入 host 機的 iptables，以防止 host 機的防火牆（`ufw` 或 `firewalld`）干擾 Guest 內部的通訊。如果沒有關閉，可能會導致 guests 之間的 mTLS 失敗（例如 GitLab 到 Vault 之間）。這樣 conntrack 也不會對這些封包生效，因為封包根本不進 `netfilter`
+    開啟 IP 轉發功能，主要是讓 guests 可以透過 host 上網。通常這設定會預設開啟
+
+    ```shell
+    sudo sysctl -w net.ipv4.ip_forward=1
+    ```
+
+    架構圖如下
+
+    ```mermaid
+    sequenceDiagram
+        autonumber
+        participant Client as External Client (Internet)
+        participant VIP as CLB VM (VIP Address)
+        participant App as Backend Services (GitLab/Harbor)
+        participant Host as Host OS (Kernel Tuning)
+
+        Note over Client, Host: [Scenario 1: Asymmetric Routing]
+
+        Client->>VIP: Ingress Request (via VIP)
+        VIP->>App: Load Balance and Forward Request
+        App-->>Host: Direct Return Packet to Client (Different Return Path)
+
+        Note right of Host: Verify Path Validity (rp_filter=2)
+        Host->>Client: Packet Successfully Sent (Route Success)
+
+        Note over Client, Host: [Scenario 2: IP Forwarding]
+
+        App->>Host: System Update / External Resource Request
+        Host->>Client: Forward to Internet via Host (ip_forward=1)
+        Client-->>Host: Data Return
+        Host-->>App: Forward to Virtual Machine
+    ```
+
+2. Libvirt 的 bridge 網路預設將流量送往 host 機的 iptables，因此要禁用 bridge 網路流量進入 host 機的 iptables，以防止 host 機的防火牆（`ufw` 或 `firewalld`）干擾 Guest 內部的通訊
+
+    ```mermaid
+    graph LR
+        subgraph Host ["Host OS (L2 Bridge Isolation)"]
+            Bridge["Linux Bridge"]
+            Bypass["bridge-nf-call-iptables=0<br/>bridge-nf-call-ip6tables=0"]
+            NF["Netfilter<br/>(firewalld / ufw)"]
+        end
+
+        subgraph GitLab_VM ["GitLab VM (Client)"]
+            GitLab["GitLab"]
+            G_Bundle["Trust Bundle"]
+        end
+
+        subgraph CLB_VM ["CLB VM (Traffic Hub)"]
+            VIP["VIP (Keepalived)"]
+            HAProxy["HAProxy<br/>(TCP Passthrough)"]
+        end
+
+        subgraph Vault_VM ["Vault VM (Server)"]
+            Vault["Vault"]
+            V_Bundle["Trust Bundle"]
+        end
+
+        GitLab -- "1. mTLS Handshake Request" --> Bridge
+        Bridge -- "2. Bypass Netfilter" --> VIP
+        VIP --> HAProxy
+        HAProxy -- "3. Forward Packet" --> Bridge
+        Bridge -- "4. Bypass Netfilter Again" --> Vault
+
+        Bridge -. "If bridge-nf-call=0 is not set" .-> NF
+        NF -. "Block or Interrupt" .-> Fail["TLS Handshake Failed<br/>(Handshake Timeout / Connection Reset)"]
+
+        GitLab <==>|"End-to-End mTLS Tunnel<br/>(Success)"| Vault
+
+        classDef bypass fill:#90EE90,stroke:#2E8B57,color:black
+        classDef fail fill:#FF9999,stroke:#CC0000,color:black
+        class Bypass bypass
+        class Fail fail
+    ```
+
+    如果沒有關閉，可能會導致 guests 之間的 mTLS 失敗（例如 GitLab 到 Vault 之間）。這樣 conntrack 也不會對這些封包生效，因為封包根本不進 `netfilter`
 
     ```shell
     sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
@@ -377,12 +489,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     ```
 
     通常小流量環境不管 `firewalld` 不會有太多問題，但如果是大流量狀態，就可能會因為看不懂虛擬機內部的複雜 TLS 握手，或是因為 conntrack 表滿了，直接中斷該連線而出現 mTLS 交握失敗
-
-3. 開啟 IP 轉發功能，主要是讓 guests 可以透過 host 上網。通常這設定會預設開啟
-
-    ```shell
-    sudo sysctl -w net.ipv4.ip_forward=1
-    ```
 
 #### **Step B.2. Prepare GitHub Credentials for Self-Management**
 
