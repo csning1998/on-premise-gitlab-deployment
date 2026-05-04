@@ -5,8 +5,8 @@ output "vault_pki_path" {
 }
 
 output "pki_root_ca_certificate_b64" {
-  description = "The root CA certificate of the PKI engine"
-  value       = base64encode(vault_pki_secret_backend_root_cert.prod_root_ca.certificate)
+  description = "The intermediate CA certificate of the PKI engine (signed by Infrastructure Root)"
+  value       = base64encode(vault_pki_secret_backend_root_sign_intermediate.signed_int.certificate)
 }
 
 output "pki_roles" {

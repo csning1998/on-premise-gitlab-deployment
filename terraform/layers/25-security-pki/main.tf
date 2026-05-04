@@ -13,11 +13,13 @@ module "vault_pki_setup" {
     vault = vault.production
   }
 
-  vault_addr          = local.sys_vault_addr
-  root_domain         = local.root_domain
-  root_ca_common_name = local.root_ca_common_name
-  pki_roles           = local.all_roles
-  pki_engine_config   = var.vault_pki_engine_config
+  vault_addr        = local.sys_vault_addr
+  root_domain       = local.root_domain
+  pki_settings      = local.state.metadata.global_pki_settings
+  root_ca_cert      = base64decode(local.state.metadata.global_vault_pki_b64.ca_cert_b64)
+  root_ca_key       = base64decode(local.state.metadata.global_vault_pki_b64.root_key_b64)
+  pki_roles         = local.all_roles
+  pki_engine_config = var.vault_pki_engine_config
 }
 
 # 1. Workload Identities for AppRole (Dependencies / Baremetal)
