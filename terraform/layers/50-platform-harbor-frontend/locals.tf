@@ -83,7 +83,8 @@ locals {
   ca_bundle_config = {
     name        = "harbor-ca-bundle" # K8s Secret Name
     secret_name = "harbor-ca-bundle" # Helm Chart Reference Name
-    content     = base64decode(local.state.vault_pki.pki_configuration.ca_cert_b64)
+    # Use the aggregated trust bundle from Vault PKI (Root CA + Issuing CA)
+    content = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   }
 }
 
