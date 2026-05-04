@@ -60,9 +60,3 @@ variable "root_ca_cert" {
   type        = string
   sensitive   = true
 }
-
-variable "root_ca_key" {
-  description = "The infrastructure root CA private key (PEM)"
-  type        = string
-  sensitive   = true
-}

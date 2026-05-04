@@ -21,10 +21,12 @@ resource "vault_mount" "pki_root_bootstrap" {
   max_lease_ttl_seconds     = var.pki_engine_config.max_lease_ttl_seconds
 }
 
-# 2b. Import the Infrastructure Root CA (from L00) into the bootstrap engine
-resource "vault_pki_secret_backend_config_ca" "root_ca_config" {
-  backend    = vault_mount.pki_root_bootstrap.path
-  pem_bundle = "${var.root_ca_cert}\n${var.root_ca_key}"
+# 2b. Generate the Infrastructure Root CA internally within the bootstrap engine
+resource "vault_pki_secret_backend_root_cert" "root_ca" {
+  backend     = vault_mount.pki_root_bootstrap.path
+  type        = "internal"
+  common_name = var.pki_settings.root_ca_common_name
+  ttl         = "87600h" # 10 Years
 }
 
 # 2c. Generate Intermediate CSR from the Production Engine
@@ -39,7 +41,7 @@ resource "vault_pki_secret_backend_intermediate_cert_request" "prod_int_csr" {
 
 # 2d. Sign the Intermediate CSR using the Bootstrap Root (Referencing Vault Docs)
 resource "vault_pki_secret_backend_root_sign_intermediate" "signed_int" {
-  depends_on = [vault_pki_secret_backend_config_ca.root_ca_config]
+  depends_on = [vault_pki_secret_backend_root_cert.root_ca]
   backend    = vault_mount.pki_root_bootstrap.path
 
   csr                  = vault_pki_secret_backend_intermediate_cert_request.prod_int_csr.csr
@@ -52,7 +54,7 @@ resource "vault_pki_secret_backend_root_sign_intermediate" "signed_int" {
 # 2e. Set the signed Intermediate certificate back to the Production Engine
 resource "vault_pki_secret_backend_intermediate_set_signed" "prod_int_signed" {
   backend     = vault_mount.pki_prod.path
-  certificate = vault_pki_secret_backend_root_sign_intermediate.signed_int.certificate
+  certificate = "${vault_pki_secret_backend_root_sign_intermediate.signed_int.certificate}\n${vault_pki_secret_backend_root_cert.root_ca.certificate}"
 }
 
 # CRL/OSCP URL
