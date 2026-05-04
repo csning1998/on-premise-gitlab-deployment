@@ -59,6 +59,14 @@ data "terraform_remote_state" "kubeadm" {
   }
 }
 
+# 0. Infrastructure Provisioning State
+data "terraform_remote_state" "provision" {
+  backend = "local"
+  config = {
+    path = "../40-provision-gitlab-frontend/terraform.tfstate"
+  }
+}
+
 # Harbor Bootstrapper State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"

@@ -12,7 +12,6 @@ resource "kubernetes_secret" "gitlab_ca_bundle" {
 
   lifecycle {
     ignore_changes = [
-      data,
       metadata[0].labels,
       metadata[0].annotations,
     ]
