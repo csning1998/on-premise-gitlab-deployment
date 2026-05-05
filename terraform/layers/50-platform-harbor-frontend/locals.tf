@@ -10,6 +10,7 @@ locals {
     microk8s_provision   = data.terraform_remote_state.microk8s_provision.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
+    provision_databases  = data.terraform_remote_state.provision_databases.outputs
   }
 }
 
@@ -69,10 +70,18 @@ locals {
 
 # 4. Vault KV Secrets
 locals {
-  harbor_pg_db_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
+  # Harbor Application Database Context
+  harbor_db = {
+    username = local.state.provision_databases.postgres_connection_info.username
+    password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
+    database = local.state.provision_databases.postgres_connection_info.database
+    host     = local.state.provision_databases.postgres_connection_info.host
+    port     = local.state.provision_databases.postgres_connection_info.port
+  }
+
   harbor_admin_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
 
-  # Database & Storage Credentials discovered from vault
+  # Infrastructure Credentials discovered from vault
   redis_password   = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
   minio_access_key = data.vault_kv_secret_v2.s3_vars.data["access_key"]
   minio_secret_key = data.vault_kv_secret_v2.s3_vars.data["secret_key"]

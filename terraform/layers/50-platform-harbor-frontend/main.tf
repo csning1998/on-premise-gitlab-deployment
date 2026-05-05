@@ -118,7 +118,7 @@ module "harbor_core" {
   external_services = {
     postgres = {
       host     = local.postgres_fqdn
-      password = local.harbor_pg_db_password
+      password = local.harbor_db.password
       port     = local.pg_port
     }
     redis = {

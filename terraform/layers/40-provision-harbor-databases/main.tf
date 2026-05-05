@@ -44,6 +44,12 @@ module "harbor_db_init" {
   }
 }
 
+# Random password for Harbor admin
+resource "random_password" "harbor_admin_password" {
+  length  = 24
+  special = false
+}
+
 # Persist generated database credentials to Vault (SSoT)
 resource "vault_kv_secret_v2" "harbor_db_password" {
   provider = vault.production
@@ -51,5 +57,6 @@ resource "vault_kv_secret_v2" "harbor_db_password" {
   name     = "on-premise-gitlab-deployment/harbor/app"
   data_json = jsonencode({
     harbor_pg_db_password = random_password.harbor_db_password.result
+    harbor_admin_password = random_password.harbor_admin_password.result
   })
 }

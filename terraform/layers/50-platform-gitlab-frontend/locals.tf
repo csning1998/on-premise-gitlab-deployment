@@ -79,11 +79,14 @@ locals {
   # GitLab Application Database Context
   gitlab_db = {
     username = local.state.provision_databases.postgres_connection_info.username
-    password = local.state.provision_databases.postgres_connection_info.password
+    password = data.vault_kv_secret_v2.app_vars.data["gitlab_pg_db_password"]
     database = local.state.provision_databases.postgres_connection_info.database
     host     = local.state.provision_databases.postgres_connection_info.host
     port     = local.state.provision_databases.postgres_connection_info.port
   }
+
+  # Infrastructure Credentials discovered from vault
+  redis_password = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
 }
 
 # 5. CA Bundle Configuration

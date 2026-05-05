@@ -76,7 +76,7 @@ module "gitlab_core" {
     redis = {
       host     = local.redis_vip
       port     = local.redis_port
-      password = local.state.provision_databases.redis_connection_info.password
+      password = local.redis_password
       scheme   = "rediss"
     }
 

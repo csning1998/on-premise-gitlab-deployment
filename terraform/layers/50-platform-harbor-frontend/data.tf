@@ -60,6 +60,14 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# 0. Database Provisioning State
+data "terraform_remote_state" "provision_databases" {
+  backend = "local"
+  config = {
+    path = "../40-provision-harbor-databases/terraform.tfstate"
+  }
+}
+
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
 data "vault_kv_secret_v2" "harbor_bootstrapper_vars" {
   provider = vault.production
