@@ -103,14 +103,16 @@ locals {
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
 
   # GitLab Application Database Context
-  # Directly sourcing from Layer 40 to avoid Vault circular dependencies within Layer 50
+  # Directly sourcing from Vault to avoid state output dependencies
   gitlab_db = {
     username = local.state.provision_databases.postgres_connection_info.username
-    password = local.state.provision_databases.postgres_connection_info.password
+    password = data.vault_kv_secret_v2.app_vars.data["gitlab_pg_db_password"]
     database = local.state.provision_databases.postgres_connection_info.database
     host     = local.state.provision_databases.postgres_connection_info.host
     port     = local.state.provision_databases.postgres_connection_info.port
   }
+
+  redis_password = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
 }
 
 # 5. DNS Configuration (Standardized)

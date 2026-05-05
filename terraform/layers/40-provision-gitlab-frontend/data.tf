@@ -103,3 +103,16 @@ ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
 }
+
+# Database Credentials (Postgres/Redis)
+data "vault_kv_secret_v2" "db_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/databases"
+}
+
+data "vault_kv_secret_v2" "app_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app"
+}
