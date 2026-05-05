@@ -1,4 +1,14 @@
 ---
+- name: "Role 81: Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ microk8s_static_route_to }}"
+        via: "{{ microk8s_static_route_via }}"
+        metric: "{{ microk8s_static_route_metric }}"
+  when: microk8s_static_route_to is defined
+
 - name: "Section A. Setup MicroK8s Prerequisites"
   ansible.builtin.include_tasks: B-prerequisites.yaml
 

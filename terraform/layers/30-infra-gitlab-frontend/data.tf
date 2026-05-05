@@ -55,8 +55,7 @@ data "terraform_remote_state" "harbor_proxy" {
   }
 }
 
-data "vault_kv_secret_v2" "guest_vm" {
+data "vault_generic_secret" "guest_vm" {
   provider = vault.production
-  mount    = "secret"
-  name     = "on-premise-gitlab-deployment/guest_vm"
+  path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }

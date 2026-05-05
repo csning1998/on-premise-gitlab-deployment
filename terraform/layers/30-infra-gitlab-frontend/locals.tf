@@ -60,10 +60,10 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Physical Identity (Mapped to Component PKI)
@@ -141,6 +141,11 @@ locals {
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+
+    # Asymmetric Routing Configuration
+    kubeadm_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    kubeadm_static_route_via    = local.p_net_config.lb_config.vip
+    kubeadm_static_route_metric = 100
 
     # Compatibility Aliases (Optional)
     vip        = local.p_net_config.lb_config.vip

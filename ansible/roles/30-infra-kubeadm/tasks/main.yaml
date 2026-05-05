@@ -1,4 +1,14 @@
 ---
+- name: "Role 81: Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ kubeadm_static_route_to }}"
+        via: "{{ kubeadm_static_route_via }}"
+        metric: "{{ kubeadm_static_route_metric }}"
+  when: kubeadm_static_route_to is defined
+
 - name: "Section A. Setup Kubeadm Prerequisites"
   ansible.builtin.include_tasks: A-prerequisites.yaml
 

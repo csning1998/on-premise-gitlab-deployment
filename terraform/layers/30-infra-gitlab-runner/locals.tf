@@ -43,10 +43,10 @@ locals {
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Identity Prep (GitLab Runner SANs)
@@ -89,6 +89,11 @@ locals {
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
     metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
     global_mss                 = local.state.metadata.global_network_baseline.global_mss
+
+    # Asymmetric Routing Configuration (Standardized Postgres/Redis pattern)
+    microk8s_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    microk8s_static_route_via    = local.p_net_config.lb_config.vip
+    microk8s_static_route_metric = 100
 
     # Cluster Topology
     microk8s_cluster_ips = [
