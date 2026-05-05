@@ -56,16 +56,16 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Service Specific Credentials
   sec_app_creds = {
-    harbor_admin_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_admin_password"]
-    harbor_pg_db_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_pg_db_password"]
+    harbor_admin_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_admin_password"]
+    harbor_pg_db_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_pg_db_password"]
   }
 
   # Component Specific Vault Identities
