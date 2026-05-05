@@ -353,43 +353,6 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!IMPORTANT]
 > 因為系統是運作在 Centralized Load Balancer 架構之下，節點之間通訊原則上以 **非對稱路由 (Asymmetric Routing)** 形式運作，所以為了確保 **VIP（Keepalived）**、**PKI**、以及 **OCI** 等能正常運作，Host 機必須進行以下設定
 
-```mermaid
-graph TD
-    subgraph Host ["Host OS (宿主機網路層)"]
-        subgraph Netfilter ["Netfilter / Conntrack 堆疊"]
-            RH["Raw Hook (NOTRACK)"]
-            CT["Conntrack 連線追蹤表"]
-        end
-        Bridge["Libvirt Bridge (L2 橋接)"]
-        Fwd["IP Forwarding (路由轉發)"]
-        RP["Reverse Path Filter (路徑過濾)"]
-    end
-
-    subgraph Guests ["Guest VMs (虛擬機群)"]
-        LB["Load Balancer (VIP)"]
-        App["GitLab / Harbor"]
-    end
-
-    %% 情境 1: 虛擬機互聯
-    LB -- "1. mTLS 流量 (L2)" --> Bridge
-    Bridge -- "bridge-nf-call-iptables=0" --> Bypassed["繞過 Netfilter/CT (防止誤殺)"]
-    Bypassed --> App
-
-    %% 情境 2: 宿主機與虛擬機通訊
-    Host -- "2. 本地/管理流量" --> RH
-    RH -- "NOTRACK 規則" --> CT_Bypass["跳過 Conntrack (效能優化)"]
-    CT_Bypass --> LB
-
-    %% 情境 3: 非對稱路由
-    Internet["外部網路 / VIP Ingress"] -- "3. 請求進入" --> LB
-    LB -- "回程路徑不同" --> RP
-    RP -- "rp_filter=2 (Loose Mode)" --> Success["驗證通過 (不掉包)"]
-
-    %% 情境 4: 上網
-    App -- "4. 出站流量" --> Fwd
-    Fwd -- "ip_forward=1" --> Internet
-```
-
 1. 將反向路徑過濾設定為 **loose mode** 防止因非對稱路由架構之下，Linux Kernel 將合法流量判定為 IP 欺騙被丟棄的狀況
 
     ```shell
