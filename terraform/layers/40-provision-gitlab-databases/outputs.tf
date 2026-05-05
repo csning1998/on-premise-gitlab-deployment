@@ -41,11 +41,9 @@ output "postgres_client_cert_b64" {
 output "redis_connection_info" {
   description = "Redis connection info for Layer 50 credentials"
   value = {
-    host     = local.state.network["core-gitlab-redis"].lb_config.vip
-    port     = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-    password = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
+    host = local.state.network["core-gitlab-redis"].lb_config.vip
+    port = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
   }
-  sensitive = true
 }
 
 output "minio_credentials" {

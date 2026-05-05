@@ -68,7 +68,7 @@ data "terraform_remote_state" "harbor_bootstrapper" {
 }
 
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
-data "vault_kv_secret_v2" "harbor_bootstrapper" {
+ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
@@ -83,7 +83,7 @@ data "terraform_remote_state" "provision_databases" {
 }
 
 # 2. Fetch Kubeconfig from Production Vault
-data "vault_kv_secret_v2" "kubeconfig" {
+ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
@@ -98,7 +98,7 @@ data "kubernetes_config_map" "kube_root_ca" {
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)
-data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"

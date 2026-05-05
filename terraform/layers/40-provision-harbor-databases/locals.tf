@@ -21,11 +21,11 @@ locals {
   # Database Context (Aligned with GitLab structure)
   postgres_rw_port  = local.state.network["core-harbor-postgres"].lb_config.ports["rw-proxy"].frontend_port
   postgres_vip      = local.state.network["core-harbor-postgres"].lb_config.vip
-  postgres_password = data.vault_kv_secret_v2.db_vars.data["pg_superuser_password"]
+  postgres_password = ephemeral.vault_kv_secret_v2.db_vars.data["pg_superuser_password"]
 
   # Minio Discovery
   minio_url = "https://${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
 
   # Harbor Context
-  harbor_pg_db_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
+  harbor_pg_db_password = ephemeral.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
 }
