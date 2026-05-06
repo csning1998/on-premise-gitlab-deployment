@@ -134,6 +134,22 @@ locals {
       {
         host = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
         ip   = local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip
+      },
+      {
+        host = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
+        ip   = local.state.vault_sys.service_vip
+      },
+      {
+        host = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["gitlab-postgres"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["gitlab-redis"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["gitlab-minio"]
       }
     ]
 
@@ -143,9 +159,18 @@ locals {
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
 
     # Asymmetric Routing Configuration
-    kubeadm_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    kubeadm_static_route_via    = local.p_net_config.lb_config.vip
-    kubeadm_static_route_metric = 100
+    kubeadm_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.p_net_config.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "harbor-bootstrapper-frontend", "harbor-frontend",
+        "gitlab-postgres", "gitlab-redis", "gitlab-minio"
+      ], name)
+    ]
 
     # Compatibility Aliases (Optional)
     vip        = local.p_net_config.lb_config.vip

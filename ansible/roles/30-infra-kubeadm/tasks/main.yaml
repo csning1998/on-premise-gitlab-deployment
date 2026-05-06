@@ -3,14 +3,21 @@
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
-    routing_static_routes:
-      - to: "{{ kubeadm_static_route_to }}"
-        via: "{{ kubeadm_static_route_via }}"
-        metric: "{{ kubeadm_static_route_metric }}"
-  when: kubeadm_static_route_to is defined
+    routing_static_routes: "{{ kubeadm_static_routes }}"
+  when: kubeadm_static_routes is defined
 
 - name: "Section A. Setup Kubeadm Prerequisites"
   ansible.builtin.include_tasks: A-prerequisites.yaml
+
+- name: "Role 82: Prepare Vault Agent for Kubernetes Nodes"
+  ansible.builtin.include_role:
+    name: 82-utils-vault-agent
+  vars:
+    vault_agent_owner: "root"
+    vault_agent_group: "root"
+    vault_agent_cert_base_dir: "/etc/kubernetes/certs"
+    vault_agent_post_command: "systemctl restart containerd"
+    vault_agent_ip_sans: "{{ kubeadm_advertise_ip }},{{ kubeadm_ha_virtual_ip }}"
 
 - name: "Section B. Configure HAProxy (Masters)"
   ansible.builtin.include_tasks: B-haproxy.yaml

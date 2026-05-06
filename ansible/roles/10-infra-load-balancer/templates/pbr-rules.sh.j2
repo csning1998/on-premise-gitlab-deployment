@@ -1,11 +1,18 @@
 #!/bin/bash
+
 set -e
 
+# 0. Global Preference: Treat all internal 172.16.0.0/16 traffic via main table
+#    This prevents source-based routing from forcing internal replies out through gateways,
+#    ensuring symmetric L2 traffic between internal segments.
+ip rule del to 172.16.0.0/16 lookup main priority 5 2>/dev/null || true
+ip rule add to 172.16.0.0/16 lookup main priority 5
+
 # 1. Inject each VIP's dedicated table and default route
-#    - Ensure idempotency: delete first, then add
+#    - Use explicit priority (100+) to ensure global rule (5) takes precedence
 {% for seg in lb_service_segments %}
 ip rule del from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }} 2>/dev/null || true
-ip rule add from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }}
+ip rule add from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }} priority {{ 100 + loop.index0 }}
 
 #    - Ensure default route exists
 ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} dev {{ seg.interface_alias }} table rt_{{ seg.name | replace('-', '_') }} advmss {{ global_mss }}
@@ -28,10 +35,8 @@ ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scop
 {% endif %}
 {% endfor %}
 
-# 4. Network Performance: MSS Clamping for ALL Service VIPs
-#    Ensures stability for cross-environment traffic (K8s <-> Baremetal).
-#    Standardized on global_mss from L00 metadata.
-{% for seg in lb_service_segments %}
-iptables -t mangle -D FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }} 2>/dev/null || true
-iptables -t mangle -A FORWARD -d {{ seg.vip }} -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }}
-{% endfor %}
+# 4. Network Performance: Global Bidirectional MSS Clamping
+#    Ensures stability for ALL TCP traffic (Forwarded and Local-Proxy) across virtual segments.
+#    This covers both client-to-VIP and CLB-to-backend traffic.
+iptables -t mangle -D POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }} 2>/dev/null || true
+iptables -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss {{ global_mss }}

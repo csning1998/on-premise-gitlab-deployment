@@ -23,7 +23,7 @@ vrrp_sync_group VG_ALL {
 {# Iterate to generate VRRP Instance #}
 {% for segment in lb_service_segments %}
 vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
-    state BACKUP
+    state {{ 'MASTER' if inventory_hostname == groups['load_balancer'][0] else 'BACKUP' }}
     {# Bind to the specific interface alias defined in Inventory, e.g. v_gitlab-frontend #}
     interface {{ segment.interface_alias }}
 
