@@ -12,18 +12,26 @@ locals {
   }
 }
 
-# 1. Unified SSoT Alignment (Flatten nested Layer 00 outputs into a single map)
+# 1. Unified SSoT Alignment (Universal Segment Dictionary)
 locals {
-  # Zip Identity and Network properties into a single O(1) lookup map.
-  # This serves as the "Universal Segment Dictionary" for this layer.
+  # Zip Identity, Network, and VIP properties into a single O(1) lookup map.
   segments_map = merge([
     for s_name, components in local.state.metadata.global_topology_identity : {
       for c_name, identity in components : identity.cluster_name => {
         identity = identity
         network  = local.state.metadata.global_topology_network[s_name][c_name]
+        vip      = lookup(local.state.network.infrastructure_map, identity.cluster_name, { lb_config = { vip = null } }).lb_config.vip
+        s_name   = s_name
+        c_name   = c_name
       }
     }
   ]...)
+
+  # Global Asymmetric Routing Targets (Dynamic Discovery Projection)
+  infrastructure_vips = {
+    for k, v in local.segments_map : "${v.s_name}-${v.c_name}" => v.vip
+    if v.vip != null
+  }
 
   # Projection for module compatibility (SSoT Network Map)
   network_map = { for k, v in local.segments_map : k => v.network }
