@@ -72,15 +72,17 @@ resource "tls_cert_request" "vault_server" {
   private_key_pem = tls_private_key.vault_server.private_key_pem
 
   subject {
-    common_name  = "vault.${var.domain_suffix}"
+    common_name  = local.pki_map["vault-frontend"].dns_san[0]
     organization = "On-Premise GitLab Deployment"
   }
 
-  dns_names = [
-    "vault.${var.domain_suffix}",
-    "vault",
-    "localhost"
-  ]
+  dns_names = concat(
+    local.pki_map["vault-frontend"].dns_san,
+    [
+      "vault",
+      "localhost"
+    ]
+  )
 
   # Inject VIP and all reserved node IPs to avoid TLS validation failures locally.
   ip_addresses = concat(
