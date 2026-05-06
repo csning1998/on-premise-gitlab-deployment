@@ -121,9 +121,9 @@ locals {
 
     # Registry & Image Config
     kubeadm_registry_host        = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    kubeadm_registry_vip         = local.state.harbor_registry.service_vip
-    kubeadm_image_repository     = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
-    kubeadm_dns_image_repository = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
+    kubeadm_registry_vip         = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
+    kubeadm_image_repository     = "${local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
+    kubeadm_dns_image_repository = "${local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
 
     # Port Mappings
     kubeadm_http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
@@ -133,11 +133,11 @@ locals {
     node_extra_hosts = [
       {
         host = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip
+        ip   = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
       },
       {
         host = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-        ip   = local.state.vault_sys.service_vip
+        ip   = local.state.network.infrastructure_vips["vault-frontend"]
       },
       {
         host = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]

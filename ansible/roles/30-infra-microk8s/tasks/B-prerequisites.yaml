@@ -37,11 +37,11 @@
               regex_replace('^' + (item.item | regex_escape()) + '\s+', '') |
               regex_replace('uid \d+', '') |
               trim }}
-          advmss 1300
+          advmss {{ global_mss }}
       loop: "{{ natural_routes.results }}"
       loop_control:
         label: "{{ item.item }}"
-      when: "'advmss 1300' not in item.stdout"
+      when: "('advmss ' + (global_mss | string)) not in item.stdout"
       changed_when: true
 
     - name: "B1e. Force update CA certificates to validate Vault API"

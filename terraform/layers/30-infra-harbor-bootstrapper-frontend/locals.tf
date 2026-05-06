@@ -108,7 +108,7 @@ locals {
     bstrap_harbor_vip              = local.net_physical_infra.lb_config.vip
     bstrap_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
     bstrap_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
-    vault_vip                      = local.state.vault_sys.service_vip
+    vault_vip                      = local.state.network.infrastructure_vips["vault-frontend"]
     global_mss                     = local.state.metadata.global_network_baseline.global_mss
 
     # Cluster Topology
@@ -119,10 +119,18 @@ locals {
       ]
     ][0] # Harbor Bootstrapper is a single component
 
-    # Asymmetric Routing (Flattened)
-    bstrap_harbor_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    bstrap_harbor_static_route_via    = local.net_physical_infra.lb_config.vip
-    bstrap_harbor_static_route_metric = 100
+    # Asymmetric Routing Configuration
+    bstrap_harbor_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.net_physical_infra.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "harbor-bootstrapper-frontend"
+      ], name)
+    ]
 
     # Compatibility Aliases
     access_scope = local.net_physical_infra.network.hostonly.cidr

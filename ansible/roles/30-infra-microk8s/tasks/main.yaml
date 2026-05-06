@@ -3,14 +3,23 @@
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
-    routing_static_routes:
-      - to: "{{ microk8s_static_route_to }}"
-        via: "{{ microk8s_static_route_via }}"
-        metric: "{{ microk8s_static_route_metric }}"
-  when: microk8s_static_route_to is defined
+    routing_static_routes: "{{ microk8s_static_routes }}"
+  when: microk8s_static_routes is defined
 
 - name: "Section A. Setup MicroK8s Prerequisites"
   ansible.builtin.include_tasks: B-prerequisites.yaml
+
+- name: "Role 82: Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-utils-vault-agent
+  vars:
+    vault_agent_owner: root
+    vault_agent_group: root
+    vault_agent_cert_base_dir: /etc/ssl/certs
+    vault_agent_cert_dirs:
+      - /etc/ssl/certs
+    vault_agent_wait_file: /etc/ssl/certs/ca-certificates.crt
+    vault_agent_post_command: update-ca-certificates
 
 - name: "Section B. Cleanup and Prepare Nodes"
   ansible.builtin.include_tasks: C-nodes.yaml
