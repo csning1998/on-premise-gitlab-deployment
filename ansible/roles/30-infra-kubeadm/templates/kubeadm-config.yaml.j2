@@ -8,6 +8,8 @@ nodeRegistration:
       value: "{{ kubeadm_cri_socket }}"
     - name: cgroup-driver
       value: "{{ kubeadm_cgroup_driver }}"
+    - name: node-ip
+      value: "{{ kubeadm_advertise_ip }}"
 localAPIEndpoint:
   advertiseAddress: "{{ kubeadm_advertise_ip }}"
   bindPort: 6443

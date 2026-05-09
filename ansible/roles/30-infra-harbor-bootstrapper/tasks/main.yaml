@@ -3,11 +3,8 @@
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
-    routing_static_routes:
-      - to: "{{ bstrap_harbor_static_route_to }}"
-        via: "{{ bstrap_harbor_static_route_via }}"
-        metric: "{{ bstrap_harbor_static_route_metric }}"
-  when: bstrap_harbor_static_route_to is defined
+    routing_static_routes: "{{ bstrap_harbor_static_routes }}"
+  when: bstrap_harbor_static_routes is defined
 
 - name: "Section A. Setup Harbor Environment"
   ansible.builtin.include_tasks: A-setup.yaml

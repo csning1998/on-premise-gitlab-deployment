@@ -38,3 +38,15 @@
       export TERM=xterm-256color
     mode: "0644"
   when: ansible_distribution == "Ubuntu" and ansible_distribution_version is match("24.04")
+
+- name: "Network: Enable Loose Mode Reverse Path Filtering"
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "2"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - net.ipv4.conf.all.rp_filter
+    - net.ipv4.conf.default.rp_filter

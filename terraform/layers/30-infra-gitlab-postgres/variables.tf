@@ -29,4 +29,3 @@ variable "service_config" {
     }))
   }))
 }
-

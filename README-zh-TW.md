@@ -348,7 +348,112 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
         若指令成功執行並列出虛擬機器（即使清單為空），代表所有必要權限已正確設定
 
-#### **Step B.1. Prepare GitHub Credentials for Self-Management**
+#### **Step B.1. Host OS Kernel Tuning on Network**
+
+> [!IMPORTANT]
+> 因為系統是運作在 Centralized Load Balancer 架構之下，節點之間通訊原則上以 **非對稱路由 (Asymmetric Routing)** 形式運作，所以為了確保 **VIP（Keepalived）**、**PKI**、以及 **OCI** 等能正常運作，Host 機必須進行以下設定
+
+1. 將反向路徑過濾設定為 **loose mode** 防止因非對稱路由架構之下，Linux Kernel 將合法流量判定為 IP 欺騙被丟棄的狀況
+
+    ```shell
+    sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+    sudo sysctl -w net.ipv4.conf.default.rp_filter=2
+    ```
+
+    開啟 IP 轉發功能，主要是讓 guests 可以透過 host 上網。通常這設定會預設開啟
+
+    ```shell
+    sudo sysctl -w net.ipv4.ip_forward=1
+    ```
+
+    架構圖如下
+
+    ```mermaid
+    sequenceDiagram
+        autonumber
+        participant Client as External Client (Internet)
+        participant VIP as CLB VM (VIP Address)
+        participant App as Backend Services (GitLab/Harbor)
+        participant Host as Host OS (Kernel Tuning)
+
+        Note over Client, Host: [Scenario 1: Asymmetric Routing]
+
+        Client->>VIP: Ingress Request (via VIP)
+        VIP->>App: Load Balance and Forward Request
+        App-->>Host: Direct Return Packet to Client (Different Return Path)
+
+        Note right of Host: Verify Path Validity (rp_filter=2)
+        Host->>Client: Packet Successfully Sent (Route Success)
+
+        Note over Client, Host: [Scenario 2: IP Forwarding]
+
+        App->>Host: System Update / External Resource Request
+        Host->>Client: Forward to Internet via Host (ip_forward=1)
+        Client-->>Host: Data Return
+        Host-->>App: Forward to Virtual Machine
+    ```
+
+2. Libvirt 的 bridge 網路預設將流量送往 host 機的 iptables，因此要禁用 bridge 網路流量進入 host 機的 iptables，以防止 host 機的防火牆（`ufw` 或 `firewalld`）干擾 Guest 內部的通訊
+
+    ```mermaid
+    graph LR
+        subgraph Host ["Host OS (L2 Bridge Isolation)"]
+            Bridge["Linux Bridge"]
+            Bypass["bridge-nf-call-iptables=0<br/>bridge-nf-call-ip6tables=0"]
+            NF["Netfilter<br/>(firewalld / ufw)"]
+        end
+
+        subgraph GitLab_VM ["GitLab VM (Client)"]
+            GitLab["GitLab"]
+            G_Bundle["Trust Bundle"]
+        end
+
+        subgraph CLB_VM ["CLB VM (Traffic Hub)"]
+            VIP["VIP (Keepalived)"]
+            HAProxy["HAProxy<br/>(TCP Passthrough)"]
+        end
+
+        subgraph Vault_VM ["Vault VM (Server)"]
+            Vault["Vault"]
+            V_Bundle["Trust Bundle"]
+        end
+
+        GitLab -- "1. mTLS Handshake Request" --> Bridge
+        Bridge -- "2. Bypass Netfilter" --> VIP
+        VIP --> HAProxy
+        HAProxy -- "3. Forward Packet" --> Bridge
+        Bridge -- "4. Bypass Netfilter Again" --> Vault
+
+        Bridge -. "If bridge-nf-call=0 is not set" .-> NF
+        NF -. "Block or Interrupt" .-> Fail["TLS Handshake Failed<br/>(Handshake Timeout / Connection Reset)"]
+
+        GitLab <==>|"End-to-End mTLS Tunnel<br/>(Success)"| Vault
+
+        classDef bypass fill:#90EE90,stroke:#2E8B57,color:black
+        classDef fail fill:#FF9999,stroke:#CC0000,color:black
+        class Bypass bypass
+        class Fail fail
+    ```
+
+    如果沒有關閉，可能會導致 guests 之間的 mTLS 失敗（例如 GitLab 到 Vault 之間）。這樣 conntrack 也不會對這些封包生效，因為封包根本不進 `netfilter`
+
+    ```shell
+    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-arptables=0
+    ```
+
+    然而，當 `bridge-nf-call-*=0` 時，bridge 流量已繞過 `netfilter`，這樣 `NOTRACK` 規則對純 bridge 穿越封包的影響就會有限，因為根本不會觸發 raw hook；但 host 本身產生的流量，例如 host 與 guests 之間的 local traffic、非 bridge 穿越的封包，或 `firewalld` 仍會處理的部分，仍會受 `NOTRACK` 影響。所以可以考慮進一步減少 conntrack table 消耗
+
+    ```shell
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw PREROUTING 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw OUTPUT 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
+    sudo firewall-cmd --reload
+    ```
+
+    通常小流量環境不管 `firewalld` 不會有太多問題，但如果是大流量狀態，就可能會因為看不懂虛擬機內部的複雜 TLS 握手，或是因為 conntrack 表滿了，直接中斷該連線而出現 mTLS 交握失敗
+
+#### **Step B.2. Prepare GitHub Credentials for Self-Management**
 
 > [!NOTE]
 > 這個專案預設使用 [Terraform GitHub Integration](https://registry.terraform.io/providers/integrations/github/latest) 管理 Repository，因此需要 Fine-grained Personal Access Token 的設定。如果 clone 此 repo 的使用者不使用 Terraform GitHub Integration 管理 repo，可以跳過或刪除 `terraform/layers/90-github-meta`，且後續執行不會受影響
@@ -370,7 +475,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 4. 點擊 `Generate token` 並複製產生的 token 供下一步使用
 
-#### **Step B.2. Create Confidential Variable File for HashiCorp Vault**
+#### **Step B.3. Create Confidential Variable File for HashiCorp Vault**
 
 > [!IMPORTANT]
 > **所有機密資料均整合到 HashiCorp Vault 內，且分為 Development mode 與 Production mode。此 repo 預設使用的 Vault 是走 HTTPS 傳輸、且憑證為 Self-signed CA。請依以下步驟正確設定**
@@ -595,7 +700,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!NOTE]
 > 如果要使用遠端來源，通常要設定 `terraform/modules/kubernetes-addons` 路徑中每一個 Helm Chart Module 的`repository` 與 `chart` 資訊。可以參考 #96 當時的 [程式碼紀錄](https://github.com/csning1998-old/on-premise-gitlab-deployment/tree/018233b3032e517b43e52fc4e17bcd3dde7cf52f/terraform/modules/kubernetes-addons)
 
-#### **Step B.3. Understand the Metadata:**
+#### **Step B.4. Understand the Metadata:**
 
 > [!TIP]
 > **Layer 00 (Foundation Metadata)** 是整個專案的「基礎設施元資料庫」與單一事實來源 (SSoT)。
@@ -607,7 +712,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 3. **決定論式連線屬性**：為每台 VM 生成固定的 MAC 地址與 DNS SANs。這樣即便資源重建，其物理特徵與 TLS 憑證辨識等依然維持不變
 4. **跨層級引用標準**：透過 `terraform_remote_state` 進行資料驅動佈署，提供給後續所有層級（如 `30-infra-xxx`）使用
 
-#### **Step B.4. Create Variable File for Terraform:**
+#### **Step B.5. Create Variable File for Terraform:**
 
 > [!NOTE]
 > 這些是建立 Clusters 的變數檔案
@@ -645,7 +750,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!NOTE]
 > 以下內容有關 CLI 指令，會使用 `tofu` 為主；使用 Terraform 的話，只需要把 `tofu` 替換成 `terraform` 即可
 
-#### **Step B.5. Vault PKI 憑證輪替規則:**
+#### **Step B.6. Vault PKI 憑證輪替規則:**
 
 有關 Vault PKI Rotation 相關設定
 
@@ -659,7 +764,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 3.  **Leaf Certificate Rotation**：Leaf 憑證由 L25 `terraform.tfvars` 中的 `max_lease_ttl_seonds` 決定，其中在 Postgres、Redis、MinIO、Bootstrapper Harbor 中，都有佈署 **Vault Agent** 進行 Sidecar 輪替。Vault Agent 會在憑證過期前自動向 Vault 申請新憑證，隨後寫入其內部的 `/etc/vault.d/` 路徑下
 
-#### **Step B.6. Provision the GitHub Repository with Terraform:**
+#### **Step B.7. Provision the GitHub Repository with Terraform:**
 
 > [!NOTE]
 > 若本 repository 是 clone 來個人使用，此步驟（B.4）可手動進入 `terraform/layers/90-github-meta` 路徑並執行 `tofu apply` 完成。以下內容僅提供 imperative 手動程序參考
@@ -701,7 +806,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     ruleset_id = <a-numeric-id>
     ```
 
-#### **Step B.7. Export Certs of Services:**
+#### **Step B.8. Export Certs of Services:**
 
 匯出服務憑證可以讓使用者在 Host 端直接瀏覽以下服務，且不會出現憑證錯誤
 
@@ -723,7 +828,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
     172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
     ```
 
-2.  由於此 repo 在 L25 已經將 Infrastructure CA 與 Service CA 聚合成單一 `trust-bundle.crt`，讓 Host 同時信任這兩個獨立的憑證根。可以參考 _Step B.5_ 內容，現在可以 `terraform/layers/25-security-pki/tls/` 路徑內確認聚合後的憑證檔案
+2.  由於此 repo 在 L25 已經將 Infrastructure CA 與 Service CA 聚合成單一 `trust-bundle.crt`，讓 Host 同時信任這兩個獨立的憑證根。可以參考 _Step B.6_ 內容，現在可以 `terraform/layers/25-security-pki/tls/` 路徑內確認聚合後的憑證檔案
 
     執行以下指令將兩份 CA 匯入作業系統：
     - **RHEL / CentOS / Fedora:**

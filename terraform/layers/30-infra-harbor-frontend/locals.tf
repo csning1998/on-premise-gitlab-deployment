@@ -43,10 +43,10 @@ locals {
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Identity Prep (Harbor Frontend SANs)
@@ -85,10 +85,25 @@ locals {
 
     # Networking & HA
     microk8s_ingress_vip       = local.net_service_vip
+    api_server_vip             = local.net_service_vip
+    api_server_port            = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
     microk8s_allowed_subnet    = local.p_net_config.network.hostonly.cidr
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
-    metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
     global_mss                 = local.state.metadata.global_network_baseline.global_mss
+
+    # Asymmetric Routing Configuration
+    microk8s_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.p_net_config.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "harbor-bootstrapper-frontend",
+        "harbor-postgres", "harbor-redis", "harbor-minio"
+      ], name)
+    ]
 
     # Cluster Topology
     microk8s_cluster_ips = [
@@ -98,15 +113,37 @@ locals {
 
     # Registry & Proxy Config
     registry_host       = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    registry_vip        = local.state.harbor_registry.service_vip
+    registry_vip        = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
 
     # Host Overrides
     node_extra_hosts = [
-      { host = local.svc_fqdn, ip = local.net_service_vip },
-      { host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0], ip = local.state.harbor_registry.service_vip }
+      {
+        host = local.svc_fqdn
+        ip   = local.net_service_vip
+      },
+      {
+        host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["vault-frontend"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["harbor-postgres"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["harbor-postgres"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["harbor-redis"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["harbor-redis"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["harbor-minio"]
+      }
     ]
   }
 

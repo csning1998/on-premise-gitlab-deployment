@@ -6,6 +6,8 @@ nodeRegistration:
   kubeletExtraArgs:
     - name: "cgroup-driver"
       value: "{{ k8s_cgroup_driver }}"
+    - name: "node-ip"
+      value: "{{ kubeadm_advertise_ip }}"
 discovery:
   bootstrapToken:
 {% if (groups['master'] | length) > 1 %}

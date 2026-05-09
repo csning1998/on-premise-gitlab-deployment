@@ -48,3 +48,14 @@ module "minio_gitlab_config" {
   vault_secret_path_prefix = "on-premise-gitlab-deployment/gitlab/app/s3_credentials"
   minio_server_url         = local.minio_url
 }
+
+# Persist generated database credentials to Vault (SSoT)
+resource "vault_kv_secret_v2" "gitlab_app_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app"
+
+  data_json = jsonencode({
+    gitlab_pg_db_password = random_password.gitlab_db_password.result
+  })
+}

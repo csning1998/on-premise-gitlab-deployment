@@ -18,15 +18,16 @@ resource "helm_release" "ingress_nginx" {
           default = true
         }
 
-        kind = "DaemonSet"
+        kind        = "DaemonSet"
+        hostNetwork = true
+        dnsPolicy   = "ClusterFirstWithHostNet"
 
         service = {
-          type           = "LoadBalancer"
-          loadBalancerIP = var.ingress_vip
+          type = "ClusterIP"
         }
 
-        extraArgs = {
-          "enable-ssl-passthrough" = "true"
+        config = {
+          "use-proxy-protocol" = "true"
         }
       }
     })

@@ -12,7 +12,8 @@ network_baseline = {
 
 # The Single Source of Truth for the Root CA Identity
 pki_settings = {
-  root_ca_common_name = "on-premise-gitlab-deployment-root-ca"
+  root_ca_common_name         = "On-prem Infrastructure Root CA"
+  intermediate_ca_common_name = "On-prem Infrastructure Intermediate CA"
 }
 
 /** Service Catalog Definition rules:
@@ -109,7 +110,6 @@ service_catalog = {
         provider   = "kvm"
         runtime    = "kubeadm"
         cidr_index = 126
-        tags       = ["self-managed-lb"]
 
         ip_range = { start_ip = 200, end_ip = 220 }
         ports = {

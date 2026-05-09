@@ -15,7 +15,7 @@ resource "vault_kv_secret_v2" "gitlab_db_keys" {
 
   data_json = jsonencode({
     username = local.state.provision_databases.postgres_connection_info.username
-    password = local.state.provision_databases.postgres_connection_info.password
+    password = local.gitlab_db.password
     database = local.state.provision_databases.postgres_connection_info.database
     host     = local.state.provision_databases.postgres_connection_info.host
     port     = local.state.provision_databases.postgres_connection_info.port
@@ -36,7 +36,7 @@ resource "vault_kv_secret_v2" "gitlab_redis_keys" {
   name     = "on-premise-gitlab-deployment/gitlab/app/redis"
 
   data_json = jsonencode({
-    password = local.state.provision_databases.redis_connection_info.password
+    password = local.redis_password
   })
 }
 

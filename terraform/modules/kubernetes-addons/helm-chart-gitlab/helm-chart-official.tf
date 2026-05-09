@@ -180,12 +180,24 @@ resource "helm_release" "gitlab" {
             image = var.image_registry != null ? "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-workhorse-${var.gitlab_config.edition}" : null
           }
           deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
+            hostAliases = concat(
+              var.external_services.minio.ip != null ? [
+                {
+                  ip        = var.external_services.minio.ip
+                  hostnames = [var.external_services.minio.hostname]
+                }
+              ] : [],
+              [
+                {
+                  ip        = var.external_services.postgres.ip
+                  hostnames = [var.external_services.postgres.host]
+                },
+                {
+                  ip        = var.external_services.redis.ip
+                  hostnames = [var.external_services.redis.host]
+                }
+              ]
+            )
           }
         }
         sidekiq = {
@@ -195,12 +207,24 @@ resource "helm_release" "gitlab" {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-sidekiq-${var.gitlab_config.edition}"
           } : null
           deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
+            hostAliases = concat(
+              var.external_services.minio.ip != null ? [
+                {
+                  ip        = var.external_services.minio.ip
+                  hostnames = [var.external_services.minio.hostname]
+                }
+              ] : [],
+              [
+                {
+                  ip        = var.external_services.postgres.ip
+                  hostnames = [var.external_services.postgres.host]
+                },
+                {
+                  ip        = var.external_services.redis.ip
+                  hostnames = [var.external_services.redis.host]
+                }
+              ]
+            )
           }
         }
         gitaly = {
@@ -233,12 +257,24 @@ resource "helm_release" "gitlab" {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-toolbox-${var.gitlab_config.edition}"
           } : null
           deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
+            hostAliases = concat(
+              var.external_services.minio.ip != null ? [
+                {
+                  ip        = var.external_services.minio.ip
+                  hostnames = [var.external_services.minio.hostname]
+                }
+              ] : [],
+              [
+                {
+                  ip        = var.external_services.postgres.ip
+                  hostnames = [var.external_services.postgres.host]
+                },
+                {
+                  ip        = var.external_services.redis.ip
+                  hostnames = [var.external_services.redis.host]
+                }
+              ]
+            )
           }
           backups = {
             objectStorage = {

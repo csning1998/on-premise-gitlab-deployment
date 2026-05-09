@@ -9,12 +9,12 @@
     - name: "C1b. Allow PostgreSQL and Patroni ports"
       community.general.ufw:
         rule: allow
-        port: "{{ item }}"
+        port: "{{ item.0 }}"
         proto: tcp
-        src: "{{ postgres_mtls_node_subnet }}"
-      loop:
-        - "{{ postgres_port }}"
-        - "{{ patroni_restapi_port }}"
+        src: "{{ item.1 }}"
+      with_nested:
+        - ["{{ postgres_port }}", "{{ patroni_restapi_port }}"]
+        - "{{ postgres_mtls_node_subnet.split(' ') }}"
       when: patroni_ufw_stat.stat.exists
 
     - name: "C1c. Reload systemd and start Patroni"

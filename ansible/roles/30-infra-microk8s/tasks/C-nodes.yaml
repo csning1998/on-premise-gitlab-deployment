@@ -26,12 +26,42 @@
         create: true
         mode: "0644"
 
-    - name: "C1e. Add Host-only IP to CSR template"
-      ansible.builtin.lineinfile:
-        path: /var/snap/microk8s/current/certs/csr.conf.template
-        insertafter: "^IP.2 ="
-        line: "IP.100 = {{ hostonly_ip }}"
-        regexp: "^IP.100 ="
+    - name: "Block C1e: Update API Server Certificate SANs"
+      block:
+        - name: "C1e1. Add Host-only IP to CSR template"
+          ansible.builtin.lineinfile:
+            path: /var/snap/microk8s/current/certs/csr.conf.template
+            insertafter: "^IP.2 ="
+            line: "IP.100 = {{ hostonly_ip }}"
+            regexp: "^IP.100 ="
+
+        - name: "C1e2. Add VIP to CSR template"
+          ansible.builtin.lineinfile:
+            path: /var/snap/microk8s/current/certs/csr.conf.template
+            insertafter: "^IP.100 ="
+            line: "IP.101 = {{ api_server_vip }}"
+            regexp: "^IP.101 ="
+          when: api_server_vip is defined
+
+        - name: "C1e3. Check if API Server certificate includes VIP in SAN"
+          ansible.builtin.shell: |
+            set -o pipefail
+            openssl x509 -in /var/snap/microk8s/current/certs/server.crt -text -noout \
+              | grep -E "IP Address:{{ api_server_vip }}(,|$)"
+          args:
+            executable: /bin/bash
+          register: apiserver_cert_check
+          failed_when: false
+          changed_when: false
+          when: api_server_vip is defined
+
+        - name: "C1e4. Refresh API Server certificate to include new SANs"
+          ansible.builtin.command:
+            cmd: "microk8s refresh-certs --cert server.crt"
+          when:
+            - api_server_vip is defined
+            - apiserver_cert_check.rc != 0
+          changed_when: true
 
     - name: "C1f. Check if Kubelet Certificate includes Host-only IP in SAN"
       ansible.builtin.shell: |

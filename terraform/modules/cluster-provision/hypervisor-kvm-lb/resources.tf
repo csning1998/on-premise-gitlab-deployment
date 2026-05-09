@@ -162,6 +162,10 @@ resource "libvirt_domain" "nodes" {
     arch = "x86_64"
   }
 
+  cpu = {
+    mode = "host-passthrough"
+  }
+
   # 3. Hardware Device Configuration (Attributes)
   devices = {
     disks = [

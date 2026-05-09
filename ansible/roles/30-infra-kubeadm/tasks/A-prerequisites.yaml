@@ -41,24 +41,9 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "A2c. Force update CA certificates to validate Vault API"
+    - name: "A2c. Force update CA certificates"
       ansible.builtin.command: update-ca-certificates
-      register: ca_update_result
-      changed_when: "'0 added, 0 removed' not in ca_update_result.stdout"
-
-    - name: "A2d. Download Vault PKI Issuing CA directly from Vault API"
-      ansible.builtin.get_url:
-        url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
-        dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
-        mode: "0644"
-        owner: root
-        group: root
-        validate_certs: true
-      notify: Update CA Certificates
-
-    - name: "A2e. Force update of CA certificates"
-      ansible.builtin.command: update-ca-certificates
-      changed_when: false
+      changed_when: true
       notify: Restart containerd service
 
 - name: "Block A3: Configure Containerd Registry endpoint"

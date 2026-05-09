@@ -34,8 +34,8 @@ provider "vault" {
 
 provider "minio" {
   minio_server      = "${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
-  minio_user        = data.vault_kv_secret_v2.db_vars.data["minio_root_user"]
-  minio_password    = data.vault_kv_secret_v2.db_vars.data["minio_root_password"]
+  minio_user        = ephemeral.vault_kv_secret_v2.db_vars.data["minio_root_user"]
+  minio_password    = ephemeral.vault_kv_secret_v2.db_vars.data["minio_root_password"]
   minio_ssl         = true
   minio_insecure    = false
   minio_cacert_file = local.state.vault_pki.bootstrap_ca_b64.path

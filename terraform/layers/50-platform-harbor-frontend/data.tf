@@ -60,6 +60,14 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+# 0. Database Provisioning State
+data "terraform_remote_state" "provision_databases" {
+  backend = "local"
+  config = {
+    path = "../40-provision-harbor-databases/terraform.tfstate"
+  }
+}
+
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
 data "vault_kv_secret_v2" "harbor_bootstrapper_vars" {
   provider = vault.production
@@ -100,10 +108,3 @@ data "vault_kv_secret_v2" "kubeconfig" {
   name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
 }
 
-# 3. Fetch the Cluster CA
-data "kubernetes_config_map" "kube_root_ca" {
-  metadata {
-    name      = "kube-root-ca.crt"
-    namespace = "kube-system"
-  }
-}
