@@ -34,8 +34,10 @@ resource "helm_release" "harbor" {
           className = var.ingress_config.class_name
           annotations = {
             "nginx.ingress.kubernetes.io/proxy-body-size" = "0"
-            "cert-manager.io/issuer"                      = var.ingress_config.issuer_name
-            "cert-manager.io/issuer-kind"                 = var.ingress_config.issuer_kind
+            (var.ingress_config.issuer_kind == "ClusterIssuer"
+              ? "cert-manager.io/cluster-issuer"
+              : "cert-manager.io/issuer"
+            )                                             = var.ingress_config.issuer_name
             "cert-manager.io/common-name"                 = var.harbor_config.hostname
             "cert-manager.io/subject-alternative-names"   = join(",", var.harbor_config.dns_sans)
             "cert-manager.io/duration"                    = var.certificate_config.duration
