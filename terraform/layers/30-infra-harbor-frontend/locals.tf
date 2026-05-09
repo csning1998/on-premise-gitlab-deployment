@@ -85,9 +85,10 @@ locals {
 
     # Networking & HA
     microk8s_ingress_vip       = local.net_service_vip
+    api_server_vip             = local.net_service_vip
+    api_server_port            = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
     microk8s_allowed_subnet    = local.p_net_config.network.hostonly.cidr
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
-    metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
     global_mss                 = local.state.metadata.global_network_baseline.global_mss
 
     # Asymmetric Routing Configuration
