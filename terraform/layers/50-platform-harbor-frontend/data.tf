@@ -108,10 +108,3 @@ data "vault_kv_secret_v2" "kubeconfig" {
   name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
 }
 
-# 3. Fetch the Cluster CA
-data "kubernetes_config_map" "kube_root_ca" {
-  metadata {
-    name      = "kube-root-ca.crt"
-    namespace = "kube-system"
-  }
-}

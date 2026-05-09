@@ -48,10 +48,10 @@ locals {
 
   # K8s API Endpoint for Vault Callback
   api_port     = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
-  api_endpoint = "https://${local.state.microk8s_provision.harbor_microk8s_ip_list[0]}:${local.api_port}"
+  api_endpoint = "https://${local.harbor_vip}:${local.api_port}"
 
-  # Cluster CA from ConfigMap
-  cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
+  # Cluster CA from Kubeconfig
+  cluster_ca = local.api_server_connection.ca_cert
 
   # Vault Connection
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
@@ -123,6 +123,13 @@ locals {
     # Registry Redirection
     "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_registry
   }
+
+  # 7. Host Aliases for Backend Services (Bypasses DNS for stability)
+  host_aliases = [
+    { ip = local.redis_vip, hostnames = [local.redis_fqdn] },
+    { ip = local.postgres_vip, hostnames = [local.postgres_fqdn] },
+    { ip = local.minio_vip, hostnames = [local.minio_fqdn] }
+  ]
 }
 
 # 7. Addons Configuration (Reloader)
@@ -131,16 +138,18 @@ locals {
     repository = "oci://${local.harbor_registry}/${local.helm_chart_project}"
   }
 
-  # Internal helper for reloader annotations to avoid duplication across components
-  _harbor_reloader_common = {
+  # Internal helper for common component settings
+  _harbor_component_common = {
     podAnnotations = {
       "secret.reloader.stakater.com/reload" = local.ca_bundle_config.name
     }
+    hostAliases = local.host_aliases
   }
 
-  harbor_reloader_annotations = {
-    core       = local._harbor_reloader_common
-    jobservice = local._harbor_reloader_common
-    registry   = local._harbor_reloader_common
+  harbor_helm_overrides = {
+    core       = local._harbor_component_common
+    jobservice = local._harbor_component_common
+    registry   = local._harbor_component_common
+    trivy      = local._harbor_component_common
   }
 }

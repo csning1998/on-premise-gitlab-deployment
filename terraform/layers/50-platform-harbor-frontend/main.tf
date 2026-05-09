@@ -82,6 +82,12 @@ resource "random_password" "harbor_core_secret_key" {
 
 module "harbor_core" {
   source = "../../modules/kubernetes-addons/helm-chart-harbor"
+  depends_on = [
+    module.platform_trust_engine,
+    module.coredns_config,
+    module.reloader,
+    kubernetes_namespace.harbor
+  ]
 
   ca_bundle = local.ca_bundle_config
 
@@ -106,7 +112,7 @@ module "harbor_core" {
     dns_sans       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san
   }
 
-  helm_values_override = local.harbor_reloader_annotations
+  helm_values_override = local.harbor_helm_overrides
 
   ingress_config = {
     class_name      = var.harbor_helm_config.ingress_class
@@ -133,9 +139,4 @@ module "harbor_core" {
       endpoint   = "https://${local.minio_fqdn}" # Harbor chart uses this
     }
   }
-
-  depends_on = [
-    module.platform_trust_engine,
-    module.reloader
-  ]
 }
