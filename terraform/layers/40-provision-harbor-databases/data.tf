@@ -55,13 +55,13 @@ data "terraform_remote_state" "redis" {
   }
 }
 
-data "vault_kv_secret_v2" "db_vars" {
+ephemeral "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor/databases"
 }
 
-data "vault_kv_secret_v2" "harbor_vars" {
+ephemeral "vault_kv_secret_v2" "harbor_vars" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor/app"

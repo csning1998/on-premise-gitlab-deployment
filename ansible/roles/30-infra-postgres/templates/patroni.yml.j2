@@ -45,10 +45,14 @@ bootstrap:
     - hostssl all all {{ terraform_runner_subnet | default('172.16.137.0/24') }} "{{ password_encryption }}"
 
     # Exception: Harbor Application lacks native mTLS client cert support
-    - hostssl all harbor {{ postgres_mtls_node_subnet }} "{{ password_encryption }}"
+{% for subnet in postgres_mtls_node_subnet.split(' ') %}
+    - hostssl all harbor {{ subnet }} "{{ password_encryption }}"
+{% endfor %}
 
     # Rule 1: K8s Node Network (Enforce mTLS) from Terraform
-    - hostssl all all {{ postgres_mtls_node_subnet }} "{{ password_encryption }}" clientcert=verify-ca
+{% for subnet in postgres_mtls_node_subnet.split(' ') %}
+    - hostssl all all {{ subnet }} "{{ password_encryption }}" clientcert=verify-ca
+{% endfor %}
 
     # Rule 2: K8s Pod Network (Enforce mTLS) from Ansible Defaults
     - hostssl all all {{ postgres_mtls_pod_subnet }} "{{ password_encryption }}" clientcert=verify-ca

@@ -21,7 +21,7 @@ locals {
   # Postgres Discovery
   postgres_rw_port  = local.state.network["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
   postgres_vip      = local.state.network["core-gitlab-postgres"].lb_config.vip
-  postgres_password = data.vault_kv_secret_v2.db_vars.data["pg_superuser_password"]
+  postgres_password = ephemeral.vault_kv_secret_v2.db_vars.data["pg_superuser_password"]
 
   # Minio Discovery
   minio_url = "https://${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"

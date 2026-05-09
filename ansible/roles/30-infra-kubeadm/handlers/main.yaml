@@ -14,21 +14,18 @@
     name: containerd
     state: restarted
 
-# HA & Load Balancing Handlers
+# HA & Load Balancing Handlers (Obsolete - Migrated to CLB)
 - name: Restart keepalived
-  ansible.builtin.systemd:
-    name: keepalived
-    state: restarted
+  ansible.builtin.debug:
+    msg: "Keepalived restart skipped (service purged from Master)"
 
 - name: Restart haproxy
-  ansible.builtin.systemd:
-    name: haproxy
-    state: restarted
+  ansible.builtin.debug:
+    msg: "HAProxy restart skipped (service purged from Master)"
 
 - name: Restart haproxy on primary master
-  ansible.builtin.systemd:
-    name: haproxy
-    state: restarted
+  ansible.builtin.debug:
+    msg: "HAProxy restart on primary skipped (service purged from Master)"
   listen: "Restart haproxy on primary master"
 
 - name: Restart kubelet

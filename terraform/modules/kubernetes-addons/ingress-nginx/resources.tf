@@ -31,6 +31,7 @@ resource "helm_release" "ingress_nginx" {
   values = [
     yamlencode({
       controller = {
+        config = var.nginx_config
         service = {
           type = "NodePort"
           nodePorts = {

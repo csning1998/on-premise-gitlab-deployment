@@ -11,3 +11,9 @@ variable "helm_config" {
     chart_project    = string
   })
 }
+
+variable "nginx_config" {
+  description = "Custom Nginx configuration parameters for the controller"
+  type        = map(string)
+  default     = {}
+}
