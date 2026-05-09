@@ -138,8 +138,8 @@ locals {
     name        = "gitlab-ca-bundle" # K8s Secret Name
     secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
 
-    # Use the current active CA from Vault PKI directly
-    content = base64decode(local.state.vault_pki.pki_configuration.ca_cert_b64)
+    # Use the current active CA bundle from Vault PKI directly
+    content = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   }
 }
 

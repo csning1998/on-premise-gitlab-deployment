@@ -109,7 +109,7 @@ locals {
 
     # Networking & HA
     postgres_ha_virtual_ip    = local.p_net_config.lb_config.vip
-    postgres_mtls_node_subnet = local.p_net_config.network.hostonly.cidr
+    postgres_mtls_node_subnet = "${local.p_net_config.network.hostonly.cidr} ${local.state.network.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}"
     vault_vip                 = local.state.vault_sys.service_vip
     global_mss                = local.state.metadata.global_network_baseline.global_mss
 

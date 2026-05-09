@@ -150,6 +150,10 @@ locals {
       {
         host = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
         ip   = local.state.network.infrastructure_vips["gitlab-minio"]
+      },
+      {
+        host = local.state.metadata.global_pki_map["gitlab-gitaly"].dns_san[0]
+        ip   = local.state.network.infrastructure_vips["gitlab-gitaly"]
       }
     ]
 
