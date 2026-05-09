@@ -3,6 +3,7 @@ resource "local_file" "trust_bundle" {
   content  = <<EOT
 ${chomp(base64decode(local.state.metadata.global_vault_pki_b64.ca_cert_b64))}
 ${chomp(base64decode(module.vault_pki_setup.pki_root_ca_certificate_b64))}
+${chomp(base64decode(module.vault_pki_setup.pki_intermediate_ca_certificate_b64))}
 EOT
   filename = abspath("${path.module}/tls/trust-bundle.crt")
 }
