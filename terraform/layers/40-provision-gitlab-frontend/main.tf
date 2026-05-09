@@ -96,6 +96,10 @@ module "ingress_nginx" {
     image_repository = "${local.harbor_k8s_proxy}/ingress-nginx"
     chart_project    = local.helm_chart_project
   }
+
+  nginx_config = {
+    "use-proxy-protocol" = "true"
+  }
 }
 
 module "storage_local_path" {
