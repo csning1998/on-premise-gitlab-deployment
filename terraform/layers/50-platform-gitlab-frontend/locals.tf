@@ -72,8 +72,6 @@ locals {
   minio_port = local.state.network["core-gitlab-minio"].lb_config.ports["api"].frontend_port
 
   # VIPs from LB Infrastructure
-  redis_vip     = local.state.network["core-gitlab-redis"].lb_config.vip
-  minio_vip     = local.state.network["core-gitlab-minio"].lb_config.vip
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
 
   # GitLab Application Database Context

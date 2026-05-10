@@ -66,7 +66,6 @@ module "gitlab_core" {
   external_services = {
     postgres = {
       host       = local.fqdn_postgres
-      ip         = local.state.network["core-gitlab-postgres"].lb_config.vip
       port       = local.gitlab_db.port
       password   = local.gitlab_db.password
       username   = local.gitlab_db.username
@@ -76,14 +75,12 @@ module "gitlab_core" {
 
     redis = {
       host     = local.fqdn_redis
-      ip       = local.redis_vip
       port     = local.redis_port
       password = local.redis_password
       scheme   = "rediss"
     }
 
     minio = {
-      ip         = local.minio_vip
       hostname   = local.fqdn_minio
       endpoint   = local.minio_address
       access_key = ""
