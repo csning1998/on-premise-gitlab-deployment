@@ -19,14 +19,6 @@
   register: harbor_creds
   no_log: true
 
-- name: Step 3. Force local DNS resolution for Harbor FQDN
-  ansible.builtin.lineinfile:
-    path: /etc/hosts
-    regexp: '^.*\\s+{{ harbor_registry | regex_escape }}$'
-    line: "127.0.0.1 {{ harbor_registry }}"
-    state: present
-  become: true
-
 - name: Step 4. Verify Harbor OCI Login
   kubernetes.core.helm_registry_auth:
     host: "{{ harbor_registry }}"

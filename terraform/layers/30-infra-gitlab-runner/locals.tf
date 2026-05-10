@@ -107,12 +107,6 @@ locals {
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
-
-    # Host Overrides
-    node_extra_hosts = [
-      { host = local.svc_fqdn, ip = local.net_service_vip },
-      { host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0], ip = local.state.harbor_registry.service_vip }
-    ]
   }
 
   ansible_extra_vars = {

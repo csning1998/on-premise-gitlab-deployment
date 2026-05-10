@@ -128,7 +128,11 @@ locals {
       "${local.state.minio.service_vip}"    = local.fqdn_minio
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
-    { for node_name, node in local.state.kubeadm.topology_cluster : node.ip => node_name }
+    merge([
+      for node_name, node in local.state.kubeadm.topology_cluster : {
+        "${node.ip}" = "${node_name} ${node_name}.cluster.local"
+      }
+    ]...)
   )
 }
 
