@@ -663,7 +663,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         ROLE_ID=$(sudo cat /etc/vault.d/approle/role_id)
         SECRET_ID=$(sudo cat /etc/vault.d/approle/secret_id)
 
-        export HARBOR_REGISTRY="harbor-bootstrapper.production.iac.local"
+        export HARBOR_REGISTRY="harbor-bootstrapper.production.iac.internal"
         export VAULT_TOKEN=$(vault write -field=token auth/workload-approle/login role_id="$ROLE_ID" secret_id="$SECRET_ID")
         vault kv get -field=password_pusher secret/on-premise-gitlab-deployment/harbor-bootstrapper/robot | \
         helm registry login "$HARBOR_REGISTRY" -u 'robot$helm-charts+helm-pusher' --password-stdin
@@ -810,22 +810,22 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 
 匯出服務憑證可以讓使用者在 Host 端直接瀏覽以下服務，且不會出現憑證錯誤
 
-- Prod Vault：`https://vault.production.iac.local`
-- Harbor：`https://harbor.production.iac.local`
-- Harhor MinIO Console：`https://minio.harbor.production.iac.local`
-- GitLab：`https://gitlab.production.iac.local`
-- GitLab MinIO Console：`https://minio.gitlab.production.iac.local`
+- Prod Vault：`https://vault.production.iac.internal`
+- Harbor：`https://harbor.production.iac.internal`
+- Harhor MinIO Console：`https://minio.harbor.production.iac.internal`
+- GitLab：`https://gitlab.production.iac.internal`
+- GitLab MinIO Console：`https://minio.gitlab.production.iac.internal`
 
 這樣需要做兩件事情，依序如下：
 
 1.  在 `/etc/hosts` 處理 DNS 解析，將以下內容（此 repo 預設）加入 host 端的 `/etc/hosts`。注意這要依照實際 Terraform 輸出的 IP 進行調整
 
     ```text
-    172.16.126.250  gitlab.production.iac.local
-    172.16.131.250  harbor.production.iac.local notary.harbor.production.iac.local
-    172.16.136.250  vault.production.iac.local
-    172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
-    172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
+    172.16.126.250  gitlab.production.iac.internal
+    172.16.131.250  harbor.production.iac.internal notary.harbor.production.iac.internal
+    172.16.136.250  vault.production.iac.internal
+    172.16.135.250  minio.harbor.production.iac.internal core-harbor-minio.production.iac.internal
+    172.16.130.250  minio.gitlab.production.iac.internal core-gitlab-minio.production.iac.internal
     ```
 
 2.  由於此 repo 在 L25 已經將 Infrastructure CA 與 Service CA 聚合成單一 `trust-bundle.crt`，讓 Host 同時信任這兩個獨立的憑證根。可以參考 _Step B.6_ 內容，現在可以 `terraform/layers/25-security-pki/tls/` 路徑內確認聚合後的憑證檔案
@@ -848,7 +848,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 3.  可以驗證從 host 存取 MinIO 做簡單測試驗證 Trust Store，這主要是驗證 host 端信任 Service CA。例如：
 
     ```shell
-    curl -I https://minio.harbor.production.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.production.iac.internal:9000/minio/health/live
     ```
 
     若輸出 `HTTP/1.1 200 OK`，代表 Trust Store 已正確設定
@@ -856,7 +856,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 4.  從 host 存取 Harbor 驗證 Trust Store
 
     ```shell
-    curl -vI https://harbor.production.iac.local
+    curl -vI https://harbor.production.iac.internal
     ```
 
     若顯示 `SSL certificate verify ok` 與 `HTTP/2 200`，代表從 Vault 憑證發行、經 cert-manager 簽署、Ingress 部署到 host 信任的完整 PKI Chain 已成功建立

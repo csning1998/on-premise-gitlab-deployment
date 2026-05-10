@@ -663,7 +663,7 @@ Successful execution and the display of virtual machines—regardless of whether
         ROLE_ID=$(sudo cat /etc/vault.d/approle/role_id)
         SECRET_ID=$(sudo cat /etc/vault.d/approle/secret_id)
 
-        export HARBOR_REGISTRY="harbor-bootstrapper.production.iac.local"
+        export HARBOR_REGISTRY="harbor-bootstrapper.production.iac.internal"
         export VAULT_TOKEN=$(vault write -field=token auth/workload-approle/login role_id="$ROLE_ID" secret_id="$SECRET_ID")
         vault kv get -field=password_pusher secret/on-premise-gitlab-deployment/harbor-bootstrapper/robot | \
         helm registry login "$HARBOR_REGISTRY" -u 'robot$helm-charts+helm-pusher' --password-stdin
@@ -810,22 +810,22 @@ Configuration related to Vault PKI Rotation:
 
 Exporting service certificates allows users to browse the following services directly from the Host side without certificate errors:
 
-- Prod Vault: `https://vault.production.iac.local`
-- Harbor: `https://harbor.production.iac.local`
-- Harbor MinIO Console: `https://minio.harbor.production.iac.local`
-- GitLab: `https://gitlab.production.iac.local`
-- GitLab MinIO Console: `https://minio.gitlab.production.iac.local`
+- Prod Vault: `https://vault.production.iac.internal`
+- Harbor: `https://harbor.production.iac.internal`
+- Harbor MinIO Console: `https://minio.harbor.production.iac.internal`
+- GitLab: `https://gitlab.production.iac.internal`
+- GitLab MinIO Console: `https://minio.gitlab.production.iac.internal`
 
 This requires two steps in sequence:
 
 1.  Handle DNS resolution in `/etc/hosts` by adding the following content (default for this repo) to the host's `/etc/hosts`. Note that this should be adjusted according to the actual IPs output by Terraform.
 
     ```text
-    172.16.126.250  gitlab.production.iac.local
-    172.16.131.250  harbor.production.iac.local notary.harbor.production.iac.local
-    172.16.136.250  vault.production.iac.local
-    172.16.135.250  minio.harbor.production.iac.local core-harbor-minio.production.iac.local
-    172.16.130.250  minio.gitlab.production.iac.local core-gitlab-minio.production.iac.local
+    172.16.126.250  gitlab.production.iac.internal
+    172.16.131.250  harbor.production.iac.internal notary.harbor.production.iac.internal
+    172.16.136.250  vault.production.iac.internal
+    172.16.135.250  minio.harbor.production.iac.internal core-harbor-minio.production.iac.internal
+    172.16.130.250  minio.gitlab.production.iac.internal core-gitlab-minio.production.iac.internal
     ```
 
 2.  Since this repo has already aggregated the Infrastructure CA and Service CA into a single `trust-bundle.crt` in L25, the Host can trust these two independent certificate roots simultaneously. Refer to the content of _Step B.5_. The aggregated certificate file can now be confirmed in the `terraform/layers/25-security-pki/tls/` path.
@@ -848,7 +848,7 @@ This requires two steps in sequence:
 3.  Verify the Trust Store configuration by testing connectivity to MinIO from the host. This mainly verifies that the host trusts the Service CA. For example:
 
     ```shell
-    curl -I https://minio.harbor.production.iac.local:9000/minio/health/live
+    curl -I https://minio.harbor.production.iac.internal:9000/minio/health/live
     ```
 
     If it outputs `HTTP/1.1 200 OK`, it means the Trust Store is correctly configured.
@@ -856,7 +856,7 @@ This requires two steps in sequence:
 4.  Access Harbor from the host to verify the Trust Store:
 
     ```shell
-    curl -vI https://harbor.production.iac.local
+    curl -vI https://harbor.production.iac.internal
     ```
 
     If it displays `SSL certificate verify ok` and `HTTP/2 200`, it means the full PKI Chain—spanning Vault certificate issuance, cert-manager signing, Ingress deployment, and host-level trust—is successfully established.
