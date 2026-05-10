@@ -11,9 +11,15 @@ resource "libvirt_network" "nat_net" {
   } : {}
 
   name      = each.value.network.nat.name_network
-  mode      = each.value.network.nat.mode
-  bridge    = each.value.network.nat.name_bridge
   autostart = true
+
+  bridge = {
+    name = each.value.network.nat.name_bridge
+  }
+
+  forward = {
+    mode = each.value.network.nat.mode
+  }
 
   ips = [
     {
@@ -39,9 +45,15 @@ resource "libvirt_network" "hostonly_net" {
   } : {}
 
   name      = each.value.network.hostonly.name_network
-  mode      = each.value.network.hostonly.mode
-  bridge    = each.value.network.hostonly.name_bridge
   autostart = true
+
+  bridge = {
+    name = each.value.network.hostonly.name_bridge
+  }
+
+  forward = {
+    mode = each.value.network.hostonly.mode
+  }
 
   ips = [
     {
@@ -63,9 +75,13 @@ resource "libvirt_network" "hostonly_net" {
 resource "libvirt_volume" "base_image" {
   for_each = local.base_image_map
 
-  name   = "base-${each.key}"
-  pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
-  format = "qcow2"
+  name = "base-${each.key}"
+  pool = values(var.libvirt_infrastructure)[0].storage_pool_name
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 
   create = {
     content = {
@@ -80,13 +96,20 @@ resource "libvirt_volume" "os_disk" {
   for_each = var.vm_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
   pool     = values(var.libvirt_infrastructure)[0].storage_pool_name
-  format   = "qcow2"
   capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 
   # Use Copy-on-Write
   backing_store = {
-    path   = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
-    format = "qcow2"
+    path = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
+    format = {
+      type = "qcow2"
+    }
   }
 }
 
@@ -117,9 +140,14 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 resource "libvirt_volume" "cloud_init_iso" {
   for_each = var.vm_config.all_nodes_map
 
-  name   = "${each.key}-cloud-init.iso"
-  pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
-  format = "iso"
+  name = "${each.key}-cloud-init.iso"
+  pool = values(var.libvirt_infrastructure)[0].storage_pool_name
+
+  target = {
+    format = {
+      type = "iso"
+    }
+  }
 
   create = {
     content = {
@@ -139,12 +167,13 @@ resource "libvirt_domain" "nodes" {
   for_each = var.vm_config.all_nodes_map
 
   # 1. Basic Configuration (Required)
-  name      = each.key
-  vcpu      = each.value.vcpu
-  memory    = each.value.ram_size
-  unit      = "MiB"
-  autostart = false
-  running   = true
+  name        = each.key
+  type        = "kvm"
+  vcpu        = each.value.vcpu
+  memory      = each.value.ram_size
+  memory_unit = "MiB"
+  autostart   = false
+  running     = true
 
   # 2. OS Configuration
   os = {
@@ -167,8 +196,16 @@ resource "libvirt_domain" "nodes" {
           bus = "virtio"
         }
         source = {
-          pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
-          volume = libvirt_volume.os_disk[each.key].name
+          volume = {
+            pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
+            volume = libvirt_volume.os_disk[each.key].name
+          }
+        }
+        driver = {
+          type = "qcow2"
+        }
+        boot = {
+          order = 1
         }
       }],
 
@@ -180,8 +217,13 @@ resource "libvirt_domain" "nodes" {
           bus = "virtio"
         }
         source = {
-          pool   = vol.pool
-          volume = vol.volume
+          volume = {
+            pool   = vol.pool
+            volume = vol.volume
+          }
+        }
+        driver = {
+          type = "qcow2"
         }
       }],
 
@@ -193,8 +235,13 @@ resource "libvirt_domain" "nodes" {
           bus = "sata"
         }
         source = {
-          pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
-          volume = libvirt_volume.cloud_init_iso[each.key].name
+          volume = {
+            pool   = values(var.libvirt_infrastructure)[0].storage_pool_name
+            volume = libvirt_volume.cloud_init_iso[each.key].name
+          }
+        }
+        boot = {
+          order = 3
         }
       }]
     )
@@ -205,46 +252,67 @@ resource "libvirt_domain" "nodes" {
       {
         type = "network"
         source = {
-          network = var.libvirt_infrastructure[each.value.network_tier].network.nat.name_network
+          network = {
+            network = var.libvirt_infrastructure[each.value.network_tier].network.nat.name_network
+          }
         }
-        mac   = local.nodes_config[each.key].nat_mac
-        model = "virtio"
+        mac = {
+          address = local.nodes_config[each.key].nat_mac
+        }
+        model = {
+          type = "virtio"
+        }
       },
       # 2. HostOnly Interface
       {
         type = "network"
         source = {
-          network = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.name_network
+          network = {
+            network = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.name_network
+          }
         }
-        mac   = local.nodes_config[each.key].hostonly_mac
-        model = "virtio"
+        mac = {
+          address = local.nodes_config[each.key].hostonly_mac
+        }
+        model = {
+          type = "virtio"
+        }
       }
     ]
 
     # Other Peripherals
     consoles = [
       {
-        type        = "pty"
-        target_port = 0
-        target_type = "serial"
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
       },
       {
-        type        = "pty"
-        target_port = 1
-        target_type = "virtio"
+        type = "pty"
+        target = {
+          port = 1
+          type = "virtio"
+        }
       }
     ]
 
-    graphics = {
+    graphics = [{
       vnc = {
         listen   = "0.0.0.0"
         autoport = "yes"
       }
-    }
+    }]
 
-    video = {
-      type = "vga"
-    }
+    videos = [{
+      model = {
+        type    = "vga"
+        vram    = 16384
+        primary = "yes"
+        heads   = 1
+      }
+    }]
   }
 
   # 4. Lifecycle Management: Ignore Changes for Devices
