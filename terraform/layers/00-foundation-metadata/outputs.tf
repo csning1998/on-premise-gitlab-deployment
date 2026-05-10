@@ -64,6 +64,11 @@ output "global_pki_map" {
   value       = local.pki_map
 }
 
+output "global_dns_records" {
+  description = "SSoT mapping of all infrastructure hostnames to their respective VIPs."
+  value       = local.global_dns_records
+}
+
 output "global_vault_pki_b64" {
   description = "Base64 encoded TLS artifacts for the Bootstrap Vault instance."
   sensitive   = true

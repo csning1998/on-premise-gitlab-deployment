@@ -68,4 +68,18 @@ locals {
       ]
     }
   }
+
+  /**
+   * 2. Global DNS Registry (SSoT)
+   *    Extracts all DNS SANs from the pki_map and associates them with
+   *    their deterministic segment VIPs for Libvirt DNS injection.
+   */
+  global_dns_records = flatten([
+    for key, pki in local.pki_map : [
+      for san in pki.dns_san : {
+        hostname = san
+        ip       = local.network_topology[key].vip
+      }
+    ]
+  ])
 }
