@@ -117,34 +117,6 @@ locals {
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
-
-    # Host Overrides
-    node_extra_hosts = [
-      {
-        host = local.svc_fqdn
-        ip   = local.net_service_vip
-      },
-      {
-        host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["vault-frontend"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["harbor-postgres"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["harbor-postgres"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["harbor-redis"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["harbor-redis"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["harbor-minio"]
-      }
-    ]
   }
 
   ansible_extra_vars = {
