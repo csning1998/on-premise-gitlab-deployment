@@ -18,20 +18,25 @@ resource "libvirt_network" "nat_networks" {
     address = each.value.nat.gateway
     prefix  = each.value.nat.prefix
     dhcp = {
-      enabled = true
-      ranges  = each.value.nat.dhcp != null ? [{ start = each.value.nat.dhcp.start, end = each.value.nat.dhcp.end }] : []
+      ranges = each.value.nat.dhcp != null ? [{ start = each.value.nat.dhcp.start, end = each.value.nat.dhcp.end }] : []
     }
   }]
 
+  domain = {
+    name       = "${each.value.nat.stage}.${local.state.metadata.global_domain_suffix}"
+    local_only = "yes"
+  }
+
   # Global Infrastructure DNS SSoT (Requires Libvirt Provider >= 0.9.7)
   dns = {
-    enabled    = true
-    local_only = true
+    enable = "yes"
 
-    hosts = [
+    host = [
       for record in local.state.metadata.global_dns_records : {
-        hostname = record.hostname
-        ip       = record.ip
+        ip = record.ip
+        hostnames = [{
+          hostname = record.hostname
+        }]
       }
     ]
   }
