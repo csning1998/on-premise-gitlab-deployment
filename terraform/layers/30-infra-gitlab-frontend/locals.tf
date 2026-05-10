@@ -129,34 +129,6 @@ locals {
     kubeadm_http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
     kubeadm_https_nodeport = local.p_net_config.lb_config.ports["ingress-https"].backend_port
 
-    # Host Overrides
-    node_extra_hosts = [
-      {
-        host = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["vault-frontend"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["gitlab-postgres"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["gitlab-redis"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["gitlab-minio"]
-      },
-      {
-        host = local.state.metadata.global_pki_map["gitlab-gitaly"].dns_san[0]
-        ip   = local.state.network.infrastructure_vips["gitlab-gitaly"]
-      }
-    ]
-
     # Mirroring Paths (Template Compatibility)
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name

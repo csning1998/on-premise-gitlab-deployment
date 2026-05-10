@@ -123,13 +123,6 @@ locals {
     # Registry Redirection
     "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_registry
   }
-
-  # 7. Host Aliases for Backend Services (Bypasses DNS for stability)
-  host_aliases = [
-    { ip = local.redis_vip, hostnames = [local.redis_fqdn] },
-    { ip = local.postgres_vip, hostnames = [local.postgres_fqdn] },
-    { ip = local.minio_vip, hostnames = [local.minio_fqdn] }
-  ]
 }
 
 # 7. Addons Configuration (Reloader)
@@ -143,7 +136,6 @@ locals {
     podAnnotations = {
       "secret.reloader.stakater.com/reload" = local.ca_bundle_config.name
     }
-    hostAliases = local.host_aliases
   }
 
   harbor_helm_overrides = {

@@ -16,8 +16,13 @@ resource "libvirt_volume" "data_disks" {
   depends_on = [libvirt_pool.storage_pools]
   for_each   = local.global_volume_map
 
-  format   = "qcow2"
   name     = each.value.volume_name
   pool     = libvirt_pool.storage_pools[each.value.pool_name].name
   capacity = each.value.capacity_gib * 1024 * 1024 * 1024
+
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 }

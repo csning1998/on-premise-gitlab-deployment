@@ -42,7 +42,6 @@ variable "external_services" {
   type = object({
     postgres = object({
       host       = string
-      ip         = optional(string)
       port       = number
       password   = string
       username   = string
@@ -51,14 +50,12 @@ variable "external_services" {
     })
     redis = object({
       host     = string
-      ip       = optional(string)
       port     = string
       password = string
       scheme   = string
     })
     minio = object({
       hostname   = optional(string)
-      ip         = optional(string)
       endpoint   = string
       access_key = string
       secret_key = string

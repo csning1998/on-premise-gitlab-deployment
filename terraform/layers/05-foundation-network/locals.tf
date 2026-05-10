@@ -44,6 +44,7 @@ locals {
         prefix      = 24
         dhcp        = data.network.nat_dhcp
         mtu         = local.state.metadata.global_network_baseline.global_mtu
+        stage       = data.identity.stage
       }
     }
   }

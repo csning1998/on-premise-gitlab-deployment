@@ -108,6 +108,7 @@ locals {
   identity_map = {
     for key, item in local._flat_catalog : key => {
       cluster_name      = item.cluster_name
+      stage             = item.stage
       storage_pool_name = item.storage_pool_name
       bridge_name_host  = "br-${item.hash_prefix}"
       bridge_name_nat   = "br-${item.hash_prefix}-nat"

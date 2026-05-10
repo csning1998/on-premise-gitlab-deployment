@@ -69,18 +69,7 @@
   block:
     - name: "B2a. Pre-calculate Registry Configurations"
       ansible.builtin.set_fact:
-        _etc_hosts_list: >-
-          {{ ([{'host': registry_host, 'ip': registry_vip}] +
-              (node_extra_hosts | default([]))) | unique(attribute='host') }}
         _containerd_registry_configs: "{{ lookup('template', 'containerd_registry_configs.j2') | from_yaml }}"
-
-    - name: "B2b. Ensure local DNS overrides for Registries in /etc/hosts"
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        regexp: '^.*\s+{{ item.host | regex_escape() }}(\s+|$)'
-        line: "{{ item.ip }} {{ item.host }}"
-        state: present
-      loop: "{{ _etc_hosts_list }}"
 
     - name: "B2c. Ensure Mirror Directories Exist"
       ansible.builtin.file:
