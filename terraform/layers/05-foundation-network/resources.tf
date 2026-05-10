@@ -4,9 +4,15 @@ resource "libvirt_network" "nat_networks" {
   for_each = local.net_infrastructure
 
   name      = each.value.nat.name
-  bridge    = each.value.nat.bridge_name
-  mode      = "nat"
   autostart = true
+
+  bridge = {
+    name = each.value.nat.bridge_name
+  }
+
+  forward = {
+    mode = "nat"
+  }
 
   ips = [{
     address = each.value.nat.gateway
@@ -16,6 +22,19 @@ resource "libvirt_network" "nat_networks" {
       ranges  = each.value.nat.dhcp != null ? [{ start = each.value.nat.dhcp.start, end = each.value.nat.dhcp.end }] : []
     }
   }]
+
+  # Global Infrastructure DNS SSoT (Requires Libvirt Provider >= 0.9.7)
+  dns = {
+    enabled    = true
+    local_only = true
+
+    hosts = [
+      for record in local.state.metadata.global_dns_records : {
+        hostname = record.hostname
+        ip       = record.ip
+      }
+    ]
+  }
 }
 
 # HostOnly Networks (one per segment, including CLB itself)
@@ -23,9 +42,15 @@ resource "libvirt_network" "hostonly_networks" {
   for_each = local.net_infrastructure
 
   name      = each.value.hostonly.name
-  bridge    = each.value.hostonly.bridge_name
-  mode      = "route"
   autostart = true
+
+  bridge = {
+    name = each.value.hostonly.bridge_name
+  }
+
+  forward = {
+    mode = "route"
+  }
 
   ips = [{
     address = each.value.hostonly.gateway
