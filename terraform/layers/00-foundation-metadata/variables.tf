@@ -89,6 +89,7 @@ variable "service_catalog" {
         health_check_http_path   = optional(string, "/")
         health_check_http_expect = optional(string, "status 200")
         health_check_ssl         = optional(bool, false)
+        health_check_sni         = optional(string)
         health_check_port        = optional(number)
         send_proxy_v2            = optional(bool, false)
       })), {})
