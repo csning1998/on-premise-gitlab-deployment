@@ -6,7 +6,7 @@
   when:
     - item != 'lo'
     - item != 'docker0'
-    - not item.startswith('br-')
+    - not item.startswith('vbr-')
     - not item.startswith('veth')
     - ansible_facts.default_ipv4 is defined
     - item != ansible_facts.default_ipv4.interface
