@@ -121,10 +121,18 @@ locals {
       ]
     ][0] # Keycloak is a single component
 
-    # Asymmetric Routing (Flattened)
-    keycloak_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    keycloak_static_route_via    = local.net_physical_infra.lb_config.vip
-    keycloak_static_route_metric = 100
+    # Asymmetric Routing Configuration (Aligned with Harbor pattern)
+    keycloak_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.net_physical_infra.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "keycloak-frontend"
+      ], name)
+    ]
 
     # Compatibility Aliases
     access_scope = local.net_physical_infra.network.hostonly.cidr

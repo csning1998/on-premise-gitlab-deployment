@@ -1,13 +1,10 @@
 ---
 - name: "Role 81: Configure Network Routing (Asymmetric Fix)"
   ansible.builtin.include_role:
-    name: "81-asymmetric-routing"
+    name: "81-utils-asymmetric-routing"
   vars:
-    routing_static_routes:
-      - to: "{{ keycloak_static_route_to }}"
-        via: "{{ keycloak_static_route_via }}"
-        metric: "{{ keycloak_static_route_metric }}"
-  when: keycloak_static_route_to is defined
+    routing_static_routes: "{{ keycloak_static_routes }}"
+  when: keycloak_static_routes is defined
 
 - name: "Section A. Setup Keycloak Environment"
   ansible.builtin.include_tasks: A-setup.yaml
@@ -17,7 +14,7 @@
 
 - name: "Role 82: Prepare Environment for Vault Agent (OIDC/Certificates)"
   ansible.builtin.include_role:
-    name: "82-vault-agent"
+    name: "82-utils-vault-agent"
   vars:
     vault_agent_role_id: "{{ vault_agent_role_id }}"
     vault_agent_secret_id: "{{ vault_agent_secret_id }}"
