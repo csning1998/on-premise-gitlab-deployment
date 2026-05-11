@@ -7,7 +7,7 @@ keycloak_config = {
     network_tier    = "default"
     base_image_path = "../../../packer/output/docker-keycloak/ubuntu-24-docker-keycloak.qcow2"
     nodes = {
-      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 3072, cpu_mode = "host-passthrough" }
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1536 }
     }
   }
 }

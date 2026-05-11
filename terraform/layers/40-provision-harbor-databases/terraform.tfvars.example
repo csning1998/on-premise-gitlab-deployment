@@ -6,3 +6,8 @@ harbor_minio_tenants = {
     policy_rw      = true
   }
 }
+
+db_init_config = {
+  db_name = "registry"
+  db_user = "harbor"
+}

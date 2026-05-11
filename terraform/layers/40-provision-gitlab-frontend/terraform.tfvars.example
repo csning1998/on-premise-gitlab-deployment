@@ -1,0 +1,18 @@
+
+trust_engine_config = {
+  issuer_name           = "vault-issuer"
+  issuer_kind           = "ClusterIssuer"
+  authorized_namespaces = ["cert-manager", "gitlab", "default"]
+}
+
+cert_manager_config = {
+  version   = "v1.14.0"
+  namespace = "cert-manager"
+}
+
+gitlab_helm_config = {
+  version         = "9.8.2"
+  namespace       = "gitlab"
+  ingress_class   = "nginx"
+  tls_secret_name = "gitlab-ingress-tls"
+}

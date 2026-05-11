@@ -1,8 +1,12 @@
 
-service_catalog_name = "harbor"
+primary_role = "runner"
 
-harbor_microk8s_config = {
-  "frontend" = {
+target_clusters = {
+  microk8s = "core-gitlab-runner"
+}
+
+service_config = {
+  "runner" = {
     role            = "microk8s"
     network_tier    = "default"
     base_image_path = "../../../packer/output/base-microk8s/ubuntu-24-base-microk8s.qcow2"

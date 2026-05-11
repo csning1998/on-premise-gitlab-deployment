@@ -3,9 +3,9 @@
 target_cluster_name = "core-central-lb-frontend"
 
 node_config = {
-  "00" = { ip_suffix = 10, vcpu = 2, ram = 1024 }
-  "01" = { ip_suffix = 11, vcpu = 2, ram = 1024 }
-  # 02" = { ip_suffix = 12, vcpu = 2, ram = 1024 }
+  "00" = { ip_suffix = 10, vcpu = 2, ram = 512 }
+  "01" = { ip_suffix = 11, vcpu = 2, ram = 512 }
+  # 02" = { ip_suffix = 12, vcpu = 2, ram = 512 }
 }
 
 base_image_path = "../../../packer/output/base-haproxy/ubuntu-24-base-haproxy.qcow2"
