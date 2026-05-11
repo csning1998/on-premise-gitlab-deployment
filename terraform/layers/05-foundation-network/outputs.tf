@@ -28,6 +28,6 @@ output "central_lb_info" {
 }
 
 output "service_segments" {
-  description = "Ordered list of service segments — consumed by 05-central-lb for HAProxy and Keepalived config."
+  description = "Stable map of service segments — consumed by 05-central-lb for HAProxy and Keepalived config."
   value       = local.net_service_segments
 }

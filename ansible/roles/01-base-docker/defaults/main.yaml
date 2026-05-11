@@ -23,4 +23,4 @@ _docker_base_gpg_path: "{{ docker_base.os_config.ubuntu.gpg_keyring_dir }}/{{ do
 _docker_base_repo_string: >
   deb [arch=amd64 signed-by={{ _docker_base_gpg_path }}]
   {{ docker_base.os_config.ubuntu.source_url }}
-  {{ ansible_distribution_release | lower }} stable
+  {{ ansible_facts['distribution_release'] | lower }} stable

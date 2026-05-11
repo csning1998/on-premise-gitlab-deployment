@@ -1,0 +1,32 @@
+---
+- name: "B1. Ensure Service Domain resolves to Localhost for Vault Agent"
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 {{ keycloak_service_domain }}"
+    state: present
+    regexp: "^127.0.0.1 {{ keycloak_service_domain }}$"
+
+- name: "B2. Ensure Keycloak FQDN resolves to VIP for local operations"
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ keycloak_vip }} {{ keycloak_fqdn }}"
+    state: present
+    regexp: "^.* {{ keycloak_fqdn | replace('.', '\\.') }}$"
+
+- name: "B3. Distribute Vault PKI Service CA to OS trust store"
+  ansible.builtin.copy:
+    content: "{{ vault_ca_cert_b64 | b64decode }}"
+    dest: /usr/local/share/ca-certificates/vault-ca.crt
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Update CA Certificates
+
+- name: "B5. Template Keycloak environment file (.env)"
+  ansible.builtin.template:
+    src: "keycloak.env.j2"
+    dest: "/opt/keycloak/.env"
+    owner: "1000"
+    group: "1000"
+    mode: "0600"
+  notify: Restart Keycloak

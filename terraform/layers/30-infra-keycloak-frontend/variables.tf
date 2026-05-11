@@ -1,0 +1,28 @@
+
+variable "target_cluster_name" {
+  description = "The physical cluster name target to deploy the service on, retrieved directly from the SSoT mapping."
+  type        = string
+}
+
+variable "vault_dev_addr" {
+  description = "The address of the Vault server"
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
+
+variable "keycloak_config" {
+  description = "Compute topology for Keycloak service components."
+  type = map(object({
+    role            = string
+    network_tier    = optional(string, "default")
+    base_image_path = string
+
+    nodes = map(object({
+      ip_suffix            = number
+      vcpu                 = number
+      ram_size             = number
+      os_disk_capacity_gib = optional(number)
+      cpu_mode             = optional(string, null)
+    }))
+  }))
+}

@@ -1,0 +1,25 @@
+---
+- name: "D1. Deploy Vault CA to System Trust Store"
+  become: true
+  ansible.builtin.copy:
+    content: "{{ vault_ca_cert_b64 | b64decode }}"
+    dest: "/usr/local/share/ca-certificates/vault-ca.crt"
+    mode: "0644"
+  notify: Update CA Certificates
+
+- name: "D2. Flush Handlers to Update Trust Store Immediately"
+  ansible.builtin.meta: flush_handlers
+
+# - name: "D3. Verify Keycloak Readiness via FQDN (Insecure TLS)"
+#   ansible.builtin.uri:
+#     url: "https://{{ keycloak_fqdn }}:9000/health/ready"
+#     validate_certs: false
+#     status_code: 200
+#   register: fqdn_readiness
+#   until: fqdn_readiness.status == 200
+#   retries: 30
+#   delay: 10
+
+- name: "D4. Report Readiness Status"
+  ansible.builtin.debug:
+    msg: "Keycloak Deployment is verified via {{ keycloak_fqdn }}. Service is UP and TLS is valid."

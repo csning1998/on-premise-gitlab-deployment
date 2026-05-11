@@ -19,8 +19,10 @@ variable "node_identities" {
   }))
 }
 
+# This is a temporary attribute as all services will gradually migrate to 'host-passthrough'.
+# Once the migration is complete, this field will be removed from the schema.
 variable "topology_cluster" {
-  description = "Standardized compute topology supporting multi-component architecture."
+  description = "Compute topology supporting multi-component architecture."
   type = object({
     storage_pool_name = string
 
@@ -33,7 +35,8 @@ variable "topology_cluster" {
         ip_suffix            = number
         vcpu                 = number
         ram_size             = number
-        os_disk_capacity_gib = number
+        os_disk_capacity_gib = optional(number)
+        cpu_mode             = optional(string, null)
 
         attached_volumes = optional(list(object({
           pool   = string
