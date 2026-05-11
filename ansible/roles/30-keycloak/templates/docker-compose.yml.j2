@@ -1,7 +1,7 @@
 ---
 services:
   keycloak-db:
-    image: postgres:18-alpine
+    image: {{ postgres_image }}:{{ postgres_version }}
     container_name: keycloak-db
     environment:
       POSTGRES_DB: keycloak
@@ -18,7 +18,7 @@ services:
       - keycloak-net
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.6.1
+    image: {{ keycloak_image }}:{{ keycloak_version }}
     container_name: keycloak
     command: start
     env_file: .env

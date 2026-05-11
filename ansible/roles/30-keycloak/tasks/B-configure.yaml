@@ -22,10 +22,6 @@
     group: root
   notify: Update CA Certificates
 
-- name: "B4. Force update CA certificates"
-  ansible.builtin.command: update-ca-certificates
-  changed_when: false
-
 - name: "B5. Template Keycloak environment file (.env)"
   ansible.builtin.template:
     src: "keycloak.env.j2"
