@@ -1,0 +1,34 @@
+---
+- name: "Role 81: Configure Network Routing (Asymmetric Fix)"
+  ansible.builtin.include_role:
+    name: "81-utils-asymmetric-routing"
+  vars:
+    routing_static_routes: "{{ keycloak_static_routes }}"
+  when: keycloak_static_routes is defined
+
+- name: "Section A. Setup Keycloak Environment"
+  ansible.builtin.include_tasks: A-setup.yaml
+
+- name: "Section B. Configure Environment and Vault Agent"
+  ansible.builtin.include_tasks: B-configure.yaml
+
+- name: "Role 82: Prepare Environment for Vault Agent (OIDC/Certificates)"
+  ansible.builtin.include_role:
+    name: "82-utils-vault-agent"
+  vars:
+    vault_agent_role_id: "{{ vault_agent_role_id }}"
+    vault_agent_secret_id: "{{ vault_agent_secret_id }}"
+    vault_ca_cert_b64: "{{ vault_ca_cert_b64 }}"
+    vault_agent_common_name: "{{ vault_agent_common_name }}"
+    vault_agent_owner: "1000"
+    vault_agent_group: "1000"
+    vault_agent_cert_dirs:
+      - "/opt/keycloak/certs"
+    vault_agent_cert_base_dir: "/opt/keycloak/certs"
+    vault_agent_post_command: "systemctl restart keycloak || true"
+
+- name: "Section C. Deploy Keycloak Stack"
+  ansible.builtin.include_tasks: C-deploy.yaml
+
+- name: "Section D. Verify Keycloak Readiness"
+  ansible.builtin.include_tasks: D-verify.yaml

@@ -1,0 +1,43 @@
+---
+- name: "C1. Find docker executable"
+  ansible.builtin.command: which docker
+  register: docker_exec
+  changed_when: false
+  check_mode: false
+
+- name: "C2. Render docker-compose.yml"
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "/opt/keycloak/docker-compose.yml"
+    owner: "1000"
+    group: "1000"
+    mode: "0640"
+  notify: Restart Keycloak
+
+- name: "C3. Deploy Keycloak Systemd Service"
+  ansible.builtin.template:
+    src: keycloak.service.j2
+    dest: /etc/systemd/system/keycloak.service
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    docker_executable: "{{ docker_exec.stdout }}"
+  notify: Restart Keycloak
+
+- name: "C4. Enable and Start Keycloak Service"
+  ansible.builtin.systemd:
+    name: keycloak
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: "C5. Wait for Keycloak Container to be Healthy"
+  ansible.builtin.command:
+    cmd: "docker inspect --format='{{ '{{' }} .State.Health.Status {{ '}}' }}' keycloak"
+  register: container_health
+  until: container_health.stdout == "healthy"
+  retries: 30
+  delay: 10
+  changed_when: false
+  check_mode: false

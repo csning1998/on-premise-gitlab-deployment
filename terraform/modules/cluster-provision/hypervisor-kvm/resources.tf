@@ -123,7 +123,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     hostname       = each.key
     vm_username    = var.credentials.username
     vm_password    = var.credentials.password
-    ssh_public_key = data.local_file.ssh_public_key.content
+    ssh_public_key = trimspace(data.local_file.ssh_public_key.content)
   })
 
   network_config = templatefile("${path.module}/../../../templates/network_config.tftpl", {
