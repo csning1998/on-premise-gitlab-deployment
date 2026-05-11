@@ -6,6 +6,10 @@ resource "libvirt_network" "nat_networks" {
   name      = each.value.nat.name
   autostart = true
 
+  mtu = {
+    size = each.value.nat.mtu
+  }
+
   bridge = {
     name = each.value.nat.bridge_name
   }
@@ -48,6 +52,10 @@ resource "libvirt_network" "hostonly_networks" {
 
   name      = each.value.hostonly.name
   autostart = true
+
+  mtu = {
+    size = each.value.hostonly.mtu
+  }
 
   bridge = {
     name = each.value.hostonly.bridge_name
