@@ -1,0 +1,13 @@
+
+target_cluster_name = "core-keycloak-frontend"
+
+keycloak_config = {
+  "keycloak" = {
+    role            = "keycloak"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/docker-keycloak/ubuntu-24-docker-keycloak.qcow2"
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1536, cpu_mode = "host-passthrough" }
+    }
+  }
+}
