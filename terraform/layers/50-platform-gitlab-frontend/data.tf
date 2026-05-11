@@ -59,6 +59,14 @@ data "terraform_remote_state" "kubeadm" {
   }
 }
 
+# 0. Infrastructure Provisioning State
+data "terraform_remote_state" "provision" {
+  backend = "local"
+  config = {
+    path = "../40-provision-gitlab-frontend/terraform.tfstate"
+  }
+}
+
 # Harbor Bootstrapper State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "local"
@@ -109,4 +117,17 @@ data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+}
+
+# Database Credentials (Postgres/Redis)
+data "vault_kv_secret_v2" "db_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/databases"
+}
+
+data "vault_kv_secret_v2" "app_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app"
 }

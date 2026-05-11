@@ -56,16 +56,16 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Service Specific Credentials
   sec_app_creds = {
-    harbor_admin_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_admin_password"]
-    harbor_pg_db_password = data.vault_kv_secret_v2.db_vars.data["harbor_bootstrapper_pg_db_password"]
+    harbor_admin_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_admin_password"]
+    harbor_pg_db_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_pg_db_password"]
   }
 
   # Component Specific Vault Identities
@@ -108,7 +108,7 @@ locals {
     bstrap_harbor_vip              = local.net_physical_infra.lb_config.vip
     bstrap_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
     bstrap_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
-    vault_vip                      = local.state.vault_sys.service_vip
+    vault_vip                      = local.state.network.infrastructure_vips["vault-frontend"]
     global_mss                     = local.state.metadata.global_network_baseline.global_mss
 
     # Cluster Topology
@@ -119,10 +119,18 @@ locals {
       ]
     ][0] # Harbor Bootstrapper is a single component
 
-    # Asymmetric Routing (Flattened)
-    bstrap_harbor_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    bstrap_harbor_static_route_via    = local.net_physical_infra.lb_config.vip
-    bstrap_harbor_static_route_metric = 100
+    # Asymmetric Routing Configuration
+    bstrap_harbor_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.net_physical_infra.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "harbor-bootstrapper-frontend"
+      ], name)
+    ]
 
     # Compatibility Aliases
     access_scope = local.net_physical_infra.network.hostonly.cidr

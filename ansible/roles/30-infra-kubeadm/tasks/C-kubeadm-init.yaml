@@ -65,7 +65,6 @@
   when: not admin_conf_stat.stat.exists
   register: kubeadm_pri_result
   notify:
-    - Restart haproxy on primary master
     - Restart kubelet
 
 - name: "C9. Verify that admin.conf was created"

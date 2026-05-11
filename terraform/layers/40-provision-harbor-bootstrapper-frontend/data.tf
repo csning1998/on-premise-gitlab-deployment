@@ -27,13 +27,13 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
-data "vault_kv_secret_v2" "harbor_bootstrapper" {
+ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
 }
 
-data "vault_kv_secret_v2" "guest_vm" {
+ephemeral "vault_kv_secret_v2" "guest_vm" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/guest_vm"

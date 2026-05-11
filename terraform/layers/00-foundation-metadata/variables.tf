@@ -1,9 +1,9 @@
 
 /**
  * Layer 00: Foundation Metadata - Variables
- * 
- * This file defines the Input Schema for the entire infrastructure's 
- * Single Source of Truth (SSoT). All downstream layers consume the 
+ *
+ * This file defines the Input Schema for the entire infrastructure's
+ * Single Source of Truth (SSoT). All downstream layers consume the
  * outputs generated based on these variables.
  *
  * Requirements:
@@ -20,8 +20,13 @@ variable "domain_suffix" {
 variable "pki_settings" {
   description = "Global PKI Identity Settings (SSoT). Defines the legal identity of the infrastructure."
   type = object({
-    root_ca_common_name = string
+    root_ca_common_name         = string
+    intermediate_ca_common_name = string
   })
+  default = {
+    root_ca_common_name         = "On-prem Infrastructure Root CA"
+    intermediate_ca_common_name = "On-prem Infrastructure Intermediate CA"
+  }
 }
 
 variable "pki_force_rotate" {

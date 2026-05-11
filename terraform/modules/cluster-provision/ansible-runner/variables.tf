@@ -20,6 +20,7 @@ variable "inventory_data" {
 
 variable "credentials_vm" {
   description = "SSH credentials for Ansible"
+  ephemeral   = true
   type = object({
     username             = string
     ssh_private_key_path = string

@@ -8,15 +8,20 @@ resource "libvirt_network" "nat_networks" {
   for_each = var.create_networks ? var.network_infrastructure : {}
 
   name      = each.value.nat.name
-  bridge    = each.value.nat.bridge_name
-  mode      = "nat"
   autostart = true
+
+  bridge = {
+    name = each.value.nat.bridge_name
+  }
+
+  forward = {
+    mode = "nat"
+  }
 
   ips = [{
     address = each.value.nat.gateway
     prefix  = each.value.nat.prefix
     dhcp = {
-      enabled = true
       ranges = each.value.nat.dhcp != null ? [{
         start = each.value.nat.dhcp.start
         end   = each.value.nat.dhcp.end
@@ -25,15 +30,20 @@ resource "libvirt_network" "nat_networks" {
   }]
 }
 
-
 resource "libvirt_network" "hostonly_networks" {
 
   for_each = var.create_networks ? var.network_infrastructure : {}
 
   name      = each.value.hostonly.name
-  bridge    = each.value.hostonly.bridge_name
-  mode      = "route"
   autostart = true
+
+  bridge = {
+    name = each.value.hostonly.bridge_name
+  }
+
+  forward = {
+    mode = "route"
+  }
 
   ips = [{
     address = each.value.hostonly.gateway
@@ -45,10 +55,16 @@ resource "libvirt_network" "service_networks" {
 
   for_each = var.create_networks ? { for seg in var.lb_cluster_service_segments : seg.name => seg } : {}
 
-  name      = each.value.name        # e.g., "gitlab-frontend"
-  bridge    = each.value.bridge_name # e.g., "br-gitlab-front"
-  mode      = "route"
+  name      = each.value.name
   autostart = true
+
+  bridge = {
+    name = each.value.bridge_name
+  }
+
+  forward = {
+    mode = "route"
+  }
 
   ips = [
     {
@@ -61,9 +77,13 @@ resource "libvirt_network" "service_networks" {
 resource "libvirt_volume" "base_image" {
   for_each = local.base_image_map
 
-  name   = "base-${each.key}"
-  pool   = var.lb_cluster_vm_config.storage_pool_name
-  format = "qcow2"
+  name = "base-${each.key}"
+  pool = var.lb_cluster_vm_config.storage_pool_name
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
 
   create = {
     content = {
@@ -77,12 +97,19 @@ resource "libvirt_volume" "os_disk" {
 
   pool     = var.lb_cluster_vm_config.storage_pool_name
   name     = "${each.key}-os.qcow2"
-  format   = "qcow2"
   capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
 
+  target = {
+    format = {
+      type = "qcow2"
+    }
+  }
+
   backing_store = {
-    path   = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
-    format = "qcow2"
+    path = libvirt_volume.base_image[basename(abspath(each.value.base_image_path))].path
+    format = {
+      type = "qcow2"
+    }
   }
 }
 
@@ -127,7 +154,12 @@ resource "libvirt_volume" "cloud_init_iso" {
   for_each = var.lb_cluster_vm_config.nodes
   pool     = var.lb_cluster_vm_config.storage_pool_name
   name     = "${each.key}-cloud-init.iso"
-  format   = "iso"
+
+  target = {
+    format = {
+      type = "iso"
+    }
+  }
 
   create = {
     content = {
@@ -149,17 +181,22 @@ resource "libvirt_domain" "nodes" {
   for_each = var.lb_cluster_vm_config.nodes
 
   # 1. Basic Configuration (Required)
-  name      = each.key
-  vcpu      = each.value.vcpu
-  memory    = each.value.ram
-  unit      = "MiB"
-  autostart = false
-  running   = true
+  name        = each.key
+  type        = "kvm"
+  vcpu        = each.value.vcpu
+  memory      = each.value.ram
+  memory_unit = "MiB"
+  autostart   = false
+  running     = true
 
   # 2. OS Configuration
   os = {
     type = "hvm"
     arch = "x86_64"
+  }
+
+  cpu = {
+    mode = "host-passthrough"
   }
 
   # 3. Hardware Device Configuration (Attributes)
@@ -173,8 +210,16 @@ resource "libvirt_domain" "nodes" {
           bus = "virtio"
         }
         source = {
-          pool   = var.lb_cluster_vm_config.storage_pool_name
-          volume = libvirt_volume.os_disk[each.key].name
+          volume = {
+            pool   = var.lb_cluster_vm_config.storage_pool_name
+            volume = libvirt_volume.os_disk[each.key].name
+          }
+        }
+        driver = {
+          type = "qcow2"
+        }
+        boot = {
+          order = 1
         }
       },
       # Second Disk: Cloud-Init ISO
@@ -185,8 +230,13 @@ resource "libvirt_domain" "nodes" {
           bus = "sata"
         }
         source = {
-          pool   = var.lb_cluster_vm_config.storage_pool_name
-          volume = libvirt_volume.cloud_init_iso[each.key].name
+          volume = {
+            pool   = var.lb_cluster_vm_config.storage_pool_name
+            volume = libvirt_volume.cloud_init_iso[each.key].name
+          }
+        }
+        boot = {
+          order = 2
         }
       }
     ]
@@ -195,37 +245,54 @@ resource "libvirt_domain" "nodes" {
     # Lookup the network ID from the map then assign MAC and relative properties to the interface
     interfaces = [
       for iface in each.value.interfaces : {
-        type   = "network"
-        source = { network = iface.network_name }
-        mac    = iface.mac
-        model  = "virtio"
+        type = "network"
+        source = {
+          network = {
+            network = iface.network_name
+          }
+        }
+        mac = {
+          address = iface.mac
+        }
+        model = {
+          type = "virtio"
+        }
       }
     ]
 
     # Other Peripherals
     consoles = [
       {
-        type        = "pty"
-        target_port = 0
-        target_type = "serial"
+        type = "pty"
+        target = {
+          port = 0
+          type = "serial"
+        }
       },
       {
-        type        = "pty"
-        target_port = 1
-        target_type = "virtio"
+        type = "pty"
+        target = {
+          port = 1
+          type = "virtio"
+        }
       }
     ]
 
-    graphics = {
+    graphics = [{
       vnc = {
         listen   = "0.0.0.0"
         autoport = "yes"
       }
-    }
+    }]
 
-    video = {
-      type = "vga"
-    }
+    videos = [{
+      model = {
+        type    = "vga"
+        vram    = 16384
+        primary = "yes"
+        heads   = 1
+      }
+    }]
   }
 
   # 4. Lifecycle Management: Ignore Changes for Devices

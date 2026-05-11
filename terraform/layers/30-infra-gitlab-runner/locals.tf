@@ -43,10 +43,10 @@ locals {
 
   # System Credentials (OS/SSH)
   sec_system_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Identity Prep (GitLab Runner SANs)
@@ -90,6 +90,11 @@ locals {
     metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
     global_mss                 = local.state.metadata.global_network_baseline.global_mss
 
+    # Asymmetric Routing Configuration (Standardized Postgres/Redis pattern)
+    microk8s_static_route_to     = "${local.state.vault_sys.service_vip}/32"
+    microk8s_static_route_via    = local.p_net_config.lb_config.vip
+    microk8s_static_route_metric = 100
+
     # Cluster Topology
     microk8s_cluster_ips = [
       for node_suffix, node_data in var.service_config["runner"].nodes :
@@ -102,12 +107,6 @@ locals {
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
-
-    # Host Overrides
-    node_extra_hosts = [
-      { host = local.svc_fqdn, ip = local.net_service_vip },
-      { host = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0], ip = local.state.harbor_registry.service_vip }
-    ]
   }
 
   ansible_extra_vars = {

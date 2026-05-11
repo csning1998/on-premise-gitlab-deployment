@@ -60,10 +60,10 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
-    username             = data.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    password             = data.vault_kv_secret_v2.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_kv_secret_v2.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
+    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
+    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
+    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
+    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
   }
 
   # Vault Agent Physical Identity (Mapped to Component PKI)
@@ -121,26 +121,32 @@ locals {
 
     # Registry & Image Config
     kubeadm_registry_host        = local.state.metadata.global_pki_map[local.registry_pki_key].dns_san[0]
-    kubeadm_registry_vip         = local.state.harbor_registry.service_vip
-    kubeadm_image_repository     = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
-    kubeadm_dns_image_repository = "${local.state.harbor_registry.service_vip}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
+    kubeadm_registry_vip         = local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]
+    kubeadm_image_repository     = "${local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}"
+    kubeadm_dns_image_repository = "${local.state.network.infrastructure_vips["harbor-bootstrapper-frontend"]}/${local.state.harbor_proxy.proxy_caches["k8s_io"].project_name}/coredns"
 
     # Port Mappings
     kubeadm_http_nodeport  = local.p_net_config.lb_config.ports["ingress-http"].backend_port
     kubeadm_https_nodeport = local.p_net_config.lb_config.ports["ingress-https"].backend_port
 
-    # Host Overrides
-    node_extra_hosts = [
-      {
-        host = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-        ip   = local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip
-      }
-    ]
-
     # Mirroring Paths (Template Compatibility)
     harbor_docker_proxy = local.state.harbor_proxy.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = local.state.harbor_proxy.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = local.state.harbor_proxy.proxy_caches["k8s_io"].project_name
+
+    # Asymmetric Routing Configuration
+    kubeadm_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.p_net_config.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend",
+        "harbor-bootstrapper-frontend", "harbor-frontend",
+        "gitlab-postgres", "gitlab-redis", "gitlab-minio"
+      ], name)
+    ]
 
     # Compatibility Aliases (Optional)
     vip        = local.p_net_config.lb_config.vip

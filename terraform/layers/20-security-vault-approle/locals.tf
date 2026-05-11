@@ -34,7 +34,8 @@ locals {
       "secret/delete/on-premise-gitlab-deployment/*"   = { capabilities = ["update"] }
       "secret/destroy/on-premise-gitlab-deployment/*"  = { capabilities = ["update"] }
 
-      "pki/prod/*" = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "pki/prod/*"                          = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "pki-infrastructure-root-bootstrap/*" = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
 
       # [2] Control Plane (Administrative): Complies with Terraform official IaC management requirements.
       #     Must allow global sys/mounts and sys/auth; otherwise, global routing table updates

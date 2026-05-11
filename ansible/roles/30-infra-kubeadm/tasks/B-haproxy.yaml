@@ -1,63 +1,29 @@
 ---
-- name: "Block B1: Install and Configure HA Services"
+- name: "Block B1: Purge Legacy HA Services"
   block:
-    - name: "B1a. Enable non-local binding (Required for VIP)"
-      ansible.posix.sysctl:
-        name: "net.ipv4.ip_nonlocal_bind"
-        value: "1"
-        state: present
-        reload: true
+    - name: "B1a. Ensure Legacy Services are Stopped and Disabled"
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - keepalived
+        - haproxy
+      register: _purge_services
+      failed_when:
+        - _purge_services.failed
+        - "'Could not find the requested service' not in _purge_services.msg"
+        - "'not found' not in _purge_services.msg"
 
-    - name: "B1b. Install HAProxy and Keepalived"
+    - name: "B1b. Remove HAProxy and Keepalived packages"
       ansible.builtin.apt:
         name:
           - keepalived
           - haproxy
-          - rsyslog
-        state: present
-        update_cache: true
+        state: absent
+        purge: true
 
-    - name: "B1c. Create keepalived_script user"
-      ansible.builtin.user:
-        name: "keepalived_script"
-        system: true
-        shell: "/usr/sbin/nologin"
-        state: present
-        create_home: false
-
-- name: "Block B2: Configure Services"
-  block:
-    - name: "B2a. Configure Keepalived"
-      ansible.builtin.template:
-        src: keepalived.conf.j2
-        dest: /etc/keepalived/keepalived.conf
-        mode: "0644"
-        validate: keepalived --config-test %s
-      notify: Restart keepalived
-
-    - name: "B2b. Configure HAProxy"
-      ansible.builtin.template:
-        src: haproxy.cfg.j2
-        dest: /etc/haproxy/haproxy.cfg
-        mode: "0640"
-        validate: haproxy -c -f %s
-      notify: Restart haproxy
-
-    - name: "B2c. Configure Rsyslog for Keepalived"
-      ansible.builtin.lineinfile:
-        path: /etc/rsyslog.conf
-        line: "local0.* /var/log/keepalived.log"
-        create: true
-        mode: "0644"
-      notify: Restart rsyslog
+    - name: "B1c. Clean up stale VIP configurations"
+      ansible.builtin.shell: |
+        ip addr del {{ kubeadm_ha_virtual_ip }}/32 dev enp0s4 || true
       changed_when: false
-
-    - name: "B2d. Ensure services are started and enabled"
-      ansible.builtin.systemd:
-        name: "{{ item }}"
-        state: started
-        enabled: true
-        daemon_reload: true
-      loop:
-        - keepalived
-        - haproxy

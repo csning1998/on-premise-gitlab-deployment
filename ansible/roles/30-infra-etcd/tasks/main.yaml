@@ -62,7 +62,8 @@
         rule: allow
         port: "{{ etcd_client_port }}"
         proto: tcp
-        src: "{{ postgres_mtls_node_subnet }}"
+        src: "{{ item }}"
+      loop: "{{ postgres_mtls_node_subnet.split(' ') }}"
       when: ufw_stat.stat.exists
 
 - name: "Section C: Start and Enable etcd Service"

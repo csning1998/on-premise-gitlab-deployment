@@ -179,14 +179,7 @@ resource "helm_release" "gitlab" {
           workhorse = {
             image = var.image_registry != null ? "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-workhorse-${var.gitlab_config.edition}" : null
           }
-          deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
-          }
+          deployment = {}
         }
         sidekiq = {
           minReplicas = 1
@@ -194,14 +187,7 @@ resource "helm_release" "gitlab" {
           image = var.image_registry != null ? {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-sidekiq-${var.gitlab_config.edition}"
           } : null
-          deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
-          }
+          deployment = {}
         }
         gitaly = {
           image = var.image_registry != null ? {
@@ -232,14 +218,7 @@ resource "helm_release" "gitlab" {
           image = var.image_registry != null ? {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-toolbox-${var.gitlab_config.edition}"
           } : null
-          deployment = {
-            hostAliases = var.external_services.minio.ip != null ? [
-              {
-                ip        = var.external_services.minio.ip
-                hostnames = [var.external_services.minio.hostname]
-              }
-            ] : []
-          }
+          deployment = {}
           backups = {
             objectStorage = {
               config = {

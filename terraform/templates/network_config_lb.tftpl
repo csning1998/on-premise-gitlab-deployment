@@ -16,7 +16,7 @@ network:
       dhcp4: true
 %{ endif ~}
       nameservers:
-        addresses: [8.8.8.8, 1.1.1.1]
+        addresses: ["${config.nat_gateway}"]
 
     id1:
       match:
