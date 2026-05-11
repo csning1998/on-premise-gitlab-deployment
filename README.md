@@ -26,7 +26,7 @@ The project can be cloned using the following command:
 git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
-This repo has the following resource allocation, based on RAM constraints (for reference only):
+This repo has the following resource allocation, based on RAM constraints (for single-host deployment, reference only):
 
 | Network Segment (CIDR) | Service Tier  | Usage (Service)         | Storage Pool Name        | VIP (HAProxy/Ingress) | Node IP Allocation | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                             |
 | ---------------------- | ------------- | ----------------------- | ------------------------ | --------------------- | ------------------ | ---------------- | -------- | --------- | -------- | -------------- | --------------------------------- |
@@ -353,22 +353,21 @@ Successful execution and the display of virtual machines—regardless of whether
 #### **Step B.1. Host OS Kernel Tuning on Network**
 
 > [!IMPORTANT]
-> The system operates under a Centralized Load Balancer architecture where inter-node communication primarily follows an **Asymmetric Routing** pattern. To ensure the operational integrity of **VIP (Keepalived)**, **PKI**, and **OCI** services, the following kernel configurations must be applied to the Host machine.
+> The system operates under a Centralized Load Balancer architecture where inter-node communication primarily follows an **Asymmetric Routing** pattern. To ensure the operational integrity of **VIP (Keepalived)**, **PKI**, and **OCI** services, the Host machine must be configured with the following settings.
 
-1.  Configuration of Reverse Path Filtering to loose mode. This prevents the Linux Kernel from dropping legitimate traffic by incorrectly flagging it as IP spoofing within an asymmetric routing architecture.
+1.  First, configure Reverse Path Filtering to **loose mode**. Under an asymmetric routing architecture, return packets may arrive from a different network interface. Strict Mode will flag this as IP spoofing and drop the packets directly.
+    1. Configure Reverse Path Filtering to loose mode
 
-    ```shell
-    sudo sysctl -w net.ipv4.conf.all.rp_filter=2
-    sudo sysctl -w net.ipv4.conf.default.rp_filter=2
-    ```
+        ```shell
+        sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+        sudo sysctl -w net.ipv4.conf.default.rp_filter=2
+        ```
 
-    Enabling IP forwarding. This primarily allows Guests to access the internet through the Host. This setting is typically enabled by default.
+    2. Enable IP forwarding (Foundation for L3 Routing)
 
-    ```shell
-    sudo sysctl -w net.ipv4.ip_forward=1
-    ```
-
-    The architecture is illustrated as follow:
+        ```shell
+        sudo sysctl -w net.ipv4.ip_forward=1
+        ```
 
     ```mermaid
     sequenceDiagram
@@ -395,7 +394,13 @@ Successful execution and the display of virtual machines—regardless of whether
         Host-->>App: Forward to Virtual Machine
     ```
 
-2.  Libvirt's bridge network sends traffic to the Host machine's `iptables` by default. Therefore, bridge network traffic must be disabled from entering the Host's `iptables` to prevent the Host's firewall (`ufw` or `firewalld`) from interfering with internal Guest communication.
+2.  Libvirt's bridge will send L2 traffic to the Host's iptables for processing by default. In high-traffic scenarios or complex mTLS handshakes, this usually causes double filtering and connection state tracking (Conntrack) conflicts. Therefore, **the bridge must be disabled from invoking `netfilter`**, allowing routing decisions to return to L3 processing.
+
+    ```shell
+    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-arptables=0
+    ```
 
     ```mermaid
     graph LR
@@ -437,23 +442,21 @@ Successful execution and the display of virtual machines—regardless of whether
         class Fail fail
     ```
 
-    Failure to do so may cause mTLS failures between Guests (e.g., between GitLab and Vault). This also ensures that `conntrack`does not take effect on these packets, as they do not enter`netfilter`.
+    Failure to disable this may lead to mTLS failures between guests (e.g., between GitLab and Vault). After setting `bridge-nf-call-*=0`, pure L2 packets forwarded by the bridge will directly bypass the Host's Netfilter and no longer consume Conntrack resources. However, inter-segment L3 routing traffic will still be managed by the Host's Conntrack. Therefore, the total capacity and recycling efficiency of the Conntrack table must be increased, and TCP state validation must be relaxed to ensure connections are not mistakenly terminated during high traffic and HA failovers:
 
     ```shell
-    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
-    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0
-    sudo sysctl -w net.bridge.bridge-nf-call-arptables=0
+    sudo sysctl -w net.netfilter.nf_conntrack_max=2097152
+    sudo sysctl -w net.netfilter.nf_conntrack_tcp_be_liberal=1
+    sudo sysctl -w net.netfilter.nf_conntrack_tcp_timeout_time_wait=30
     ```
 
-    However, when `bridge-nf-call-*=0`, bridge traffic already bypasses `netfilter`, meaning `NOTRACK` rules have limited impact on pure bridge-transit packets as they do not trigger the `raw` hook. Nevertheless, traffic generated by the host itself—such as local traffic between the host and guests, non-bridge transit packets, or traffic still processed by `firewalld`—is still affected by `NOTRACK`. Therefore, this configuration can be considered to further reduce `conntrack` table consumption.
+3.  Since the infrastructure MTU is set to 1450 (with overhead reserved for VXLAN encapsulation), the MSS must be forcibly modified in the Host's `mangle` table to prevent TCP packets from being too large, which would result in fragmentation or black hole issues.
 
     ```shell
-    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw PREROUTING 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
-    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw OUTPUT 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 mangle FORWARD 0 -s 172.16.0.0/16 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 mangle FORWARD 0 -d 172.16.0.0/16 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
     sudo firewall-cmd --reload
     ```
-
-    Generally, low-traffic environments may not encounter significant issues even if `firewalld` is left unmanaged. However, in high-traffic scenarios, the firewall may fail to process complex internal TLS handshakes or the `conntrack` table may reach capacity, leading to immediate connection termination and subsequent mTLS handshake failures.
 
 #### **Step B.2. Prepare GitHub Credentials for Self-Management**
 
