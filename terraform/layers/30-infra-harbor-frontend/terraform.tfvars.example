@@ -1,7 +1,11 @@
 
-service_catalog_name = "harbor"
+primary_role = "microk8s"
 
-harbor_microk8s_config = {
+target_clusters = {
+  microk8s = "core-harbor-microk8s"
+}
+
+service_config = {
   "frontend" = {
     role            = "microk8s"
     network_tier    = "default"

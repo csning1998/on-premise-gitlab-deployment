@@ -26,26 +26,28 @@
 git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
 ```
 
-此 repo 具有以下資源分配，基於 RAM 本身限制，僅供參考：
+此 repo 具有以下資源分配，基於 RAM 本身限制，僅供「單機佈署」參考：
 
-| Network Segment (CIDR) | Service Tier  | Usage (Service)  | Storage Pool Name   | VIP (HAProxy/Ingress) | Node IP Allocation               | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                                      |
-| ---------------------- | ------------- | ---------------- | ------------------- | --------------------- | -------------------------------- | ---------------- | -------- | --------- | -------- | -------------- | ------------------------------------------ |
-| 172.16.125.0/24        | Shared        | Central LB       | core-central-lb     | 172.16.125.250        | `.20x` (Frontend)                | HAProxy          | 1        | 1         | 0.5 GiB  | 512 MiB        | TCP forwarding only                        |
-| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster  | core-gitlab-kubeadm | 172.16.126.250        | `.200` (Master), `.21x` (Worker) | Kubeadm Master   | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Used for GitLab Helm Chart deployment      |
-|                        |               |                  |                     |                       |                                  | Kubeadm Worker   | 2        | 4         | 6.0 GiB  | 12,288 MiB     | For Rails/Sidekiq, GitLab Runner, etc.     |
-| 172.16.127.0/24        | Data (GitLab) | Postgres HA      | core-gitlab-pg      | 172.16.127.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Instantiated via Module 30                 |
-| 172.16.128.0/24        | Data (GitLab) | Etcd HA          | core-gitlab-etcd    | 172.16.128.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
-| 172.16.129.0/24        | Data (GitLab) | Redis HA         | core-gitlab-redis   | 172.16.129.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
-| 172.16.130.0/24        | Data (GitLab) | MinIO HA         | core-gitlab-minio   | 172.16.130.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Distributed MinIO ready                    |
-| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster | core-harbor         | 172.16.131.250        | `.20x` (Nodes)                   | MicroK8s Node    | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Full Harbor consumes ~4-5 GB               |
-| 172.16.132.0/24        | Data (Harbor) | Postgres HA      | core-harbor-pg      | 172.16.132.250        | `.20x` (Postgres)                | Postgres         | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Same as GitLab Postgres                    |
-| 172.16.133.0/24        | Data (Harbor) | Etcd HA          | core-harbor-etcd    | 172.16.133.250        | `.20x` (Etcd)                    | Etcd             | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Patroni backend                            |
-| 172.16.134.0/24        | Data (Harbor) | Redis HA         | core-harbor-redis   | 172.16.134.250        | `.20x` (Redis)                   | Redis            | 1        | 2         | 2.0 GiB  | 2,048 MiB      |                                            |
-| 172.16.135.0/24        | Data (Harbor) | MinIO HA         | core-harbor-minio   | 172.16.135.250        | `.20x` (MinIO)                   | MinIO            | 1        | 2         | 3.0 GiB  | 3,072 MiB      | Same as GitLab MinIO                       |
-| 172.16.136.0/24        | Shared        | Vault HA         | core-vault          | 172.16.136.250        | `.20x` (Vault)                   | Vault (Raft)     | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Raft is lightweight; Shared secrets center |
-| 172.16.137.0/24        | App (Harbor)  | Bootstrapper     | core-bootstrapper   | 172.16.137.250        | `.200` (Docker)                  | Docker Engine    | 1        | 2         | 4.0 GiB  | 4,096 MiB      | Ephemeral deployment controller            |
-| 172.16.138.0/24        | Data (GitLab) | Gitaly node      | core-gitaly         | 172.16.138.250        | `.20x`                           | Gitaly           | 1        | 2         | 2.0 GiB  | 2,048 MiB      | [Pending] Not deployed                     |
-| **Total**              |               |                  |                     |                       |                                  |                  | **19**   |           |          | **55,296 MiB** | ≈ 54.0 GiB                                 |
+| Network Segment (CIDR) | Service Tier  | Usage (Service)         | Storage Pool Name        | VIP (HAProxy/Ingress) | Node IP Allocation | Component (Role) | Quantity | Unit vCPU | Unit RAM | Subtotal RAM   | Notes                             |
+| ---------------------- | ------------- | ----------------------- | ------------------------ | --------------------- | ------------------ | ---------------- | -------- | --------- | -------- | -------------- | --------------------------------- |
+| 172.16.125.0/24        | Shared        | Central LB              | core-central-lb-pool     | 172.16.125.250        | `.10, .11`         | HAProxy          | 2        | 2         | 0.5 GiB  | 1,024 MiB      | TCP forwarding; HA pair           |
+| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster         | core-gitlab-kubeadm-pool | 172.16.126.250        | `.200` (Master)    | Kubeadm Master   | 1        | 4         | 3.0 GiB  | 3,072 MiB      | Control Plane node                |
+|                        |               |                         |                          |                       | `.210, .211`       | Kubeadm Worker   | 2        | 4         | 6.0 GiB  | 12,288 MiB     | Workload nodes                    |
+| 172.16.127.0/24        | Data (GitLab) | Postgres HA             | core-gitlab-pg-pool      | 172.16.127.250        | `.200`             | Postgres         | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Deployed via Module 30            |
+| 172.16.128.0/24        | Data (GitLab) | Etcd HA                 | core-gitlab-etcd-pool    | 172.16.128.250        | `.200`             | Etcd             | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Patroni backend; Same layer as PG |
+| 172.16.129.0/24        | Data (GitLab) | Redis HA                | core-gitlab-redis-pool   | 172.16.129.250        | `.200`             | Redis            | 1        | 2         | 0.5 GiB  | 512 MiB        |                                   |
+| 172.16.130.0/24        | Data (GitLab) | MinIO HA                | core-gitlab-minio-pool   | 172.16.130.250        | `.200`             | MinIO            | 1        | 2         | 1.0 GiB  | 1,024 MiB      | Object Storage                    |
+| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster        | core-harbor-pool         | 172.16.131.250        | `.200`             | MicroK8s Node    | 1        | 4         | 4.0 GiB  | 4,096 MiB      | Full Harbor stack                 |
+| 172.16.132.0/24        | Data (Harbor) | Postgres HA             | core-harbor-pg-pool      | 172.16.132.250        | `.200`             | Postgres         | 1        | 2         | 1.0 GiB  | 1,024 MiB      |                                   |
+| 172.16.133.0/24        | Data (Harbor) | Etcd HA                 | core-harbor-etcd-pool    | 172.16.133.250        | `.200`             | Etcd             | 1        | 2         | 1.0 GiB  | 1,024 MiB      |                                   |
+| 172.16.134.0/24        | Data (Harbor) | Redis HA                | core-harbor-redis-pool   | 172.16.134.250        | `.200`             | Redis            | 1        | 2         | 0.5 GiB  | 512 MiB        |                                   |
+| 172.16.135.0/24        | Data (Harbor) | MinIO HA                | core-harbor-minio-pool   | 172.16.135.250        | `.200`             | MinIO            | 1        | 2         | 1.0 GiB  | 1,024 MiB      |                                   |
+| 172.16.136.0/24        | Shared        | Vault HA                | core-vault-pool          | 172.16.136.250        | `.200`             | Vault (Raft)     | 1        | 2         | 0.5 GiB  | 512 MiB        | Central Secrets Management        |
+| 172.16.137.0/24        | App (Harbor)  | Bootstrapper            | core-bootstrapper-pool   | 172.16.137.250        | `.200`             | Docker Engine    | 1        | 2         | 1.5 GiB  | 1,536 MiB      | Deployment controller             |
+| 172.16.138.0/24        | Data (GitLab) | Gitaly node [Pending]   | core-gitaly-pool         | 172.16.138.250        | `.200`             | Gitaly           | 1        | 2         | 2.0 GiB  | 2,048 MiB      | [Pending] Not deployed            |
+| 172.16.139.0/24        | App (GitLab)  | GitLab Runner [Pending] | core-gitlab-runner-pool  | 172.16.139.250        | `.200`             | MicroK8s Node    | 1        | 4         | 4.0 GiB  | 4,096 MiB      | [Pending] Dedicated runner pool   |
+| 172.16.142.0/24        | Shared        | Keycloak SSO [Pending]  | core-keycloak-pool       | 172.16.142.250        | `.200`             | Docker Engine    | 1        | 2         | 1.5 GiB  | 1,536 MiB      | [Pending] Identity Provider       |
+| **Total**              |               |                         |                          |                       |                    |                  | **19**   |           |          | **40,448 MiB** | ≈ 39.5 GiB                        |
 
 ### A. Disclaimer
 
@@ -353,20 +355,19 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 > [!IMPORTANT]
 > 因為系統是運作在 Centralized Load Balancer 架構之下，節點之間通訊原則上以 **非對稱路由 (Asymmetric Routing)** 形式運作，所以為了確保 **VIP（Keepalived）**、**PKI**、以及 **OCI** 等能正常運作，Host 機必須進行以下設定
 
-1. 將反向路徑過濾設定為 **loose mode** 防止因非對稱路由架構之下，Linux Kernel 將合法流量判定為 IP 欺騙被丟棄的狀況
+1.  首先需要將反向路徑過濾設定為 **loose mode**。在非對稱路由架構下，回程封包可能從不同的網路介面進入，嚴格模式 (Strict Mode) 會將其判定為 IP 欺騙並直接丟棄
+    1. 設定反向路徑過濾為鬆散模式
 
-    ```shell
-    sudo sysctl -w net.ipv4.conf.all.rp_filter=2
-    sudo sysctl -w net.ipv4.conf.default.rp_filter=2
-    ```
+        ```shell
+        sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+        sudo sysctl -w net.ipv4.conf.default.rp_filter=2
+        ```
 
-    開啟 IP 轉發功能，主要是讓 guests 可以透過 host 上網。通常這設定會預設開啟
+    2. 開啟 IP 轉發功能 (L3 Routing 基礎)
 
-    ```shell
-    sudo sysctl -w net.ipv4.ip_forward=1
-    ```
-
-    架構圖如下
+        ```shell
+        sudo sysctl -w net.ipv4.ip_forward=1
+        ```
 
     ```mermaid
     sequenceDiagram
@@ -393,7 +394,13 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         Host-->>App: Forward to Virtual Machine
     ```
 
-2. Libvirt 的 bridge 網路預設將流量送往 host 機的 iptables，因此要禁用 bridge 網路流量進入 host 機的 iptables，以防止 host 機的防火牆（`ufw` 或 `firewalld`）干擾 Guest 內部的通訊
+2.  Libvirt 的 bridge 預設會將 L2 流量送往 Host 的 iptables 處理。在大流量或複雜的 mTLS 交握中，這通常會導致雙重過濾與連線狀態追蹤 (Conntrack) 衝突。因此 **必須禁用 bridge 呼叫 `netfilter`**，讓路由決策回歸 L3 層級處理
+
+    ```shell
+    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0
+    sudo sysctl -w net.bridge.bridge-nf-call-arptables=0
+    ```
 
     ```mermaid
     graph LR
@@ -435,23 +442,21 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
         class Fail fail
     ```
 
-    如果沒有關閉，可能會導致 guests 之間的 mTLS 失敗（例如 GitLab 到 Vault 之間）。這樣 conntrack 也不會對這些封包生效，因為封包根本不進 `netfilter`
+    如果沒有關閉，可能會導致 guests 之間的 mTLS 失敗（例如 GitLab 到 Vault 之間）。設定 `bridge-nf-call-*=0` 後，純 Bridge 轉發的 L2 封包將直接繞過 Host 的 Netfilter，不再消耗 Conntrack 資源。然而跨網路段 (Inter-segment) 的 L3 路由流量仍會受 Host 的 Conntrack 管理，因此必須提升 Conntrack 表的總量與回收效率，並放寬 TCP 狀態驗證，以確保大流量與 HA 切換期間連線不被誤殺：
 
     ```shell
-    sudo sysctl -w net.bridge.bridge-nf-call-iptables=0
-    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=0
-    sudo sysctl -w net.bridge.bridge-nf-call-arptables=0
+    sudo sysctl -w net.netfilter.nf_conntrack_max=2097152
+    sudo sysctl -w net.netfilter.nf_conntrack_tcp_be_liberal=1
+    sudo sysctl -w net.netfilter.nf_conntrack_tcp_timeout_time_wait=30
     ```
 
-    然而，當 `bridge-nf-call-*=0` 時，bridge 流量已繞過 `netfilter`，這樣 `NOTRACK` 規則對純 bridge 穿越封包的影響就會有限，因為根本不會觸發 raw hook；但 host 本身產生的流量，例如 host 與 guests 之間的 local traffic、非 bridge 穿越的封包，或 `firewalld` 仍會處理的部分，仍會受 `NOTRACK` 影響。所以可以考慮進一步減少 conntrack table 消耗
+3.  由於基礎設施 MTU 設為 1450（有預留給 VXLAN 封裝），為防止 TCP 封包過大導致分片（Fragmentation）或黑洞問題，必須在 Host 的 `mangle` 表強制修正 MSS
 
     ```shell
-    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw PREROUTING 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
-    sudo firewall-cmd --permanent --direct --add-rule ipv4 raw OUTPUT 0 -s 172.16.0.0/16 -d 172.16.0.0/16 -j NOTRACK
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 mangle FORWARD 0 -s 172.16.0.0/16 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 mangle FORWARD 0 -d 172.16.0.0/16 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
     sudo firewall-cmd --reload
     ```
-
-    通常小流量環境不管 `firewalld` 不會有太多問題，但如果是大流量狀態，就可能會因為看不懂虛擬機內部的複雜 TLS 握手，或是因為 conntrack 表滿了，直接中斷該連線而出現 mTLS 交握失敗
 
 #### **Step B.2. Prepare GitHub Credentials for Self-Management**
 

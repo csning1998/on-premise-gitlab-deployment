@@ -110,8 +110,8 @@ locals {
       cluster_name      = item.cluster_name
       stage             = item.stage
       storage_pool_name = item.storage_pool_name
-      bridge_name_host  = "br-${item.hash_prefix}"
-      bridge_name_nat   = "br-${item.hash_prefix}-nat"
+      bridge_name_host  = "vbr${item.hash_prefix}"
+      bridge_name_nat   = "vbr${item.hash_prefix}-n"
       node_name_prefix  = "${item.cluster_name}-node"
       ansible_inventory = "inventory-${item.cluster_name}.yaml"
       ssh_config        = "ssh_${item.cluster_name}"
