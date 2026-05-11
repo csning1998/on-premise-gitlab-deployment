@@ -35,7 +35,7 @@ variable "topology_cluster" {
         ip_suffix            = number
         vcpu                 = number
         ram_size             = number
-        os_disk_capacity_gib = number
+        os_disk_capacity_gib = optional(number)
         cpu_mode             = optional(string, null)
 
         attached_volumes = optional(list(object({
