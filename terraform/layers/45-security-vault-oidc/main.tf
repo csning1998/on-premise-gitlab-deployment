@@ -32,6 +32,8 @@ resource "vault_jwt_auth_backend_role" "keycloak_user" {
 
   allowed_redirect_uris = [
     "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
+    "https://vault.production.iac.internal/ui/vault/auth/oidc/callback",
+    "https://vault.production.iac.internal/vault/oidc/callback",
     "http://localhost:8250/oidc/callback"
   ]
 }
