@@ -5,11 +5,11 @@ set -e
 # 0. Global Preference: Treat all internal 172.16.0.0/16 traffic via main table
 #    This prevents source-based routing from forcing internal replies out through gateways,
 #    ensuring symmetric L2 traffic between internal segments.
-ip rule del to 172.16.0.0/16 lookup main priority 5 2>/dev/null || true
-ip rule add to 172.16.0.0/16 lookup main priority 5
+ip rule del to 172.16.0.0/16 lookup main priority 200 2>/dev/null || true
+ip rule add to 172.16.0.0/16 lookup main priority 200
 
 # 1. Inject each VIP's dedicated table and default route
-#    - Use explicit priority (100+) to ensure global rule (5) takes precedence
+#    - Use explicit priority (100+) to ensure VIP-specific rules take precedence over global rule (200)
 {% for seg in lb_service_segments %}
 ip rule del from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }} 2>/dev/null || true
 ip rule add from {{ seg.vip }} table rt_{{ seg.name | replace('-', '_') }} priority {{ 100 + loop.index0 }}
@@ -23,16 +23,13 @@ ip route replace default via {{ seg.cidr | regex_replace('\\.0/24$', '.1') }} de
 ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table rt_{{ seg.name | replace('-', '_') }} advmss {{ global_mss }}
 {% endfor %}
 
-# 3. Targeted L2 Return Paths for Vault
-#    Nodes bypass the core router to reach Vault via fix-routes.service.
-#    Injection of scope links for all segments into the Vault routing table ensures symmetric L2 returns.
-#    Other routing tables (e.g., Redis) remain reliant on L3 symmetry.
+# 3. Targeted L2 Return Paths for All Internal Services
+#    Nodes bypass the core router to reach other internal services.
+#    Injection of scope links for all segments into all routing tables ensures symmetric L2 returns internally.
 {% for target_seg in lb_service_segments %}
-{% if 'vault' in target_seg.name %}
 {% for source_seg in lb_service_segments %}
 ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scope link table rt_{{ target_seg.name | replace('-', '_') }} advmss {{ global_mss }} 2>/dev/null || true
 {% endfor %}
-{% endif %}
 {% endfor %}
 
 # 4. Network Performance: Global Bidirectional MSS Clamping
