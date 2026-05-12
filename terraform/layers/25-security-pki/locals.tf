@@ -32,19 +32,53 @@ locals {
 #    b. Inject Metadata (OU)
 #    c. Apply TTL Policy
 locals {
-  # Consolidated Roles (Based on SSoT global_pki_map)
-  all_roles = {
-    for k, v in local.state.metadata.global_pki_map : k => {
-      name            = v.role_name
-      allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
-      ou              = v.ou
-      auth_path       = v.auth_config.path
-      auth_method     = v.auth_config.method
-      approle_path    = v.auth_config.approle_path
-      max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
-      ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
+  # Consolidated Roles (Based on SSoT global_pki_map + Manual Management Roles)
+  all_roles = merge(
+    {
+      for k, v in local.state.metadata.global_pki_map : k => {
+        name            = v.role_name
+        allowed_domains = distinct(concat(v.dns_san, [local.root_domain]))
+        ou              = v.ou
+        auth_path       = v.auth_config.path
+        auth_method     = v.auth_config.method
+        approle_path    = v.auth_config.approle_path
+        max_ttl         = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).max
+        ttl             = lookup(local.ttl_policy, v.ttl_stage, local.ttl_policy["default"]).default
+      }
+    },
+    {
+      "oidc-admin" = {
+        name            = "oidc-admin"
+        allowed_domains = [local.root_domain]
+        ou              = ["infrastructure"]
+        auth_path       = "workload-approle"
+        auth_method     = "approle"
+        approle_path    = "workload-approle"
+        max_ttl         = local.ttl_policy["production"].max
+        ttl             = local.ttl_policy["production"].default
+      },
+      "oidc-auditor" = {
+        name            = "oidc-auditor"
+        allowed_domains = [local.root_domain]
+        ou              = ["compliance"]
+        auth_path       = "workload-approle"
+        auth_method     = "approle"
+        approle_path    = "workload-approle"
+        max_ttl         = local.ttl_policy["production"].max
+        ttl             = local.ttl_policy["production"].default
+      },
+      "oidc-developer" = {
+        name            = "oidc-developer"
+        allowed_domains = ["*"] # To work with multiple domain
+        ou              = ["development"]
+        auth_path       = "workload-approle"
+        auth_method     = "approle"
+        approle_path    = "workload-approle"
+        max_ttl         = local.ttl_policy["development"].max
+        ttl             = local.ttl_policy["development"].default
+      }
     }
-  }
+  )
 
   # Identification of roles requiring Kubernetes Auth for main.tf resources
   kubernetes_roles = { for k, v in local.all_roles : k => v if v.auth_method == "kubernetes" }
@@ -66,5 +100,48 @@ locals {
     "gitlab-runner" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
+
+    # Infrastructure Management (Super-Admin for Terraform)
+    "production" = {
+      # Auth & Mounts
+      "auth/*"           = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "sys/auth/*"       = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "sys/auth"         = { capabilities = ["read"] }
+      "sys/mounts/*"     = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "sys/mounts"       = { capabilities = ["read"] }
+      
+      # PKI & Secrets
+      "pki/*"            = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "secret/*"         = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      
+      # Identity & Policies
+      "identity/*"       = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+      "sys/policies/acl/*" = { capabilities = ["create", "update", "read", "delete", "list", "sudo"] }
+      
+      # System
+      "sys/health"       = { capabilities = ["read"] }
+    }
+
+    # Human/Management Identities
+    "oidc-admin" = {
+      "secret/data/on-premise-gitlab-deployment/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
+      "secret/metadata/on-premise-gitlab-deployment/*" = { capabilities = ["list", "read", "delete"] }
+      "auth/token/lookup-self"                         = { capabilities = ["read"] }
+      "identity/lookup/entity"                         = { capabilities = ["read", "update"] }
+    }
+
+    "oidc-auditor" = {
+      "secret/metadata/*"                          = { capabilities = ["list", "read"] }
+      "secret/data/on-premise-gitlab-deployment/*" = { capabilities = ["read", "list"] }
+      "sys/audit"                                  = { capabilities = ["read"] }
+      "sys/policies/acl"                           = { capabilities = ["list", "read"] }
+    }
+
+    "oidc-developer" = {
+      "secret/data/on-premise-gitlab-deployment/applications/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
+      "secret/metadata/on-premise-gitlab-deployment/applications/*" = { capabilities = ["list", "read"] }
+    }
   }
+
+  management_identities = toset(["oidc-admin", "oidc-auditor", "oidc-developer"])
 }
