@@ -29,7 +29,10 @@ resource "keycloak_openid_client" "clients" {
     vault = {
       client_id           = "vault-infra"
       name                = "Vault Infrastructure"
-      valid_redirect_uris = ["https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback"]
+      valid_redirect_uris = [
+        "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
+        "http://localhost:8250/oidc/callback"
+      ]
     }
     gitlab = {
       client_id           = "gitlab-infra"
@@ -62,23 +65,67 @@ resource "keycloak_openid_client" "clients" {
 
 # 4. Protocol Mappers (Inject Groups into Token)
 resource "keycloak_openid_group_membership_protocol_mapper" "group_mapper" {
-  for_each   = keycloak_openid_client.clients
-  realm_id   = keycloak_realm.infra_realm.id
-  client_id  = each.value.id
-  name       = "group-mapper"
-  claim_name = "groups"
-  full_path  = false
+  for_each            = keycloak_openid_client.clients
+  realm_id            = keycloak_realm.infra_realm.id
+  client_id           = each.value.id
+  name                = "group-mapper"
+  claim_name          = "groups"
+  full_path           = false
+  add_to_id_token     = true
+  add_to_access_token = true
 }
 
-# 5. Secret Storage in Vault
-resource "vault_generic_secret" "oidc_clients" {
+# Audience Mapper for Vault to verify Token
+resource "keycloak_openid_audience_protocol_mapper" "vault_audience" {
+  realm_id  = keycloak_realm.infra_realm.id
+  client_id = keycloak_openid_client.clients["vault"].id
+  name      = "audience-mapper"
+
+  included_custom_audience = "vault-infra"
+  add_to_id_token          = true
+  add_to_access_token      = true
+}
+
+# 5. Secret Storage in Vault (Using V2 for proper path handling)
+resource "vault_kv_secret_v2" "oidc_clients" {
   provider = vault.production
   for_each = keycloak_openid_client.clients
-  path     = "secret/on-premise-gitlab-deployment/oidc/clients/${each.key}"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/oidc/clients/${each.key}"
 
   data_json = jsonencode({
     client_id     = each.value.client_id
     client_secret = random_password.client_secrets[each.key].result
     issuer        = "https://sso.keycloak.production.iac.internal/realms/${local.realm_id}"
   })
+}
+
+# 6. Test User & Groups for OIDC Verification
+resource "keycloak_group" "admin_group" {
+  realm_id = keycloak_realm.infra_realm.id
+  name     = "admin" # Matches the Vault alias 'admin'
+}
+
+resource "keycloak_user" "test_admin" {
+  realm_id       = keycloak_realm.infra_realm.id
+  username       = "testadmin"
+  enabled        = true
+  email          = "testadmin@iac.internal"
+  first_name     = "Test"
+  last_name      = "Admin"
+  email_verified = true
+
+  initial_password {
+    value     = "testadmin"
+    temporary = false
+  }
+}
+
+resource "keycloak_user_groups" "test_admin_groups" {
+  realm_id = keycloak_realm.infra_realm.id
+  user_id  = keycloak_user.test_admin.id
+
+  group_ids = [
+    keycloak_group.admin_group.id
+  ]
 }

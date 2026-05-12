@@ -21,13 +21,14 @@ resource "vault_jwt_auth_backend" "keycloak" {
 # This role allows everyone from Keycloak to authenticate; actual permissions
 # are managed via Identity Group mappings based on the 'groups' claim.
 resource "vault_jwt_auth_backend_role" "keycloak_user" {
-  provider       = vault.production
-  backend        = vault_jwt_auth_backend.keycloak.path
-  role_name      = "keycloak-user"
-  token_policies = ["default"]
-  user_claim     = "sub"
-  groups_claim   = "groups"
-  role_type      = "oidc"
+  provider             = vault.production
+  backend              = vault_jwt_auth_backend.keycloak.path
+  role_name            = "keycloak-user"
+  token_policies       = ["default"]
+  user_claim           = "preferred_username"
+  groups_claim         = "groups"
+  role_type            = "oidc"
+  verbose_oidc_logging = true
 
   allowed_redirect_uris = [
     "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
