@@ -101,29 +101,13 @@ locals {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
 
-    # Infrastructure Management (Super-Admin for Terraform)
-    "production" = {
-      # Auth & Mounts
-      "auth/*"           = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      "sys/auth/*"       = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      "sys/auth"         = { capabilities = ["read"] }
-      "sys/mounts/*"     = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      "sys/mounts"       = { capabilities = ["read"] }
-      
-      # PKI & Secrets
-      "pki/*"            = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      "secret/*"         = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      
-      # Identity & Policies
-      "identity/*"       = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-      "sys/policies/acl/*" = { capabilities = ["create", "update", "read", "delete", "list", "sudo"] }
-      
-      # System
-      "sys/health"       = { capabilities = ["read"] }
-    }
+
 
     # Human/Management Identities
     "oidc-admin" = {
+      "secret/metadata/"                              = { capabilities = ["list"] }
+      "secret/metadata/on-premise-gitlab-deployment/" = { capabilities = ["list"] }
+
       "secret/data/on-premise-gitlab-deployment/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
       "secret/metadata/on-premise-gitlab-deployment/*" = { capabilities = ["list", "read", "delete"] }
       "auth/token/lookup-self"                         = { capabilities = ["read"] }

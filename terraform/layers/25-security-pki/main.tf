@@ -70,11 +70,3 @@ resource "vault_kubernetes_auth_backend_role" "kubernetes_role" {
     "${each.value.name}-pki-policy"
   ]
 }
-# 4. Infrastructure Management Policy (For Terraform production Role)
-resource "vault_policy" "production_management" {
-  provider = vault.production
-  name     = "production-terraform-admin-policy"
-  policy = jsonencode({
-    path = local.workload_identity_extra_rules["production"]
-  })
-}
