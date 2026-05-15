@@ -20,3 +20,8 @@ output "approle_name" {
   value       = vault_approle_auth_backend_role.this.role_name
 }
 
+
+output "policy_name" {
+  description = "The name of the generated ACL policy"
+  value       = vault_policy.this.name
+}

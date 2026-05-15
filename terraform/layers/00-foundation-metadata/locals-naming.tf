@@ -74,6 +74,8 @@ locals {
             ]))
           ]
         ]),
+        # Base Service SAN (e.g. keycloak.production.iac.internal)
+        item.comp_name == "frontend" ? ["${item.service_name}.${item.stage}.${var.domain_suffix}"] : [],
         ["${item.cluster_name}.${item.stage}.${var.domain_suffix}"]
       ))
 

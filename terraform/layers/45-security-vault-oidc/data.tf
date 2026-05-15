@@ -6,6 +6,13 @@ data "terraform_remote_state" "metadata" {
   }
 }
 
+data "terraform_remote_state" "vault_sys" {
+  backend = "local"
+  config = {
+    path = "../15-shared-vault-frontend/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "local"
   config = {
@@ -20,21 +27,16 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
-data "terraform_remote_state" "keycloak_oidc" {
+data "terraform_remote_state" "keycloak_provisioning" {
   backend = "local"
   config = {
     path = "../40-provision-keycloak-oidc/terraform.tfstate"
   }
 }
 
-data "vault_kv_secret_v2" "harbor_vars" {
+# Read OIDC Client credentials from Vault (Created in L40)
+data "vault_kv_secret_v2" "keycloak_vault_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/app"
-}
-
-data "vault_kv_secret_v2" "keycloak_harbor_client" {
-  provider = vault.production
-  mount    = "secret"
-  name     = "on-premise-gitlab-deployment/oidc/clients/harbor_frontend"
+  name     = "on-premise-gitlab-deployment/oidc/clients/vault_frontend"
 }

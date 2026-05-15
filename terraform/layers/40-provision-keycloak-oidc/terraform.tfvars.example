@@ -1,0 +1,11 @@
+
+oidc_users = {
+  "admin" = {
+    username   = "testadmin"
+    email      = "testadmin@iac.internal"
+    first_name = "System"
+    last_name  = "Administrator"
+    password   = "testadmin"
+    groups     = ["admin", "infra-admins"]
+  },
+}
