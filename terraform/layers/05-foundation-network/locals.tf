@@ -84,3 +84,17 @@ locals {
     }
   }
 }
+
+# Global Infrastructure DNS SSoT (Requires Libvirt Provider >= 0.9.7)
+locals {
+  global_dns_hosts = [
+    for ip in sort(distinct([for r in local.state.metadata.global_dns_records : r.ip])) : {
+      ip = ip
+      hostnames = [
+        for h in sort(distinct([for r in local.state.metadata.global_dns_records : r.hostname if r.ip == ip])) : {
+          hostname = h
+        }
+      ]
+    }
+  ]
+}

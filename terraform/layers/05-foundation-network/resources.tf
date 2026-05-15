@@ -35,17 +35,7 @@ resource "libvirt_network" "nat_networks" {
   # Groups hostnames by IP to prevent duplicate IP entries and potential SERVFAIL issues.
   dns = {
     enable = "yes"
-
-    host = [
-      for ip in sort(distinct([for r in local.state.metadata.global_dns_records : r.ip])) : {
-        ip = ip
-        hostnames = [
-          for h in sort(distinct([for r in local.state.metadata.global_dns_records : r.hostname if r.ip == ip])) : {
-            hostname = h
-          }
-        ]
-      }
-    ]
+    host   = local.global_dns_hosts
   }
 }
 
@@ -76,15 +66,6 @@ resource "libvirt_network" "hostonly_networks" {
   # Inject same DNS registry into hostonly networks to ensure internal consistency.
   dns = {
     enable = "yes"
-    host = [
-      for ip in sort(distinct([for r in local.state.metadata.global_dns_records : r.ip])) : {
-        ip = ip
-        hostnames = [
-          for h in sort(distinct([for r in local.state.metadata.global_dns_records : r.hostname if r.ip == ip])) : {
-            hostname = h
-          }
-        ]
-      }
-    ]
+    host   = local.global_dns_hosts
   }
 }
