@@ -20,8 +20,21 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
+data "terraform_remote_state" "keycloak_oidc" {
+  backend = "local"
+  config = {
+    path = "../40-provision-keycloak-oidc/terraform.tfstate"
+  }
+}
+
 data "vault_kv_secret_v2" "harbor_vars" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/harbor/app"
+}
+
+data "vault_kv_secret_v2" "keycloak_harbor_client" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/oidc/clients/harbor"
 }
