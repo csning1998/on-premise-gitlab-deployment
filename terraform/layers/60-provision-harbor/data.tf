@@ -36,5 +36,5 @@ data "vault_kv_secret_v2" "harbor_vars" {
 data "vault_kv_secret_v2" "keycloak_harbor_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/oidc/clients/harbor"
+  name     = "on-premise-gitlab-deployment/oidc/clients/harbor_frontend"
 }

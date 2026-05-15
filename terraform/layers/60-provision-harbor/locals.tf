@@ -24,6 +24,6 @@ locals {
 # 4. OIDC Configuration Context
 locals {
   oidc_discovery_url = local.state.keycloak_oidc.issuer_url
-  oidc_client_id     = local.state.keycloak_oidc.oidc_clients["harbor"].client_id
+  oidc_client_id     = local.state.keycloak_oidc.oidc_clients["harbor_frontend"].client_id
   oidc_client_secret = data.vault_kv_secret_v2.keycloak_harbor_client.data["client_secret"]
 }
