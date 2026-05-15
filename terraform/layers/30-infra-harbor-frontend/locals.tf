@@ -99,7 +99,7 @@ locals {
         metric = 100
       }
       if contains([
-        "vault-frontend",
+        "vault-frontend", "keycloak-frontend",
         "harbor-bootstrapper-frontend",
         "harbor-postgres", "harbor-redis", "harbor-minio"
       ], name)
