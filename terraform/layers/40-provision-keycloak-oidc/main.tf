@@ -18,7 +18,7 @@ resource "keycloak_realm" "infra_realm" {
 
 # 2. Client Secret Generation
 resource "random_password" "client_secrets" {
-  for_each = toset(["vault", "gitlab", "harbor", "minio"])
+  for_each = toset(["vault_frontend", "gitlab_frontend", "harbor_frontend", "gitlab_minio", "harbor_minio"])
   length   = 32
   special  = false
 }
@@ -26,30 +26,35 @@ resource "random_password" "client_secrets" {
 # 3. OIDC Clients
 resource "keycloak_openid_client" "clients" {
   for_each = {
-    vault = {
+    vault_frontend = {
       client_id = "vault-infra"
       name      = "Vault Infrastructure"
       valid_redirect_uris = [
-        "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
-        "https://vault.production.iac.internal/ui/vault/auth/oidc/callback",
-        "https://vault.production.iac.internal/vault/oidc/callback",
+        "${local.vault_frontend_url}/ui/vault/auth/oidc/oidc/callback",
+        "${local.vault_frontend_url}/ui/vault/auth/oidc/callback",
+        "${local.vault_frontend_url}/vault/oidc/callback",
         "http://localhost:8250/oidc/callback"
       ]
     }
-    gitlab = {
+    gitlab_frontend = {
       client_id           = "gitlab-infra"
       name                = "GitLab Platform"
-      valid_redirect_uris = ["https://gitlab.production.iac.internal/users/auth/openid_connect/callback"]
+      valid_redirect_uris = ["${local.gitlab_frontend_url}/users/auth/openid_connect/callback"]
     }
-    harbor = {
+    harbor_frontend = {
       client_id           = "harbor-infra"
       name                = "Harbor Registry"
-      valid_redirect_uris = ["https://harbor.production.iac.internal/c/oidc/callback"]
+      valid_redirect_uris = ["${local.harbor_frontend_url}/c/oidc/callback"]
     }
-    minio = {
-      client_id           = "minio-infra"
-      name                = "MinIO Console"
-      valid_redirect_uris = ["https://minio.gitlab.production.iac.internal/oauth_callback"]
+    gitlab_minio = {
+      client_id           = "gitlab-minio-infra"
+      name                = "GitLab MinIO Console"
+      valid_redirect_uris = ["${local.gitlab_minio_url}/oauth_callback"]
+    }
+    harbor_minio = {
+      client_id           = "harbor-minio-infra"
+      name                = "Harbor MinIO Console"
+      valid_redirect_uris = ["${local.harbor_minio_url}/oauth_callback"]
     }
   }
 
@@ -80,7 +85,7 @@ resource "keycloak_openid_group_membership_protocol_mapper" "group_mapper" {
 # Audience Mapper for Vault to verify Token
 resource "keycloak_openid_audience_protocol_mapper" "vault_audience" {
   realm_id  = keycloak_realm.infra_realm.id
-  client_id = keycloak_openid_client.clients["vault"].id
+  client_id = keycloak_openid_client.clients["vault_frontend"].id
   name      = "audience-mapper"
 
   included_custom_audience = "vault-infra"
@@ -98,7 +103,7 @@ resource "vault_kv_secret_v2" "oidc_clients" {
   data_json = jsonencode({
     client_id     = each.value.client_id
     client_secret = random_password.client_secrets[each.key].result
-    issuer        = "https://sso.keycloak.production.iac.internal/realms/${local.realm_id}"
+    issuer        = "${local.keycloak_frontend_url}/realms/${local.realm_id}"
   })
 }
 

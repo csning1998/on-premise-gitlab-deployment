@@ -7,10 +7,27 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     keycloak             = data.terraform_remote_state.keycloak.outputs
   }
+}
 
-  # Endpoint Construction (Must match TLS Certificate SAN)
-  keycloak_url  = "https://sso.keycloak.production.iac.internal"
-  vault_address = "https://${local.state.vault_sys.service_vip}:443"
+locals {
+  fdqn = {
+    keycloak_frontend = local.state.metadata.global_pki_map["keycloak-frontend"].dns_san[0]
+    vault_frontend    = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
+    gitlab_frontend   = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
+    gitlab_minio      = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
+    harbor_frontend   = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
+    harbor_minio      = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
+  }
+}
+
+locals {
+  # Endpoint Construction
+  keycloak_frontend_url = "https://${local.fdqn.keycloak_frontend}"
+  vault_frontend_url    = "https://${local.fdqn.vault_frontend}"
+  gitlab_frontend_url   = "https://${local.fdqn.gitlab_frontend}"
+  gitlab_minio_url      = "https://${local.fdqn.gitlab_minio}"
+  harbor_frontend_url   = "https://${local.fdqn.harbor_frontend}"
+  harbor_minio_url      = "https://${local.fdqn.harbor_minio}"
 
   # Admin Credentials
   keycloak_admin_user     = ephemeral.vault_kv_secret_v2.keycloak_admin.data["keycloak_admin_user"]

@@ -18,7 +18,7 @@ terraform {
 
 provider "vault" {
   alias        = "production"
-  address      = local.vault_address
+  address      = local.vault_frontend_url
   ca_cert_file = local.state.vault_pki.bootstrap_ca_b64.path
 
   auth_login {
@@ -35,7 +35,7 @@ provider "keycloak" {
   client_id           = "admin-cli"
   username            = local.keycloak_admin_user
   password            = local.keycloak_admin_password
-  url                 = local.keycloak_url
+  url                 = local.keycloak_frontend_url
   root_ca_certificate = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   initial_login       = false
 }
