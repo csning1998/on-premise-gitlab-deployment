@@ -27,8 +27,8 @@ resource "random_password" "client_secrets" {
 resource "keycloak_openid_client" "clients" {
   for_each = {
     vault = {
-      client_id           = "vault-infra"
-      name                = "Vault Infrastructure"
+      client_id = "vault-infra"
+      name      = "Vault Infrastructure"
       valid_redirect_uris = [
         "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
         "https://vault.production.iac.internal/ui/vault/auth/oidc/callback",
@@ -102,32 +102,47 @@ resource "vault_kv_secret_v2" "oidc_clients" {
   })
 }
 
-# 6. Test User & Groups for OIDC Verification
-resource "keycloak_group" "admin_group" {
-  realm_id = keycloak_realm.infra_realm.id
-  name     = "admin" # Matches the Vault alias 'admin'
+# 6. Test User & Groups Configuration
+locals {
+  all_groups = distinct(flatten([for u in var.oidc_users : u.groups]))
 }
 
-resource "keycloak_user" "test_admin" {
-  realm_id       = keycloak_realm.infra_realm.id
-  username       = "testadmin"
-  enabled        = true
-  email          = "testadmin@iac.internal"
-  first_name     = "Test"
-  last_name      = "Admin"
-  email_verified = true
+resource "keycloak_group" "groups" {
+  for_each = toset(local.all_groups)
+  realm_id = keycloak_realm.infra_realm.id
+  name     = each.key
 
-  initial_password {
-    value     = "testadmin"
-    temporary = false
+  lifecycle {
+    prevent_destroy = false # Set to true in production if needed
   }
 }
 
-resource "keycloak_user_groups" "test_admin_groups" {
+resource "keycloak_user" "users" {
+  for_each       = var.oidc_users
+  realm_id       = keycloak_realm.infra_realm.id
+  username       = each.value.username
+  enabled        = true
+  email          = each.value.email
+  first_name     = each.value.first_name
+  last_name      = each.value.last_name
+  email_verified = true
+
+  initial_password {
+    value     = each.value.password
+    temporary = false
+  }
+
+  lifecycle {
+    ignore_changes = [initial_password]
+  }
+}
+
+resource "keycloak_user_groups" "user_assignments" {
+  for_each = var.oidc_users
   realm_id = keycloak_realm.infra_realm.id
-  user_id  = keycloak_user.test_admin.id
+  user_id  = keycloak_user.users[each.key].id
 
   group_ids = [
-    keycloak_group.admin_group.id
+    for g in each.value.groups : keycloak_group.groups[g].id
   ]
 }
