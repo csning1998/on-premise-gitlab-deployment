@@ -7,9 +7,9 @@ output "vault_service_vip" {
 output "pki_configuration" {
   description = "PKI Configuration Summary"
   value = {
-    path                        = module.vault_pki_setup.vault_pki_path
-    pki_roles                   = module.vault_pki_setup.pki_roles
-    root_ca_certificate_b64     = module.vault_pki_setup.pki_root_ca_certificate_b64
+    path                            = module.vault_pki_setup.vault_pki_path
+    pki_roles                       = module.vault_pki_setup.pki_roles
+    root_ca_certificate_b64         = module.vault_pki_setup.pki_root_ca_certificate_b64
     intermediate_ca_certificate_b64 = module.vault_pki_setup.pki_intermediate_ca_certificate_b64
     lease_durations = {
       default = format("%dh", var.vault_pki_engine_config.default_lease_ttl_seconds / 3600)
@@ -52,4 +52,9 @@ output "bootstrap_ca_b64" {
     path        = local_file.trust_bundle.filename
     content_b64 = base64encode(local_file.trust_bundle.content)
   }
+}
+
+output "management_policies" {
+  description = "Map of management policy names"
+  value       = { for k in local.management_identities : k => module.vault_workload_identity_approle[k].policy_name }
 }

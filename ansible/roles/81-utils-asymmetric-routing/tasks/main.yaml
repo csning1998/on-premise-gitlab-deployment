@@ -8,6 +8,8 @@
     - item != 'docker0'
     - not item.startswith('vbr-')
     - not item.startswith('veth')
+    - not item.startswith('vxlan.')
+    - not item.startswith('cali')
     - ansible_facts.default_ipv4 is defined
     - item != ansible_facts.default_ipv4.interface
     - ansible_facts[item] is defined

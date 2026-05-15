@@ -31,3 +31,13 @@ output "service_segments" {
   description = "Stable map of service segments — consumed by 05-central-lb for HAProxy and Keepalived config."
   value       = local.net_service_segments
 }
+
+output "dns_mapping" {
+  description = "SSoT DNS mapping for verification of Grouping and Sorting logic."
+  value = [
+    for ip in sort(distinct([for r in local.state.metadata.global_dns_records : r.ip])) : {
+      ip        = ip
+      hostnames = sort(distinct([for r in local.state.metadata.global_dns_records : r.hostname if r.ip == ip]))
+    }
+  ]
+}

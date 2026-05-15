@@ -32,17 +32,10 @@ resource "libvirt_network" "nat_networks" {
   }
 
   # Global Infrastructure DNS SSoT (Requires Libvirt Provider >= 0.9.7)
+  # Groups hostnames by IP to prevent duplicate IP entries and potential SERVFAIL issues.
   dns = {
     enable = "yes"
-
-    host = [
-      for record in local.state.metadata.global_dns_records : {
-        ip = record.ip
-        hostnames = [{
-          hostname = record.hostname
-        }]
-      }
-    ]
+    host   = local.global_dns_hosts
   }
 }
 
@@ -69,4 +62,10 @@ resource "libvirt_network" "hostonly_networks" {
     address = each.value.hostonly.gateway
     prefix  = each.value.hostonly.prefix
   }]
+
+  # Inject same DNS registry into hostonly networks to ensure internal consistency.
+  dns = {
+    enable = "yes"
+    host   = local.global_dns_hosts
+  }
 }
