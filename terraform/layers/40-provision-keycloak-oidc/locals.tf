@@ -21,6 +21,10 @@ locals {
 }
 
 locals {
+  all_groups = distinct(flatten([for u in var.oidc_users : u.groups]))
+}
+
+locals {
   # Endpoint Construction
   keycloak_frontend_url = "https://${local.fdqn.keycloak_frontend}"
   vault_frontend_url    = "https://${local.fdqn.vault_frontend}"

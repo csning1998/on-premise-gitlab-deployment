@@ -21,8 +21,9 @@ locals {
     "sys/mounts"   = { capabilities = ["read", "list"] }
 
     # PKI & Secrets
-    "pki*"     = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
-    "secret/*" = { capabilities = ["create", "read", "update", "delete", "list"] }
+    "pki/prod/*"                          = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+    "pki-infrastructure-root-bootstrap/*" = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+    "secret/*"                            = { capabilities = ["create", "read", "update", "delete", "list"] }
 
     # Identity & Policies
     "identity/*"         = { capabilities = ["create", "read", "update", "delete", "list"] }

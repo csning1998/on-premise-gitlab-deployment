@@ -60,9 +60,15 @@ resource "keycloak_openid_client" "clients" {
   access_type           = "CONFIDENTIAL"
   client_secret         = random_password.client_secrets[each.key].result
   standard_flow_enabled = true
+  valid_redirect_uris   = each.value.valid_redirect_uris
 
-  valid_redirect_uris = each.value.valid_redirect_uris
-  web_origins         = ["+"]
+  web_origins = [
+    local.vault_frontend_url,
+    local.gitlab_frontend_url,
+    local.harbor_frontend_url,
+    local.gitlab_minio_url,
+    local.harbor_minio_url
+  ]
 }
 
 # 4. Protocol Mappers (Inject Groups into Token)
@@ -103,10 +109,6 @@ resource "vault_kv_secret_v2" "oidc_clients" {
 }
 
 # 6. Test User & Groups Configuration
-locals {
-  all_groups = distinct(flatten([for u in var.oidc_users : u.groups]))
-}
-
 resource "keycloak_group" "groups" {
   for_each = toset(local.all_groups)
   realm_id = keycloak_realm.infra_realm.id
