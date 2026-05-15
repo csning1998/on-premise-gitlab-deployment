@@ -27,14 +27,9 @@ resource "random_password" "client_secrets" {
 resource "keycloak_openid_client" "clients" {
   for_each = {
     vault_frontend = {
-      client_id = "vault-infra"
-      name      = "Vault Infrastructure"
-      valid_redirect_uris = [
-        "${local.vault_frontend_url}/ui/vault/auth/oidc/oidc/callback",
-        "${local.vault_frontend_url}/ui/vault/auth/oidc/callback",
-        "${local.vault_frontend_url}/vault/oidc/callback",
-        "http://localhost:8250/oidc/callback"
-      ]
+      client_id           = "vault-infra"
+      name                = "Vault Infrastructure"
+      valid_redirect_uris = local.vault_redirect_uris
     }
     gitlab_frontend = {
       client_id           = "gitlab-infra"

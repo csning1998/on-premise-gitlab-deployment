@@ -1,17 +1,12 @@
-
-output "realm_id" {
-  value = keycloak_realm.infra_realm.id
+output "issuer_url" {
+  value = "${local.keycloak_frontend_url}/realms/${local.realm_id}"
 }
 
 output "oidc_clients" {
-  value = {
-    for k, v in keycloak_openid_client.clients : k => {
-      client_id   = v.client_id
-      secret_path = vault_kv_secret_v2.oidc_clients[k].path
-    }
-  }
+  value     = keycloak_openid_client.clients
+  sensitive = true
 }
 
-output "issuer_url" {
-  value = "https://sso.keycloak.production.iac.internal/realms/${local.realm_id}"
+output "vault_redirect_uris" {
+  value = local.vault_redirect_uris
 }

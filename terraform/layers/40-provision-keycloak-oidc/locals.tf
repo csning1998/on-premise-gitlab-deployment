@@ -35,4 +35,12 @@ locals {
 
   # OIDC Configuration Constants
   realm_id = "infra-company"
+
+  # Centralized Redirect URIs for Vault
+  vault_redirect_uris = [
+    "${local.vault_frontend_url}/ui/vault/auth/oidc/oidc/callback",
+    "${local.vault_frontend_url}/ui/vault/auth/oidc/callback",
+    "${local.vault_frontend_url}/vault/oidc/callback",
+    "http://localhost:8250/oidc/callback"
+  ]
 }

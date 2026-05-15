@@ -30,12 +30,7 @@ resource "vault_jwt_auth_backend_role" "keycloak_user" {
   role_type            = "oidc"
   verbose_oidc_logging = true
 
-  allowed_redirect_uris = [
-    "https://vault.production.iac.internal/ui/vault/auth/oidc/oidc/callback",
-    "https://vault.production.iac.internal/ui/vault/auth/oidc/callback",
-    "https://vault.production.iac.internal/vault/oidc/callback",
-    "http://localhost:8250/oidc/callback"
-  ]
+  allowed_redirect_uris = local.state.keycloak_oidc.vault_redirect_uris
 }
 
 # 3. Identity Groups (External) - Dynamic Mapping for all Management Roles
