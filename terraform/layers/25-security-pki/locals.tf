@@ -67,6 +67,7 @@ locals {
         max_ttl         = local.ttl_policy["production"].max
         ttl             = local.ttl_policy["production"].default
       },
+      # The allowed_domains will be corrected during subsequent testing; no immediate action is required.
       "oidc-developer" = {
         name            = "oidc-developer"
         allowed_domains = ["*"] # To work with multiple domain
@@ -100,8 +101,6 @@ locals {
     "gitlab-runner" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
-
-
 
     # Human/Management Identities
     "oidc-admin" = {
