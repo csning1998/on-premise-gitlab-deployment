@@ -35,7 +35,17 @@ resource "gitlab_group_membership" "team_memberships" {
   access_level = "developer"
 }
 
-# 3. Pre-provision GitLab users
+# 3. Random placeholders for local passwords (OIDC is primary)
+resource "random_password" "gitlab_user_passwords" {
+  for_each = local.kc_users
+  length   = 32
+  special  = true
+  upper    = true
+  lower    = true
+  numeric  = true
+}
+
+# 4. Pre-provision GitLab users
 resource "gitlab_user" "oidc_users" {
   for_each = local.kc_users
 
@@ -49,9 +59,8 @@ resource "gitlab_user" "oidc_users" {
   can_create_group = true
   projects_limit   = 100
 
-  # Required by resource but overridden by OIDC identity.
-  # Using the initial password from Keycloak for consistency.
-  password       = each.value.password
+  # Decoupled from Keycloak: Use a one-time random password for the shadow account
+  password       = random_password.gitlab_user_passwords[each.key].result
   reset_password = false
 
   lifecycle {
