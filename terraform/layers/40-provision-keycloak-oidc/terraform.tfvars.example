@@ -1,4 +1,12 @@
 
+keycloak_groups = [
+  "engineering",
+  "engineering/dev-a",
+  "engineering/dev-b",
+  "finance",
+  "hr"
+]
+
 oidc_users = {
   "admin" = {
     username   = "testadmin"
@@ -6,6 +14,22 @@ oidc_users = {
     first_name = "System"
     last_name  = "Administrator"
     password   = "testadmin"
-    groups     = ["admin", "infra-admins"]
+    groups     = ["engineering/infra"]
   },
+  "dev-a-lead" = {
+    username   = "dev-a-lead"
+    email      = "dev-a-lead@company.com"
+    first_name = "DevA"
+    last_name  = "Lead"
+    password   = "DevPass123!"
+    groups     = ["engineering/dev-a", "engineering/dev-leads"]
+  },
+  "finance-user1" = {
+    username   = "finance-user1"
+    email      = "finance-user1@company.com"
+    first_name = "Finance"
+    last_name  = "Member"
+    password   = "FinancePass123!"
+    groups     = ["finance"]
+  }
 }

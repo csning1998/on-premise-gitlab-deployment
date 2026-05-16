@@ -11,3 +11,9 @@ variable "oidc_users" {
   }))
   default = {}
 }
+
+variable "keycloak_groups" {
+  description = "List of groups to create in Keycloak (supports hierarchical paths like 'parent/child')"
+  type        = list(string)
+  default     = []
+}

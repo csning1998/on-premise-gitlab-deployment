@@ -115,7 +115,7 @@ resource "vault_kv_secret_v2" "oidc_clients" {
 
 # 6. Test User & Groups Configuration
 resource "keycloak_group" "groups" {
-  for_each = toset(local.all_groups)
+  for_each = toset(var.keycloak_groups)
   realm_id = keycloak_realm.infra_realm.id
   name     = each.key
 
