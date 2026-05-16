@@ -78,3 +78,28 @@ resource "vault_kv_secret_v2" "robot_helm_creds" {
     password_pusher = harbor_robot_account.helm_pusher.secret
   })
 }
+
+# 3. Harbor OIDC Authentication Configuration
+# Configures Harbor Bootstrapper to use Keycloak for Identity.
+resource "harbor_config_auth" "main" {
+  auth_mode          = "oidc_auth"
+  primary_auth_mode  = true
+  oidc_name          = "Keycloak"
+  oidc_endpoint      = data.terraform_remote_state.keycloak_oidc.outputs.issuer_url
+  oidc_client_id     = data.terraform_remote_state.keycloak_oidc.outputs.oidc_clients["harbor_bootstrapper"].client_id
+  oidc_client_secret = data.terraform_remote_state.keycloak_oidc.outputs.oidc_clients["harbor_bootstrapper"].client_secret
+  oidc_scope         = "openid,profile,email"
+  oidc_verify_cert   = false
+  oidc_auto_onboard  = true
+  oidc_user_claim    = "preferred_username"
+  oidc_groups_claim  = "groups"
+
+  # Map the Keycloak 'admin' group to Harbor System Administrator
+  oidc_admin_group = "admin"
+}
+
+# 4. Infrastructure Admin Group Mapping
+resource "harbor_group" "infra_admins" {
+  group_name = "admin"
+  group_type = 3 # OIDC Group
+}

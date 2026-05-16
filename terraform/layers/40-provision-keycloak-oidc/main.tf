@@ -18,7 +18,7 @@ resource "keycloak_realm" "infra_realm" {
 
 # 2. Client Secret Generation
 resource "random_password" "client_secrets" {
-  for_each = toset(["vault_frontend", "gitlab_frontend", "harbor_frontend", "gitlab_minio", "harbor_minio"])
+  for_each = toset(["vault_frontend", "gitlab_frontend", "harbor_frontend", "harbor_bootstrapper", "gitlab_minio", "harbor_minio"])
   length   = 32
   special  = false
 }
@@ -50,6 +50,11 @@ resource "keycloak_openid_client" "clients" {
       client_id           = "harbor-minio-infra"
       name                = "Harbor MinIO Console"
       valid_redirect_uris = ["${local.harbor_minio_url}/oauth_callback"]
+    }
+    harbor_bootstrapper = {
+      client_id           = "harbor-bootstrapper-infra"
+      name                = "Harbor Bootstrapper"
+      valid_redirect_uris = ["${local.harbor_bootstrapper_url}/c/oidc/callback"]
     }
   }
 
