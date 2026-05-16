@@ -1,11 +1,24 @@
 
-keycloak_groups = [
-  "engineering",
-  "engineering/dev-a",
-  "engineering/dev-b",
-  "finance",
-  "hr"
-]
+keycloak_groups = {
+  "engineering" = {
+    description = "Engineering Organization"
+    attributes  = { type = "org", sync_to_gitlab = "true" }
+  }
+  "dev-a" = {
+    parent      = "engineering"
+    description = "Development Team A"
+    attributes  = { type = "team" }
+  }
+  "infra" = {
+    parent      = "engineering"
+    description = "Infrastructure & Platform Team"
+    attributes  = { type = "team", mission_critical = "true" }
+  }
+  "finance" = {
+    description = "Finance Department"
+    attributes  = { type = "dept" }
+  }
+}
 
 oidc_users = {
   "admin" = {
@@ -14,7 +27,7 @@ oidc_users = {
     first_name = "System"
     last_name  = "Administrator"
     password   = "testadmin"
-    groups     = ["engineering/infra"]
+    groups     = ["infra"]
   },
   "dev-a-lead" = {
     username   = "dev-a-lead"
@@ -22,14 +35,6 @@ oidc_users = {
     first_name = "DevA"
     last_name  = "Lead"
     password   = "DevPass123!"
-    groups     = ["engineering/dev-a", "engineering/dev-leads"]
-  },
-  "finance-user1" = {
-    username   = "finance-user1"
-    email      = "finance-user1@company.com"
-    first_name = "Finance"
-    last_name  = "Member"
-    password   = "FinancePass123!"
-    groups     = ["finance"]
+    groups     = ["dev-a"]
   }
 }

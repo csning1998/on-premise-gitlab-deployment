@@ -10,3 +10,23 @@ output "oidc_clients" {
 output "vault_redirect_uris" {
   value = local.vault_redirect_uris
 }
+
+output "keycloak_groups" {
+  value = var.keycloak_groups
+}
+
+output "oidc_users" {
+  description = "User inventory for downstream layers. Marked as sensitive because it contains initial passwords."
+  value = {
+    for k, v in var.oidc_users : k => {
+      id         = keycloak_user.users[k].id
+      username   = v.username
+      first_name = v.first_name
+      last_name  = v.last_name
+      email      = v.email
+      groups     = v.groups
+      password   = v.password
+    }
+  }
+  sensitive = true
+}
