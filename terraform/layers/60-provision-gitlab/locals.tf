@@ -17,7 +17,7 @@ locals {
 # 3. GitLab Identity & Secrets (For Provider)
 locals {
   gitlab_fqdn          = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
-  gitlab_root_password = data.vault_kv_secret_v2.gitlab_internal.data["root_password"]
+  gitlab_root_password = ephemeral.vault_kv_secret_v2.gitlab_internal.data["root_password"]
 }
 
 # 4. Organizational Structure Mapping (Derived from Keycloak SSoT)

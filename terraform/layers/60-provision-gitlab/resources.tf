@@ -2,7 +2,7 @@
 # 1. Global Application Settings (OIDC Behavior)
 resource "gitlab_application_settings" "this" {
   signup_enabled                          = false
-  password_authentication_enabled_for_web = false
+  password_authentication_enabled_for_web = true
 
   default_project_visibility = "internal"
   default_group_visibility   = "internal"
