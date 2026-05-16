@@ -37,6 +37,8 @@ output "keycloak_groups" {
   value = var.keycloak_groups
 }
 
+# Since GitLab CE does not support native OIDC inventory/sync,
+# this user data must be passed via remote states to enable shadow account provisioning in Layer 60.
 output "oidc_users" {
   description = "User inventory for downstream layers. Marked as sensitive because it contains initial passwords."
   value = {
