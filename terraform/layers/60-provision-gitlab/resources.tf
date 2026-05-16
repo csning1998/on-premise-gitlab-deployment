@@ -11,9 +11,9 @@ resource "gitlab_application_settings" "this" {
 # 2. Hierarchical Group Structure
 #    Top-level Engineering Group
 resource "gitlab_group" "engineering" {
-  name             = "engineering"
-  path             = "engineering"
-  description      = "Engineering Organization"
+  name             = local.engineering_org_metadata.name
+  path             = local.engineering_org_metadata.name
+  description      = local.engineering_org_metadata.description
   visibility_level = "internal"
 }
 

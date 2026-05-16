@@ -2,6 +2,28 @@ output "issuer_url" {
   value = "${local.keycloak_frontend_url}/realms/${local.realm_id}"
 }
 
+output "root_groups_metadata" {
+  description = "Metadata for top-level organizational groups."
+  value = {
+    for k, v in var.keycloak_groups : k => {
+      name        = k
+      description = v.description
+      attributes  = v.attributes
+    } if v.parent == null
+  }
+}
+
+output "groups_metadata" {
+  description = "Sanitized metadata for all groups."
+  value = {
+    for k, v in var.keycloak_groups : k => {
+      description = v.description
+      parent      = v.parent
+      attributes  = v.attributes
+    }
+  }
+}
+
 output "oidc_clients" {
   value     = keycloak_openid_client.clients
   sensitive = true

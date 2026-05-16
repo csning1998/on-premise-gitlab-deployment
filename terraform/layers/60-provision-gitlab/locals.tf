@@ -5,6 +5,7 @@ locals {
     metadata             = data.terraform_remote_state.metadata.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
+    keycloak_oidc        = data.terraform_remote_state.keycloak_oidc.outputs
   }
 }
 
@@ -23,8 +24,11 @@ locals {
 # 4. Organizational Structure Mapping (Derived from Keycloak SSoT)
 locals {
   # Get groups and users from Layer 40
-  kc_groups = data.terraform_remote_state.keycloak_oidc.outputs.keycloak_groups
-  kc_users  = data.terraform_remote_state.keycloak_oidc.outputs.oidc_users
+  kc_groups = local.state.keycloak_oidc.groups_metadata
+  kc_users  = local.state.keycloak_oidc.oidc_users
+
+  # Extract dynamic metadata for the top-level Engineering organization
+  engineering_org_metadata = local.state.keycloak_oidc.root_groups_metadata["engineering"]
 
   # 4a. Identify Subgroups under 'engineering'
   engineering_groups = {
