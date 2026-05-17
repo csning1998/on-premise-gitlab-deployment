@@ -123,7 +123,7 @@ resource "keycloak_group" "root_groups" {
   attributes = each.value.attributes
 
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
 }
 
@@ -137,7 +137,7 @@ resource "keycloak_group" "subgroups" {
   attributes = each.value.attributes
 
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
 }
 
