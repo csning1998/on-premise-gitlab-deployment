@@ -1,6 +1,6 @@
 # Harbor Bootstrapper Recovery for Disk Exhaustion
 
-## Example Problem Diagnosis: Disk Exhaustion
+## Problem Diagnosis: Disk Exhaustion
 
 The `/data/harbor` partition reaching 100% capacity (e.g., 47GB/49GB) results in multiple service failures:
 
@@ -9,8 +9,6 @@ The `/data/harbor` partition reaching 100% capacity (e.g., 47GB/49GB) results in
 - **`harbor-core` / `harbor-jobservice`**: Initialization failure resulting from underlying database and Redis issues.
 
 In this instance, the primary driver of disk usage was the `helm-charts/tigera/operator` repository, which contained over **2,300 artifacts** and associated blobs.
-
-## Resolution Steps
 
 ### Step A. Manual Filesystem Recovery
 
@@ -106,3 +104,50 @@ where `<harbor_username>` and `<harbor_password>` are the username and password 
 
 > [!IMPORTANT]
 > **Action Required**: A manual **Garbage Collection** must be executed from the Harbor UI. While metadata cleanup has restored service stability, physical disk space is only reclaimed once the Garbage Collection process removes unreferenced blobs from the shared pool.
+
+## Problem Diagnosis: Duplicate User Conflict (OIDC Identity Drift)
+
+During Keycloak OIDC integration, a login failure may occur with the following JSON error response:
+
+```json
+{
+    "errors": [
+        {
+            "code": "UNKNOWN",
+            "message": "failed to create user record: user ___ or email ___ already exists"
+        }
+    ]
+}
+```
+
+Assume that the duplicated user is `somebody@example.com` with username `somebody`
+
+### Rationale & Trigger Condition
+
+1. **IdP Re-provisioning (UUID Drift)**: If Keycloak users are recreated or the Keycloak provider is redeployed, the underlying user UUID (`sub` claim) changes.
+2. **Database Constraint Violation**: Harbor identifies OIDC users uniquely using a concatenation of `sub` and `issuer` in the `oidc_user` table. If the `sub` UUID drifts, Harbor treats the user as new and attempts to auto-onboard them. This triggers a unique constraint violation on `username` or `email` in the `harbor_user` table because the old local record still exists under the old UUID.
+3. **Defense in Depth**: Harbor prevents automatic account merging/mapping when `sub` does not match, ensuring that malicious or misconfigured external identities cannot hijack existing local admin or member accounts.
+
+### Resolution Steps
+
+> [!WARNING]
+> Prior to deleting the user, ensure no production data or manual projects are uniquely tied to the old local account without a backup. For OIDC-driven environments, all identities should be treated as ephemeral shadow accounts managed by Keycloak.
+
+1. Query the `harbor-db` container inside the bootstrapper host (`core-harbor-bootstrapper-frontend-node-00`) to find the exact `user_id`:
+
+    ```bash
+    docker exec harbor-db psql -U postgres -d registry -c "
+        SELECT user_id, username, email FROM harbor_user WHERE username = 'somebody';
+    "
+    ```
+
+    _Assume the returned `user_id` is `<user_id>` (e.g., `3`)._
+
+2. Execute database operations to remove the drifted OIDC mapping and the conflicting user record, respectively
+
+    ```bash
+    docker exec harbor-db psql -U postgres -d registry -c "DELETE FROM oidc_user WHERE user_id = <user_id>;"
+    docker exec harbor-db psql -U postgres -d registry -c "DELETE FROM harbor_user WHERE user_id = <user_id>;"
+    ```
+
+3. Re-login via OIDC on Harbor UI.
