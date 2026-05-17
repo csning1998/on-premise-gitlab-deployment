@@ -1,0 +1,43 @@
+---
+- name: "Block B: Install Gitaly & Praefect Package"
+  become: true
+  block:
+    - name: "Step B1. Install runtime dependencies"
+      ansible.builtin.apt:
+        name: "{{ gitaly_praefect_base.packages.apt.dependencies }}"
+        state: present
+        update_cache: true
+
+    - name: "Step B2. Ensure GitLab configuration directory exists"
+      ansible.builtin.file:
+        path: /etc/gitlab
+        state: directory
+        owner: root
+        group: root
+        mode: "0775"
+
+    - name: "Step B3. Touch skip-auto-reconfigure to prevent build-time setup"
+      ansible.builtin.file:
+        path: /etc/gitlab/skip-auto-reconfigure
+        state: touch
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "Step B4. Install GitLab CE package"
+      ansible.builtin.apt:
+        name: "{{ gitaly_praefect_base.packages.apt.gitaly_praefect }}"
+        state: present
+      environment:
+        EXTERNAL_URL: "http://localhost"
+
+    - name: "Step B5. Disable gitlab-runsvdir service from automatic startup"
+      ansible.builtin.systemd:
+        name: gitlab-runsvdir
+        enabled: false
+        state: stopped
+
+    - name: "Step B6. Clean up skip-auto-reconfigure file"
+      ansible.builtin.file:
+        path: /etc/gitlab/skip-auto-reconfigure
+        state: absent

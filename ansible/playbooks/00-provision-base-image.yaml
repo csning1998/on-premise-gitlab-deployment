@@ -74,6 +74,13 @@
   roles:
     - 09-base-etcd
 
+- name: "Play: Provision Gitaly & Praefect (Base) Image"
+  hosts: "base-gitaly-praefect"
+  become: true
+  roles:
+    - 0A-base-gitaly-praefect
+    - 07-base-vault
+
 - name: "Play: Final Permission Check and Clean up"
   hosts: "all"
   become: true
