@@ -27,6 +27,13 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
+data "terraform_remote_state" "keycloak_oidc" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../40-provision-keycloak-oidc/terraform.tfstate"
+  }
+}
+
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"

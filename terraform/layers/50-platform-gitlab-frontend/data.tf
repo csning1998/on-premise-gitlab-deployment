@@ -131,3 +131,17 @@ data "vault_kv_secret_v2" "app_vars" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app"
 }
+
+# 3. Keycloak OIDC State & Client Secret
+data "terraform_remote_state" "keycloak_oidc" {
+  backend = "local"
+  config = {
+    path = "../40-provision-keycloak-oidc/terraform.tfstate"
+  }
+}
+
+data "vault_kv_secret_v2" "keycloak_gitlab_client" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/oidc/clients/gitlab_frontend"
+}

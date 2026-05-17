@@ -91,6 +91,22 @@ resource "helm_release" "gitlab" {
         minio = { enabled = false }
 
         appConfig = {
+          omniauth = var.gitlab_config.omniauth_secret_name != null ? {
+            enabled               = true
+            allowSingleSignOn     = ["openid_connect"]
+            blockAutoCreatedUsers = false
+            providers = [
+              {
+                secret = var.gitlab_config.omniauth_secret_name
+              }
+            ]
+            } : {
+            enabled               = false
+            allowSingleSignOn     = []
+            blockAutoCreatedUsers = false
+            providers             = []
+          }
+
           lfs = {
             bucket = var.external_services.minio.buckets["lfs"].name
             connection = {

@@ -61,3 +61,13 @@ trivy:
   skip_update: false
   insecure: false
   debug_mode: false
+
+# Proxy Configuration for OIDC Session Stability
+proxy:
+  http_proxy:
+  https_proxy:
+  no_proxy:
+  components:
+    - core
+    - jobservice
+    - registry

@@ -22,7 +22,8 @@ module "gitlab_core" {
   source = "../../modules/kubernetes-addons/helm-chart-gitlab"
   depends_on = [
     module.platform_mtls_certificate,
-    kubernetes_namespace.gitlab_ns
+    kubernetes_namespace.gitlab_ns,
+    kubernetes_secret.gitlab_keycloak_oidc
   ]
 
   # Helm Deployment Configuration
@@ -39,9 +40,10 @@ module "gitlab_core" {
 
   # GitLab Application Configuration
   gitlab_config = {
-    hostname = local.fqdn_gitlab
-    edition  = "ce"
-    dns_sans = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
+    hostname             = local.fqdn_gitlab
+    edition              = "ce"
+    dns_sans             = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
+    omniauth_secret_name = local.gitlab_config.omniauth_secret_name
   }
 
   # Trust Engine Integration
