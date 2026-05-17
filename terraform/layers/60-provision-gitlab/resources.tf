@@ -53,8 +53,8 @@ resource "gitlab_user" "oidc_users" {
   username = each.value.username
   email    = each.value.email
 
-  # Infrastructure team members get admin privileges
-  is_admin = contains(each.value.groups, "infra")
+  # Driven by Keycloak group attributes: Administrators get admin privileges in GitLab
+  is_admin = contains(local.admin_users, each.key)
 
   can_create_group = true
   projects_limit   = 100

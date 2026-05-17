@@ -50,6 +50,16 @@ locals {
       if contains(user_data.groups, team_id)
     ]
   }
+
+  # 4d. Identify Users who have Admin Privileges based on Keycloak Group Attributes (SSoT)
+  admin_users = toset([
+    for user_key, user_data in local.kc_users :
+    user_key
+    if anytrue([
+      for g in user_data.groups :
+      lookup(local.kc_groups[g].attributes, "gitlab_admin", "false") == "true"
+    ])
+  ])
 }
 
 # Assign users to their respective subgroups
