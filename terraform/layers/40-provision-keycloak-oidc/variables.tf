@@ -11,3 +11,13 @@ variable "oidc_users" {
   }))
   default = {}
 }
+
+variable "keycloak_groups" {
+  description = "Hierarchical group definitions with parents and attributes."
+  type = map(object({
+    parent      = optional(string, null)
+    attributes  = optional(map(string), {})
+    description = optional(string, "")
+  }))
+  default = {}
+}

@@ -1,11 +1,70 @@
 
+/** Keycloak & GitLab OIDC Integration Variables Template
+ * This file serves as the template configuration for Keycloak OIDC identity provisioning
+ * and dynamic GitLab synchronization settings.
+ */
+
+/** Keycloak Groups Schema & Sync Rules:
+ * 0. keycloak_groups: Define hierarchical groups to provision in Keycloak.
+ * 1. parent: Optional parent group ID. Set to null or omit for top-level root organizations.
+ * 2. description: Brief description of the group's purpose.
+ * 3. attributes: Metadata attributes map for downstream dynamic provisioning:
+ *    - type: The structural tier of the group (e.g., "org", "team", "dept").
+ *    - sync_to_gitlab: "true" on a root group dynamically designates it as the
+ *                      top-level organization synced to GitLab.
+ *    - gitlab_admin: "true" on a group dynamically grants GitLab administrator
+ *                    privileges to its members, eliminating hardcoded role checks.
+*/
+
+keycloak_groups = {
+  "engineering" = {
+    description = "Engineering Organization"
+    attributes  = { type = "org", sync_to_gitlab = "true" }
+  }
+  "dev-a" = {
+    parent      = "engineering"
+    description = "Development Team A"
+    attributes  = { type = "team" }
+  }
+  "infra" = {
+    parent      = "engineering"
+    description = "Infrastructure & Platform Team"
+    attributes  = { type = "team", mission_critical = "true", gitlab_admin = "true" }
+  }
+  "finance" = {
+    description = "Finance Department"
+    attributes  = { type = "dept" }
+  }
+}
+
+/** Keycloak OIDC Users Schema Rules:
+ * 0. oidc_users: Map of initial OIDC users to provision in the Keycloak realm.
+ * 1. key (e.g. E0001): MUST follow a unique, immutable Employee ID (E-Keys) format.
+ *                      This ensures stable identity indexing across IdP and SPs.
+ * 2. fields:
+ *    - username: Unique username for OIDC preferred_username claim mapping.
+ *    - email: Unique email address.
+ *    - first_name: First name of the user.
+ *    - last_name: Last name of the user.
+ *    - password: Initial one-time bootstrap password.
+ *    - groups: List of group IDs the user belongs to.
+ */
+
 oidc_users = {
-  "admin" = {
+  "E0001" = {
     username   = "testadmin"
     email      = "testadmin@iac.internal"
     first_name = "System"
     last_name  = "Administrator"
-    password   = "testadmin"
-    groups     = ["admin", "infra-admins"]
-  },
+    password   = "testadmin-pass-2026!"
+    groups     = ["infra"]
+  }
+  "E1001" = {
+    username   = "dev-a-lead"
+    email      = "dev-a-lead@company.com"
+    first_name = "DevA"
+    last_name  = "Lead"
+    password   = "DevPass123!"
+    groups     = ["dev-a"]
+  }
 }

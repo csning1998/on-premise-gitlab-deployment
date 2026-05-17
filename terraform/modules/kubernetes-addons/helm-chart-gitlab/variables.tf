@@ -13,9 +13,10 @@ variable "helm_config" {
 variable "gitlab_config" {
   description = "GitLab application configuration"
   type = object({
-    hostname = string
-    edition  = string
-    dns_sans = list(string)
+    hostname             = string
+    edition              = string
+    dns_sans             = list(string)
+    omniauth_secret_name = optional(string)
   })
 }
 

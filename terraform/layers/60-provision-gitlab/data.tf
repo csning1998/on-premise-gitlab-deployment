@@ -20,8 +20,15 @@ data "terraform_remote_state" "vault_pki" {
   }
 }
 
+data "terraform_remote_state" "keycloak_oidc" {
+  backend = "local"
+  config = {
+    path = "../40-provision-keycloak-oidc/terraform.tfstate"
+  }
+}
+
 # Fetch GitLab Admin/Root credentials for provider configuration
-data "vault_kv_secret_v2" "gitlab_internal" {
+ephemeral "vault_kv_secret_v2" "gitlab_internal" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app/internal"

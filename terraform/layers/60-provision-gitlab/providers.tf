@@ -5,10 +5,10 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.5.0"
     }
-    # gitlab = {
-    #   source  = "gitlabhq/gitlab"
-    #   version = "17.8.0"
-    # }
+    gitlab = {
+      source  = "gitlabhq/gitlab"
+      version = "18.11.0"
+    }
   }
 }
 
@@ -28,8 +28,10 @@ provider "vault" {
   skip_child_token = true
 }
 
-# provider "gitlab" {
-#   base_url = "https://${local.gitlab_fqdn}/api/v4/"
-#   password = local.gitlab_root_password
-#   username = "root"
-# }
+# GitLab Provider configuration using Personal Access Token (PAT)
+provider "gitlab" {
+  base_url    = "https://${local.gitlab_fqdn}/api/v4/"
+  cacert_file = local.state.vault_pki.bootstrap_ca_b64.path
+  token       = ephemeral.vault_kv_secret_v2.gitlab_internal.data["token"]
+  # token       = var.gitlab_token
+}

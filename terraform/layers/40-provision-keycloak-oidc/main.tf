@@ -18,7 +18,7 @@ resource "keycloak_realm" "infra_realm" {
 
 # 2. Client Secret Generation
 resource "random_password" "client_secrets" {
-  for_each = toset(["vault_frontend", "gitlab_frontend", "harbor_frontend", "gitlab_minio", "harbor_minio"])
+  for_each = toset(["vault_frontend", "gitlab_frontend", "harbor_frontend", "harbor_bootstrapper", "gitlab_minio", "harbor_minio"])
   length   = 32
   special  = false
 }
@@ -50,6 +50,11 @@ resource "keycloak_openid_client" "clients" {
       client_id           = "harbor-minio-infra"
       name                = "Harbor MinIO Console"
       valid_redirect_uris = ["${local.harbor_minio_url}/oauth_callback"]
+    }
+    harbor_bootstrapper = {
+      client_id           = "harbor-bootstrapper-infra"
+      name                = "Harbor Bootstrapper"
+      valid_redirect_uris = ["${local.harbor_bootstrapper_url}/c/oidc/callback"]
     }
   }
 
@@ -109,13 +114,30 @@ resource "vault_kv_secret_v2" "oidc_clients" {
 }
 
 # 6. Test User & Groups Configuration
-resource "keycloak_group" "groups" {
-  for_each = toset(local.all_groups)
+# 6a. Root Level Groups (Parents)
+resource "keycloak_group" "root_groups" {
+  for_each = { for k, v in var.keycloak_groups : k => v if v.parent == null }
   realm_id = keycloak_realm.infra_realm.id
   name     = each.key
 
+  attributes = each.value.attributes
+
   lifecycle {
-    prevent_destroy = false # Set to true in production if needed
+    prevent_destroy = true
+  }
+}
+
+# 6b. Subgroups (Children)
+resource "keycloak_group" "subgroups" {
+  for_each  = { for k, v in var.keycloak_groups : k => v if v.parent != null }
+  realm_id  = keycloak_realm.infra_realm.id
+  name      = each.key
+  parent_id = keycloak_group.root_groups[each.value.parent].id
+
+  attributes = each.value.attributes
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -133,10 +155,14 @@ resource "keycloak_user" "users" {
     value     = each.value.password
     temporary = false
   }
+}
 
-  lifecycle {
-    ignore_changes = [initial_password]
-  }
+locals {
+  # Helper to merge both group layers for easy lookup
+  all_group_ids = merge(
+    { for k, v in keycloak_group.root_groups : k => v.id },
+    { for k, v in keycloak_group.subgroups : k => v.id }
+  )
 }
 
 resource "keycloak_user_groups" "user_assignments" {
@@ -145,6 +171,6 @@ resource "keycloak_user_groups" "user_assignments" {
   user_id  = keycloak_user.users[each.key].id
 
   group_ids = [
-    for g in each.value.groups : keycloak_group.groups[g].id
+    for g in each.value.groups : local.all_group_ids[g]
   ]
 }
