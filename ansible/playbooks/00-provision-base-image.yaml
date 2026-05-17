@@ -78,4 +78,4 @@
   hosts: "all"
   become: true
   roles:
-    - 0A-image-finalization
+    - 00-image-finalization
