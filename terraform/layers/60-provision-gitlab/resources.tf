@@ -9,21 +9,21 @@ resource "gitlab_application_settings" "this" {
 }
 
 # 2. Hierarchical Group Structure
-#    Top-level Engineering Group
-resource "gitlab_group" "engineering" {
-  name             = local.engineering_org_metadata.name
-  path             = local.engineering_org_metadata.name
-  description      = local.engineering_org_metadata.description
+#    Top-level Organization Group
+resource "gitlab_group" "top_org" {
+  name             = local.target_org_metadata.name
+  path             = local.target_org_metadata.name
+  description      = local.target_org_metadata.description
   visibility_level = "internal"
 }
 
 #    Subgroups for each development team
 resource "gitlab_group" "subgroups" {
-  for_each         = local.engineering_groups
+  for_each         = local.target_subgroups
   name             = each.value.name
   path             = each.key
   description      = each.value.description
-  parent_id        = gitlab_group.engineering.id
+  parent_id        = gitlab_group.top_org.id
   visibility_level = "internal"
 }
 

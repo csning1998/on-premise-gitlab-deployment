@@ -27,22 +27,23 @@ locals {
   kc_groups = local.state.keycloak_oidc.groups_metadata
   kc_users  = local.state.keycloak_oidc.oidc_users
 
-  # Extract dynamic metadata for the top-level Engineering organization
-  engineering_org_metadata = local.state.keycloak_oidc.root_groups_metadata["engineering"]
+  # 4a. Target Organization (Top-Level)
+  target_org_name     = local.state.keycloak_oidc.gitlab_sync_root_org
+  target_org_metadata = local.state.keycloak_oidc.root_groups_metadata[local.target_org_name]
 
-  # 4a. Identify Subgroups under 'engineering'
-  engineering_groups = {
+  # 4b. Subgroups (Teams) under the Target Organization
+  target_subgroups = {
     for id, meta in local.kc_groups :
     id => {
       name        = upper(id)
       description = meta.description != "" ? meta.description : "Auto-synced team for ${id}"
     }
-    if meta.parent == "engineering"
+    if meta.parent == local.target_org_name
   }
 
-  # 4b. Map Users to Teams based on their Keycloak groups
-  dev_team_mapping = {
-    for team_id, config in local.engineering_groups :
+  # 4c. Map Users to Subgroups based on Keycloak memberships
+  subgroup_memberships = {
+    for team_id, config in local.target_subgroups :
     team_id => [
       for user_key, user_data in local.kc_users :
       user_key
@@ -55,7 +56,7 @@ locals {
 locals {
   # Flatten the mapping for easy resource creation
   membership_list = flatten([
-    for team, users in local.dev_team_mapping : [
+    for team, users in local.subgroup_memberships : [
       for user in users : {
         team = team
         user = user

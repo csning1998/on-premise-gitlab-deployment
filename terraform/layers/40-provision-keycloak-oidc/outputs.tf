@@ -2,6 +2,14 @@ output "issuer_url" {
   value = "${local.keycloak_frontend_url}/realms/${local.realm_id}"
 }
 
+output "gitlab_sync_root_org" {
+  description = "The root organization name targeted for GitLab synchronization."
+  value = one([
+    for k, v in var.keycloak_groups : k
+    if v.parent == null && lookup(v.attributes, "sync_to_gitlab", "false") == "true"
+  ])
+}
+
 output "root_groups_metadata" {
   description = "Metadata for top-level organizational groups."
   value = {
