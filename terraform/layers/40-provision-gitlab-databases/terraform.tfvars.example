@@ -43,3 +43,6 @@ gitlab_minio_tenants = {
     function       = "tmp"
   }
 }
+
+extension_drop_cascade = false
+

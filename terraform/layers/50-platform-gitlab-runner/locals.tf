@@ -45,6 +45,7 @@ locals {
   harbor_quay_proxy   = local.state.harbor_bootstrapper_oci.proxy_caches["quay_io"].project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper_oci.proxy_caches["k8s_io"].project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["docker_hub"].project_name
+  harbor_gitlab_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["gitlab_com"].project_name
   helm_chart_project  = local.state.harbor_bootstrapper_oci.proxy_oci["helm_charts"].name
 
   # API Endpoint for Vault Callback
@@ -72,7 +73,7 @@ locals {
   ca_bundle_config = {
     name        = "gitlab-ca-bundle" # K8s Secret Name
     secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
-    content     = base64decode(local.state.vault_pki.pki_configuration.ca_cert_b64)
+    content     = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   }
 
   # 6. DNS Configuration (Standardized Alignment)
