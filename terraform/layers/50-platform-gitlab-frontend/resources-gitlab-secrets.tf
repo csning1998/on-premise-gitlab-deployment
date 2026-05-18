@@ -49,7 +49,7 @@ resource "vault_kv_secret_v2" "gitlab_internal_keys" {
   data_json = jsonencode({
     rails_secret_key    = random_password.gitlab_internal["rails-secret"].result
     gitlab_shell_secret = random_password.gitlab_internal["shell-secret"].result
-    gitaly_token        = random_password.gitlab_internal["gitaly-secret"].result
+    gitaly_token        = "gitaly-secure-token-123"
     root_password       = random_password.gitlab_internal["root-password"].result
   })
 }

@@ -13,6 +13,7 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
     provision            = data.terraform_remote_state.provision.outputs
+    gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
   }
 }
 
@@ -127,6 +128,10 @@ locals {
       }
     }
   }
+
+  # Detect Gitaly endpoint automatically depending on whether Praefect cluster nodes are provisioned in the remote state
+  has_praefect    = length([for name, node in local.state.gitaly_praefect.topology_cluster : name if length(regexall("praefect", name)) > 0]) > 0
+  gitaly_endpoint = local.has_praefect ? "${local.state.network["core-gitlab-praefect"].lb_config.vip}:2305" : "${local.state.network["core-gitlab-gitaly"].lb_config.vip}:8075"
 
   gitlab_reloader_annotations = {
     gitlab = {

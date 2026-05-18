@@ -59,6 +59,13 @@ data "terraform_remote_state" "kubeadm" {
   }
 }
 
+data "terraform_remote_state" "gitaly_praefect" {
+  backend = "local"
+  config = {
+    path = "../30-infra-gitlab-gitaly-praefect/terraform.tfstate"
+  }
+}
+
 # 0. Infrastructure Provisioning State
 data "terraform_remote_state" "provision" {
   backend = "local"

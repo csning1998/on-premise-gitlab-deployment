@@ -96,6 +96,10 @@ module "gitlab_core" {
         }
       }
     }
+
+    gitaly = {
+      external_address = local.gitaly_endpoint
+    }
   }
 
   # Internal Secrets of Rails, Gitaly, etc.
@@ -111,7 +115,7 @@ module "gitlab_core" {
     }
     "gitaly-secret" = {
       key   = "token"
-      value = random_password.gitlab_internal["gitaly-secret"].result
+      value = "gitaly-secure-token-123"
     }
     "root-password" = {
       key   = "secret"

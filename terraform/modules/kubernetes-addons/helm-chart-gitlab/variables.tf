@@ -67,6 +67,9 @@ variable "external_services" {
         secret_key = string
       }))
     })
+    gitaly = optional(object({
+      external_address = string
+    }))
   })
 }
 

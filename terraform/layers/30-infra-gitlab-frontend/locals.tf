@@ -144,7 +144,7 @@ locals {
       if contains([
         "vault-frontend", "keycloak-frontend",
         "harbor-bootstrapper-frontend", "harbor-frontend",
-        "gitlab-postgres", "gitlab-redis", "gitlab-minio"
+        "gitlab-postgres", "gitlab-redis", "gitlab-minio", "gitlab-gitaly", "gitlab-praefect"
       ], name)
     ]
 

@@ -159,6 +159,17 @@ resource "helm_release" "gitlab" {
           }
         }
         gitaly = {
+          enabled = var.external_services.gitaly != null ? false : true
+          internal = {
+            names = var.external_services.gitaly != null ? [] : ["default"]
+          }
+          external = var.external_services.gitaly != null ? [
+            {
+              name     = "default"
+              hostname = split(":", var.external_services.gitaly.external_address)[0]
+              port     = tonumber(split(":", var.external_services.gitaly.external_address)[1])
+            }
+          ] : null
           authToken = {
             secret = kubernetes_secret.gitlab_internal_secrets["gitaly-secret"].metadata[0].name,
             key    = "token"
@@ -183,6 +194,7 @@ resource "helm_release" "gitlab" {
       redis         = { install = false }
       registry      = { enabled = false }
       gitlab-runner = { install = false }
+      gitaly        = { enabled = var.external_services.gitaly != null ? false : true }
 
       # Component Specifics
       gitlab = {
