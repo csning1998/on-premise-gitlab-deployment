@@ -37,6 +37,7 @@ resource "postgresql_extension" "extensions" {
     for pair in local.db_extensions : "${pair.database}.${pair.extension}" => pair
   }
 
-  name     = each.value.extension
-  database = postgresql_database.dbs[each.value.database].name
+  name         = each.value.extension
+  database     = postgresql_database.dbs[each.value.database].name
+  drop_cascade = true
 }
