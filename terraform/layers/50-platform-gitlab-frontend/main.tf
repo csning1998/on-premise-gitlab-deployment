@@ -115,7 +115,7 @@ module "gitlab_core" {
     }
     "gitaly-secret" = {
       key   = "token"
-      value = "gitaly-secure-token-123"
+      value = data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
     }
     "root-password" = {
       key   = "secret"

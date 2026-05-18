@@ -13,3 +13,34 @@ resource "vault_approle_auth_backend_role_secret_id" "component_agents" {
     "component" = each.key
   })
 }
+
+# Dynamic Gitaly Auth Token Generation
+resource "random_password" "gitaly_token" {
+  length  = 32
+  special = false
+}
+
+# Dynamic Praefect External Token Generation
+resource "random_password" "praefect_external_token" {
+  length  = 32
+  special = false
+}
+
+# Dynamic Praefect DB Password Generation
+resource "random_password" "praefect_db_password" {
+  length  = 32
+  special = false
+}
+
+# Upload dynamically generated Gitaly Token to isolated Vault space
+resource "vault_kv_secret_v2" "gitaly_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/gitaly"
+
+  data_json = jsonencode({
+    gitaly_token            = random_password.gitaly_token.result
+    praefect_external_token = random_password.praefect_external_token.result
+    praefect_db_password    = random_password.praefect_db_password.result
+  })
+}

@@ -151,6 +151,9 @@ locals {
   }
 
   ansible_extra_vars = {
+    gitaly_auth_token       = random_password.gitaly_token.result
+    praefect_external_token = random_password.praefect_external_token.result
+    praefect_db_password    = random_password.praefect_db_password.result
     pg_replication_password = local.sec_app_creds.replication_password
     pg_superuser_password   = local.sec_app_creds.superuser_password
     pg_vrrp_secret          = local.sec_app_creds.vrrp_secret

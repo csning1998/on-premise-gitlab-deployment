@@ -33,3 +33,9 @@ ephemeral "vault_kv_secret_v2" "gitlab_internal" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app/internal"
 }
+
+ephemeral "vault_kv_secret_v2" "gitlab_pat" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/pat"
+}

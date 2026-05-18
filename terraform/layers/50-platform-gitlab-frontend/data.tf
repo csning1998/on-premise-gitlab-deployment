@@ -66,6 +66,12 @@ data "terraform_remote_state" "gitaly_praefect" {
   }
 }
 
+data "vault_kv_secret_v2" "gitaly_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/gitaly"
+}
+
 # 0. Infrastructure Provisioning State
 data "terraform_remote_state" "provision" {
   backend = "local"

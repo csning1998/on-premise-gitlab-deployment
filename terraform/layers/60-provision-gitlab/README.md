@@ -35,7 +35,7 @@ The GitLab Terraform Provider requires a PAT with administrator privileges to pe
 6. Store the PAT in Vault:
 
     ```bash
-    vault kv patch -mount="secret" "on-premise-gitlab-deployment/gitlab/app/internal" token="glpat-..."
+    vault kv put -mount="secret" "on-premise-gitlab-deployment/gitlab/app/pat" token="glpat-..."
     ```
 
 > [!TIP]
