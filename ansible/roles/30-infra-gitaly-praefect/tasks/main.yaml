@@ -1,0 +1,8 @@
+---
+- name: "Section A: Configure Standalone/HA Gitaly Storage Node"
+  ansible.builtin.include_tasks: gitaly.yaml
+  when: node_role == 'gitaly'
+
+- name: "Section B: Configure Praefect Proxy Service"
+  ansible.builtin.include_tasks: praefect.yaml
+  when: node_role == 'praefect'

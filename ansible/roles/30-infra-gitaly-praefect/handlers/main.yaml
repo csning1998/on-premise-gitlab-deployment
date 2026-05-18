@@ -1,0 +1,10 @@
+---
+- name: Restart Gitaly
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart gitaly
+  changed_when: false
+
+- name: Restart Praefect
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart praefect
+  changed_when: false

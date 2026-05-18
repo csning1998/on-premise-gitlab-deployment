@@ -1,0 +1,9 @@
+---
+gitaly_auth_token: "gitaly-secure-token-123"
+praefect_external_token: "praefect-secure-token-123"
+praefect_db_user: "praefect"
+praefect_db_name: "praefect_production"
+praefect_db_password: "praefect-secure-db-password-123"
+gitaly_tls_enabled: true
+praefect_tls_enabled: true
+gitlab_external_url: "https://gitlab.example.com"

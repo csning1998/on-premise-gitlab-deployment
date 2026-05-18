@@ -1,0 +1,75 @@
+---
+- name: "Role 81: Configure Network Routing (Gitaly)"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes:
+      - to: "{{ gitaly_static_route_to }}"
+        via: "{{ gitaly_static_route_via }}"
+        metric: "{{ gitaly_static_route_metric }}"
+  when: gitaly_static_route_to is defined
+
+- name: "Block A1: Configure Gitaly Configuration"
+  block:
+    - name: "A1a. Render gitlab.rb configuration for Gitaly"
+      ansible.builtin.template:
+        src: gitlab.rb.gitaly.j2
+        dest: /etc/gitlab/gitlab.rb
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart Gitaly
+
+    - name: "A1b. Ensure SSL certificate directory exists"
+      ansible.builtin.file:
+        path: /etc/gitlab/ssl
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+- name: "Role 82: Prepare Environment for Vault Agent (Gitaly)"
+  ansible.builtin.include_role:
+    name: 82-utils-vault-agent
+  vars:
+    vault_agent_owner: "root"
+    vault_agent_group: "root"
+    vault_agent_cert_base_dir: "/etc/gitlab/ssl"
+    vault_agent_post_command: "gitlab-ctl hup gitaly"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ gitaly_ha_virtual_ip | default('') }}"
+    vault_agent_identities: "{{ vault_agent_identities_json | from_json }}"
+    vault_agent_role_id: "{{ vault_agent_identities['gitaly'].role_id }}"
+    vault_agent_secret_id: "{{ vault_agent_identities['gitaly'].secret_id }}"
+    vault_role_name: "{{ vault_agent_identities['gitaly'].role_name }}"
+    vault_agent_common_name: "{{ vault_agent_identities['gitaly'].common_name }}"
+    vault_agent_auth_path: "{{ vault_agent_identities['gitaly'].auth_path }}"
+
+- name: "Block A2: Start and Enable Gitaly Service"
+  block:
+    - name: "A2a. Check if UFW is installed"
+      ansible.builtin.stat:
+        path: /usr/sbin/ufw
+      register: gitaly_ufw_stat
+
+    - name: "A2b. Allow Gitaly gRPC ports"
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        src: any
+      loop:
+        - "8075"
+        - "8076"
+      when: gitaly_ufw_stat.stat.exists
+
+    - name: "A2c. Ensure gitlab-runsvdir service is running and enabled"
+      ansible.builtin.systemd:
+        name: gitlab-runsvdir
+        state: started
+        enabled: true
+
+    - name: "A2d. Run GitLab reconfigure to apply Gitaly changes"
+      ansible.builtin.command:
+        cmd: gitlab-ctl reconfigure
+      register: gitaly_reconfigure_result
+      changed_when: true
