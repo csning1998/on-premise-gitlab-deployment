@@ -213,22 +213,22 @@ service_catalog = {
           { name_suffix = "data", capacity_gib = 100 }
         ]
       }
-      "praefact" = {
+      "praefect" = {
         provider   = "kvm"
         runtime    = "baremetal"
         cidr_index = 140
-        tags       = ["with-141-praefact-patroni"]
+        tags       = ["with-141-praefect-patroni"]
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
           "proxy"   = { frontend_port = 2305, backend_port = 2305 }
           "metrics" = { frontend_port = 9652, backend_port = 9652 }
         }
       }
-      "praefact-patroni" = {
+      "praefect-patroni" = {
         provider   = "kvm"
         runtime    = "baremetal"
         cidr_index = 141
-        tags       = ["with-140-praefact"]
+        tags       = ["with-140-praefect"]
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
           "rw-proxy" = { frontend_port = 5432, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }

@@ -1,0 +1,48 @@
+target_clusters = {
+  "gitaly"           = "core-gitlab-gitaly"
+  "praefect"         = "core-gitlab-praefect"
+  "praefect-patroni" = "core-gitlab-praefect-patroni"
+}
+
+primary_role = "praefect"
+
+service_config = {
+  "gitaly" = {
+    role            = "gitaly"
+    network_tier    = "gitaly"
+    base_image_path = "../../../packer/output/base-gitaly-praefect/ubuntu-24-base-gitaly-praefect.qcow2"
+
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # Uncomment for Gitaly HA Setup
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+    }
+  }
+
+  "praefect" = {
+    role            = "praefect"
+    network_tier    = "praefect"
+    base_image_path = "../../../packer/output/base-gitaly-praefect/ubuntu-24-base-gitaly-praefect.qcow2"
+
+    nodes = {
+      # "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # # Uncomment for Praefact HA Proxy Setup
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+    }
+  }
+
+  "praefect-patroni" = {
+    role            = "postgres"
+    network_tier    = "praefect-patroni"
+    base_image_path = "../../../packer/output/base-postgres/ubuntu-24-base-postgres.qcow2"
+
+    nodes = {
+      # "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # # Uncomment for Patroni HA Database Setup
+      # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+      # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
+    }
+  }
+}
