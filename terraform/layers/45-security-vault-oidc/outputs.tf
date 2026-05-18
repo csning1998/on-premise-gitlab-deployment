@@ -12,5 +12,5 @@ output "oidc_role" {
 }
 
 output "login_url" {
-  value = "https://vault.production.iac.internal/ui/vault/auth/oidc"
+  value = "${local.vault_fdqn}/ui/vault/auth/oidc"
 }

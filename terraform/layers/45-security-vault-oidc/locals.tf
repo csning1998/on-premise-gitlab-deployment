@@ -9,7 +9,8 @@ locals {
   }
 
   vault_address = "https://${local.state.vault_sys.service_vip}:443"
-  
+  vault_fdqn    = "https://${local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]}"
+
   # OIDC Configuration
   oidc_discovery_url = local.state.keycloak_oidc.issuer_url
   oidc_client_id     = data.vault_kv_secret_v2.keycloak_vault_client.data["client_id"]
