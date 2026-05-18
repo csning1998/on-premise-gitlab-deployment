@@ -20,6 +20,8 @@ resource "random_password" "gitlab_db_password" {
 module "gitlab_db_init" {
   source = "../../modules/configuration/patroni-init"
 
+  extension_drop_cascade = var.extension_drop_cascade
+
   databases = {
     "gitlabhq_production" = {
       owner      = "gitlab"
@@ -36,6 +38,7 @@ module "gitlab_db_init" {
     }
   }
 }
+
 
 module "minio_gitlab_config" {
   source = "../../modules/configuration/minio-bucket-setup"

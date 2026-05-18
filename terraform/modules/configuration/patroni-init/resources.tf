@@ -39,5 +39,5 @@ resource "postgresql_extension" "extensions" {
 
   name         = each.value.extension
   database     = postgresql_database.dbs[each.value.database].name
-  drop_cascade = true
+  drop_cascade = var.extension_drop_cascade
 }

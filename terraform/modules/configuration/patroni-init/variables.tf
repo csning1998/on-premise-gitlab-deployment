@@ -20,3 +20,9 @@ variable "users" {
   }))
   default = {}
 }
+
+variable "extension_drop_cascade" {
+  description = "Whether to use DROP CASCADE when destroying PostgreSQL extensions to automatically drop dependent objects."
+  type        = bool
+  default     = false
+}
