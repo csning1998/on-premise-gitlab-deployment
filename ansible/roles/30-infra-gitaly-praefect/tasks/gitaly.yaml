@@ -3,11 +3,8 @@
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
-    routing_static_routes:
-      - to: "{{ gitaly_static_route_to }}"
-        via: "{{ gitaly_static_route_via }}"
-        metric: "{{ gitaly_static_route_metric }}"
-  when: gitaly_static_route_to is defined
+    routing_static_routes: "{{ gitaly_static_routes }}"
+  when: gitaly_static_routes is defined and (gitaly_static_routes | length > 0)
 
 - name: "Block A1: Configure Gitaly Configuration"
   block:
@@ -32,8 +29,8 @@
   ansible.builtin.include_role:
     name: 82-utils-vault-agent
   vars:
-    vault_agent_owner: "root"
-    vault_agent_group: "root"
+    vault_agent_owner: "git"
+    vault_agent_group: "git"
     vault_agent_cert_base_dir: "/etc/gitlab/ssl"
     vault_agent_post_command: "gitlab-ctl hup gitaly"
     vault_agent_ip_sans: "{{ advertise_ip }},{{ gitaly_ha_virtual_ip | default('') }}"

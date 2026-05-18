@@ -29,8 +29,9 @@ listen_addr: '0.0.0.0:8075',
 {% if gitaly_tls_enabled | default(false) %}
 tls_listen_addr: '0.0.0.0:8076',
 tls: {
-certificate_path: '/etc/gitlab/ssl/gitaly.crt',
-key_path: '/etc/gitlab/ssl/gitaly.key'
+certificate_path: '/etc/gitlab/ssl/server.crt',
+key_path: '/etc/gitlab/ssl/server.key',
+client_ca_path: '/etc/gitlab/ssl/ca.crt'
 },
 {% endif %}
 auth: {

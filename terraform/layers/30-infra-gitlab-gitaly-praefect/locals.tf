@@ -117,24 +117,37 @@ locals {
     vault_vip                 = local.state.vault_sys.service_vip
     global_mss                = local.state.metadata.global_network_baseline.global_mss
 
-    # Asymmetric Routing (Flattened)
-    postgres_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    postgres_static_route_via    = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
-    postgres_static_route_metric = 100
-
-    # Asymmetric Routing for Gitaly
-    gitaly_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    gitaly_static_route_via    = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
-    gitaly_static_route_metric = 100
-
-    # Asymmetric Routing for Praefect
-    praefect_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    praefect_static_route_via    = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
-    praefect_static_route_metric = 100
-
     # Gitaly and Praefect HA
     gitaly_ha_virtual_ip   = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
     praefect_ha_virtual_ip = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
+
+    # Asymmetric Routing Lists (Native HCL list of objects, matching harbor style)
+    gitaly_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
+        metric = 100
+      }
+      if contains(["vault-frontend", "gitlab-frontend", "gitlab-praefact"], name)
+    ]
+
+    praefect_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
+        metric = 100
+      }
+      if contains(["vault-frontend", "gitlab-frontend", "gitlab-gitaly", "gitlab-praefact-patroni"], name)
+    ]
+
+    postgres_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
+        metric = 100
+      }
+      if contains(["vault-frontend", "gitlab-praefact"], name)
+    ]
   }
 
   ansible_extra_vars = {
