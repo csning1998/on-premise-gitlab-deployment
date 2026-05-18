@@ -85,15 +85,24 @@ locals {
 
     # Networking & HA
     microk8s_ingress_vip       = local.net_service_vip
+    api_server_vip             = local.net_service_vip
+    api_server_port            = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
     microk8s_allowed_subnet    = local.p_net_config.network.hostonly.cidr
     microk8s_nat_subnet_prefix = join(".", slice(split(".", local.p_net_config.network.nat.gateway), 0, 3))
-    metallb_ip_range           = "${local.net_service_vip}-${local.net_service_vip}"
     global_mss                 = local.state.metadata.global_network_baseline.global_mss
 
     # Asymmetric Routing Configuration (Standardized Postgres/Redis pattern)
-    microk8s_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    microk8s_static_route_via    = local.p_net_config.lb_config.vip
-    microk8s_static_route_metric = 100
+    microk8s_static_routes = [
+      for name, vip in local.state.network.infrastructure_vips : {
+        to     = "${vip}/32"
+        via    = local.p_net_config.lb_config.vip
+        metric = 100
+      }
+      if contains([
+        "vault-frontend", "keycloak-frontend",
+        "harbor-bootstrapper-frontend", "gitlab-frontend",
+      ], name)
+    ]
 
     # Cluster Topology
     microk8s_cluster_ips = [
