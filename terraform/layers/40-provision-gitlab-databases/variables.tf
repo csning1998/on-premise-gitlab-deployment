@@ -14,3 +14,9 @@ variable "gitlab_minio_tenants" {
     function       = string
   }))
 }
+
+variable "extension_drop_cascade" {
+  description = "Whether to use DROP CASCADE when destroying PostgreSQL extensions."
+  type        = bool
+  default     = false
+}

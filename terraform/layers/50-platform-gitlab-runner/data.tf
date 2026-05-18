@@ -23,7 +23,7 @@ data "terraform_remote_state" "vault_pki" {
 data "terraform_remote_state" "gitlab_frontend" {
   backend = "local"
   config = {
-    path = "${path.root}/../30-infra-gitlab-frontend/terraform.tfstate"
+    path = "${path.root}/../50-platform-gitlab-frontend/terraform.tfstate"
   }
 }
 
@@ -66,4 +66,10 @@ data "kubernetes_config_map" "kube_root_ca" {
     name      = "kube-root-ca.crt"
     namespace = "default"
   }
+}
+
+data "vault_kv_secret_v2" "gitlab_runner" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/runner/kubernetes"
 }
