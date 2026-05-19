@@ -128,7 +128,7 @@ locals {
         via    = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
         metric = 100
       }
-      if contains(["vault-frontend", "gitlab-frontend", "gitlab-praefact"], name)
+      if contains(["vault-frontend", "gitlab-frontend", "gitlab-praefect"], name)
     ]
 
     praefect_static_routes = [
@@ -137,7 +137,7 @@ locals {
         via    = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
         metric = 100
       }
-      if contains(["vault-frontend", "gitlab-frontend", "gitlab-gitaly", "gitlab-praefact-patroni"], name)
+      if contains(["vault-frontend", "gitlab-frontend", "gitlab-gitaly", "gitlab-praefect-patroni"], name)
     ]
 
     postgres_static_routes = [
@@ -146,7 +146,7 @@ locals {
         via    = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
         metric = 100
       }
-      if contains(["vault-frontend", "gitlab-praefact"], name)
+      if contains(["vault-frontend", "gitlab-praefect"], name)
     ]
   }
 

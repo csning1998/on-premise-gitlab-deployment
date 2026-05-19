@@ -92,7 +92,7 @@ This project currently provisions the following services (Items 1–5 are config
 7. Resolved Redis configuration issues for Harbor and GitLab.
     - MTU/MSS：[#102](https://github.com/csning1998/on-premise-gitlab-deployment/pull/102), [#104](https://github.com/csning1998/on-premise-gitlab-deployment/pull/104)
     - Virtio：[#110](https://github.com/csning1998/on-premise-gitlab-deployment/pull/110)
-8. **[ONGOING]** GitLab Runner (on Microk8s) / Gitaly (Praefact) etc.
+8. **[ONGOING]** GitLab Runner (on Microk8s) / Gitaly (Praefect) etc.
 9. Private Key Encryption.
 10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration for the feature of `*.tfstate` files encryption.
 

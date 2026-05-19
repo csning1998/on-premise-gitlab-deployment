@@ -27,7 +27,7 @@ service_config = {
 
     nodes = {
       # "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
-      # # Uncomment for Praefact HA Proxy Setup
+      # # Uncomment for Praefect HA Proxy Setup
       # "01" = { ip_suffix = 201, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
       # "02" = { ip_suffix = 202, vcpu = 2, ram_size = 1024, os_disk_capacity_gib = 40 }
     }

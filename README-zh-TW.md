@@ -92,7 +92,7 @@ git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployme
 7. 修正 Harbor 與 GitLab 的 Rediss 問題
     - MTU/MSS：[#102](https://github.com/csning1998/on-premise-gitlab-deployment/pull/102), [#104](https://github.com/csning1998/on-premise-gitlab-deployment/pull/104)
     - Virtio：[#110](https://github.com/csning1998/on-premise-gitlab-deployment/pull/110)
-8. **[Ongoing]** GitLab Runner (on Microk8s) / Gitaly (Praefact) 等
+8. **[Ongoing]** GitLab Runner (on Microk8s) / Gitaly (Praefect) 等
 9. Private Key Encryption
 10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration 對於 `*.tfstates` 檔案的加密
 
