@@ -226,6 +226,10 @@ resource "helm_release" "gitlab" {
           image = var.image_registry != null ? {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-shell"
           } : null
+          service = {
+            type     = "NodePort"
+            nodePort = 32022
+          }
         }
         migrations = {
           image = var.image_registry != null ? {

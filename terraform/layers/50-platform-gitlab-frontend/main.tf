@@ -111,7 +111,7 @@ module "gitlab_core" {
     }
     "shell-secret" = {
       key   = "secret"
-      value = random_password.gitlab_internal["shell-secret"].result
+      value = data.vault_kv_secret_v2.gitaly_secrets.data["gitlab_shell_secret"]
     }
     "gitaly-secret" = {
       key   = "token"

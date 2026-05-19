@@ -151,6 +151,8 @@ locals {
   }
 
   ansible_extra_vars = {
+    gitlab_external_url     = "https://${local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]}"
+    gitlab_shell_secret     = random_password.gitlab_shell_secret.result
     gitaly_auth_token       = random_password.gitaly_token.result
     praefect_external_token = random_password.praefect_external_token.result
     praefect_db_password    = random_password.praefect_db_password.result

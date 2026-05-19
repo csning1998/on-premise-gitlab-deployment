@@ -25,6 +25,14 @@
         group: root
         mode: "0755"
 
+    - name: "A1c. Render gitlab-secrets.json for Gitaly"
+      ansible.builtin.template:
+        src: gitlab-secrets.json.j2
+        dest: /etc/gitlab/gitlab-secrets.json
+        owner: root
+        group: root
+        mode: "0600"
+
 - name: "Role 82: Prepare Environment for Vault Agent (Gitaly)"
   ansible.builtin.include_role:
     name: 82-utils-vault-agent
@@ -41,14 +49,55 @@
     vault_agent_common_name: "{{ vault_agent_identities['gitaly'].common_name }}"
     vault_agent_auth_path: "{{ vault_agent_identities['gitaly'].auth_path }}"
 
-- name: "Block A2: Start and Enable Gitaly Service"
+- name: "Block A2: Trust Vault CA for System and Gitaly"
   block:
-    - name: "A2a. Check if UFW is installed"
+    - name: "A2a. Copy Vault CA to system trust store and GitLab trusted-certs"
+      ansible.builtin.copy:
+        src: /etc/gitlab/ssl/ca.crt
+        dest: "{{ item }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - /usr/local/share/ca-certificates/vault-ca.crt
+        - /etc/gitlab/trusted-certs/vault-ca.crt
+      register: gitaly_ca_copied
+
+    - name: "A2b. Update system CA certificates"
+      ansible.builtin.command:
+        cmd: update-ca-certificates
+      when: gitaly_ca_copied.changed
+
+- name: "Block B: Start and Enable Gitaly Service"
+  block:
+    - name: "B1a. Check if gitlab-secrets.json exists"
+      ansible.builtin.stat:
+        path: /etc/gitlab/gitlab-secrets.json
+      register: gitaly_secrets_stat
+
+    - name: "B1b. Validate gitlab-secrets.json format"
+      ansible.builtin.command:
+        cmd: python3 -c "import json; json.loads(open('/etc/gitlab/gitlab-secrets.json').read())"
+      register: gitaly_secrets_validation
+      ignore_errors: true
+      changed_when: false
+      when: gitaly_secrets_stat.stat.exists
+
+    - name: "B1c. Clean broken gitlab-secrets.json to ensure idempotency"
+      ansible.builtin.file:
+        path: /etc/gitlab/gitlab-secrets.json
+        state: absent
+      when:
+        - gitaly_secrets_stat.stat.exists
+        - gitaly_secrets_validation.rc is defined and gitaly_secrets_validation.rc != 0
+
+    - name: "B1d. Check if UFW is installed"
       ansible.builtin.stat:
         path: /usr/sbin/ufw
       register: gitaly_ufw_stat
 
-    - name: "A2b. Allow Gitaly gRPC ports"
+    - name: "B1e. Allow Gitaly gRPC ports"
       community.general.ufw:
         rule: allow
         port: "{{ item }}"
@@ -59,13 +108,13 @@
         - "8076"
       when: gitaly_ufw_stat.stat.exists
 
-    - name: "A2c. Ensure gitlab-runsvdir service is running and enabled"
+    - name: "B1f. Ensure gitlab-runsvdir service is running and enabled"
       ansible.builtin.systemd:
         name: gitlab-runsvdir
         state: started
         enabled: true
 
-    - name: "A2d. Run GitLab reconfigure to apply Gitaly changes"
+    - name: "B1g. Run GitLab reconfigure to apply Gitaly changes"
       ansible.builtin.command:
         cmd: gitlab-ctl reconfigure
       register: gitaly_reconfigure_result

@@ -32,6 +32,12 @@ resource "random_password" "praefect_db_password" {
   special = false
 }
 
+# Dynamic GitLab Shell Secret Generation
+resource "random_password" "gitlab_shell_secret" {
+  length  = 32
+  special = false
+}
+
 # Upload dynamically generated Gitaly Token to isolated Vault space
 resource "vault_kv_secret_v2" "gitaly_secrets" {
   provider = vault.production
@@ -42,5 +48,6 @@ resource "vault_kv_secret_v2" "gitaly_secrets" {
     gitaly_token            = random_password.gitaly_token.result
     praefect_external_token = random_password.praefect_external_token.result
     praefect_db_password    = random_password.praefect_db_password.result
+    gitlab_shell_secret     = random_password.gitlab_shell_secret.result
   })
 }
