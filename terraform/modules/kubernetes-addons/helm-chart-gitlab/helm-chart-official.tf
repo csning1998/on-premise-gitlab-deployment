@@ -36,7 +36,11 @@ resource "helm_release" "gitlab" {
           ]
         }
 
-
+        kubectl = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/kubectl"
+          } : null
+        }
 
         # Domain & Ingress
         hosts = {
@@ -176,7 +180,7 @@ resource "helm_release" "gitlab" {
           }
         }
         rails = {
-          secret = {
+          secrets = {
             secret = kubernetes_secret.gitlab_internal_secrets["rails-secret"].metadata[0].name,
             key    = "secret"
           }
