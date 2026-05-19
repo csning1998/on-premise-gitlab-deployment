@@ -16,6 +16,7 @@
         group: root
         mode: "0600"
       notify: Restart Gitaly
+      register: gitaly_config_rendered
 
     - name: "A1b. Ensure SSL certificate directory exists"
       ansible.builtin.file:
@@ -32,6 +33,7 @@
         owner: root
         group: root
         mode: "0600"
+      register: gitaly_secrets_rendered
 
 - name: "Role 82: Prepare Environment for Vault Agent (Gitaly)"
   ansible.builtin.include_role:
@@ -83,6 +85,7 @@
       ansible.builtin.file:
         path: /etc/gitlab/gitlab-secrets.json
         state: absent
+      register: gitaly_secrets_cleaned
       when:
         - gitaly_secrets_stat.stat.exists
         - gitaly_secrets_validation.rc is defined and gitaly_secrets_validation.rc != 0
@@ -114,3 +117,7 @@
         cmd: gitlab-ctl reconfigure
       register: gitaly_reconfigure_result
       changed_when: true
+      when: >
+        (gitaly_config_rendered.changed | default(false)) or
+        (gitaly_secrets_rendered.changed | default(false)) or
+        (gitaly_secrets_cleaned.changed | default(false))

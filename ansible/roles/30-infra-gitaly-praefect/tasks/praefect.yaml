@@ -16,6 +16,7 @@
         group: root
         mode: "0600"
       notify: Restart Praefect
+      register: praefect_config_rendered
 
     - name: "A1b. Ensure SSL certificate directory exists"
       ansible.builtin.file:
@@ -75,6 +76,7 @@
       ansible.builtin.file:
         path: /etc/gitlab/gitlab-secrets.json
         state: absent
+      register: praefect_secrets_cleaned
       when:
         - praefect_secrets_stat.stat.exists
         - praefect_secrets_validation.rc is defined and praefect_secrets_validation.rc != 0
@@ -106,6 +108,9 @@
         cmd: gitlab-ctl reconfigure
       register: praefect_reconfigure_result
       changed_when: true
+      when: >
+        (praefect_config_rendered.changed | default(false)) or
+        (praefect_secrets_cleaned.changed | default(false))
 
     - name: "B1h. Run Praefect database migrations"
       ansible.builtin.command:
