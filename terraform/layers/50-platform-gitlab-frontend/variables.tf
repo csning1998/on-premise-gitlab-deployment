@@ -102,3 +102,9 @@ variable "certificate_config" {
     renew_before = "12h"   # Must be less than Vault's 24h declared duration.
   }
 }
+
+variable "enable_db_token_reset" {
+  description = "Enable the one-time Kubernetes Job to clean encrypted database fields and bypass CipherError"
+  type        = bool
+  default     = false
+}
