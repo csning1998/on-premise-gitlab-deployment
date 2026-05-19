@@ -1,0 +1,120 @@
+---
+- name: "Role 81: Configure Network Routing (Praefect)"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ praefect_static_routes }}"
+  when: praefect_static_routes is defined and (praefect_static_routes | length > 0)
+
+- name: "Block A1: Configure Praefect Configuration"
+  block:
+    - name: "A1a. Render gitlab.rb configuration for Praefect"
+      ansible.builtin.template:
+        src: gitlab.rb.praefect.j2
+        dest: /etc/gitlab/gitlab.rb
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart Praefect
+      register: praefect_config_rendered
+
+    - name: "A1b. Ensure SSL certificate directory exists"
+      ansible.builtin.file:
+        path: /etc/gitlab/ssl
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+- name: "Role 82: Prepare Environment for Vault Agent (Praefect)"
+  ansible.builtin.include_role:
+    name: 82-utils-vault-agent
+  vars:
+    vault_agent_owner: "git"
+    vault_agent_group: "git"
+    vault_agent_cert_base_dir: "/etc/gitlab/ssl"
+    vault_agent_post_command: "gitlab-ctl restart praefect"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ praefect_ha_virtual_ip | default('') }}"
+    vault_agent_identities: "{{ vault_agent_identities_json | from_json }}"
+    vault_agent_role_id: "{{ vault_agent_identities['praefect'].role_id }}"
+    vault_agent_secret_id: "{{ vault_agent_identities['praefect'].secret_id }}"
+    vault_role_name: "{{ vault_agent_identities['praefect'].role_name }}"
+    vault_agent_common_name: "{{ vault_agent_identities['praefect'].common_name }}"
+    vault_agent_auth_path: "{{ vault_agent_identities['praefect'].auth_path }}"
+
+- name: "Block A2: Trust Vault CA for System and Praefect"
+  block:
+    - name: "A2a. Copy Vault CA to system trust store and GitLab trusted-certs"
+      ansible.builtin.copy:
+        src: /etc/gitlab/ssl/ca.crt
+        dest: "{{ item }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - /usr/local/share/ca-certificates/vault-ca.crt
+        - /etc/gitlab/trusted-certs/vault-ca.crt
+      notify: Update system CA certificates
+
+- name: "Block B: Start and Enable Praefect Service"
+  block:
+    - name: "B1a. Check if gitlab-secrets.json exists"
+      ansible.builtin.stat:
+        path: /etc/gitlab/gitlab-secrets.json
+      register: praefect_secrets_stat
+
+    - name: "B1b. Validate gitlab-secrets.json format"
+      ansible.builtin.command:
+        cmd: python3 -c "import json; json.loads(open('/etc/gitlab/gitlab-secrets.json').read())"
+      register: praefect_secrets_validation
+      ignore_errors: true
+      changed_when: false
+      when: praefect_secrets_stat.stat.exists
+
+    - name: "B1c. Clean broken gitlab-secrets.json to ensure idempotency"
+      ansible.builtin.file:
+        path: /etc/gitlab/gitlab-secrets.json
+        state: absent
+      register: praefect_secrets_cleaned
+      when:
+        - praefect_secrets_stat.stat.exists
+        - praefect_secrets_validation.rc is defined and praefect_secrets_validation.rc != 0
+
+    - name: "B1d. Check if UFW is installed"
+      ansible.builtin.stat:
+        path: /usr/sbin/ufw
+      register: praefect_ufw_stat
+
+    - name: "B1e. Allow Praefect proxy ports"
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        src: any
+      loop:
+        - "2305"
+        - "2306"
+      when: praefect_ufw_stat.stat.exists
+
+    - name: "B1f. Ensure gitlab-runsvdir service is running and enabled"
+      ansible.builtin.systemd:
+        name: gitlab-runsvdir
+        state: started
+        enabled: true
+
+    - name: "B1g. Run GitLab reconfigure to apply Praefect changes"
+      ansible.builtin.command:
+        cmd: gitlab-ctl reconfigure
+      register: praefect_reconfigure_result
+      changed_when: true
+      when: >
+        (praefect_config_rendered.changed | default(false)) or
+        (praefect_secrets_cleaned.changed | default(false))
+
+    - name: "B1h. Run Praefect database migrations"
+      ansible.builtin.command:
+        cmd: gitlab-ctl praefect-sql-migrate
+      register: praefect_migrate_result
+      changed_when: true
+      run_once: true

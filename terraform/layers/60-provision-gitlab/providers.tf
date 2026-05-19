@@ -32,6 +32,6 @@ provider "vault" {
 provider "gitlab" {
   base_url    = "https://${local.gitlab_fqdn}/api/v4/"
   cacert_file = local.state.vault_pki.bootstrap_ca_b64.path
-  token       = ephemeral.vault_kv_secret_v2.gitlab_internal.data["token"]
+  token       = ephemeral.vault_kv_secret_v2.gitlab_pat.data["token"]
   # token       = var.gitlab_token
 }

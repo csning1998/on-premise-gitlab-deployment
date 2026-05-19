@@ -96,28 +96,33 @@ module "gitlab_core" {
         }
       }
     }
+
+    gitaly = {
+      external_address = local.gitaly_endpoint
+    }
   }
 
   # Internal Secrets of Rails, Gitaly, etc.
-  # Values are sourced from local random resources to avoid circular dependencies
+  # Sourced persistently from Layer 30 via Vault to support data-safe Greenfield rebuilds
   gitlab_secrets = {
     "rails-secret" = {
       key   = "secret"
-      value = random_password.gitlab_internal["rails-secret"].result
-    }
-    "shell-secret" = {
-      key   = "secret"
-      value = random_password.gitlab_internal["shell-secret"].result
-    }
-    "gitaly-secret" = {
-      key   = "token"
-      value = random_password.gitlab_internal["gitaly-secret"].result
+      value = data.vault_kv_secret_v2.gitlab_internal_secrets.data["rails_secret_key"]
     }
     "root-password" = {
       key   = "secret"
-      value = random_password.gitlab_internal["root-password"].result
+      value = data.vault_kv_secret_v2.gitlab_internal_secrets.data["root_password"]
+    }
+    "shell-secret" = {
+      key   = "secret"
+      value = data.vault_kv_secret_v2.gitaly_secrets.data["gitlab_shell_secret"]
+    }
+    "gitaly-secret" = {
+      key   = "token"
+      value = data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
     }
   }
 
-  ca_bundle = local.ca_bundle_config
+  gitlab_shell_node_port = local.shell_port
+  ca_bundle              = local.ca_bundle_config
 }

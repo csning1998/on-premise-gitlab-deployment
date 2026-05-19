@@ -1,0 +1,15 @@
+---
+- name: Restart Gitaly
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart gitaly
+  changed_when: false
+
+- name: Restart Praefect
+  ansible.builtin.command:
+    cmd: gitlab-ctl restart praefect
+  changed_when: false
+
+- name: Update system CA certificates
+  ansible.builtin.command:
+    cmd: update-ca-certificates
+  changed_when: true

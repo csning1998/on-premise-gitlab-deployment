@@ -67,6 +67,9 @@ variable "external_services" {
         secret_key = string
       }))
     })
+    gitaly = optional(object({
+      external_address = string
+    }))
   })
 }
 
@@ -100,4 +103,9 @@ variable "helm_values_override" {
   description = "Extra Helm values to override or add in HCL format"
   type        = any
   default     = {}
+}
+
+variable "gitlab_shell_node_port" {
+  description = "The NodePort for gitlab-shell service"
+  type        = number
 }

@@ -13,6 +13,7 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
     provision            = data.terraform_remote_state.provision.outputs
+    gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
   }
 }
 
@@ -78,6 +79,7 @@ locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
   redis_port = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
   minio_port = local.state.network["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+  shell_port = local.state.network["core-gitlab-frontend"].lb_config.ports["gitlab-ssh"].frontend_port
 
   # VIPs from LB Infrastructure
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
@@ -127,6 +129,10 @@ locals {
       }
     }
   }
+
+  # Detect Gitaly endpoint automatically depending on whether Praefect cluster nodes are provisioned in the remote state
+  has_praefect    = length([for name, node in local.state.gitaly_praefect.topology_cluster : name if length(regexall("praefect", name)) > 0]) > 0
+  gitaly_endpoint = local.has_praefect ? "${local.state.network["core-gitlab-praefect"].lb_config.vip}:2305" : "${local.state.network["core-gitlab-gitaly"].lb_config.vip}:8075"
 
   gitlab_reloader_annotations = {
     gitlab = {

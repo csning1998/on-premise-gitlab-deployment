@@ -1,0 +1,33 @@
+---
+gitaly_praefect_base:
+  versions:
+    gitlab: "18.8.2-ce.0"
+
+  apt_repositories:
+    - id: "gitlab-ce"
+      url_base: "https://packages.gitlab.com/gitlab/gitlab-ce/ubuntu"
+      gpg_url: "https://packages.gitlab.com/gpgkey/gpg.key"
+      gpg_store_path: "/usr/share/keyrings/gitlab_gitlab-ce-archive-keyring.asc"
+      gpg_signed_by_path: "/usr/share/keyrings/gitlab_gitlab-ce-archive-keyring.asc"
+      distribution: "{{ ansible_distribution_release }}"
+      components: "main"
+      filename: "gitlab_gitlab-ce"
+
+  packages:
+    apt:
+      dependencies:
+        - curl
+        - openssh-server
+        - ca-certificates
+        - tzdata
+        - perl
+      gitaly_praefect:
+        - "gitlab-ce={{ gitaly_praefect_base.versions.gitlab }}"
+
+# Apt Repo (GitLab CE)
+_gitaly_praefect_repo_data: "{{ gitaly_praefect_base.apt_repositories | selectattr('id', 'equalto', 'gitlab-ce') | first }}"
+_gitaly_praefect_repo_string: >
+  deb [signed-by={{ _gitaly_praefect_repo_data.gpg_signed_by_path }}]
+  {{ _gitaly_praefect_repo_data.url_base }}
+  {{ _gitaly_praefect_repo_data.distribution }}
+  {{ _gitaly_praefect_repo_data.components }}

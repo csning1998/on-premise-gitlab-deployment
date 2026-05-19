@@ -36,7 +36,11 @@ resource "helm_release" "gitlab" {
           ]
         }
 
-
+        kubectl = {
+          image = var.image_registry != null ? {
+            repository = "${var.image_registry.registry}/${var.image_registry.repository}/kubectl"
+          } : null
+        }
 
         # Domain & Ingress
         hosts = {
@@ -159,13 +163,24 @@ resource "helm_release" "gitlab" {
           }
         }
         gitaly = {
+          enabled = var.external_services.gitaly != null ? false : true
+          internal = {
+            names = var.external_services.gitaly != null ? [] : ["default"]
+          }
+          external = var.external_services.gitaly != null ? [
+            {
+              name     = "default"
+              hostname = split(":", var.external_services.gitaly.external_address)[0]
+              port     = tonumber(split(":", var.external_services.gitaly.external_address)[1])
+            }
+          ] : null
           authToken = {
             secret = kubernetes_secret.gitlab_internal_secrets["gitaly-secret"].metadata[0].name,
             key    = "token"
           }
         }
         rails = {
-          secret = {
+          secrets = {
             secret = kubernetes_secret.gitlab_internal_secrets["rails-secret"].metadata[0].name,
             key    = "secret"
           }
@@ -183,6 +198,7 @@ resource "helm_release" "gitlab" {
       redis         = { install = false }
       registry      = { enabled = false }
       gitlab-runner = { install = false }
+      gitaly        = { enabled = var.external_services.gitaly != null ? false : true }
 
       # Component Specifics
       gitlab = {
@@ -214,6 +230,10 @@ resource "helm_release" "gitlab" {
           image = var.image_registry != null ? {
             repository = "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-shell"
           } : null
+          service = {
+            type     = "NodePort"
+            nodePort = var.gitlab_shell_node_port
+          }
         }
         migrations = {
           image = var.image_registry != null ? {

@@ -6,8 +6,8 @@ When GitLab internal secrets (especially `rails-secret` / `db_key_base`) are reg
 
 ## Root Cause
 
-- **State Regeneration**: While preserving the `40-provision-gitlab-databases` layer (Postgres persistent data), performing `tofu destroy && tofu apply` on `50-platform-gitlab`, causing `random_password` resources to be destroyed and recreated
-- **Encryption Mismatch**: `tofu apply` will recreate the `random_password.gitlab_internal["rails-secret"]` resource, resulting in a new `rails_secret_key` in Vault KV; however, encrypted columns in tables such as `users` and `application_settings` in Postgres are still ciphertext encrypted with the old password, causing Rails to fail during decryption at the application layer. This issue is not related to database connection verification
+- **State Regeneration**: While preserving the `40-provision-gitlab-databases` layer (Postgres persistent data), performing `terraform destroy && terraform apply` on `50-platform-gitlab`, causing `random_password` resources to be destroyed and recreated
+- **Encryption Mismatch**: `terraform apply` will recreate the `random_password.gitlab_internal["rails-secret"]` resource, resulting in a new `rails_secret_key` in Vault KV; however, encrypted columns in tables such as `users` and `application_settings` in Postgres are still ciphertext encrypted with the old password, causing Rails to fail during decryption at the application layer. This issue is not related to database connection verification
 
 ## Resolution Steps
 
@@ -20,24 +20,38 @@ OpenSSL::Cipher::CipherError
 /srv/gitlab/vendor/bundle/ruby/3.2.0/gems/encryptor-3.0.0/lib/encryptor.rb:98:in `final'
 ```
 
-### Step B. Wipe Persistent Database Residue
+### Step B. Execute HCL-Native Database Reset
 
-Since the new secrets have been regenerated, any existing data in the database is unrecoverable without the old keys. Therefore, the database must be wiped to allow the migration job to perform a fresh initialization
+To resolve the `CipherError` with minimal intervention—without dropping the database or destroying Gitaly repository directories on disk—deploy the pre-configured Kubernetes Job to clear the encryption-drift residues:
 
-1. Switch to the root directory of the project.
-2. Delete and recreate the Postgres database
+1. **Delete Any Stale Reset Job (If Exists)**
 
     ```bash
-    export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
-
-    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "DROP DATABASE gitlabhq_production WITH (FORCE);"'
-    ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"'
+    ssh core-gitlab-frontend-master-00 "kubectl delete job -n gitlab gitlab-db-token-reset"
     ```
 
-3. Re-apply the GitLab platform layer `50-platform-gitlab` to create the data schema and seed initial data using the **new** secrets.
+2. **Deploy the Reset Job Natively via Terraform**: Execute `terraform apply` with the reset variable enabled. This mounts the necessary database client certificates (mTLS) and executes `TRUNCATE TABLE application_settings CASCADE;` safely:
 
     ```bash
-    tofu destroy -auto-approve && tofu apply -auto-approve
+    terraform apply -auto-approve -var="enable_db_token_reset=true"
+    ```
+
+3. **Verify the Reset Execution**: Check the logs of the deployed reset container. It should show a successful `TRUNCATE TABLE` output:
+
+    ```bash
+    ssh core-gitlab-frontend-master-00 "kubectl logs -f -n gitlab -l app=gitlab-db-token-reset"
+    ```
+
+4. **Restart the Crashing Migrations Pod**: Force recreate the migrations pod. The setup script will automatically initialize the application settings dynamically with the correct Vault-backed encryption keys:
+
+    ```bash
+    ssh core-gitlab-frontend-master-00 "kubectl delete pod -n gitlab -l app=migrations"
+    ```
+
+5. **Clean Up Reset Resources**: Once migrations have successfully completed, run standard apply to automatically reclaim the Job resource:
+
+    ```bash
+    terraform apply -auto-approve
     ```
 
 ### Step C. Verification

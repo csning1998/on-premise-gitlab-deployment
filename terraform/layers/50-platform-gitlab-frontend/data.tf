@@ -59,6 +59,19 @@ data "terraform_remote_state" "kubeadm" {
   }
 }
 
+data "terraform_remote_state" "gitaly_praefect" {
+  backend = "local"
+  config = {
+    path = "../30-infra-gitlab-gitaly-praefect/terraform.tfstate"
+  }
+}
+
+data "vault_kv_secret_v2" "gitaly_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/gitaly"
+}
+
 # 0. Infrastructure Provisioning State
 data "terraform_remote_state" "provision" {
   backend = "local"
@@ -144,4 +157,11 @@ data "vault_kv_secret_v2" "keycloak_gitlab_client" {
   provider = vault.production
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/oidc/clients/gitlab_frontend"
+}
+
+# GitLab Internal Secrets (Persistent via Layer 30)
+data "vault_kv_secret_v2" "gitlab_internal_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
 }
