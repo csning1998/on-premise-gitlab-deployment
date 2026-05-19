@@ -1,0 +1,6 @@
+---
+- name: "Section A: Configure Gitaly & Praefect APT Repository"
+  ansible.builtin.include_tasks: A-repo.yaml
+
+- name: "Section B: Install GitLab CE Package (Gitaly & Praefect Bundle)"
+  ansible.builtin.include_tasks: B-install.yaml

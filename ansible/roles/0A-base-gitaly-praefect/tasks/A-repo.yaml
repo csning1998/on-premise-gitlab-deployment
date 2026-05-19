@@ -1,0 +1,25 @@
+---
+- name: "Block A: Configure GitLab CE Repository"
+  become: true
+  block:
+    - name: "Step A1. Ensure keyrings directory exists"
+      ansible.builtin.file:
+        path: "{{ _gitaly_praefect_repo_data.gpg_store_path | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: "Step A2. Import the GitLab CE repository GPG key"
+      ansible.builtin.get_url:
+        url: "{{ _gitaly_praefect_repo_data.gpg_url }}"
+        dest: "{{ _gitaly_praefect_repo_data.gpg_store_path }}"
+        mode: "0644"
+      register: gpg_key_result
+      until: gpg_key_result is succeeded
+      retries: 5
+      delay: 2
+
+    - name: "Step A3. Create the GitLab CE repository configuration file"
+      ansible.builtin.apt_repository:
+        repo: "{{ _gitaly_praefect_repo_string }}"
+        state: present
+        filename: "{{ _gitaly_praefect_repo_data.filename }}"

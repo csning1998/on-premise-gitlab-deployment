@@ -30,7 +30,6 @@ resource "kubernetes_secret" "gitlab_postgres_password" {
 
   lifecycle {
     ignore_changes = [
-      data,
       metadata[0].labels,
       metadata[0].annotations,
     ]
@@ -48,7 +47,6 @@ resource "kubernetes_secret" "gitlab_redis_password" {
 
   lifecycle {
     ignore_changes = [
-      data,
       metadata[0].labels,
       metadata[0].annotations,
     ]
@@ -77,7 +75,6 @@ resource "kubernetes_secret" "gitlab_minio_secrets" {
 
   lifecycle {
     ignore_changes = [
-      data,
       metadata[0].labels,
       metadata[0].annotations,
     ]
@@ -100,7 +97,6 @@ resource "kubernetes_secret" "gitlab_internal_secrets" {
 
   lifecycle {
     ignore_changes = [
-      data,
       metadata[0].labels,
       metadata[0].annotations,
     ]

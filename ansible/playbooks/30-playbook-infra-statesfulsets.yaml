@@ -8,6 +8,14 @@
       ansible.builtin.group_by:
         key: "{{ node_role }}"
 
+    - name: "Map praefect-patroni to standard service groups"
+      ansible.builtin.add_host:
+        name: "{{ inventory_hostname }}"
+        groups:
+          - etcd
+          - postgres
+      when: node_role == 'praefect-patroni'
+
 # (HA) ETCD
 - name: "Play [ETCD]: Configure etcd Cluster"
   hosts: "{{ 'etcd' if 'etcd' in groups else [] }}"
@@ -35,3 +43,10 @@
   become: true
   roles:
     - 30-infra-minio
+
+# Gitaly and Praefect
+- name: "Play [Gitaly/Praefect]: Configure Gitaly / Praefect High Availability Cluster"
+  hosts: "{{ (groups['gitaly'] | default([])) + (groups['praefect'] | default([])) }}"
+  become: true
+  roles:
+    - 30-infra-gitaly-praefect

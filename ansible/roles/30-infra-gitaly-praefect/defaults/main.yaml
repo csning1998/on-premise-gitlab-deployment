@@ -1,0 +1,6 @@
+---
+praefect_db_user: "praefect"
+praefect_db_name: "praefect_production"
+gitaly_tls_enabled: true
+praefect_tls_enabled: true
+gitlab_external_url: "https://gitlab.example.com"

@@ -1,0 +1,53 @@
+# Standalone or Clustered Gitaly Node Configuration
+# Disable all other Omnibus services
+postgresql['enable'] = false
+redis['enable'] = false
+nginx['enable'] = false
+puma['enable'] = false
+sidekiq['enable'] = false
+gitlab_workhorse['enable'] = false
+gitlab_exporter['enable'] = false
+alertmanager['enable'] = false
+prometheus['enable'] = false
+registry['enable'] = false
+logrotate['enable'] = true
+
+# Keep Gitaly enabled
+gitaly['enable'] = true
+
+# Storage Naming compatibility logic
+{% if groups['praefect'] | default([]) | length > 0 %}
+# Clustered HA storage shard name
+{% set local_storage_name = "gitaly-" ~ groups['gitaly'].index(inventory_hostname) %}
+{% else %}
+# Standalone Gitaly storage name
+{% set local_storage_name = "default" %}
+{% endif %}
+
+gitaly['configuration'] = {
+  listen_addr: '0.0.0.0:8075',
+{% if gitaly_tls_enabled | default(false) %}
+  tls_listen_addr: '0.0.0.0:8076',
+  tls: {
+    certificate_path: '/etc/gitlab/ssl/server.crt',
+    key_path: '/etc/gitlab/ssl/server.key',
+    client_ca_path: '/etc/gitlab/ssl/ca.crt'
+  },
+{% endif %}
+  auth: {
+    token: '{{ gitaly_auth_token }}'
+  },
+  storage: [
+    {
+      name: '{{ local_storage_name }}',
+      path: '/var/opt/gitlab/git-data/repositories'
+    }
+  ],
+  git: {
+    bin_path: '/opt/gitlab/embedded/bin/git'
+  },
+  gitlab: {
+    url: '{{ gitlab_external_url }}',
+    secret_file: '/etc/gitlab/gitlab-secrets.json'
+  }
+}

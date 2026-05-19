@@ -1,11 +1,4 @@
 
-# GitLab Internal Application Secrets (Rails, Shell, Gitaly, Root)
-resource "random_password" "gitlab_internal" {
-  for_each = toset(["rails-secret", "shell-secret", "gitaly-secret", "root-password"])
-  length   = 32
-  special  = false
-}
-
 # Vault Storage: Centralized Credentials Logic
 # a. Postgres Credentials
 resource "vault_kv_secret_v2" "gitlab_db_keys" {
@@ -37,20 +30,6 @@ resource "vault_kv_secret_v2" "gitlab_redis_keys" {
 
   data_json = jsonencode({
     password = local.redis_password
-  })
-}
-
-# c. GitLab Internal Secrets
-resource "vault_kv_secret_v2" "gitlab_internal_keys" {
-  provider = vault.production
-  mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
-
-  data_json = jsonencode({
-    rails_secret_key    = random_password.gitlab_internal["rails-secret"].result
-    gitlab_shell_secret = random_password.gitlab_internal["shell-secret"].result
-    gitaly_token        = random_password.gitlab_internal["gitaly-secret"].result
-    root_password       = random_password.gitlab_internal["root-password"].result
   })
 }
 
