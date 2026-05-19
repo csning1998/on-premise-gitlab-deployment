@@ -18,7 +18,7 @@ resource "kubernetes_job" "gitlab_db_token_reset" {
       spec {
         container {
           name  = "postgres-reset-client"
-          image = "${local.gitlab_image_registry}/${local.gitlab_image_repository}/gitlab-toolbox-ce:v18.8.2"
+          image = "${local.gitlab_image_registry}/${local.gitlab_image_repository}/gitlab-toolbox-ce:${var.gitlab_version}"
 
           command = [
             "sh",

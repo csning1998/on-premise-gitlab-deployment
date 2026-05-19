@@ -79,6 +79,7 @@ locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
   redis_port = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
   minio_port = local.state.network["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+  shell_port = local.state.network["core-gitlab-frontend"].lb_config.ports["gitlab-ssh"].frontend_port
 
   # VIPs from LB Infrastructure
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"

@@ -104,3 +104,8 @@ variable "helm_values_override" {
   type        = any
   default     = {}
 }
+
+variable "gitlab_shell_node_port" {
+  description = "The NodePort for gitlab-shell service"
+  type        = number
+}

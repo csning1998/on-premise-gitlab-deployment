@@ -232,7 +232,7 @@ resource "helm_release" "gitlab" {
           } : null
           service = {
             type     = "NodePort"
-            nodePort = 32022
+            nodePort = var.gitlab_shell_node_port
           }
         }
         migrations = {

@@ -108,3 +108,9 @@ variable "enable_db_token_reset" {
   type        = bool
   default     = false
 }
+
+variable "gitlab_version" {
+  description = "The version of GitLab to deploy"
+  type        = string
+  default     = "v18.8.2"
+}

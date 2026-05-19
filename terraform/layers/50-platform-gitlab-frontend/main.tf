@@ -123,5 +123,6 @@ module "gitlab_core" {
     }
   }
 
-  ca_bundle = local.ca_bundle_config
+  gitlab_shell_node_port = local.shell_port
+  ca_bundle              = local.ca_bundle_config
 }
