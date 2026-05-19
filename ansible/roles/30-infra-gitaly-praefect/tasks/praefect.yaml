@@ -54,12 +54,7 @@
       loop:
         - /usr/local/share/ca-certificates/vault-ca.crt
         - /etc/gitlab/trusted-certs/vault-ca.crt
-      register: praefect_ca_copied
-
-    - name: "A2b. Update system CA certificates"
-      ansible.builtin.command:
-        cmd: update-ca-certificates
-      when: praefect_ca_copied.changed
+      notify: Update system CA certificates
 
 - name: "Block B: Start and Enable Praefect Service"
   block:
