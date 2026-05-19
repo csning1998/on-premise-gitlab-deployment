@@ -158,3 +158,10 @@ data "vault_kv_secret_v2" "keycloak_gitlab_client" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/oidc/clients/gitlab_frontend"
 }
+
+# GitLab Internal Secrets (Persistent via Layer 30)
+data "vault_kv_secret_v2" "gitlab_internal_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
+}

@@ -51,3 +51,28 @@ resource "vault_kv_secret_v2" "gitaly_secrets" {
     gitlab_shell_secret     = random_password.gitlab_shell_secret.result
   })
 }
+
+# Dynamic GitLab Rails Encryption Key Generation
+resource "random_password" "rails_secret" {
+  length  = 32
+  special = false
+}
+
+# Dynamic GitLab Initial Root Password Generation
+resource "random_password" "root_password" {
+  length  = 32
+  special = false
+}
+
+# Upload dynamically generated Internal Secrets to isolated Vault space
+resource "vault_kv_secret_v2" "gitlab_internal_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
+
+  data_json = jsonencode({
+    rails_secret_key = random_password.rails_secret.result
+    root_password    = random_password.root_password.result
+  })
+}
+
