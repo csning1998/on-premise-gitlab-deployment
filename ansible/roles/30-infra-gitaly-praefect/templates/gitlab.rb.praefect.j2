@@ -34,7 +34,10 @@ praefect['configuration'] = {
     user: '{{ praefect_db_user | default("praefect") }}',
     password: '{{ praefect_db_password }}',
     dbname: '{{ praefect_db_name | default("praefect_production") }}',
-    sslmode: 'disable'
+    sslmode: 'verify-ca',
+    sslrootcert: '/etc/gitlab/ssl/ca.crt',
+    sslcert: '/etc/gitlab/ssl/server.crt',
+    sslkey: '/etc/gitlab/ssl/server.key'
   },
   # Dynamic sharding to Gitaly nodes based on active inventory
   virtual_storage: [
@@ -44,7 +47,11 @@ praefect['configuration'] = {
 {% for host in groups['gitaly'] %}
         {
           storage: 'gitaly-{{ loop.index0 }}',
+{% if gitaly_tls_enabled | default(false) %}
+          address: 'tls://{{ hostvars[host]["advertise_ip"] }}:8076',
+{% else %}
           address: 'tcp://{{ hostvars[host]["advertise_ip"] }}:8075',
+{% endif %}
           token: '{{ gitaly_auth_token }}'
         },
 {% endfor %}
