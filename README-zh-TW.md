@@ -23,7 +23,7 @@
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供「單機佈署」參考：

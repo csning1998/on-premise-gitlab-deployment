@@ -23,7 +23,7 @@ The hardware specifications used for development are as follows (for reference o
 The project can be cloned using the following command:
 
 ```shell
-git clone --depth 1 https://github.com/csning1998-old/on-premise-gitlab-deployment.git
+git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.git
 ```
 
 This repo has the following resource allocation, based on RAM constraints (for single-host deployment, reference only):
