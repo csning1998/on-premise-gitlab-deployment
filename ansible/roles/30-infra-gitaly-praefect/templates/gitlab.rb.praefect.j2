@@ -15,40 +15,40 @@ gitaly['enable'] = false
 praefect['enable'] = true
 
 praefect['configuration'] = {
-listen_addr: '0.0.0.0:2305',
+  listen_addr: '0.0.0.0:2305',
 {% if praefect_tls_enabled | default(false) %}
-tls_listen_addr: '0.0.0.0:2306',
-tls: {
-certificate_path: '/etc/gitlab/ssl/server.crt',
-key_path: '/etc/gitlab/ssl/server.key',
-client_ca_path: '/etc/gitlab/ssl/ca.crt'
-},
+  tls_listen_addr: '0.0.0.0:2306',
+  tls: {
+    certificate_path: '/etc/gitlab/ssl/server.crt',
+    key_path: '/etc/gitlab/ssl/server.key',
+    client_ca_path: '/etc/gitlab/ssl/ca.crt'
+  },
 {% endif %}
-auth: {
-token: '{{ praefect_external_token }}'
-},
-# Database connection to the Praefect Patroni DB cluster
-database: {
-host: '{{ postgres_ha_virtual_ip }}',
-port: 5432,
-user: '{{ praefect_db_user | default("praefect") }}',
-password: '{{ praefect_db_password }}',
-dbname: '{{ praefect_db_name | default("praefect_production") }}',
-sslmode: 'disable'
-},
-# Dynamic sharding to Gitaly nodes based on active inventory
-virtual_storage: [
-{
-name: '{{ praefect_virtual_storage_name | default("default") }}',
-node: [
+  auth: {
+    token: '{{ praefect_external_token }}'
+  },
+  # Database connection to the Praefect Patroni DB cluster
+  database: {
+    host: '{{ postgres_ha_virtual_ip }}',
+    port: 5432,
+    user: '{{ praefect_db_user | default("praefect") }}',
+    password: '{{ praefect_db_password }}',
+    dbname: '{{ praefect_db_name | default("praefect_production") }}',
+    sslmode: 'disable'
+  },
+  # Dynamic sharding to Gitaly nodes based on active inventory
+  virtual_storage: [
+    {
+      name: '{{ praefect_virtual_storage_name | default("default") }}',
+      node: [
 {% for host in groups['gitaly'] %}
-{
-storage: 'gitaly-{{ loop.index0 }}',
-address: 'tcp://{{ hostvars[host]["advertise_ip"] }}:8075',
-token: '{{ gitaly_auth_token }}'
-},
+        {
+          storage: 'gitaly-{{ loop.index0 }}',
+          address: 'tcp://{{ hostvars[host]["advertise_ip"] }}:8075',
+          token: '{{ gitaly_auth_token }}'
+        },
 {% endfor %}
-]
-}
-]
+      ]
+    }
+  ]
 }
