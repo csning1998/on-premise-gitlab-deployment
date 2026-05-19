@@ -34,7 +34,17 @@ Since the new secrets have been regenerated, any existing data in the database i
     ssh core-gitlab-postgres-node-00 'psql -h 172.16.127.200 -U postgres -d postgres -c "CREATE DATABASE gitlabhq_production OWNER gitlab;"'
     ```
 
-3. Re-apply the GitLab platform layer `50-platform-gitlab` to create the data schema and seed initial data using the **new** secrets.
+3. **Wipe Gitaly Storage Residue (Hashed Storage Conflict Prevention)**
+
+    Because the database was dropped and recreated, new projects will start with initial IDs (e.g. ID `1`) which map to specific hashed storage directories on disk (e.g. `@hashed/6b/86/`). If the physical disk directories from the previous deployment still exist on Gitaly, subsequent `git push` attempts will fail with: `There is already a repository with that name on disk`.
+
+    Log into the Gitaly node and wipe the stale hashed repositories directory:
+
+    ```bash
+    ssh core-gitlab-gitaly-node-00 'sudo rm -rf /var/opt/gitlab/git-data/repositories/@hashed'
+    ```
+
+4. Re-apply the GitLab platform layer `50-platform-gitlab` to create the data schema and seed initial data using the **new** secrets.
 
     ```bash
     tofu destroy -auto-approve && tofu apply -auto-approve

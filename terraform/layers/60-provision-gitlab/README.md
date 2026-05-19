@@ -19,7 +19,7 @@ The GitLab Terraform Provider requires a PAT with administrator privileges to pe
 2. Before logging into the GitLab web interface, retrieve the initial password from Vault:
 
     ```shell
-    vault kv get -mount="secret" "on-premise-gitlab-deployment/gitlab/app/internal"
+    vault kv get -mount="secret" "on-premise-gitlab-deployment/gitlab/app/pat"
     ```
 
 ### Generating the First PAT
@@ -35,7 +35,7 @@ The GitLab Terraform Provider requires a PAT with administrator privileges to pe
 6. Store the PAT in Vault:
 
     ```bash
-    vault kv patch -mount="secret" "on-premise-gitlab-deployment/gitlab/app/internal" token="glpat-..."
+    vault kv patch -mount="secret" "on-premise-gitlab-deployment/gitlab/app/pat" token="glpat-..."
     ```
 
 > [!TIP]
