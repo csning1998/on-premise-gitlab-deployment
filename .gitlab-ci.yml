@@ -1,0 +1,13 @@
+stages:
+  - review
+
+gemini-code-review:
+  stage: review
+  image: python:3.11-slim
+  variables:
+    GEMINI_MODEL: "gemini-3.5-flash"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+  script:
+    - python gemini_review.py
