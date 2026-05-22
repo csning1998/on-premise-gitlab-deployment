@@ -15,6 +15,12 @@
 - name: "Block B: Install Vault Binary"
   become: true
   block:
+    - name: "Step B0. Check installed Vault version"
+      ansible.builtin.command: vault version
+      register: vault_installed_version
+      changed_when: false
+      failed_when: false
+
     - name: "Step B1. Download and Unarchive Vault (v{{ vault_target_version }})"
       vars:
         vault_zip: "vault_{{ vault_target_version }}_{{ vault_target_os }}_{{ vault_target_arch }}.zip"
@@ -25,7 +31,7 @@
         mode: "0755"
         owner: root
         group: root
-        creates: "/usr/local/bin/vault"
+      when: vault_installed_version.rc != 0 or vault_target_version not in vault_installed_version.stdout
 
     - name: "Step B2. Verify Vault installation"
       ansible.builtin.command: vault --version
