@@ -31,7 +31,10 @@
         mode: "0755"
         owner: root
         group: root
-      when: vault_installed_version.rc != 0 or vault_target_version not in vault_installed_version.stdout
+      when: >-
+        vault_installed_version.rc != 0 or
+        vault_target_version not in
+        (vault_installed_version.stdout | default('')).split() | map('replace', 'v', '')
 
     - name: "Step B2. Verify Vault installation"
       ansible.builtin.command: vault --version
