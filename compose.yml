@@ -5,14 +5,15 @@ x-podman:
 services:
   # Service 1: Vault Server (Target System)
   iac-vault-server:
-    image: docker.io/hashicorp/vault:1.20.2
+    image: docker.io/hashicorp/vault:2.0
     container_name: iac-vault-server
     entrypoint: "vault"
-    command: server -config=/vault/vault.hcl
+    command: server -config=/opt/vault/vault.hcl
     volumes:
-      - ./vault/vault.hcl:/vault/vault.hcl:z
-      - ./vault/data:/vault/data:z
-      - ./vault/tls:/vault/tls:z
+      - ./vault/vault.hcl:/opt/vault/vault.hcl:z
+      - ./vault/data:/opt/vault/data:z
+      - ./vault/tls:/opt/vault/tls:z
+    user: "${HOST_UID}:${HOST_GID}"
     cap_add:
       - IPC_LOCK
     network_mode: "host"
@@ -21,7 +22,11 @@ services:
       - SKIP_SETCAP=true
       - VAULT_ADDR=https://127.0.0.1:8200
     healthcheck:
-      test: ["CMD-SHELL", "vault status -address=https://127.0.0.1:8200 -tls-skip-verify || if [ $? -eq 2 ]; then exit 0; else exit 1; fi"]
+      test:
+        [
+          "CMD-SHELL",
+          "vault status -address=https://127.0.0.1:8200 -tls-skip-verify || if [ $? -eq 2 ]; then exit 0; else exit 1; fi",
+        ]
       interval: 5s
       timeout: 3s
       retries: 5

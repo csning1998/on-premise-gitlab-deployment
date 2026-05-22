@@ -3,6 +3,6 @@ environment = "development"
 
 vault_pki_engine_config = {
   path                      = "pki/prod"
-  default_lease_ttl_seconds = 60 * 60 * 24      # 1 Day
+  default_lease_ttl_seconds = 60 * 60 * 24 * 7  # 7 Days
   max_lease_ttl_seconds     = 60 * 60 * 24 * 45 # 45 Days
 }
