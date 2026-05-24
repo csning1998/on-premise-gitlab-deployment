@@ -3,6 +3,9 @@
 > [!NOTE]
 > Refer to [README.md](README.md) for English (US) version.
 
+> [!NOTE]
+> 這個 repository 自 #128 起，已經遷移到 GitLab 上進行託管，後續更新都會在 [https://gitlab.com/csning1998/on-premise-gitlab-deployment](https://gitlab.com/csning1998/on-premise-gitlab-deployment) 上看到。而 GitHub 這邊則是做為 GitLab 專案的 mirror
+
 ## Section 0. Introduction
 
 這個 repository （以下簡稱「此 repo」）是一套 Infrastructure as Code 的 PoC（概念驗證），主要是透過 QEMU-KVM 在純地端環境中進行 HA 的 Kubernetes Cluster (Kubeadm / microk8s) 的自動佈署。此 repo 是根據在國泰綜合醫院實習期間的個人練習所開發，目標是建立出 on-premise GitLab 建立自動佈署基礎設施，目標是針對 legacy 系統做出可以重複利用的 IaC pipeline
@@ -23,7 +26,7 @@
 可透過以下指令 clone 這個專案：
 
 ```shell
-git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.git
+git clone --depth 1 https://gitlab.com/csning1998/on-premise-gitlab-deployment.git
 ```
 
 此 repo 具有以下資源分配，基於 RAM 本身限制，僅供「單機佈署」參考：
@@ -92,9 +95,12 @@ git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.g
 7. 修正 Harbor 與 GitLab 的 Rediss 問題
     - MTU/MSS：[#102](https://github.com/csning1998/on-premise-gitlab-deployment/pull/102), [#104](https://github.com/csning1998/on-premise-gitlab-deployment/pull/104)
     - Virtio：[#110](https://github.com/csning1998/on-premise-gitlab-deployment/pull/110)
-8. **[Ongoing]** GitLab Runner (on Microk8s) / Gitaly (Praefect) 等
-9. Private Key Encryption
-10. [OpenTofu](https://github.com/opentofu/opentofu.git) Migration 對於 `*.tfstates` 檔案的加密
+8. Bootstrapper Harbor as OCI and Registry
+9. Keycloak OIDC on GitLab, Production Vault, Bootstrapper Harbor and Production Harbor
+10. Standalone Gitaly
+11. **[Ongoing]** HA Gitaly with (HA) Praefect
+12. **[Ongoing]** GitLab Runner (on Microk8s)
+13. Private Key Encryption
 
 ### D. The Entrypoint: `entry.sh`
 
@@ -215,7 +221,7 @@ git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.g
 
         ```text
         CONTAINER ID  IMAGE                                            COMMAND               CREATED         STATUS                   PORTS       NAMES
-        974baf0177f6  docker.io/hashicorp/vault:1.20.2                 server -config=/v...  24 seconds ago  Up 14 seconds (healthy)  8200/tcp    iac-vault-server
+        974baf0177f6  docker.io/hashicorp/vault:2.0                    server -config=/v...  24 seconds ago  Up 14 seconds (healthy)  8200/tcp    iac-vault-server
         ea3b31db9a5c  localhost/on-premise-iac-controller:qemu-latest  /bin/bash -c whil...  24 seconds ago  Up 14 seconds                        iac-runner
         ```
 
@@ -703,7 +709,7 @@ git clone --depth 1 https://github.com/csning1998/on-premise-gitlab-deployment.g
     4. 後續才能執行 L50 的 Helm Chart
 
 > [!NOTE]
-> 如果要使用遠端來源，通常要設定 `terraform/modules/kubernetes-addons` 路徑中每一個 Helm Chart Module 的`repository` 與 `chart` 資訊。可以參考 #96 當時的 [程式碼紀錄](https://github.com/csning1998-old/on-premise-gitlab-deployment/tree/018233b3032e517b43e52fc4e17bcd3dde7cf52f/terraform/modules/kubernetes-addons)
+> 如果要使用遠端來源，通常要設定 `terraform/modules/kubernetes-addons` 路徑中每一個 Helm Chart Module 的`repository` 與 `chart` 資訊。可以參考 #96 當時的 [程式碼紀錄](https://github.com/csning1998/on-premise-gitlab-deployment/tree/018233b3032e517b43e52fc4e17bcd3dde7cf52f/terraform/modules/kubernetes-addons)
 
 #### **Step B.4. Understand the Metadata:**
 
