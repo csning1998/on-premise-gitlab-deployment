@@ -6,7 +6,7 @@
   tasks:
     - name: "Create dynamic groups from node_role variable"
       ansible.builtin.group_by:
-        key: "{{ node_role }}"
+        key: "{{ node_role | replace('-', '_') }}"
 
 # Phase 1: Central Load Balancer (Refactored)
 - name: "Play [LB]: Configure Central Load Balancer"

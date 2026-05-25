@@ -6,7 +6,7 @@
   tasks:
     - name: "Create dynamic groups from node_role variable"
       ansible.builtin.group_by:
-        key: "{{ node_role }}"
+        key: "{{ node_role | replace('-', '_') }}"
 
 # 1. Harbor Bootstrapper Container and OCI Registry
 - name: "Play [Harbor]: Configure Harbor Bootstrapper Cluster"

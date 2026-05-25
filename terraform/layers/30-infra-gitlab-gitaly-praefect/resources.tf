@@ -20,14 +20,16 @@ resource "random_password" "gitaly_token" {
   special = false
 }
 
-# Dynamic Praefect External Token Generation
+# Dynamic Praefect External Token Generation (only when Praefect is in target_clusters)
 resource "random_password" "praefect_external_token" {
+  count   = contains(keys(var.target_clusters), "praefect") ? 1 : 0
   length  = 32
   special = false
 }
 
-# Dynamic Praefect DB Password Generation
+# Dynamic Praefect DB Password Generation (only when Praefect is in target_clusters)
 resource "random_password" "praefect_db_password" {
+  count   = contains(keys(var.target_clusters), "praefect") ? 1 : 0
   length  = 32
   special = false
 }
@@ -44,11 +46,45 @@ resource "vault_kv_secret_v2" "gitaly_secrets" {
   mount    = "secret"
   name     = "on-premise-gitlab-deployment/gitlab/app/gitaly"
 
+  # Praefect-specific secrets — null when Praefect not in target_clusters.
+  # L50 selects the correct token (praefect_external_token vs gitaly_token)
+  # using its own has_praefect local, keeping topology logic out of L30.
   data_json = jsonencode({
     gitaly_token            = random_password.gitaly_token.result
-    praefect_external_token = random_password.praefect_external_token.result
-    praefect_db_password    = random_password.praefect_db_password.result
     gitlab_shell_secret     = random_password.gitlab_shell_secret.result
+    praefect_external_token = one(random_password.praefect_external_token[*].result)
+    praefect_db_password    = one(random_password.praefect_db_password[*].result)
+  })
+}
+
+# Dynamic PostgreSQL Replication Password Generation
+resource "random_password" "pg_replication_password" {
+  length  = 32
+  special = false
+}
+
+# Dynamic PostgreSQL Superuser Password Generation
+resource "random_password" "pg_superuser_password" {
+  length  = 32
+  special = false
+}
+
+# Dynamic PostgreSQL VRRP Secret Generation
+resource "random_password" "pg_vrrp_secret" {
+  length  = 32
+  special = false
+}
+
+# Upload dynamically generated PostgreSQL Secrets to isolated Vault space
+resource "vault_kv_secret_v2" "postgres_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/app/postgres"
+
+  data_json = jsonencode({
+    pg_replication_password = random_password.pg_replication_password.result
+    pg_superuser_password   = random_password.pg_superuser_password.result
+    pg_vrrp_secret          = random_password.pg_vrrp_secret.result
   })
 }
 
@@ -75,4 +111,3 @@ resource "vault_kv_secret_v2" "gitlab_internal_secrets" {
     root_password    = random_password.root_password.result
   })
 }
-

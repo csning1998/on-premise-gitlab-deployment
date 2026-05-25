@@ -234,6 +234,9 @@ resource "helm_release" "gitlab" {
             type     = "NodePort"
             nodePort = var.gitlab_shell_node_port
           }
+          config = {
+            useDns = false
+          }
         }
         migrations = {
           image = var.image_registry != null ? {

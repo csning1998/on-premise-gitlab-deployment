@@ -10,9 +10,15 @@ alertmanager['enable'] = false
 prometheus['enable'] = false
 registry['enable'] = false
 gitaly['enable'] = false
+gitlab_kas['enable'] = false
 
 # Enable Praefect
 praefect['enable'] = true
+
+# Only the primary Praefect node (inventory group 'primary') should run DB migrations.
+# Concurrent migration runs on replica nodes cause "relation already exists" errors
+# because the primary node creates the schema first during the same reconfigure pass.
+praefect['auto_migrate'] = {{ 'true' if inventory_hostname in (groups['primary'] | default([])) else 'false' }}
 
 praefect['configuration'] = {
   listen_addr: '0.0.0.0:2305',

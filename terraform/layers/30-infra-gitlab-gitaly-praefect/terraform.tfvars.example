@@ -34,7 +34,7 @@ service_config = {
   }
 
   "praefect-patroni" = {
-    role            = "postgres"
+    role            = "praefect-patroni"
     network_tier    = "praefect-patroni"
     base_image_path = "../../../packer/output/base-postgres/ubuntu-24-base-postgres.qcow2"
 

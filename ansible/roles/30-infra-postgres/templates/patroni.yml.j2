@@ -12,7 +12,7 @@ restapi:
 # DCS Configuration (etcd)
 etcd3:
   hosts:
-{% for host in groups['etcd'] %}
+{% for host in groups['all'] if hostvars[host]['node_role'] | default('') in ['etcd', 'praefect-patroni'] %}
     - {{ hostvars[host]['advertise_ip'] }}:2379
 {% endfor %}
   ttl: 30
@@ -35,7 +35,7 @@ bootstrap:
     - host all all {{ advertise_ip }}/32 "{{ password_encryption }}"
 
     # Allow other nodes in the cluster to replicate (no mTLS)
-{% for host in groups['postgres'] %}
+{% for host in groups['all'] if hostvars[host]['node_role'] != 'etcd' %}
     - hostssl replication repuser {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
     - hostssl all postgres {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
     - hostssl all all {{ hostvars[host]['advertise_ip'] }}/32 "{{ password_encryption }}"
@@ -48,6 +48,15 @@ bootstrap:
 {% for subnet in postgres_mtls_node_subnet.split(' ') %}
     - hostssl all harbor {{ subnet }} "{{ password_encryption }}"
 {% endfor %}
+
+    # Exception: Praefect service lacks native mTLS client cert support
+    # Praefect connects via HAProxy VIP; the LB node IP falls in the mTLS subnet
+    # and would be rejected by the clientcert=verify-ca rule below.
+{% if praefect_db_password is defined and praefect_db_password | length > 0 %}
+{% for subnet in postgres_mtls_node_subnet.split(' ') %}
+    - hostssl all praefect {{ subnet }} "{{ password_encryption }}"
+{% endfor %}
+{% endif %}
 
     # Rule 1: K8s Node Network (Enforce mTLS) from Terraform
 {% for subnet in postgres_mtls_node_subnet.split(' ') %}

@@ -112,14 +112,19 @@ locals {
     postgres_cluster_name = lookup(var.target_clusters, "praefect-patroni", "") != "" ? var.target_clusters["praefect-patroni"] : ""
 
     # Networking & HA for database
-    postgres_ha_virtual_ip    = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
-    postgres_mtls_node_subnet = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? "${local.network_infrastructure_map["praefect-patroni"].network.hostonly.cidr} ${local.state.network.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}" : ""
-    vault_vip                 = local.state.vault_sys.service_vip
-    global_mss                = local.state.metadata.global_network_baseline.global_mss
+    postgres_ha_virtual_ip = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
+    postgres_mtls_node_subnet = join(" ", compact([
+      lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].network.hostonly.cidr : "",
+      lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].network.hostonly.cidr : "",
+      local.state.network.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr,
+    ]))
+    vault_vip  = local.state.vault_sys.service_vip
+    global_mss = local.state.metadata.global_network_baseline.global_mss
 
     # Gitaly and Praefect HA
     gitaly_ha_virtual_ip   = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
     praefect_ha_virtual_ip = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
+    gitlab_frontend_vip    = lookup(local.state.network.infrastructure_map, "core-gitlab-frontend", null) != null ? local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.vip : ""
 
     # Asymmetric Routing Lists (Native HCL list of objects, matching harbor style)
     gitaly_static_routes = [
@@ -148,21 +153,29 @@ locals {
       }
       if contains(["vault-frontend", "gitlab-praefect"], name)
     ]
+
+    # Tell 30-infra-postgres role which key to look up inside vault_agent_identities_json.
+    # The middleware injects the primary role's (praefect) identity as flat vars for all nodes;
+    # this key lets praefect-patroni nodes override those with their own identity.
+    postgres_vault_role_key = "praefect-patroni"
   }
 
   ansible_extra_vars = {
     gitlab_external_url     = "https://${local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]}"
     gitlab_shell_secret     = random_password.gitlab_shell_secret.result
     gitaly_auth_token       = random_password.gitaly_token.result
-    praefect_external_token = random_password.praefect_external_token.result
-    praefect_db_password    = random_password.praefect_db_password.result
-    pg_replication_password = local.sec_app_creds.replication_password
-    pg_superuser_password   = local.sec_app_creds.superuser_password
-    pg_vrrp_secret          = local.sec_app_creds.vrrp_secret
+    praefect_external_token = one(random_password.praefect_external_token[*].result)
+    praefect_db_password    = one(random_password.praefect_db_password[*].result)
+    pg_replication_password = random_password.pg_replication_password.result
+    pg_superuser_password   = random_password.pg_superuser_password.result
+    pg_vrrp_secret          = random_password.pg_vrrp_secret.result
     vault_agent_cert_ttl    = tostring(local.state.vault_pki.pki_configuration.lease_durations.agent)
 
-    # Pass the component specific Vault AppRole credentials dynamically as a serialized JSON string
-    vault_agent_identities_json = jsonencode({
+    # Base64-encoded JSON of per-component Vault AppRole credentials (sensitive).
+    # Encoding avoids shell quoting issues: ansible provider passes extra_vars via bare
+    # `-e key=value`; raw JSON with `{}` and `:` gets misinterpreted as a playbook path.
+    # Ansible roles decode with `| b64decode | from_json`.
+    vault_agent_identities_json = base64encode(jsonencode({
       for role, id in local.role_vault_agent_identities : role => {
         vault_addr  = id.vault_address
         role_id     = id.role_id
@@ -171,6 +184,6 @@ locals {
         auth_path   = id.auth_path
         common_name = id.common_name
       }
-    })
+    }))
   }
 }

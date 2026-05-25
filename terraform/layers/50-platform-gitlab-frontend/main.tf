@@ -118,8 +118,11 @@ module "gitlab_core" {
       value = data.vault_kv_secret_v2.gitaly_secrets.data["gitlab_shell_secret"]
     }
     "gitaly-secret" = {
-      key   = "token"
-      value = data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
+      key = "token"
+      # When Praefect is deployed, GitLab Rails connects to the Praefect VIP using
+      # praefect_external_token. When standalone, it connects directly to Gitaly
+      # using gitaly_token. The decision mirrors local.gitaly_endpoint.
+      value = local.has_praefect ? data.vault_kv_secret_v2.gitaly_secrets.data["praefect_external_token"] : data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
     }
   }
 

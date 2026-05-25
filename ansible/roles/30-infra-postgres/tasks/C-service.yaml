@@ -23,3 +23,86 @@
         state: started
         enabled: true
         daemon_reload: true
+
+    # Bootstrap Praefect DB user and database on the leader node.
+    # praefect_db_password is injected via ansible_extra_vars (sensitive); skip
+    # if not provided (standalone postgres layers (Harbor, GitLab) that don't host Praefect).
+    #
+    # C1d: Each node waits for its own PostgreSQL on advertise_ip before proceeding.
+    # Patroni (C1c) handles bootstrap/pg_basebackup; by the time this runs, PostgreSQL
+    # is listening on advertise_ip on all nodes. Waiting per-host prevents C1d2 from
+    # probing the leader before its PostgreSQL is fully accepting connections.
+    - name: "C1d. Wait for PostgreSQL to accept connections"
+      ansible.builtin.wait_for:
+        host: "{{ advertise_ip }}"
+        port: "{{ postgres_port }}"
+        timeout: 60
+      when:
+        - praefect_db_password is defined
+        - praefect_db_password | length > 0
+
+    # C1d2: Detect the Patroni leader on each node via the REST API.
+    # Patroni returns HTTP 200 on /leader only for the leader node.
+    # C1e/C1f run without run_once and connect via 127.0.0.1 (loopback pg_hba rule:
+    # "host all all 127.0.0.1/32" — no SSL, no client cert required).
+    # This avoids the HAProxy source-IP mTLS enforcement that rejects psql from VIP.
+    - name: "C1d2. Detect Patroni leader via REST API"
+      ansible.builtin.uri:
+        url: "http://{{ advertise_ip }}:{{ patroni_restapi_port }}/leader"
+        status_code: [200, 503]
+        return_content: false
+      register: patroni_leader_status
+      changed_when: false
+      when:
+        - praefect_db_password is defined
+        - praefect_db_password | length > 0
+
+    # C1e/C1f connect to advertise_ip (the leader's own IP, not the VIP).
+    # Connecting via VIP routes through HAProxy; the source IP PostgreSQL sees
+    # is the HAProxy LB node (e.g. 172.16.141.10) which falls under the mTLS
+    # clientcert=verify-ca rule — psql has no client cert and is rejected.
+    # Connecting to advertise_ip from the same host appears as the node's own IP,
+    # which matches "hostssl all all <node-ip>/32" (no clientcert) in pg_hba.
+    # PostgreSQL listens on advertise_ip (not 127.0.0.1), so loopback is not usable.
+    - name: "C1e. Create praefect PostgreSQL login role"
+      ansible.builtin.command:
+        cmd: >-
+          psql
+          -h {{ advertise_ip }}
+          -p {{ postgres_port }}
+          -U postgres
+          -c "CREATE ROLE praefect WITH LOGIN ENCRYPTED PASSWORD '{{ praefect_db_password }}';"
+      environment:
+        PGPASSWORD: "{{ pg_superuser_password }}"
+      register: praefect_pg_user
+      failed_when:
+        - praefect_pg_user.rc != 0
+        - "'already exists' not in praefect_pg_user.stderr"
+      changed_when: "'CREATE ROLE' in praefect_pg_user.stdout"
+      no_log: true
+      when:
+        - praefect_db_password is defined
+        - praefect_db_password | length > 0
+        - patroni_leader_status is defined
+        - patroni_leader_status.status == 200
+
+    - name: "C1f. Create praefect_production database"
+      ansible.builtin.command:
+        cmd: >-
+          psql
+          -h {{ advertise_ip }}
+          -p {{ postgres_port }}
+          -U postgres
+          -c "CREATE DATABASE praefect_production WITH OWNER praefect ENCODING 'UTF8';"
+      environment:
+        PGPASSWORD: "{{ pg_superuser_password }}"
+      register: praefect_pg_db
+      failed_when:
+        - praefect_pg_db.rc != 0
+        - "'already exists' not in praefect_pg_db.stderr"
+      changed_when: "'CREATE DATABASE' in praefect_pg_db.stdout"
+      when:
+        - praefect_db_password is defined
+        - praefect_db_password | length > 0
+        - patroni_leader_status is defined
+        - patroni_leader_status.status == 200

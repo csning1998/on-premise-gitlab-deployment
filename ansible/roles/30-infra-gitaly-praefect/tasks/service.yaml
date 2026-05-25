@@ -1,0 +1,169 @@
+---
+- name: "Setup: Derive per-service parameters from node_role"
+  ansible.builtin.set_fact:
+    _svc_routes: "{{ gitaly_static_routes | default([])
+      if node_role == 'gitaly'
+      else praefect_static_routes | default([]) }}"
+    _svc_ha_vip: "{{ gitaly_ha_virtual_ip | default('')
+      if node_role == 'gitaly'
+      else praefect_ha_virtual_ip | default('') }}"
+    _svc_ports: "{{ ['8075', '8076']
+      if node_role == 'gitaly'
+      else ['2305', '2306'] }}"
+    _svc_post_cmd: "{{ 'gitlab-ctl hup gitaly'
+      if node_role == 'gitaly'
+      else 'gitlab-ctl restart praefect' }}"
+    _svc_config_template: "{{ 'gitlab.rb.gitaly.j2'
+      if node_role == 'gitaly'
+      else 'gitlab.rb.praefect.j2' }}"
+
+- name: "Role 81: Configure Network Routing"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ _svc_routes }}"
+  when: _svc_routes | length > 0
+
+- name: "Block A1: Render Service Configuration"
+  block:
+    - name: "A1a. Render gitlab.rb configuration"
+      ansible.builtin.template:
+        src: "{{ _svc_config_template }}"
+        dest: /etc/gitlab/gitlab.rb
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Restart Service
+      register: _svc_config_rendered
+
+    - name: "A1b. Ensure SSL certificate directory exists"
+      ansible.builtin.file:
+        path: /etc/gitlab/ssl
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # Gitaly only: communicates back to GitLab Rails via secrets file.
+    # Praefect does not require gitlab-secrets.json.
+    - name: "A1c. Render gitlab-secrets.json"
+      ansible.builtin.template:
+        src: gitlab-secrets.json.j2
+        dest: /etc/gitlab/gitlab-secrets.json
+        owner: root
+        group: root
+        mode: "0600"
+      register: _svc_secrets_rendered
+      when: node_role == 'gitaly'
+
+    # Gitaly only: gitlab-shell calls the GitLab internal API at gitlab_external_url.
+    # Gitaly nodes may not have DNS resolution for the GitLab FQDN if the internal
+    # DNS server is not reachable from the Gitaly network tier. A hosts entry ensures
+    # the FQDN resolves to the GitLab LB VIP without relying on external DNS.
+    - name: "A1d. Ensure GitLab FQDN is resolvable via /etc/hosts"
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ gitlab_frontend_vip }} {{ gitlab_external_url | urlsplit('hostname') }}"
+        regexp: "{{ gitlab_external_url | urlsplit('hostname') }}"
+        state: present
+      when:
+        - node_role == 'gitaly'
+        - gitlab_frontend_vip is defined
+        - gitlab_external_url is defined
+
+- name: "Role 82: Prepare Environment for Vault Agent"
+  ansible.builtin.include_role:
+    name: 82-utils-vault-agent
+  vars:
+    vault_agent_owner: "git"
+    vault_agent_group: "git"
+    vault_agent_cert_base_dir: "/etc/gitlab/ssl"
+    vault_agent_post_command: "{{ _svc_post_cmd }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ _svc_ha_vip }}"
+    vault_agent_identities: "{{ vault_agent_identities_json | b64decode | from_json }}"
+    vault_agent_role_id: "{{ vault_agent_identities[node_role].role_id }}"
+    vault_agent_secret_id: "{{ vault_agent_identities[node_role].secret_id }}"
+    vault_role_name: "{{ vault_agent_identities[node_role].role_name }}"
+    vault_agent_common_name: "{{ vault_agent_identities[node_role].common_name }}"
+    vault_agent_auth_path: "{{ vault_agent_identities[node_role].auth_path }}"
+
+- name: "Block A2: Trust Vault CA for System and Service"
+  block:
+    - name: "A2a. Copy Vault CA to system trust store and GitLab trusted-certs"
+      ansible.builtin.copy:
+        src: /etc/gitlab/ssl/ca.crt
+        dest: "{{ item }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - /usr/local/share/ca-certificates/vault-ca.crt
+        - /etc/gitlab/trusted-certs/vault-ca.crt
+      notify: Update system CA certificates
+
+    - name: "A2b. Force update system CA certificates (idempotent guard)"
+      ansible.builtin.command: update-ca-certificates
+      changed_when: false
+
+- name: "Block B: Start and Enable Service"
+  block:
+    - name: "B1a. Check if gitlab-secrets.json exists"
+      ansible.builtin.stat:
+        path: /etc/gitlab/gitlab-secrets.json
+      register: _svc_secrets_stat
+
+    - name: "B1b. Validate gitlab-secrets.json format"
+      ansible.builtin.command:
+        cmd: python3 -c "import json; json.loads(open('/etc/gitlab/gitlab-secrets.json').read())"
+      register: _svc_secrets_validation
+      ignore_errors: true
+      changed_when: false
+      when: _svc_secrets_stat.stat.exists
+
+    - name: "B1c. Clean broken gitlab-secrets.json to ensure idempotency"
+      ansible.builtin.file:
+        path: /etc/gitlab/gitlab-secrets.json
+        state: absent
+      register: _svc_secrets_cleaned
+      when:
+        - _svc_secrets_stat.stat.exists
+        - _svc_secrets_validation.rc is defined and _svc_secrets_validation.rc != 0
+
+    - name: "B1d. Check if UFW is installed"
+      ansible.builtin.stat:
+        path: /usr/sbin/ufw
+      register: _svc_ufw_stat
+
+    - name: "B1e. Allow service ports"
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        src: any
+      loop: "{{ _svc_ports }}"
+      when: _svc_ufw_stat.stat.exists
+
+    - name: "B1f. Ensure gitlab-runsvdir service is running and enabled"
+      ansible.builtin.systemd:
+        name: gitlab-runsvdir
+        state: started
+        enabled: true
+
+    - name: "B1g. Check service health"
+      ansible.builtin.command:
+        cmd: "gitlab-ctl status {{ node_role }}"
+      register: _svc_health_status
+      changed_when: false
+      failed_when: false
+
+    - name: "B1h. Run GitLab reconfigure to apply changes"
+      ansible.builtin.command:
+        cmd: gitlab-ctl reconfigure
+      register: _svc_reconfigure_result
+      changed_when: true
+      when: >
+        (_svc_config_rendered.changed | default(false)) or
+        (_svc_secrets_rendered.changed | default(false)) or
+        (_svc_secrets_cleaned.changed | default(false)) or
+        (_svc_health_status.rc | default(1) != 0)

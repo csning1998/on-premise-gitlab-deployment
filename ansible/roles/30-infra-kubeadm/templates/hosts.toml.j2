@@ -4,7 +4,7 @@ server = "https://{{ item.upstream }}"
 [host."https://{{ item.mirror_host | default(item.domain) }}{{ '/v2/' ~ item.proxy if item.proxy | default('') != '' else '' }}"]
     capabilities = ["pull", "resolve", "push"]
     skip_verify = false
-    ca = "/usr/local/share/ca-certificates/vault-pki-issuing-ca.crt"
+    ca = "/usr/local/share/ca-certificates/vault-ca.crt"
 {% if item.proxy | default('') != '' %}
     override_path = true
 {% endif %}

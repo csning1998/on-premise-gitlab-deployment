@@ -1,5 +1,6 @@
 ---
-- name: "Role 81: Configure Network Routing"
+# Role 81 (scalar): standalone postgres layers pass individual route vars
+- name: "Role 81: Configure Network Routing (scalar format)"
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
@@ -9,12 +10,33 @@
         metric: "{{ postgres_static_route_metric }}"
   when: postgres_static_route_to is defined
 
+# Role 81 (list): multi-component layers (e.g. gitaly layer) pass a pre-built list
+- name: "Role 81: Configure Network Routing (list format)"
+  ansible.builtin.include_role:
+    name: 81-utils-asymmetric-routing
+  vars:
+    routing_static_routes: "{{ postgres_static_routes }}"
+  when:
+    - postgres_static_route_to is not defined
+    - postgres_static_routes is defined
+    - postgres_static_routes | length > 0
+
 - name: "Section A. Install Patroni and Environment"
   ansible.builtin.include_tasks: A-install.yaml
 
 - name: "Section B. Configure Patroni and Vault"
   ansible.builtin.include_tasks: B-configure.yaml
 
+# Resolve per-component Vault Agent identity when running inside a multi-component
+# layer (postgres_vault_role_key is set). Falls back to the flat vars injected by
+# the middleware for standalone layers (postgres_vault_role_key is null).
+- name: "Resolve Vault Agent Identity from shared identities JSON"
+  ansible.builtin.set_fact:
+    _postgres_vault_identity: "{{ (vault_agent_identities_json | b64decode | from_json)[postgres_vault_role_key] }}"
+  when:
+    - postgres_vault_role_key is not none
+    - postgres_vault_role_key != ""
+    - vault_agent_identities_json is defined
 - name: "Role 82: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-utils-vault-agent
@@ -24,6 +46,26 @@
     vault_agent_cert_base_dir: "/etc/postgresql/certs"
     vault_agent_post_command: "systemctl restart patroni"
     vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"
+    vault_agent_role_id: >-
+      {{ _postgres_vault_identity.role_id
+        if _postgres_vault_identity is defined
+        else vault_agent_role_id }}
+    vault_agent_secret_id: >-
+      {{ _postgres_vault_identity.secret_id
+        if _postgres_vault_identity is defined
+        else vault_agent_secret_id }}
+    vault_role_name: >-
+      {{ _postgres_vault_identity.role_name
+        if _postgres_vault_identity is defined
+        else vault_role_name }}
+    vault_agent_common_name: >-
+      {{ _postgres_vault_identity.common_name
+        if _postgres_vault_identity is defined
+        else vault_agent_common_name }}
+    vault_auth_path: >-
+      {{ _postgres_vault_identity.auth_path
+        if _postgres_vault_identity is defined
+        else vault_auth_path }}
 
 - name: "Section C. Manage Patroni Service"
   ansible.builtin.include_tasks: C-service.yaml

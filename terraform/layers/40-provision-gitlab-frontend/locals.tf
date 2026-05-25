@@ -126,6 +126,10 @@ locals {
       "${local.state.redis.service_vip}"    = local.fqdn_redis
       "${local.state.postgres.service_vip}" = local.fqdn_postgres
       "${local.state.minio.service_vip}"    = local.fqdn_minio
+
+      # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
+      # resolve domain name; CoreDNS must resolve this via static hosts entry)
+      "${local.state.network["core-harbor-bootstrapper-frontend"].lb_config.vip}" = local.fqdn_harbor_bootstrapper
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
     merge([

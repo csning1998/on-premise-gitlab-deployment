@@ -6,26 +6,23 @@
   tasks:
     - name: "Create dynamic groups from node_role variable"
       ansible.builtin.group_by:
-        key: "{{ node_role }}"
-
-    - name: "Map praefect-patroni to standard service groups"
-      ansible.builtin.add_host:
-        name: "{{ inventory_hostname }}"
-        groups:
-          - etcd
-          - postgres
-      when: node_role == 'praefect-patroni'
+        key: "{{ node_role | replace('-', '_') }}"
 
 # (HA) ETCD
 - name: "Play [ETCD]: Configure etcd Cluster"
-  hosts: "{{ 'etcd' if 'etcd' in groups else [] }}"
+  hosts: >-
+    {{ (groups['etcd'] | default([]))
+       + (groups['praefect_patroni'] | default([])) }}
   become: true
   roles:
+    - 09-base-etcd
     - 30-infra-etcd
 
 # Patroni
 - name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
-  hosts: "{{ 'postgres' if 'postgres' in groups else [] }}"
+  hosts: >-
+    {{ (groups['postgres'] | default([]))
+       + (groups['praefect_patroni'] | default([])) }}
   become: true
   roles:
     - 30-infra-postgres

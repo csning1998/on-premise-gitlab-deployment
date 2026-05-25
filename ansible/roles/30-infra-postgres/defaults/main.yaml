@@ -6,3 +6,8 @@ postgres_mtls_pod_subnet: "10.1.0.0/16"
 password_encryption: "scram-sha-256"
 postgres_port: 5432
 patroni_restapi_port: 8008
+
+# When set, vault identity is sourced from vault_agent_identities_json[postgres_vault_role_key]
+# instead of the flat vars injected by the middleware (used in multi-component layers).
+# Leave null for standalone postgres layers.
+postgres_vault_role_key: null

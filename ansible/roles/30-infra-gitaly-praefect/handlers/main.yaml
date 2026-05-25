@@ -1,12 +1,7 @@
 ---
-- name: Restart Gitaly
+- name: Restart Service
   ansible.builtin.command:
-    cmd: gitlab-ctl restart gitaly
-  changed_when: false
-
-- name: Restart Praefect
-  ansible.builtin.command:
-    cmd: gitlab-ctl restart praefect
+    cmd: "gitlab-ctl restart {{ node_role }}"
   changed_when: false
 
 - name: Update system CA certificates
