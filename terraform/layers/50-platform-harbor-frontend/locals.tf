@@ -110,6 +110,7 @@ locals {
   redis_fqdn    = local.state.metadata.global_pki_map["harbor-redis"].dns_san[0]
   postgres_fqdn = local.state.metadata.global_pki_map["harbor-postgres"].dns_san[0]
   minio_fqdn    = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
+  minio_port    = local.state.metadata.global_topology_network["harbor"]["minio"].ports["api"].frontend_port
 
   dns_hosts = {
     "${local.harbor_vip}" = "${local.harbor_fqdn} notary.${local.harbor_fqdn}"

@@ -100,7 +100,7 @@ locals {
       }
       if contains([
         "vault-frontend", "keycloak-frontend",
-        "harbor-bootstrapper-frontend", "gitlab-frontend",
+        "harbor-bootstrapper-frontend", "gitlab-frontend", "harbor-frontend",
       ], name)
     ]
 

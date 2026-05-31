@@ -114,3 +114,15 @@ variable "gitlab_version" {
   type        = string
   default     = "v18.8.2"
 }
+
+variable "enable_ci_signing_key_rotation" {
+  description = "Enable the one-time Kubernetes Job that overwrites ApplicationSetting.ci_job_token_signing_key with the Vault-sourced RSA key. Reset to false after the job completes."
+  type        = bool
+  default     = false
+}
+
+variable "ci_signing_key_rotation_version" {
+  description = "Increment this integer each time a new CI signing key rotation Job must be created. Terraform uses this as part of the Job name to force resource recreation."
+  type        = number
+  default     = 1
+}

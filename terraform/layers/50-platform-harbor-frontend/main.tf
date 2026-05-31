@@ -1,4 +1,8 @@
 
+module "felix_config" {
+  source = "../../modules/kubernetes-addons/calico-felix-config"
+}
+
 # [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
   source = "../../modules/kubernetes-addons/platform-trust-engine"
@@ -136,7 +140,7 @@ module "harbor_core" {
       region     = var.object_storage_config.region
       access_key = local.minio_access_key
       secret_key = local.minio_secret_key
-      endpoint   = "https://${local.minio_fqdn}" # Harbor chart uses this
+      endpoint   = "https://${local.minio_fqdn}:${local.minio_port}"
     }
   }
 }

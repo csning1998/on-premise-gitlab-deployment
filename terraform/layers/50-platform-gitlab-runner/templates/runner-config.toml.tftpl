@@ -1,0 +1,29 @@
+[[runners]]
+  name = "k8s-runner-manager"
+  executor = "kubernetes"
+  request_concurrency = 1
+  # Copy the CA cert to the Kaniko-specific path so Kaniko containers can verify
+  # internal registries (Harbor). For non-Kaniko containers the /kaniko path is
+  # irrelevant; the mkdir/cp is harmless and suppressed on failure.
+  pre_build_script = "mkdir -p /kaniko/ssl/certs && cp /etc/ssl/certs/${fqdn_gitlab}.crt /kaniko/ssl/certs/ca-bundle.crt 2>/dev/null || true"
+  [runners.custom_build_dir]
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+  [runners.kubernetes]
+    host = ""
+    bearer_token_overwrite_allowed = false
+    image = "${harbor_registry}/${harbor_docker_proxy}/ubuntu:22.04"
+    namespace = "${namespace}"
+    namespace_overwrite_allowed = ""
+    privileged = false
+    service_account = "${service_account}"
+    dns_policy = "cluster-first"
+    pod_annotations = { "net.multus.cni.cncf.io/mtu" = "${pod_network_mtu}" }
+    # Mount the shared PKI CA bundle so job containers can trust all internal
+    # services (GitLab, Harbor, Vault) — all share the same root CA.
+    # A single volume is sufficient; Kaniko's path is handled by pre_build_script.
+    [[runners.kubernetes.volumes.secret]]
+      name = "${gitlab_ca_bundle_name}"
+      mount_path = "/etc/ssl/certs/${fqdn_gitlab}.crt"
+      read_only = true
+      sub_path = "${fqdn_gitlab}.crt"

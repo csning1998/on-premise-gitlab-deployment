@@ -23,7 +23,8 @@ module "gitlab_core" {
   depends_on = [
     module.platform_mtls_certificate,
     kubernetes_namespace.gitlab_ns,
-    kubernetes_secret.gitlab_keycloak_oidc
+    kubernetes_secret.gitlab_keycloak_oidc,
+    kubernetes_manifest.gitlab_rails_secret_eso,
   ]
 
   # Helm Deployment Configuration
@@ -44,6 +45,7 @@ module "gitlab_core" {
     edition              = "ce"
     dns_sans             = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
     omniauth_secret_name = local.gitlab_config.omniauth_secret_name
+    rails_secret_name    = local.gitlab_config.rails_secret_name
   }
 
   # Trust Engine Integration

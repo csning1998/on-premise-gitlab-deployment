@@ -6,9 +6,7 @@ resource "kubernetes_secret" "gitlab_ca_bundle" {
     name      = var.ca_bundle.name
     namespace = var.helm_config.namespace
   }
-  data = {
-    "ca.crt" = var.ca_bundle.content
-  }
+  data = var.ca_bundle.certs
 
   lifecycle {
     ignore_changes = [

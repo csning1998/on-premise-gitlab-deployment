@@ -13,6 +13,7 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
     provision            = data.terraform_remote_state.provision.outputs
+    harbor               = data.terraform_remote_state.harbor.outputs
     gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
   }
 }
@@ -40,6 +41,7 @@ locals {
     edition              = "ce"
     dns_sans             = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
     omniauth_secret_name = kubernetes_secret.gitlab_keycloak_oidc.metadata[0].name
+    rails_secret_name    = "gitlab-rails-secret"
   }
 }
 
@@ -49,6 +51,7 @@ locals {
   fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
   fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
   fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  fqdn_harbor              = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
   fqdn_minio               = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
   fqdn_postgres            = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
   fqdn_redis               = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
@@ -100,11 +103,16 @@ locals {
 # 5. CA Bundle Configuration
 locals {
   ca_bundle_config = {
-    name        = "gitlab-ca-bundle" # K8s Secret Name
-    secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
+    name        = "gitlab-ca-bundle"
+    secret_name = "gitlab-ca-bundle"
 
-    # Use the aggregated trust bundle from Vault PKI (Root CA + Issuing CA)
-    content = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
+    # One key per CA so update-ca-certificates processes each file individually.
+    # All three CAs are already available from upstream remote state — no local file needed.
+    certs = {
+      "ca-bootstrap.crt"    = base64decode(local.state.metadata.global_vault_pki_b64.ca_cert_b64)
+      "ca-root.crt"         = base64decode(local.state.vault_pki.pki_configuration.root_ca_certificate_b64)
+      "ca-intermediate.crt" = base64decode(local.state.vault_pki.pki_configuration.intermediate_ca_certificate_b64)
+    }
   }
 }
 
@@ -135,9 +143,39 @@ locals {
   gitaly_endpoint = local.has_praefect ? "${local.state.network["core-gitlab-praefect"].lb_config.vip}:2305" : "${local.state.network["core-gitlab-gitaly"].lb_config.vip}:8075"
 
   gitlab_reloader_annotations = {
+    global = {
+      registry = {
+        enabled = true
+        host    = local.fqdn_harbor
+        port    = 443
+        api = {
+          protocol = "https"
+          host     = local.fqdn_harbor
+          port     = 443
+        }
+        certificate = {
+          secret = "gitlab-registry-token-cert"
+        }
+      }
+    }
+    registry = {
+      enabled  = false
+      host     = local.fqdn_harbor
+      port     = 443
+      tokenKey = "registry-auth.key"
+      secret = {
+        secret = "gitlab-registry-token-key"
+      }
+    }
     gitlab = {
       webservice = local._gitlab_reloader_common
       sidekiq    = local._gitlab_reloader_common
+      gitlab-shell = {
+        service = {
+          type     = "NodePort"
+          nodePort = 32022
+        }
+      }
     }
   }
 }

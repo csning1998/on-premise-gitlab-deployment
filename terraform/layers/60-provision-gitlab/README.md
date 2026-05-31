@@ -45,6 +45,17 @@ The GitLab Terraform Provider requires a PAT with administrator privileges to pe
 
 Refer to `terraform/layers/40-provision-keycloak-oidc/terraform.tfvars.example` to configure and create initial users.
 
+## Harbor CI Registry Credentials
+
+Each team subgroup receives the credentials of its dedicated Harbor `ci-{team}` robot as group level CI/CD variables. A pipeline running under a team subgroup authenticates to Production Harbor as that robot and pushes images into the matching `team-{name}` project. The robot accounts and their Vault entries are created by `60-provision-harbor`, so that layer must be applied before this one.
+
+Teams are the subgroups under the target org whose Keycloak `type` attribute is `team`. Role groups such as `dev-leads` have no Harbor robot and are excluded. The variables are provisioned by `resources-harbor-ci-vars.tf`, which reads each robot from Vault and sets two group variables.
+
+- `CI_REGISTRY_USER` holds the robot name such as `robot$ci-infra`. It is created with `raw = true` so GitLab does not treat the dollar sign as a variable reference and corrupt the value at job runtime. The robot name is not secret so it is left unmasked.
+- `CI_REGISTRY_PASSWORD` holds the robot secret. It is masked and also uses `raw = true`.
+
+Both variables are left unprotected so that merge request and feature branch pipelines can authenticate, not only pipelines that run on protected branches.
+
 ## Push Repository to GitLab
 
 To import an existing project (e.g., `test-repo`) to the on-premise GitLab instance, configure the local environment for DNS resolution, trust the self-signed PKI certificate chain, and push using OIDC credentials.

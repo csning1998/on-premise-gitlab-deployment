@@ -8,6 +8,11 @@ module "tigera_calico" {
   mtu            = local.pod_network_mtu - 50
 }
 
+module "felix_config" {
+  source     = "../../modules/kubernetes-addons/calico-felix-config"
+  depends_on = [module.tigera_calico]
+}
+
 # [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
   source     = "../../modules/kubernetes-addons/platform-trust-engine"
@@ -129,4 +134,19 @@ module "coredns_config" {
 module "reloader" {
   source            = "../../modules/kubernetes-addons/reloader"
   harbor_oci_config = local.reloader_oci_config
+}
+
+module "external_secrets" {
+  source     = "../../modules/kubernetes-addons/external-secrets"
+  depends_on = [module.reloader]
+
+  helm_config = {
+    install          = true
+    version          = "2.5.0"
+    namespace        = "external-secrets"
+    create_namespace = true
+    image_registry   = local.harbor_registry
+    image_repository = "${local.harbor_ghcr_proxy}/external-secrets/external-secrets"
+    chart_project    = local.helm_chart_project
+  }
 }

@@ -24,8 +24,12 @@ ip route replace {{ seg.cidr }} dev {{ seg.interface_alias }} scope link table r
 {% endfor %}
 
 # 3. Targeted L2 Return Paths for All Internal Services
-#    Nodes bypass the core router to reach other internal services.
-#    Injection of scope links for all segments into all routing tables ensures symmetric L2 returns internally.
+#    K8s/microk8s nodes reach VIPs via static routes pointing at the local L2 HAProxy VIP
+#    (e.g. 172.16.136.250/32 via 172.16.126.250). This means the SYN arrives intra-bridge
+#    and never crosses the hypervisor FORWARD chain. The SYN-ACK must therefore also stay
+#    intra-bridge; otherwise the hypervisor's conntrack/iptables will drop the reply.
+#    Injecting all segment scope links into every VIP routing table ensures the SYN-ACK
+#    always exits on the same L2 bridge the SYN came in on.
 {% for target_seg in lb_service_segments %}
 {% for source_seg in lb_service_segments %}
 ip route replace {{ source_seg.cidr }} dev {{ source_seg.interface_alias }} scope link table rt_{{ target_seg.name | replace('-', '_') }} advmss {{ global_mss }} 2>/dev/null || true

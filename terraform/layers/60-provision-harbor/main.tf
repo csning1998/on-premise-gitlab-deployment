@@ -1,6 +1,10 @@
 
 module "harbor_system_config" {
   source = "../../modules/configuration/harbor-system-config"
+
+  providers = {
+    vault = vault.production
+  }
 }
 
 # 1. Harbor OIDC Authentication Configuration

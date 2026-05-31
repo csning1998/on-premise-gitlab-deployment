@@ -6,6 +6,11 @@ resource "gitlab_application_settings" "this" {
 
   default_project_visibility = "internal"
   default_group_visibility   = "internal"
+
+  # Enable shared (instance) runners for all new projects by default.
+  # Projects created via push-to-create inherit this setting automatically.
+  shared_runners_enabled = true
+  shared_runners_text    = "Kubernetes-based shared runners managed by Terraform"
 }
 
 # 2. Hierarchical Group Structure
@@ -15,6 +20,9 @@ resource "gitlab_group" "top_org" {
   path             = local.target_org_metadata.name
   description      = local.target_org_metadata.description
   visibility_level = "internal"
+
+  # Allow all projects and subgroups to use instance runners.
+  shared_runners_setting = "enabled"
 }
 
 #    Subgroups for each development team
@@ -25,6 +33,9 @@ resource "gitlab_group" "subgroups" {
   description      = each.value.description
   parent_id        = gitlab_group.top_org.id
   visibility_level = "internal"
+
+  # Inherit instance runner access from the top-level group.
+  shared_runners_setting = "enabled"
 }
 
 resource "gitlab_group_membership" "team_memberships" {
@@ -76,3 +87,23 @@ resource "gitlab_user_identity" "oidc_links" {
   external_provider = "openid_connect"
   external_uid      = each.value.id # Using the actual Keycloak UUID for sub claim matching
 }
+
+# 5. Pre-create GitLab Runner Entity (GitLab 18+ Architecture alignment)
+resource "gitlab_user_runner" "kubernetes_runner" {
+  runner_type = "instance_type"
+  description = "Production Kubernetes Runner Cluster managed by Terraform"
+  tag_list    = ["k8s", "kubernetes", "docker"]
+  untagged    = false
+}
+
+# 6. Securely Store Runner Authentication Token in Vault
+resource "vault_kv_secret_v2" "gitlab_runner_token" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/gitlab/runner/kubernetes"
+
+  data_json = jsonencode({
+    token = gitlab_user_runner.kubernetes_runner.token
+  })
+}
+

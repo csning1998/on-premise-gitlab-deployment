@@ -23,7 +23,7 @@ module "shared_load_balancer" {
   credentials_vm          = local.sec_vm_creds
   credentials_application = local.sec_haproxy_creds
 
-  # Infrastructure Setup (Networks are managed by 04-network-topology layer)
+  # Infrastructure Setup (Networks are managed by 05-foundation-network layer)
   network_infrastructure_map = {
     (local.svc_cluster_name) = local.net_lb_config
   }

@@ -36,6 +36,7 @@ locals {
   fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
   fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
   fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  fqdn_harbor              = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
   fqdn_minio               = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
   fqdn_postgres            = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
   fqdn_redis               = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
@@ -77,14 +78,20 @@ locals {
   }
 
   # 6. DNS Configuration (Standardized Alignment)
-  # Standardized mapping for local resolution (K8s / LB)
-  dns_hosts = {
-    "${local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.vip}" = local.fqdn_gitlab
-    "${local.state.vault_pki.vault_service_vip}"                                      = local.fqdn_vault
+  # VIPs extracted for readability
+  vip_gitlab   = local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.vip
+  vip_vault    = local.state.vault_pki.vault_service_vip
+  vip_redis    = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip
+  vip_postgres = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip
+  vip_minio    = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip
+  vip_harbor   = local.state.network.infrastructure_map["core-harbor-frontend"].lb_config.vip
 
-    # Dependency Roles
-    "${local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip}"    = local.fqdn_redis
-    "${local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip}" = local.fqdn_postgres
-    "${local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip}"    = local.fqdn_minio
+  dns_hosts = {
+    "${local.vip_gitlab}"   = local.fqdn_gitlab
+    "${local.vip_vault}"    = local.fqdn_vault
+    "${local.vip_redis}"    = local.fqdn_redis
+    "${local.vip_postgres}" = local.fqdn_postgres
+    "${local.vip_minio}"    = local.fqdn_minio
+    "${local.vip_harbor}"   = local.fqdn_harbor
   }
 }

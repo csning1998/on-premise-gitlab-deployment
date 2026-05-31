@@ -17,6 +17,7 @@ variable "gitlab_config" {
     edition              = string
     dns_sans             = list(string)
     omniauth_secret_name = optional(string)
+    rails_secret_name    = optional(string)
   })
 }
 
@@ -85,7 +86,7 @@ variable "ca_bundle" {
   description = "CA Bundle configuration"
   type = object({
     name        = string
-    content     = string
+    certs       = map(string) # key → single PEM cert; one entry per CA in the chain
     secret_name = string
   })
 }

@@ -28,8 +28,9 @@ provider "vault" {
   skip_child_token = true
 }
 
+# Harbor admin uses basic auth on /api/v2.0 and is not subject to OIDC redirect.
 provider "harbor" {
   url      = "https://${local.harbor_hostname}"
   username = "admin"
-  password = local.harbor_admin_password
+  password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
 }

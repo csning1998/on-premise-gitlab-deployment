@@ -54,3 +54,8 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "1.2.14"
     repo: "oci://ghcr.io/postfinance/charts"
     is_oci: true
+
+  - name: "external-secrets"
+    version: "2.5.0"
+    repo: "https://charts.external-secrets.io"
+    is_oci: false

@@ -1,4 +1,8 @@
 
+module "felix_config" {
+  source = "../../modules/kubernetes-addons/calico-felix-config"
+}
+
 resource "kubernetes_namespace" "gitlab" {
   metadata {
     name = var.gitlab_runner_config.namespace
@@ -23,10 +27,10 @@ module "platform_trust_engine" {
   }
 
   issuer_config = {
-    name             = var.trust_engine_config.issuer_name
-    issue_path       = "sign"
-    vault_role_name  = local.vault_role_name
-    pki_mount_path   = local.vault_pki_path
+    name            = var.trust_engine_config.issuer_name
+    issue_path      = "sign"
+    vault_role_name = local.vault_role_name
+    pki_mount_path  = local.vault_pki_path
   }
 
   reviewer_service_account = {

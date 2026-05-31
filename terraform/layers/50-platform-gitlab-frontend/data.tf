@@ -103,6 +103,13 @@ data "terraform_remote_state" "provision_databases" {
   }
 }
 
+data "terraform_remote_state" "harbor" {
+  backend = "local"
+  config = {
+    path = "../50-platform-harbor-frontend/terraform.tfstate"
+  }
+}
+
 # 2. Fetch Kubeconfig from Production Vault
 data "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production

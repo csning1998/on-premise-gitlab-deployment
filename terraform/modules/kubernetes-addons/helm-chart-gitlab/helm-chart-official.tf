@@ -185,6 +185,13 @@ resource "helm_release" "gitlab" {
             key    = "secret"
           }
         }
+        # When global.railsSecrets is provided, the Helm chart migration job uses the
+        # pre-created secret instead of auto-generating a new one. This is the correct
+        # mechanism to stabilize db_key_base across cluster rebuilds.
+        railsSecrets = var.gitlab_config.rails_secret_name != null ? {
+          secret = var.gitlab_config.rails_secret_name
+          key    = "secrets.yml"
+        } : null
         initialRootPassword = {
           secret = kubernetes_secret.gitlab_internal_secrets["root-password"].metadata[0].name,
           key    = "secret"

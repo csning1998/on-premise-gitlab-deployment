@@ -1,6 +1,8 @@
 
 # Create Reviewer Service Account
 resource "kubernetes_service_account" "vault_reviewer" {
+  depends_on = [helm_release.cert_manager]
+
   metadata {
     name      = var.reviewer_service_account.name
     namespace = var.reviewer_service_account.namespace
