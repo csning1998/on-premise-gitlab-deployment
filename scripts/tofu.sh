@@ -29,11 +29,10 @@ tofu_artifact_cleaner() {
       continue
     fi
 
-    log_print "STEP" "Cleaning Terraform artifacts for layer [${layer_name}]..."
-    rm -rf "${layer_dir}/.terraform.lock.hcl" \
-      "${layer_dir}/terraform.tfstate" \
+    log_print "STEP" "Cleaning Terraform artifacts..."
+    rm -rf "${layer_dir}/terraform.tfstate" \
       "${layer_dir}"/terraform.tfstate*.backup
-    log_print "INFO" "Terraform artifact cleanup for [${layer_name}] completed."
+    log_print "INFO" "Terraform artifact cleanup is completed."
     log_divider
   done
 }

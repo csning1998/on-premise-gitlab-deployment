@@ -2,57 +2,8 @@
 
 # This script contains functions for controlling KVM/libvirt services and VMs.
 
-# Resources Mapping
-declare -A DOMAIN_MAP=(
-	["15-shared-vault-frontend"]="core-vault-raft-node"
-	["10-shared-load-balancer-frontend"]="core-central-lb-node"
-
-	["30-infra-gitlab-postgres"]="core-gitlab-postgres-node core-gitlab-etcd-node"
-	["30-infra-gitlab-redis"]="core-gitlab-redis-node"
-	["30-infra-gitlab-minio"]="core-gitlab-minio-node"
-	["30-infra-gitlab-frontend"]="core-gitlab-frontend"
-
-  ["30-infra-harbor-bootstrapper-frontend"]="core-harbor-bootstrapper-frontend-node"
-	["30-infra-harbor-frontend"]="core-harbor-frontend-node"
-	["30-infra-harbor-postgres"]="core-harbor-postgres-node core-harbor-etcd-node"
-	["30-infra-harbor-redis"]="core-harbor-redis-node"
-	["30-infra-harbor-minio"]="core-harbor-minio-node"
-)
-
-# Storage Pool names.
-declare -A POOL_MAP=(
-	["15-shared-vault-frontend"]="iac-core-vault-raft-pool"
-	["10-shared-load-balancer-frontend"]="iac-core-central-lb-pool"
-
-	["30-infra-gitlab-postgres"]="iac-core-gitlab-postgres-pool iac-core-gitlab-etcd-pool"
-	["30-infra-gitlab-redis"]="iac-core-gitlab-redis-pool"
-	["30-infra-gitlab-minio"]="iac-core-gitlab-minio-pool"
-	["30-infra-gitlab-frontend"]="iac-core-gitlab-frontend-pool"
-
-  ["30-infra-harbor-bootstrapper-frontend"]="iac-core-harbor-bootstrapper-frontend-pool"
-	["30-infra-harbor-frontend"]="iac-core-harbor-frontend-pool"
-	["30-infra-harbor-postgres"]="iac-core-harbor-postgres-pool iac-core-harbor-etcd-pool"
-	["30-infra-harbor-redis"]="iac-core-harbor-redis-pool"
-	["30-infra-harbor-minio"]="iac-core-harbor-minio-pool"
-)
-
-# Network prefixes (Segment Keys).
-declare -A NET_MAP=(
-	["15-shared-vault-frontend"]="vault"
-	["10-shared-load-balancer-frontend"]="central-lb"
-
-
-	["30-infra-gitlab-postgres"]="gitlab-postgres gitlab-etcd"
-	["30-infra-gitlab-redis"]="gitlab-redis"
-	["30-infra-gitlab-minio"]="gitlab-minio"
-	["30-infra-gitlab-frontend"]="gitlab"
-
-  ["30-infra-harbor-bootstrapper-frontend"]="harbor-bootstrapper"
-	["30-infra-harbor-frontend"]="harbor"
-  ["30-infra-harbor-postgres"]="harbor-postgres harbor-etcd"
-	["30-infra-harbor-redis"]="harbor-redis"
-	["30-infra-harbor-minio"]="harbor-minio"
-)
+# Project code filter that matches project_code in L00 terraform.tfvars
+readonly PROJECT_CODE="core"
 
 # Function: Ensure libvirt service is running before executing a command.
 libvirt_service_manager() {
@@ -77,65 +28,23 @@ libvirt_service_manager() {
   fi
 }
 
-# Function: Forcefully clean up all libvirt resources associated with this project.
+# Function: Forcefully clean up all libvirt resources with project_code = PROJECT_CODE.
 libvirt_resource_purger() {
-  if [[ $# -eq 0 ]]; then
-    log_print "ERROR" "Usage: $0 <target1> [target2...] | all"
-    log_print "INFO" "Available targets: ${!DOMAIN_MAP[*]}"
-    return 1
-  fi
+  log_print "STEP" "Detecting and purging all resources with project_code = '${PROJECT_CODE}'..."
 
-  local targets_to_process=("$@")
-  local domain_prefixes_to_purge=()
-  local pool_names_to_purge=()
-  local net_prefixes_to_purge=()
-
-  # 1. Build lists of resources to purge based on input
-  log_print "STEP" "Parsing targets and building resource lists..."
-  for target in "${targets_to_process[@]}"; do
-    if [[ "$target" == "all" ]]; then
-      log_print "INFO" "Target 'all' selected. Preparing to purge all known resources."
-      domain_prefixes_to_purge+=("${DOMAIN_MAP[@]}")
-      pool_names_to_purge+=("${POOL_MAP[@]}")
-      net_prefixes_to_purge+=("${NET_MAP[@]}")
-      break # 'all' overrides everything else
-    fi
-
-    if [[ -v "DOMAIN_MAP[$target]" ]]; then
-      log_print "INFO" "Adding resources for target: $target"
-      domain_prefixes_to_purge+=("${DOMAIN_MAP[$target]}")
-      pool_names_to_purge+=("${POOL_MAP[$target]}")
-      # Note: Individual layer networks are preserved. Use 'all' target to purge networks.
-    else
-      log_print "WARN" "Unknown target '$target'. Skipping."
-    fi
-  done
-
-  # 2. Deduplicate the resource lists
-  local unique_domain_prefixes
-	unique_domain_prefixes="$(echo "${domain_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-
-	local unique_pool_names
-	unique_pool_names="$(echo "${pool_names_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-
-	local unique_net_prefixes
-	unique_net_prefixes="$(echo "${net_prefixes_to_purge[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
-
-  # 3. Purge VMs (Domains)
+  # 1. Purge VMs (Domains) starting with PROJECT_CODE-
   log_print "STEP" "Purging Virtual Machines (Domains)..."
-  for prefix in ${unique_domain_prefixes}; do
-    for vm in $(sudo virsh list --all --name | grep "^${prefix}" || true); do
-      if [[ -n "$vm" ]]; then
-        log_print "TASK" "Destroying and undefining VM: $vm"
-        sudo virsh destroy "$vm" >/dev/null 2>&1 || true
-        sudo virsh undefine "$vm" --nvram --remove-all-storage >/dev/null 2>&1 || true
-      fi
-    done
+  for vm in $(sudo virsh list --all --name | grep "^${PROJECT_CODE}-" || true); do
+    if [[ -n "$vm" ]]; then
+      log_print "TASK" "Destroying and undefining VM: $vm"
+      sudo virsh destroy "$vm" >/dev/null 2>&1 || true
+      sudo virsh undefine "$vm" --nvram --remove-all-storage >/dev/null 2>&1 || true
+    fi
   done
 
-  # 4. Purge Storage Volumes and Pools
+  # 2. Purge Storage Volumes and Pools starting with PROJECT_CODE-
   log_print "STEP" "Purging Storage Volumes and Pools..."
-  for pool in ${unique_pool_names}; do
+  for pool in $(sudo virsh pool-list --all --name | grep "^${PROJECT_CODE}-" || true); do
     if sudo virsh pool-info "$pool" >/dev/null 2>&1; then
       # Delete all volumes within the pool
       for vol in $(sudo virsh vol-list "$pool" | awk 'NR>2 {print $1}' || true); do
@@ -153,16 +62,14 @@ libvirt_resource_purger() {
     fi
   done
 
-  # 5. Purge Networks
+  # 3. Purge Networks starting with PROJECT_CODE-
   log_print "STEP" "Purging Networks..."
-  for seg_key in ${unique_net_prefixes}; do
-    for net_name in "${seg_key}" "iac-${seg_key}-nat"; do
-      if sudo virsh net-info "$net_name" >/dev/null 2>&1; then
-        log_print "TASK" "Destroying and undefining network: $net_name"
-        sudo virsh net-destroy "$net_name" >/dev/null 2>&1 || true
-        sudo virsh net-undefine "$net_name" >/dev/null 2>&1 || true
-      fi
-    done
+  for net in $(sudo virsh net-list --all --name | grep "^${PROJECT_CODE}-" || true); do
+    if sudo virsh net-info "$net" >/dev/null 2>&1; then
+      log_print "TASK" "Destroying and undefining network: $net"
+      sudo virsh net-destroy "$net" >/dev/null 2>&1 || true
+      sudo virsh net-undefine "$net" >/dev/null 2>&1 || true
+    fi
   done
 
   log_divider
