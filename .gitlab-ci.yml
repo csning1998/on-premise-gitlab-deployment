@@ -1,13 +1,14 @@
+---
 stages:
+  - format
+  - lint
   - review
 
-gemini-code-review:
-  stage: review
-  image: python:3.11-slim
-  variables:
-    GEMINI_MODEL: "gemini-3.5-flash"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-  script:
-    - python gemini_review.py
+include:
+  - local: .gitlab/ci/terraform-fmt.yml
+  - local: .gitlab/ci/go-fmt.yml
+  - local: .gitlab/ci/go-lint.yml
+  - local: .gitlab/ci/ansible-lint.yml
+  - local: .gitlab/ci/yamllint.yml
+  - local: .gitlab/ci/markdownlint.yml
+  - local: .gitlab/ci/gemini-review.yml

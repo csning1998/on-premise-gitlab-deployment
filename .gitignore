@@ -13,7 +13,7 @@ ansible/fetched/
 backup
 vault_pass.txt
 ansible-log*.log
-**/ansible.cfg
+terraform/layers/**/ansible.cfg
 
 ### Ignore folder for output
 packer/output

@@ -1,0 +1,12 @@
+# Default owner for everything
+* @csning1998
+
+[Documentation]
+/.gitlab/                           @csning1998
+CODE_OF_CONDUCT.md                  @csning1998
+LICENSE                             @csning1998
+README.md                           @csning1998
+
+[Critical Infrastructure]
+/terraform/layers/90-meta-github/   @csning1998
+/terraform/layers/90-meta-gitlab/   @csning1998

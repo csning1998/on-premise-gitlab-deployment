@@ -1,0 +1,15 @@
+---
+gemini-code-review:
+  stage: review
+  image: golang:1.26-alpine
+  variables:
+    GEMINI_MODEL: "gemini-3.5-flash"
+    GOTOOLCHAIN: "local"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+  interruptible: true
+  script:
+    - cd tools/ci
+    - go run ./cmd/gemini-review

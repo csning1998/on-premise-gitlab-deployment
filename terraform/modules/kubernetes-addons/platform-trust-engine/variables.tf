@@ -24,10 +24,10 @@ variable "vault_config" {
 variable "issuer_config" {
   description = "Cert-Manager Issuer and Vault Role mapping configuration"
   type = object({
-    name             = string       # ClusterIssuer in K8s, e.g., "vault-issuer"
-    vault_role_name  = string       # Role name in Vault, e.g., "k8s-issuer-role"
-    pki_mount_path   = string       # PKI Engine mount path in Vault, e.g., "pki/prod"
-    issue_path       = string       # Issue path, usually "issue" or "sign"
+    name            = string # ClusterIssuer in K8s, e.g., "vault-issuer"
+    vault_role_name = string # Role name in Vault, e.g., "k8s-issuer-role"
+    pki_mount_path  = string # PKI Engine mount path in Vault, e.g., "pki/prod"
+    issue_path      = string # Issue path, usually "issue" or "sign"
   })
 }
 

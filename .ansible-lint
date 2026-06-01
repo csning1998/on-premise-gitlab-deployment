@@ -1,0 +1,13 @@
+---
+profile: production
+
+warn_list:
+  - role-name
+  - ignore-errors
+  - latest
+
+exclude_paths:
+  - .git/
+  - .terraform/
+  - roles/80-utilities/tasks/main.yaml
+  - inventory-*.yaml

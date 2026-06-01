@@ -1,0 +1,9 @@
+---
+go-lint:
+  stage: lint
+  image: golangci/golangci-lint:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - cd tools/ci
+    - golangci-lint run -c ../../.gitlab/golangci.yml ./...

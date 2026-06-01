@@ -37,11 +37,11 @@ resource "helm_release" "harbor" {
             (var.ingress_config.issuer_kind == "ClusterIssuer"
               ? "cert-manager.io/cluster-issuer"
               : "cert-manager.io/issuer"
-            )                                             = var.ingress_config.issuer_name
-            "cert-manager.io/common-name"                 = var.harbor_config.hostname
-            "cert-manager.io/subject-alternative-names"   = join(",", var.harbor_config.dns_sans)
-            "cert-manager.io/duration"                    = var.certificate_config.duration
-            "cert-manager.io/renew-before"                = var.certificate_config.renew_before
+            )                                           = var.ingress_config.issuer_name
+            "cert-manager.io/common-name"               = var.harbor_config.hostname
+            "cert-manager.io/subject-alternative-names" = join(",", var.harbor_config.dns_sans)
+            "cert-manager.io/duration"                  = var.certificate_config.duration
+            "cert-manager.io/renew-before"              = var.certificate_config.renew_before
           }
         }
       }

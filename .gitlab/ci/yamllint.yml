@@ -1,0 +1,8 @@
+---
+yamllint:
+  stage: lint
+  image: pipelinecomponents/yamllint:latest
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - yamllint .

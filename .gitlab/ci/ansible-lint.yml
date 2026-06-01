@@ -1,0 +1,10 @@
+---
+ansible-lint:
+  stage: lint
+  image: pipelinecomponents/ansible-lint:latest
+  allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - cd ansible
+    - ansible-lint
