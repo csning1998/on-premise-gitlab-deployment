@@ -1,21 +1,21 @@
 
 output "service_vip" {
   description = "The virtual IP of the primary tier."
-  value       = local.p_net_config.lb_config.vip
+  value       = module.context.primary_net_config.lb_config.vip
 }
 
 output "service_vips" {
   description = "The virtual IPs assigned to each service tier."
   value = {
-    gitaly           = lookup(local.network_infrastructure_map, "gitaly", null) != null ? local.network_infrastructure_map["gitaly"].lb_config.vip : ""
-    praefect         = lookup(local.network_infrastructure_map, "praefect", null) != null ? local.network_infrastructure_map["praefect"].lb_config.vip : ""
-    praefect-patroni = lookup(local.network_infrastructure_map, "praefect-patroni", null) != null ? local.network_infrastructure_map["praefect-patroni"].lb_config.vip : ""
+    gitaly           = module.context.network_infrastructure_map["gitaly"].lb_config.vip
+    praefect         = module.context.network_infrastructure_map["praefect"].lb_config.vip
+    praefect-patroni = module.context.network_infrastructure_map["praefect-patroni"].lb_config.vip
   }
 }
 
 output "credentials_system" {
   description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = local.sec_vm_creds
+  value       = module.context.sec_vm_creds
   sensitive   = true
 }
 

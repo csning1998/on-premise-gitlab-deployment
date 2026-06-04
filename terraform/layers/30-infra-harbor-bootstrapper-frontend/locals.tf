@@ -1,129 +1,46 @@
 
-# State Object
+# Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  state = {
-    metadata  = data.terraform_remote_state.metadata.outputs
-    volume    = data.terraform_remote_state.volume.outputs
-    network   = data.terraform_remote_state.load_balancer.outputs # Handover through Layer 10
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-  }
+  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
-# 1. Unified SSoT Alignment
+# Service-specific credentials and Vault Agent identity
 locals {
-  # Zip Identity and Network properties into a single O(1) lookup map.
-  segments_map = merge([
-    for s_name, components in local.state.metadata.global_topology_identity : {
-      for c_name, identity in components : identity.cluster_name => {
-        identity = identity
-        network  = local.state.metadata.global_topology_network[s_name][c_name]
-        pki_key  = "${s_name}-${c_name}"
-        s_name   = s_name
-        c_name   = c_name
-      }
-    }
-  ]...)
-
-  # Target the cluster using the unified SSoT key passed via tfvars
-  svc_cluster_name = var.target_cluster_name
-  svc_context      = local.segments_map[local.svc_cluster_name]
-
-  svc_identity = local.svc_context.identity
-  svc_network  = local.svc_context.network
-  svc_name     = local.svc_context.s_name
-
-  # Fetch DNS from PKI metadata (mapped by s_name-c_name)
-  svc_pki_role = local.state.metadata.global_pki_map[local.svc_context.pki_key]
-  svc_fqdn     = local.svc_pki_role.dns_san[0]
-}
-
-# 2. Network Context (Inherit from Load Balancer Handover)
-locals {
-  # Layer 10 (network state) provides infrastructure_map keyed by cluster_name
-  net_physical_infra = local.state.network.infrastructure_map[local.svc_cluster_name]
-
-  # Single map of raw infrastructures for HA middleware consumption
-  # Act as an adapter, mapping the true physical network to the generic "default" tier.
-  network_infrastructure_map = {
-    "default" = local.net_physical_infra
-  }
-}
-
-# 3. Security & Credentials Context (sec_ / pki_)
-locals {
-  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
-
-  # System Level Credentials (OS/SSH)
-  sec_vm_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
-  }
-
-  # Service Specific Credentials
   sec_app_creds = {
     harbor_admin_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_admin_password"]
     harbor_pg_db_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_pg_db_password"]
   }
 
-  # Component Specific Vault Identities
-  sec_vault_role_key = local.svc_pki_role.key
-  sec_vault_agent_identity = {
-    common_name   = local.svc_fqdn
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
-    auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
-    role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
-    role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
-    secret_id     = vault_approle_auth_backend_role_secret_id.bootstrap_harbor_agent.secret_id
-    vault_address = local.sys_vault_addr
-  }
+  sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {
+    secret_id = vault_approle_auth_backend_role_secret_id.bootstrap_harbor_agent.secret_id
+  })
 }
 
-# 4. Topology & Construction
-locals {
-  storage_pool_name = local.svc_identity.storage_pool_name
-
-  topology_cluster = {
-    components        = var.harbor_bootstrapper_config
-    storage_pool_name = local.storage_pool_name
-  }
-
-  # Map dynamic component names back to their single physical identity
-  node_identities = {
-    for comp_name, comp_config in var.harbor_bootstrapper_config : comp_name => local.svc_identity
-  }
-}
-
-# 5. Ansible Configuration (Dynamic Inventory)
+# Ansible Configuration
 locals {
   ansible_template_vars = {
-    # Service Identifiers
-    service_identifier           = local.svc_name
-    bstrap_harbor_fqdn           = local.svc_fqdn
-    bstrap_harbor_service_domain = local.svc_identity.cluster_name
+    service_identifier           = module.context.primary_context.s_name
+    bstrap_harbor_fqdn           = module.context.svc_fqdn
+    bstrap_harbor_service_domain = module.context.svc_identity.cluster_name
 
-    # Networking & HA
-    bstrap_harbor_vip              = local.net_physical_infra.lb_config.vip
-    bstrap_harbor_tls_port         = local.net_physical_infra.lb_config.ports["https"].frontend_port
-    bstrap_harbor_mtls_node_subnet = local.net_physical_infra.network.hostonly.cidr
-    vault_vip                      = local.state.network.infrastructure_vips["vault-frontend"]
-    global_mss                     = local.state.metadata.global_network_baseline.global_mss
+    bstrap_harbor_vip              = module.context.primary_net_config.lb_config.vip
+    bstrap_harbor_tls_port         = module.context.primary_net_config.lb_config.ports["https"].frontend_port
+    bstrap_harbor_mtls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
+    vault_vip                      = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["vault-frontend"]
+    global_mss                     = module.context.global_mss
 
-    # Cluster Topology
     bstrap_harbor_cluster_ips = [
-      for comp_name, comp_config in var.harbor_bootstrapper_config : [
+      for comp_name, comp_config in var.service_config : [
         for node_suffix, node_data in comp_config.nodes :
-        cidrhost(local.net_physical_infra.network.hostonly.cidr, node_data.ip_suffix)
+        cidrhost(module.context.primary_net_config.network.hostonly.cidr, node_data.ip_suffix)
       ]
-    ][0] # Harbor Bootstrapper is a single component
+    ][0]
 
-    # Asymmetric Routing Configuration
     bstrap_harbor_static_routes = [
-      for name, vip in local.state.network.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
-        via    = local.net_physical_infra.lb_config.vip
+        via    = module.context.primary_net_config.lb_config.vip
         metric = 100
       }
       if contains([
@@ -132,15 +49,14 @@ locals {
       ], name)
     ]
 
-    # Compatibility Aliases
-    access_scope = local.net_physical_infra.network.hostonly.cidr
-    service_name = local.svc_name
+    access_scope = module.context.primary_net_config.network.hostonly.cidr
+    service_name = module.context.primary_context.s_name
   }
 
   ansible_extra_vars = {
     harbor_bootstrapper_admin_password = local.sec_app_creds.harbor_admin_password
     harbor_bootstrapper_pg_db_password = local.sec_app_creds.harbor_pg_db_password
     vault_agent_common_name            = local.sec_vault_agent_identity.common_name
-    vault_agent_cert_ttl               = local.state.vault_pki.pki_configuration.lease_durations.agent
+    vault_agent_cert_ttl               = data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent
   }
 }

@@ -1,0 +1,98 @@
+
+output "svc_identity" {
+  description = "SSoT identity object for the primary cluster."
+  value       = local.svc_identity
+}
+
+output "svc_network" {
+  description = "SSoT network object for the primary cluster."
+  value       = local.svc_network
+}
+
+output "svc_pki_role" {
+  description = "PKI role object for the primary cluster."
+  value       = local.svc_pki_role
+}
+
+output "svc_fqdn" {
+  description = "Primary FQDN derived from PKI DNS SANs."
+  value       = local.svc_fqdn
+}
+
+output "network_infrastructure_map" {
+  description = "Physical network infrastructure map keyed by network_tier, ready for middleware consumption."
+  value       = local.network_infrastructure_map
+}
+
+output "primary_net_config" {
+  description = "Network infrastructure configuration for the primary role's network tier."
+  value       = local.primary_net_config
+}
+
+output "sec_vm_creds" {
+  description = "VM system credentials."
+  value       = local.sec_vm_creds
+  sensitive   = true
+}
+
+output "global_vault_pki_b64" {
+  description = "Bootstrap PKI certificates in base64. Null when PKI not yet initialized."
+  value       = var.global_vault_pki_b64
+}
+
+output "sys_vault_addr" {
+  description = "Vault HTTPS address constructed from vault_sys_vip. Null for layers without Vault Agent integration."
+  value       = local.sys_vault_addr
+}
+
+output "storage_pool_name" {
+  description = "Storage pool name from primary SSoT identity."
+  value       = local.storage_pool_name
+}
+
+output "topology_cluster" {
+  description = "Assembled topology_cluster object for ha-service-kvm-general middleware."
+  value       = local.topology_cluster
+}
+
+output "node_identities" {
+  description = "Map of role to SSoT identity, for middleware node name resolution."
+  value       = local.node_identities
+}
+
+output "vault_agent_identity_base" {
+  description = "Partial Vault Agent identity (excludes secret_id). Null for layers without Vault PKI integration."
+  value       = local.vault_agent_identity_base
+  sensitive   = true
+}
+
+output "global_mss" {
+  description = "Global MSS value from network baseline."
+  value       = var.global_network_baseline.global_mss
+}
+
+output "primary_context" {
+  description = "Full primary context entry from segments_map. Exposes s_name/c_name for layer-specific filter logic."
+  value       = local.primary_context
+}
+
+output "components_context" {
+  description = "Full components_context map. Used by multi-role layers that need per-role context beyond the primary."
+  value       = local.components_context
+}
+
+output "asymmetric_static_routes" {
+  description = "Pre-computed static routes: all other services' cidr_block + nat_cidr_block (k8s runtimes only), all via primary LB VIP."
+  value       = local.asymmetric_static_routes
+}
+
+output "vault_sys_vip" {
+  description = "Raw Vault system VIP address without protocol or port. Null for layers without Vault integration."
+  value       = var.vault_sys_vip
+}
+
+output "all_vault_agent_identity_bases" {
+  description = "Per-role Vault Agent identity bases (excludes secret_id). Keyed by target_clusters role. Empty map for layers without Vault integration."
+  value       = local.all_vault_agent_identity_bases
+  sensitive   = true
+}

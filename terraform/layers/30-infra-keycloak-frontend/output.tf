@@ -1,17 +1,17 @@
 
 output "keycloak_fqdn" {
   description = "The FQDN of the Keycloak service."
-  value       = local.svc_fqdn
+  value       = module.context.svc_fqdn
 }
 
 output "service_vip" {
   description = "The virtual IP assigned to the Keycloak service from Central LB topology."
-  value       = local.net_physical_infra.lb_config.vip
+  value       = module.context.primary_net_config.lb_config.vip
 }
 
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
-  value       = local.sec_vm_creds
+  value       = module.context.sec_vm_creds
   sensitive   = true
 }
 
@@ -28,7 +28,7 @@ output "topology_node" {
 
 output "pki_key" {
   description = "The physical SSoT PKI key associated with the Keycloak service."
-  value       = local.svc_context.pki_key
+  value       = module.context.primary_context.pki_key
 }
 
 output "ansible_inventory" {

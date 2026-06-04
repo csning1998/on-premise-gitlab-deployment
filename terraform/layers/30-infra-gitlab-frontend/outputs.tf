@@ -1,17 +1,17 @@
 
 output "service_vip" {
   description = "The virtual IP assigned to the Kubeadm entrypoint."
-  value       = local.p_net_config.lb_config.vip
+  value       = module.context.primary_net_config.lb_config.vip
 }
 
 output "cluster_name" {
-  description = "The name of the Cluster from the metadata"
-  value       = local.svc_identity.cluster_name
+  description = "The name of the Cluster from the metadata."
+  value       = module.context.svc_identity.cluster_name
 }
 
 output "credentials_system" {
   description = "System-level access credentials for the cluster nodes."
-  value       = local.sec_vm_creds
+  value       = module.context.sec_vm_creds
   sensitive   = true
 }
 

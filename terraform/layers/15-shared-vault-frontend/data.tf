@@ -30,11 +30,3 @@ data "terraform_remote_state" "network" {
 data "vault_generic_secret" "guest_vm" {
   path = "secret/on-premise-gitlab-deployment/guest_vm"
 }
-
-data "vault_generic_secret" "infrastructure" {
-  path = "secret/on-premise-gitlab-deployment/infrastructure"
-}
-
-data "vault_generic_secret" "credentials" {
-  path = "secret/on-premise-gitlab-deployment/credentials"
-}

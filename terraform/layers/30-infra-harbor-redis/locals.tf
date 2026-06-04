@@ -1,136 +1,49 @@
 
-# State Object
+# Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  state = {
-    metadata  = data.terraform_remote_state.metadata.outputs
-    volume    = data.terraform_remote_state.volume.outputs
-    network   = data.terraform_remote_state.network.outputs # Handover through Layer 10
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-  }
+  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
-# 1. Unified SSoT Alignment
+# Service-specific credentials and Vault Agent identity
 locals {
-  # Zip Identity and Network properties into a single O(1) lookup map.
-  segments_map = merge([
-    for s_name, components in local.state.metadata.global_topology_identity : {
-      for c_name, identity in components : identity.cluster_name => {
-        identity = identity
-        network  = local.state.metadata.global_topology_network[s_name][c_name]
-        pki_key  = "${s_name}-${c_name}"
-        s_name   = s_name
-        c_name   = c_name
-      }
-    }
-  ]...)
-
-  # Resolve all targeted clusters into a components context map
-  components_context = {
-    for role, cluster_name in var.target_clusters : role => local.segments_map[cluster_name]
-  }
-
-  # Primary component definitions
-  primary_role    = var.primary_role
-  primary_context = local.components_context[local.primary_role]
-
-  svc_identity = local.primary_context.identity
-  svc_network  = local.primary_context.network
-
-  # Fetch DNS from PKI metadata for the primary service entrypoint
-  svc_pki_role = local.state.metadata.global_pki_map[local.primary_context.pki_key]
-  svc_fqdn     = local.svc_pki_role.dns_san[0]
-}
-
-# 2. Network Context (Inherit from Load Balancer Handover)
-locals {
-  # Map physical networks for all components into an infrastructure map for middleware
-  network_infrastructure_map = {
-    for role, ctx in local.components_context : var.service_config[role].network_tier => local.state.network.infrastructure_map[ctx.identity.cluster_name]
-  }
-
-  # Helper for primary network configuration to reduce path redundancy
-  p_net_config = local.network_infrastructure_map[var.service_config[local.primary_role].network_tier]
-}
-
-# 3. Security & Credentials Context (sec_ / pki_)
-locals {
-  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
-
-  # System Level Credentials (OS/SSH)
-  sec_vm_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
-  }
-
-  # Service Specific Credentials
   sec_app_creds = {
     masterauth  = data.vault_generic_secret.db_vars.data["redis_masterauth"]
     requirepass = data.vault_generic_secret.db_vars.data["redis_requirepass"]
     vrrp_secret = data.vault_generic_secret.db_vars.data["redis_vrrp_secret"]
   }
 
-  # Component Specific Vault Identities
-  sec_vault_role_key = local.svc_pki_role.key
-  sec_vault_agent_identity = {
-    vault_address = local.sys_vault_addr
-    auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
-    role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
-    role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
-    secret_id     = vault_approle_auth_backend_role_secret_id.redis_agent.secret_id
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
-    common_name   = local.svc_fqdn
-  }
+  sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {
+    secret_id = vault_approle_auth_backend_role_secret_id.redis_agent.secret_id
+  })
 }
 
-# 4. Topology & Construction
-locals {
-  storage_pool_name = local.svc_identity.storage_pool_name
-
-  topology_cluster = {
-    components        = var.service_config
-    storage_pool_name = local.storage_pool_name
-  }
-
-  # Map logical roles to their respective physical identities from SSoT
-  node_identities = {
-    for role, ctx in local.components_context : role => ctx.identity
-  }
-}
-
-# 5. Ansible Configuration (Dynamic Inventory)
+# Ansible Configuration
 locals {
   ansible_template_vars = {
-    # Service Identifiers
-    service_identifier   = local.svc_identity.cluster_name
-    redis_service_domain = local.sec_vault_agent_identity.common_name
+    service_identifier   = module.context.svc_identity.cluster_name
+    redis_service_domain = module.context.svc_fqdn
 
-    # Networking & HA
-    redis_ha_virtual_ip   = local.p_net_config.lb_config.vip
-    redis_tls_node_subnet = local.p_net_config.network.hostonly.cidr
-    redis_tls_port        = local.p_net_config.lb_config.ports["main"].frontend_port
-    vault_vip             = local.state.vault_sys.service_vip
-    global_mss            = local.state.metadata.global_network_baseline.global_mss
+    redis_ha_virtual_ip   = module.context.primary_net_config.lb_config.vip
+    redis_tls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
+    redis_tls_port        = module.context.primary_net_config.lb_config.ports["main"].frontend_port
+    vault_vip             = module.context.vault_sys_vip
+    global_mss            = module.context.global_mss
 
-    # Cluster Topology
     redis_cluster_ips = join(",", [
       for node_suffix, node_data in var.service_config["redis"].nodes :
-      cidrhost(local.p_net_config.network.hostonly.cidr, node_data.ip_suffix)
+      cidrhost(module.context.primary_net_config.network.hostonly.cidr, node_data.ip_suffix)
     ])
-    redis_initial_master_ip = cidrhost(local.p_net_config.network.hostonly.cidr, var.service_config["redis"].nodes["00"].ip_suffix)
+    redis_initial_master_ip = cidrhost(module.context.primary_net_config.network.hostonly.cidr, var.service_config["redis"].nodes["00"].ip_suffix)
     sentinel_quorum         = floor(length(var.service_config["redis"].nodes) / 2) + 1
 
-    # Asymmetric Routing
-    redis_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    redis_static_route_via    = local.p_net_config.lb_config.vip
+    redis_static_route_to     = "${module.context.vault_sys_vip}/32"
+    redis_static_route_via    = module.context.primary_net_config.lb_config.vip
     redis_static_route_metric = 100
 
-    # Compatibility Aliases (Optional, kept for safety)
-    access_scope = local.p_net_config.network.hostonly.cidr
-    redis_vip    = local.p_net_config.lb_config.vip
-    cluster_name = local.svc_identity.cluster_name
+    access_scope = module.context.primary_net_config.network.hostonly.cidr
+    redis_vip    = module.context.primary_net_config.lb_config.vip
+    cluster_name = module.context.svc_identity.cluster_name
   }
 
   ansible_extra_vars = {
@@ -138,6 +51,6 @@ locals {
     redis_requirepass       = local.sec_app_creds.requirepass
     redis_vrrp_secret       = local.sec_app_creds.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
-    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
+    vault_agent_cert_ttl    = data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent
   }
 }

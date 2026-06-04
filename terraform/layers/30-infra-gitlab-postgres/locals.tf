@@ -1,126 +1,40 @@
 
-# State Object
+# Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  state = {
-    metadata  = data.terraform_remote_state.metadata.outputs # Source from `00-foundation-metadata`
-    volume    = data.terraform_remote_state.volume.outputs   # Source from `05-foundation-volume`
-    network   = data.terraform_remote_state.network.outputs  # Source from `10-shared-load-balancer-frontend`
-    vault_sys = data.terraform_remote_state.vault_sys.outputs
-    vault_pki = data.terraform_remote_state.vault_pki.outputs
-  }
+  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
-# 1. Unified SSoT Alignment
+# Service-specific credentials and Vault Agent identity
 locals {
-  # Zip Identity and Network properties into a single O(1) lookup map.
-  segments_map = merge([
-    for s_name, components in local.state.metadata.global_topology_identity : {
-      for c_name, identity in components : identity.cluster_name => {
-        identity = identity
-        network  = local.state.metadata.global_topology_network[s_name][c_name]
-        pki_key  = "${s_name}-${c_name}"
-        s_name   = s_name
-        c_name   = c_name
-      }
-    }
-  ]...)
-
-  # Resolve all targeted clusters into a components context map
-  components_context = {
-    for role, cluster_name in var.target_clusters : role => local.segments_map[cluster_name]
-  }
-
-  # Primary component definitions
-  primary_role    = var.primary_role
-  primary_context = local.components_context[local.primary_role]
-
-  svc_identity = local.primary_context.identity
-  svc_network  = local.primary_context.network
-
-  # Fetch DNS from PKI metadata for the primary service entrypoint
-  svc_pki_role = local.state.metadata.global_pki_map[local.primary_context.pki_key]
-  svc_fqdn     = local.svc_pki_role.dns_san[0]
-}
-
-# 2. Network Context (Inherit from Load Balancer Handover)
-locals {
-  # Map physical networks for all components into an infrastructure map for middleware
-  network_infrastructure_map = {
-    for role, ctx in local.components_context : var.service_config[role].network_tier => local.state.network.infrastructure_map[ctx.identity.cluster_name]
-  }
-
-  # Helper for primary network configuration to reduce path redundancy
-  p_net_config = local.network_infrastructure_map[var.service_config[local.primary_role].network_tier]
-}
-
-# 3. Security & Credentials Context (sec_ / pki_ / sys_)
-locals {
-  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
-
-  # System Level Credentials (OS/SSH)
-  sec_vm_creds = {
-    username             = data.vault_generic_secret.guest_vm.data["vm_username"]
-    password             = data.vault_generic_secret.guest_vm.data["vm_password"]
-    ssh_public_key_path  = data.vault_generic_secret.guest_vm.data["ssh_public_key_path"]
-    ssh_private_key_path = data.vault_generic_secret.guest_vm.data["ssh_private_key_path"]
-  }
-
-  # Service Specific Credentials (DB/PG)
   sec_app_creds = {
     replication_password = data.vault_generic_secret.db_vars.data["pg_replication_password"]
     superuser_password   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
     vrrp_secret          = data.vault_generic_secret.db_vars.data["pg_vrrp_secret"]
   }
 
-  # Component Specific Vault Identities
-  sec_vault_role_key = local.svc_pki_role.key
-  sec_vault_agent_identity = {
-    vault_address = local.sys_vault_addr
-    auth_path     = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
-    role_id       = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_id
-    role_name     = local.state.vault_pki.pki_configuration.pki_roles[local.sec_vault_role_key].name
-    secret_id     = vault_approle_auth_backend_role_secret_id.postgres_agent.secret_id
-    ca_cert_b64   = local.state.vault_pki.bootstrap_ca_b64.content_b64
-    common_name   = local.svc_fqdn
-  }
+  sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {
+    secret_id = vault_approle_auth_backend_role_secret_id.postgres_agent.secret_id
+  })
 }
 
-# 4. Topology & Construction
-locals {
-  storage_pool_name = local.svc_identity.storage_pool_name
-
-  topology_cluster = {
-    components        = var.service_config
-    storage_pool_name = local.storage_pool_name
-  }
-
-  # Map logical roles to their respective physical identities from SSoT
-  node_identities = {
-    for role, ctx in local.components_context : role => ctx.identity
-  }
-}
-
-# 5. Ansible Configuration (Dynamic Inventory)
+# Ansible Configuration
 locals {
   ansible_template_vars = {
-    # Service Identifiers
-    service_identifier    = local.svc_identity.cluster_name
-    postgres_cluster_name = local.svc_identity.cluster_name
+    service_identifier    = module.context.svc_identity.cluster_name
+    postgres_cluster_name = module.context.svc_identity.cluster_name
 
-    # Networking & HA
-    postgres_ha_virtual_ip    = local.p_net_config.lb_config.vip
-    postgres_mtls_node_subnet = "${local.p_net_config.network.hostonly.cidr} ${local.state.network.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}"
-    vault_vip                 = local.state.vault_sys.service_vip
-    global_mss                = local.state.metadata.global_network_baseline.global_mss
+    postgres_ha_virtual_ip    = module.context.primary_net_config.lb_config.vip
+    postgres_mtls_node_subnet = "${module.context.primary_net_config.network.hostonly.cidr} ${data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}"
+    vault_vip                 = module.context.vault_sys_vip
+    global_mss                = module.context.global_mss
 
-    # Asymmetric Routing (Flattened)
-    postgres_static_route_to     = "${local.state.vault_sys.service_vip}/32"
-    postgres_static_route_via    = local.p_net_config.lb_config.vip
+    postgres_static_route_to     = "${module.context.vault_sys_vip}/32"
+    postgres_static_route_via    = module.context.primary_net_config.lb_config.vip
     postgres_static_route_metric = 100
 
-    # Compatibility Aliases (Optional)
-    access_scope = local.p_net_config.network.hostonly.cidr
-    postgres_vip = local.p_net_config.lb_config.vip
+    access_scope = module.context.primary_net_config.network.hostonly.cidr
+    postgres_vip = module.context.primary_net_config.lb_config.vip
   }
 
   ansible_extra_vars = {
@@ -128,6 +42,6 @@ locals {
     pg_superuser_password   = local.sec_app_creds.superuser_password
     pg_vrrp_secret          = local.sec_app_creds.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
-    vault_agent_cert_ttl    = local.state.vault_pki.pki_configuration.lease_durations.agent
+    vault_agent_cert_ttl    = data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent
   }
 }

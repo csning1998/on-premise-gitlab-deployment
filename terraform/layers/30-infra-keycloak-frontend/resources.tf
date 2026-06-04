@@ -1,11 +1,9 @@
 
-# Call the Identity Module to generate AppRole & Secret ID
 resource "vault_approle_auth_backend_role_secret_id" "keycloak_agent" {
   provider  = vault.production
-  backend   = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].auth_path
-  role_name = local.state.vault_pki.workload_identities_approle[local.sec_vault_role_key].role_name
+  backend   = data.terraform_remote_state.vault_pki.outputs.workload_identities_approle[module.context.svc_pki_role.key].auth_path
+  role_name = data.terraform_remote_state.vault_pki.outputs.workload_identities_approle[module.context.svc_pki_role.key].role_name
 
-  # Metadata for Vault Audit Log
   metadata = jsonencode({
     "source" = "terraform-layer-30-keycloak"
   })

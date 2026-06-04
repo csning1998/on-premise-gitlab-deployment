@@ -1,0 +1,105 @@
+
+# 1. SSoT Alignment
+locals {
+  segments_map = merge([
+    for s_name, components in var.global_topology_identity : {
+      for c_name, identity in components : identity.cluster_name => {
+        identity = identity
+        network  = var.global_topology_network[s_name][c_name]
+        pki_key  = "${s_name}-${c_name}"
+        s_name   = s_name
+        c_name   = c_name
+      }
+    }
+  ]...)
+
+  components_context = {
+    for role, cluster_name in var.target_clusters : role => local.segments_map[cluster_name]
+  }
+
+  primary_context = local.components_context[var.primary_role]
+
+  svc_identity = local.primary_context.identity
+  svc_network  = local.primary_context.network
+  svc_pki_role = var.global_pki_map[local.primary_context.pki_key]
+  svc_fqdn     = local.svc_pki_role.dns_san[0]
+}
+
+# 2. Network Context
+# The ... grouping operator handles layers where multiple roles share the same network_tier
+# (e.g. kubeadm master/worker both using "default"). Taking [0] is safe: duplicate tiers
+# always map to the same infrastructure config since they point to the same cluster.
+locals {
+  network_infrastructure_map_grouped = {
+    for role, ctx in local.components_context :
+    var.service_config[role].network_tier => var.infrastructure_map[ctx.identity.cluster_name]...
+  }
+
+  network_infrastructure_map = {
+    for k, v in local.network_infrastructure_map_grouped : k => v[0]
+  }
+
+  primary_net_config = local.network_infrastructure_map[var.service_config[var.primary_role].network_tier]
+}
+
+# 3. Security & Credentials
+locals {
+  sys_vault_addr = var.vault_sys_vip != null ? "https://${var.vault_sys_vip}:443" : null
+
+  sec_vm_creds = {
+    username             = var.guest_vm_data["vm_username"]
+    password             = var.guest_vm_data["vm_password"]
+    ssh_public_key_path  = var.guest_vm_data["ssh_public_key_path"]
+    ssh_private_key_path = var.guest_vm_data["ssh_private_key_path"]
+  }
+}
+
+# 4. Topology
+locals {
+  storage_pool_name = local.svc_identity.storage_pool_name
+
+  topology_cluster = {
+    components        = var.service_config
+    storage_pool_name = local.storage_pool_name
+  }
+
+  node_identities = {
+    for role, ctx in local.components_context : role => ctx.identity
+  }
+}
+
+# 5. Vault Agent Identities (partial — secret_id must be injected by root module after AppRole generation)
+# vault_pki_outputs absent (Layer 15 and earlier) → all_vault_agent_identity_bases = {}, vault_agent_identity_base = null
+locals {
+  all_vault_agent_identity_bases = var.vault_pki_outputs != null ? {
+    for role, ctx in local.components_context : role => {
+      vault_address = local.sys_vault_addr
+      auth_path     = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].auth_path
+      role_id       = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].role_id
+      role_name     = var.vault_pki_outputs.pki_configuration.pki_roles[var.global_pki_map[ctx.pki_key].key].name
+      ca_cert_b64   = var.vault_pki_outputs.bootstrap_ca_b64.content_b64
+      common_name   = var.global_pki_map[ctx.pki_key].dns_san[0]
+    }
+  } : {}
+
+  vault_agent_identity_base = lookup(local.all_vault_agent_identity_bases, var.primary_role, null)
+}
+
+# 6. Asymmetric Static Routes
+# Produces routes for every other service's cidr_block, plus nat_cidr_block for k8s runtimes
+# (microk8s/kubeadm use a VXLAN overlay; pod IPs come from nat_cidr_block, not cidr_block).
+# The via address is always the primary LB VIP so all inter-service traffic egresses correctly.
+locals {
+  asymmetric_static_routes = flatten([
+    for s_name, components in var.global_topology_network : [
+      for c_name, net in components : concat(
+        [{ to = net.cidr_block, via = local.primary_net_config.lb_config.vip, metric = 100 }],
+        contains(["microk8s", "kubeadm"], net.runtime) ? [{
+          to     = net.nat_cidr_block
+          via    = local.primary_net_config.lb_config.vip
+          metric = 100
+        }] : []
+      ) if s_name != local.primary_context.s_name || c_name != local.primary_context.c_name
+    ]
+  ])
+}

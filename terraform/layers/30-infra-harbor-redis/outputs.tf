@@ -1,12 +1,12 @@
 
 output "service_vip" {
   description = "The virtual IP assigned to the Redis service from Central LB topology."
-  value       = local.ansible_template_vars.redis_vip
+  value       = module.context.primary_net_config.lb_config.vip
 }
 
 output "credentials_system" {
   description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = local.sec_vm_creds
+  value       = module.context.sec_vm_creds
   sensitive   = true
 }
 
