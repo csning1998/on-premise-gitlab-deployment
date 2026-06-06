@@ -8,6 +8,7 @@ network:
         macaddress: "${nat_mac}"
       dhcp4: true
       dhcp-identifier: mac
+      optional: true
       nameservers:
         addresses: ["${nat_gateway}"]
 
@@ -21,4 +22,9 @@ network:
         - to: 172.16.0.0/16
           via: "${hostonly_gateway}"
           metric: 100
+%{ for route in static_routes ~}
+        - to: "${route.to}"
+          via: "${route.via}"
+          metric: ${route.metric}
+%{ endfor ~}
       mtu: ${mtu}

@@ -17,33 +17,6 @@
         group: root
       notify: Update CA Certificates
 
-    - name: "B1c. Identify natural route for Infrastructure VIPs"
-      ansible.builtin.shell: >
-        set -o pipefail &&
-        ip route get {{ item }} | head -n 1
-      args:
-        executable: /bin/bash
-      register: natural_routes
-      loop:
-        - "{{ vault_addr | regex_replace('^https://', '') | regex_replace(':.*$', '') }}"
-        - "{{ registry_vip }}"
-      changed_when: false
-
-    - name: "B1d. Inject routing optimization for Infrastructure VIPs (MTU bypass)"
-      ansible.builtin.command:
-        cmd: >
-          ip route replace {{ item.item }}
-          {{ item.stdout |
-              regex_replace('^' + (item.item | regex_escape()) + '\s+', '') |
-              regex_replace('uid \d+', '') |
-              trim }}
-          advmss {{ global_mss }}
-      loop: "{{ natural_routes.results }}"
-      loop_control:
-        label: "{{ item.item }}"
-      when: "('advmss ' + (global_mss | string)) not in item.stdout"
-      changed_when: true
-
     - name: "B1e. Force update CA certificates to validate Vault API"
       ansible.builtin.command: update-ca-certificates
       register: ca_update_result

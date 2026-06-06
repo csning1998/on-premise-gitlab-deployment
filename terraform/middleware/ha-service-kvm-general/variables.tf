@@ -132,3 +132,13 @@ variable "storage_infrastructure_map" {
   type        = any
   default     = {}
 }
+
+variable "static_routes" {
+  description = "Static routes keyed by network_tier. Each entry is the list of routes for nodes in that tier."
+  type = map(list(object({
+    to     = string
+    via    = string
+    metric = number
+  })))
+  default = {}
+}

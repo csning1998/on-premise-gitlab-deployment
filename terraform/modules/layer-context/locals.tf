@@ -86,20 +86,39 @@ locals {
 }
 
 # 6. Asymmetric Static Routes
-# Produces routes for every other service's cidr_block, plus nat_cidr_block for k8s runtimes
-# (microk8s/kubeadm use a VXLAN overlay; pod IPs come from nat_cidr_block, not cidr_block).
-# The via address is always the primary LB VIP so all inter-service traffic egresses correctly.
+# Keyed by network_tier so each tier uses its own LB VIP as gateway (on-link requirement).
+# '...' grouping deduplicates tiers shared across roles (e.g. kubeadm master/worker); [0] is safe.
 locals {
-  asymmetric_static_routes = flatten([
+  all_cluster_net_specs = flatten([
     for s_name, components in var.global_topology_network : [
-      for c_name, net in components : concat(
-        [{ to = net.cidr_block, via = local.primary_net_config.lb_config.vip, metric = 100 }],
-        contains(["microk8s", "kubeadm"], net.runtime) ? [{
-          to     = net.nat_cidr_block
-          via    = local.primary_net_config.lb_config.vip
-          metric = 100
-        }] : []
-      ) if s_name != local.primary_context.s_name || c_name != local.primary_context.c_name
+      for c_name, net in components : {
+        s_name = s_name
+        c_name = c_name
+        cidrs = concat(
+          [net.cidr_block],
+          contains(["microk8s", "kubeadm"], net.runtime) ? [net.nat_cidr_block] : []
+        )
+      }
     ]
   ])
+}
+
+locals {
+  asymmetric_static_routes_grouped = {
+    for role, ctx in local.components_context :
+    var.service_config[role].network_tier => flatten([
+      for spec in local.all_cluster_net_specs :
+      (spec.s_name != ctx.s_name || spec.c_name != ctx.c_name) ? [
+        for cidr in spec.cidrs : {
+          to     = cidr
+          via    = local.network_infrastructure_map[var.service_config[role].network_tier].lb_config.vip
+          metric = 100
+        }
+      ] : []
+    ])...
+  }
+
+  asymmetric_static_routes = {
+    for k, v in local.asymmetric_static_routes_grouped : k => v[0]
+  }
 }

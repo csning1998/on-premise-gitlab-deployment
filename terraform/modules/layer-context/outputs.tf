@@ -82,8 +82,16 @@ output "components_context" {
 }
 
 output "asymmetric_static_routes" {
-  description = "Pre-computed static routes: all other services' cidr_block + nat_cidr_block (k8s runtimes only), all via primary LB VIP."
+  description = "Static routes keyed by network_tier. Each tier's routes cover all other clusters via that tier's own LB VIP, ensuring on-link gateway validity."
   value       = local.asymmetric_static_routes
+
+  precondition {
+    condition = alltrue([
+      for tier, route_lists in local.asymmetric_static_routes_grouped :
+      length(distinct([for rl in route_lists : jsonencode(rl)])) == 1
+    ])
+    error_message = "One or more network_tier values are shared by roles from different clusters. Each tier must map to exactly one cluster for route deduplication to be correct."
+  }
 }
 
 output "vault_sys_vip" {

@@ -7,6 +7,7 @@ module "hypervisor_kvm" {
   create_networks        = false
   credentials            = local.vm_credentials_for_hypervisor
   libvirt_infrastructure = local.hypervisor_kvm_infrastructure
+  static_routes          = var.static_routes
 }
 
 module "ssh_manager" {

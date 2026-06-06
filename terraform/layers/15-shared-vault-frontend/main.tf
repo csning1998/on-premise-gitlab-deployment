@@ -30,9 +30,10 @@ module "shared_vault" {
   svc_identity               = module.context.svc_identity
   node_identities            = module.context.node_identities
   topology_cluster           = module.context.topology_cluster
-  storage_infrastructure_map = data.terraform_remote_state.volume.outputs.storage_infrastructure_map
   network_infrastructure_map = module.context.network_infrastructure_map
   credentials_system         = module.context.sec_vm_creds
+  static_routes              = module.context.asymmetric_static_routes
+  storage_infrastructure_map = data.terraform_remote_state.volume.outputs.storage_infrastructure_map
 
   ansible_generic_config = {
     template_vars = local.ansible_template_vars

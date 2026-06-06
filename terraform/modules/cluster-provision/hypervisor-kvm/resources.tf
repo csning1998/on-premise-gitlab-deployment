@@ -134,6 +134,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
     nat_gateway      = var.libvirt_infrastructure[each.value.network_tier].network.nat.ips.address
     hostonly_gateway = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.ips.address
     mtu              = var.libvirt_infrastructure[each.value.network_tier].network.hostonly.mtu
+    static_routes    = lookup(var.static_routes, each.value.network_tier, [])
   })
 }
 
