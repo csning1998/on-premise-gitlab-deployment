@@ -1,0 +1,28 @@
+---
+- name: "Play: Operation - Unseal All Vault Nodes"
+  hosts: primary, replica
+  become: true
+  gather_facts: true
+  tags: [vault-unseal]
+  tasks:
+    - name: "Execute Vault Unseal only"
+      ansible.builtin.include_role:
+        name: 15-infra-vault
+        tasks_from: D-unseal.yaml
+
+- name: "Play: Operation - Revert Gitaly to Standalone (Safety Pre-check)"
+  hosts: all
+  become: true
+  gather_facts: true
+  tags: [gitaly-revert-standalone]
+  tasks:
+    - name: "Create dynamic groups from node_role"
+      ansible.builtin.group_by:
+        key: "{{ node_role | replace('-', '_') }}"
+    - name: "Verify data integrity before reverting to standalone Gitaly"
+      ansible.builtin.include_role:
+        name: 30-infra-gitaly-praefect
+        tasks_from: C-migrate-to-standalone.yaml
+      when:
+        - groups['gitaly'] | default([]) | length > 0
+        - inventory_hostname == groups['gitaly'][0]

@@ -1,4 +1,17 @@
 ---
-- name: "Configure service: {{ node_role }}"
-  ansible.builtin.include_tasks: service.yaml
+- name: "Section A. Initialize and mount vdb for Gitaly"
+  ansible.builtin.include_tasks: A-data-disk.yaml
+  when: node_role == 'gitaly'
+
+- name: "Section B. Configure service: {{ node_role }}"
+  ansible.builtin.include_tasks: B-service.yaml
   when: node_role in ['gitaly', 'praefect']
+
+# Registers any on-disk Gitaly repository missing from the Praefect DB on every deploy,
+# so a topology change or DB rebuild restores tracking automatically.
+# Runs once on the primary Praefect node.
+- name: "Section C. Reconcile Gitaly repositories into Praefect"
+  ansible.builtin.include_tasks: C-migrate-to-praefect.yaml
+  when:
+    - node_role == 'praefect'
+    - inventory_hostname == groups['praefect'][0]

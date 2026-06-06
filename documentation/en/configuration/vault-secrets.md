@@ -192,4 +192,4 @@ SSH identity variables (`ssh_`) are primarily utilized in Packer for one-time pr
 Vault must be unsealed after every startup in this repo. Following options are available:
 
 - Option `3` in `entry.sh` unseals Bootstrapper Vault, using `vault_dev_unseal_handler()` shell function.
-- Option `4` in `entry.sh` unseals Production Vault via `90-operation-vault-unseal.yaml` Ansible playbook.
+- Option `4` in `entry.sh` unseals Production Vault via `90-operation-playbook.yaml` Ansible playbook.

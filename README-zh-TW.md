@@ -656,7 +656,7 @@ git clone --depth 1 https://gitlab.com/csning1998/on-premise-gitlab-deployment.g
 
 5.  在此 repo 中，Vault 在每一次啟動之後，都會需要進行 unseal 操作。可以使用以下方式：
     - `entry.sh` 選項 `3` 做 Unseal Bootstrapper Vault，會使用 Shell Script 的 `vault_dev_unseal_handler()` 執行
-    - `entry.sh` 選項 `4` 做 Unseal Production mode Vault，會使用 Ansible Playbook `90-operation-vault-unseal.yaml` 操作
+    - `entry.sh` 選項 `4` 做 Unseal Production mode Vault，會使用 Ansible Playbook `90-operation-playbook.yaml` 操作
 
     或者如 B.1-2 所述使用容器，較為簡便
 

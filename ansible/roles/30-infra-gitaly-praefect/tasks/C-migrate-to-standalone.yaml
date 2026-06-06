@@ -1,0 +1,32 @@
+---
+# Pre-flight check before reverting from Praefect HA to standalone Gitaly.
+# Runs on groups['gitaly'][0] only (the node that will become the standalone Gitaly).
+# Delegates the dataloss query to the primary Praefect node.
+# Blocks the revert if gitaly-0 appears as an outdated replica in the dataloss report.
+
+- name: "Pre-check: Query Praefect dataloss status"
+  ansible.builtin.command:
+    cmd: >-
+      /opt/gitlab/embedded/bin/praefect
+      -config /var/opt/gitlab/praefect/config.toml
+      dataloss
+  delegate_to: "{{ groups['praefect'][0] }}"
+  become: true
+  register: _migrate_back_dataloss
+  changed_when: false
+
+- name: "Pre-check: Display dataloss report"
+  ansible.builtin.debug:
+    var: _migrate_back_dataloss.stdout_lines
+
+- name: "Pre-check: Fail if gitaly-0 has missing replicas"
+  ansible.builtin.fail:
+    msg: |
+      gitaly-0 is listed as an outdated replica in Praefect's dataloss report.
+      Reverting to standalone would cause data loss.
+      Wait for replication to complete, then re-run the safety pre-check.
+      Dataloss output:
+      {{ _migrate_back_dataloss.stdout }}
+  when:
+    - "'All repositories are available!' not in _migrate_back_dataloss.stdout"
+    - "'gitaly-0 (behind' in _migrate_back_dataloss.stdout"

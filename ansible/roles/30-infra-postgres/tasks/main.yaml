@@ -1,4 +1,7 @@
 ---
+- name: "Section A. Initialize and mount vdb for PostgreSQL"
+  ansible.builtin.include_tasks: A-data-disk.yaml
+
 # Role 81 (scalar): standalone postgres layers pass individual route vars
 - name: "Role 81: Configure Network Routing (scalar format)"
   ansible.builtin.include_role:
@@ -21,11 +24,11 @@
     - postgres_static_routes is defined
     - postgres_static_routes | length > 0
 
-- name: "Section A. Install Patroni and Environment"
-  ansible.builtin.include_tasks: A-install.yaml
+- name: "Section B. Install Patroni and Environment"
+  ansible.builtin.include_tasks: B-install.yaml
 
-- name: "Section B. Configure Patroni and Vault"
-  ansible.builtin.include_tasks: B-configure.yaml
+- name: "Section C. Configure Patroni and Vault"
+  ansible.builtin.include_tasks: C-configure.yaml
 
 # Resolve per-component Vault Agent identity when running inside a multi-component
 # layer (postgres_vault_role_key is set). Falls back to the flat vars injected by
@@ -45,7 +48,7 @@
     vault_agent_owner: "{{ postgres_user }}"
     vault_agent_group: "{{ postgres_group }}"
     vault_agent_cert_base_dir: "/etc/postgresql/certs"
-    vault_agent_post_command: "systemctl restart patroni"
+    vault_agent_post_command: "systemctl is-active patroni && systemctl restart patroni || true"
     vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"
     vault_agent_role_id: >-
       {{ _postgres_vault_identity.role_id
@@ -68,5 +71,5 @@
         if _postgres_vault_identity is defined
         else vault_auth_path }}
 
-- name: "Section C. Manage Patroni Service"
-  ansible.builtin.include_tasks: C-service.yaml
+- name: "Section D. Manage Patroni Service"
+  ansible.builtin.include_tasks: D-service.yaml

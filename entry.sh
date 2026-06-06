@@ -76,6 +76,9 @@ options+=("Build Packer Base Image")
 options+=("Verify Guest VM Connectivity via SSH")
 options+=("Switch Environment Strategy")
 
+# [Operations - GitLab]
+options+=("[PROD] Revert Gitaly to Standalone for Safety Pre-check")
+
 # [Reset]
 options+=("Purge All Packer Artifacts")
 options+=("Purge All Infrastructure Resources (Libvirt + Terraform)")
@@ -131,6 +134,12 @@ select opt in "${options[@]}"; do
       ;;
     "Switch Environment Strategy")
       strategy_switch_handler
+      ;;
+
+    # Operations - GitLab
+    "[PROD] Revert Gitaly to Standalone for Safety Pre-check")
+      gitaly_revert_to_standalone_trigger
+      break
       ;;
     # Reset
     "Purge All Packer Artifacts")

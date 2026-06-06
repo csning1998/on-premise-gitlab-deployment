@@ -4,3 +4,4 @@ praefect_db_name: "praefect_production"
 gitaly_tls_enabled: true
 praefect_tls_enabled: true
 gitlab_external_url: "https://gitlab.example.com"
+gitaly_repo_base_path: "/var/opt/gitlab/git-data/repositories"

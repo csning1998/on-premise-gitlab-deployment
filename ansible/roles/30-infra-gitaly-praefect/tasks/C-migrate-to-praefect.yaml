@@ -1,0 +1,95 @@
+---
+# Idempotently reconciles repositories from the authoritative Gitaly node into
+# Praefect's database. Runs on the primary Praefect node on every deploy so that
+# any repository present on disk but missing from the Praefect DB is tracked and
+# replicated. This self-heals the tracking metadata after a Praefect DB rebuild
+# or a change to the Gitaly/Praefect topology, without a manual track-repositories run.
+#
+# The authoritative node is always gitaly-0 (the first host in groups['gitaly']).
+
+- name: "Migrate: Find all repositories on authoritative Gitaly node"
+  ansible.builtin.find:
+    paths: "{{ gitaly_repo_base_path }}"
+    patterns: "*.git"
+    recurse: true
+    file_type: directory
+  delegate_to: "{{ groups['gitaly'][0] }}"
+  become: true
+  become_user: git
+  register: _migrate_repos_found
+
+# Gitaly stores internal cluster state under the reserved '+gitaly' prefix.
+# Those paths are not user repositories and must never be tracked in Praefect.
+- name: "Migrate: Build on-disk repository set excluding +gitaly internal state"
+  ansible.builtin.set_fact:
+    _migrate_disk_paths: >-
+      {{ _migrate_repos_found.files
+          | map(attribute='path')
+          | map('regex_replace', '^' + gitaly_repo_base_path + '/', '')
+          | reject('match', '^[+]gitaly/')
+          | list }}
+
+- name: "Migrate: Query repositories already tracked in Praefect DB"
+  ansible.builtin.command:
+    cmd: /opt/gitlab/embedded/bin/psql -tAc "SELECT relative_path FROM repositories"
+  environment:
+    PGHOST: "{{ postgres_ha_virtual_ip }}"
+    PGPORT: "5432"
+    PGDATABASE: "{{ praefect_db_name | default('praefect_production') }}"
+    PGUSER: "{{ praefect_db_user | default('praefect') }}"
+    PGPASSWORD: "{{ praefect_db_password }}"
+    PGSSLMODE: "verify-ca"
+    PGSSLROOTCERT: "/etc/gitlab/ssl/ca.crt"
+    PGSSLCERT: "/etc/gitlab/ssl/server.crt"
+    PGSSLKEY: "/etc/gitlab/ssl/server.key"
+  become: true
+  register: _migrate_tracked
+  changed_when: false
+  no_log: true
+
+- name: "Migrate: Compute repositories present on disk but untracked"
+  ansible.builtin.set_fact:
+    _migrate_untracked: >-
+      {{ _migrate_disk_paths
+          | difference(_migrate_tracked.stdout_lines | map('trim') | select | list) }}
+
+- name: "Migrate: Report reconciliation plan"
+  ansible.builtin.debug:
+    msg: "On-disk repos: {{ _migrate_disk_paths | length }}, untracked to register: {{ _migrate_untracked | length }}"
+
+- name: "Migrate: Write track-repositories NDJSON input file"
+  ansible.builtin.copy:
+    dest: /tmp/praefect-track-input.json
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      {% for r in _migrate_untracked %}
+      {{ dict(relative_path=r, replica_path=r, virtual_storage=vs, authoritative_storage="gitaly-0") | to_json }}
+      {% endfor %}
+  vars:
+    vs: "{{ praefect_virtual_storage_name | default('default') }}"
+  when: _migrate_untracked | length > 0
+
+- name: "Migrate: Register repositories in Praefect DB and replicate immediately"
+  ansible.builtin.command:
+    cmd: >-
+      /opt/gitlab/embedded/bin/praefect
+      -config /var/opt/gitlab/praefect/config.toml
+      track-repositories
+      --input-path /tmp/praefect-track-input.json
+      --replicate-immediately
+  register: _migrate_track_result
+  changed_when: "'Finished adding new repository' in _migrate_track_result.stdout"
+  when: _migrate_untracked | length > 0
+
+- name: "Migrate: Show track-repositories result"
+  ansible.builtin.debug:
+    var: _migrate_track_result.stdout_lines
+  when: _migrate_untracked | length > 0
+
+- name: "Migrate: Remove NDJSON input file"
+  ansible.builtin.file:
+    path: /tmp/praefect-track-input.json
+    state: absent
+  when: _migrate_untracked | length > 0

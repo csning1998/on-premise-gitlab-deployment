@@ -4,7 +4,7 @@ locals {
     global_mss          = module.context.global_mss
     vault_vip           = module.context.primary_net_config.lb_config.vip
     vault_cluster_name  = module.context.svc_identity.cluster_name
-    vault_static_routes = module.context.asymmetric_static_routes
+    vault_static_routes = one(values(module.context.asymmetric_static_routes))
   }
 
   ansible_extra_vars = merge(

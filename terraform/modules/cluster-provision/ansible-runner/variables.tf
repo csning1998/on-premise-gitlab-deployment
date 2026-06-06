@@ -5,6 +5,7 @@ variable "ansible_config" {
     root_path       = string # e.g. ".../ansible"
     ssh_config_path = string
     inventory_file  = string # e.g. "inventory-10-vault-core.yaml"
+    verbosity       = optional(number, 4)
   })
 
   validation {

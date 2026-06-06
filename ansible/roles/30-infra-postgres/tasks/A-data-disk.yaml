@@ -1,0 +1,50 @@
+---
+- name: "A1. Check current mount state"
+  ansible.builtin.command:
+    cmd: findmnt --source /dev/vdb --mountpoint /var/lib/postgresql
+  register: _disk_already_mounted
+  changed_when: false
+  failed_when: false
+
+- name: "A2. Initialize vdb"
+  when: _disk_already_mounted.rc != 0
+  block:
+    - name: "A2a. Check if vdb is already formatted"
+      ansible.builtin.command:
+        cmd: blkid /dev/vdb
+      register: _disk_blkid
+      changed_when: false
+      failed_when: false
+
+    - name: "A2b. Format vdb with XFS"
+      ansible.builtin.command:
+        cmd: mkfs.xfs /dev/vdb
+      when: _disk_blkid.rc != 0
+      changed_when: true
+
+    - name: "A2c. Get vdb UUID"
+      ansible.builtin.command:
+        cmd: blkid -s UUID -o value /dev/vdb
+      register: _disk_uuid
+      changed_when: false
+
+    - name: "A2d. Ensure postgresql base directory exists"
+      ansible.builtin.file:
+        path: /var/lib/postgresql
+        state: directory
+        mode: "0755"
+
+    - name: "A2e. Mount vdb at postgresql path and persist in fstab"
+      ansible.posix.mount:
+        path: /var/lib/postgresql
+        src: "UUID={{ _disk_uuid.stdout }}"
+        fstype: xfs
+        opts: defaults
+        state: mounted
+
+- name: "A3. Enforce ownership on vdb mount root"
+  ansible.builtin.file:
+    path: /var/lib/postgresql
+    owner: "{{ postgres_user }}"
+    group: "{{ postgres_group }}"
+    mode: "0700"

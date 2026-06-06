@@ -12,7 +12,7 @@
 - name: "Play [ETCD]: Configure etcd Cluster"
   hosts: >-
     {{ (groups['etcd'] | default([]))
-       + (groups['praefect_patroni'] | default([])) }}
+        + (groups['praefect_patroni'] | default([])) }}
   become: true
   roles:
     - 09-base-etcd
@@ -22,7 +22,7 @@
 - name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
   hosts: >-
     {{ (groups['postgres'] | default([]))
-       + (groups['praefect_patroni'] | default([])) }}
+        + (groups['praefect_patroni'] | default([])) }}
   become: true
   roles:
     - 30-infra-postgres

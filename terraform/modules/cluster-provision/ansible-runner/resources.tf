@@ -59,7 +59,7 @@ action "ansible_playbook_run" "run_playbook" {
   config {
     playbooks               = local.playbook_path
     extra_vars              = var.extra_vars
-    verbosity               = 2
+    verbosity               = var.ansible_config.verbosity
     ansible_playbook_binary = "ansible-playbook"
   }
 }

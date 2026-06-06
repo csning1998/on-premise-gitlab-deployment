@@ -16,13 +16,12 @@ logrotate['enable'] = true
 # Keep Gitaly enabled
 gitaly['enable'] = true
 
-# Storage Naming compatibility logic
-{% if groups['praefect'] | default([]) | length > 0 %}
-# Clustered HA storage shard name
-{% set local_storage_name = "gitaly-" ~ groups['gitaly'].index(inventory_hostname) %}
-{% else %}
-# Standalone Gitaly storage name
+# Storage naming: standalone uses "default"; clustered (behind Praefect) uses "gitaly-N".
+# Topology-driven: storage name is derived from whether Praefect nodes exist in inventory.
+{% if groups['praefect'] | default([]) | length == 0 %}
 {% set local_storage_name = "default" %}
+{% else %}
+{% set local_storage_name = "gitaly-" ~ groups['gitaly'].index(inventory_hostname) %}
 {% endif %}
 
 gitaly['configuration'] = {

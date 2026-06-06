@@ -45,7 +45,7 @@ locals {
         via    = module.context.primary_net_config.lb_config.vip
         metric = 100
       }
-      if contains(["vault-frontend", "keycloak-frontend"], name)
+      if contains(["vault-frontend"], name)
     ]
 
     access_scope = module.context.primary_net_config.network.hostonly.cidr
