@@ -1,7 +1,5 @@
 
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }

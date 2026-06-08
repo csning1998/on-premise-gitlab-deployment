@@ -1,4 +1,14 @@
 
+# GitLab HTTP backend credentials (read at plan time from gitignored file)
+locals {
+  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _state_auth = {
+    username = local._gl_creds.username
+    password = local._gl_creds.token
+  }
+}
+
 # 1. Global Topology and Bootstrap CA.
 # Note: The bootstrap-ca.crt file is written by Layer 15 (15-shared-vault-frontend).
 # Layer 20 references it via the path below for the Vault provider's ca_cert_file.

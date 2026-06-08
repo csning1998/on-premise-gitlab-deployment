@@ -6,6 +6,7 @@ terraform {
       version = "6.8.3"
     }
   }
+  backend "http" {}
 }
 
 provider "github" {

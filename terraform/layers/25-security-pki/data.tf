@@ -1,28 +1,20 @@
 
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "vault_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-vault-bootstrapper/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-vault-bootstrapper" })
 }
 
 data "terraform_remote_state" "vault_sys" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../15-shared-vault-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/15-shared-vault-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }

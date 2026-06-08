@@ -6,6 +6,7 @@ terraform {
       version = "5.5.0"
     }
   }
+  backend "http" {}
 }
 
 # The target Vault being configured (Bootstrapper/Initial Vault)

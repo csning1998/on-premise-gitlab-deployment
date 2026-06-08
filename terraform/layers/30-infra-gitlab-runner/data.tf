@@ -1,44 +1,32 @@
 
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "volume" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../05-foundation-volume/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/05-foundation-volume" })
 }
 
 data "terraform_remote_state" "load_balancer" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../10-shared-load-balancer-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 data "terraform_remote_state" "vault_sys" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../15-shared-vault-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/15-shared-vault-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
 
 data "terraform_remote_state" "vault_pki" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../25-security-pki/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
 
@@ -48,15 +36,11 @@ data "vault_generic_secret" "guest_vm" {
 }
 
 data "terraform_remote_state" "harbor_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-bootstrapper-frontend" })
 }
 
 data "terraform_remote_state" "harbor_proxy" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }

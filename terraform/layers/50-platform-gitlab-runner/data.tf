@@ -1,58 +1,42 @@
 
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
 
 data "terraform_remote_state" "vault_pki" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../25-security-pki/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
 data "terraform_remote_state" "gitlab_frontend" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../50-platform-gitlab-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/50-platform-gitlab-frontend" })
 }
 
 data "terraform_remote_state" "runner_cluster" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-gitlab-runner/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-runner" })
 }
 
 data "terraform_remote_state" "harbor_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-bootstrapper-frontend" })
 }
 
 data "terraform_remote_state" "harbor_bootstrapper_oci" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }
 
 data "terraform_remote_state" "network" {
-  backend = "local"
-  config = {
-    path = "../10-shared-load-balancer-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 ephemeral "vault_kv_secret_v2" "kubeconfig" {

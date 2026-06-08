@@ -10,6 +10,7 @@ terraform {
       version = "18.11.0"
     }
   }
+  backend "http" {}
 }
 
 # Production Provider (Layer 10 Vault)

@@ -6,6 +6,7 @@ terraform {
       version = "4.1.0"
     }
   }
+  backend "http" {}
 }
 
 provider "tls" {}

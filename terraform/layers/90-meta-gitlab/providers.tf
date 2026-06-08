@@ -10,6 +10,7 @@ terraform {
       version = "5.5.0"
     }
   }
+  backend "http" {}
 }
 
 provider "vault" {

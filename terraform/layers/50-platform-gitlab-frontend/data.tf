@@ -1,69 +1,51 @@
 
 # Foundation Metadata State (SSoT)
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "network" {
-  backend = "local"
-  config = {
-    path = "../05-foundation-network/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/05-foundation-network" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
 
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
-  backend = "local"
-  config = {
-    path = "../25-security-pki/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
 # Infrastructure VIPs
 data "terraform_remote_state" "redis" {
-  backend = "local"
-  config = {
-    path = "../30-infra-gitlab-redis/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-redis" })
 }
 
 data "terraform_remote_state" "postgres" {
-  backend = "local"
-  config = {
-    path = "../30-infra-gitlab-postgres/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-postgres" })
 }
 
 data "terraform_remote_state" "minio" {
-  backend = "local"
-  config = {
-    path = "../30-infra-gitlab-minio/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-minio" })
 }
 
 # Kubeadm Cluster State
 data "terraform_remote_state" "kubeadm" {
-  backend = "local"
-  config = {
-    path = "../30-infra-gitlab-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-frontend" })
 }
 
 data "terraform_remote_state" "gitaly_praefect" {
-  backend = "local"
-  config = {
-    path = "../30-infra-gitlab-gitaly-praefect/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-gitaly-praefect" })
 }
 
 data "vault_kv_secret_v2" "gitaly_secrets" {
@@ -74,18 +56,14 @@ data "vault_kv_secret_v2" "gitaly_secrets" {
 
 # 0. Infrastructure Provisioning State
 data "terraform_remote_state" "provision" {
-  backend = "local"
-  config = {
-    path = "../40-provision-gitlab-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-gitlab-frontend" })
 }
 
 # Harbor Bootstrapper State
 data "terraform_remote_state" "harbor_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }
 
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
@@ -97,17 +75,13 @@ data "vault_kv_secret_v2" "harbor_bootstrapper" {
 
 # 1. Database Provisioning State
 data "terraform_remote_state" "provision_databases" {
-  backend = "local"
-  config = {
-    path = "../40-provision-gitlab-databases/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-gitlab-databases" })
 }
 
 data "terraform_remote_state" "harbor" {
-  backend = "local"
-  config = {
-    path = "../50-platform-harbor-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/50-platform-harbor-frontend" })
 }
 
 # 2. Fetch Kubeconfig from Production Vault
@@ -154,10 +128,8 @@ data "vault_kv_secret_v2" "gitlab_app_database" {
 
 # 3. Keycloak OIDC State & Client Secret
 data "terraform_remote_state" "keycloak_oidc" {
-  backend = "local"
-  config = {
-    path = "../40-provision-keycloak-oidc/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-keycloak-oidc" })
 }
 
 data "vault_kv_secret_v2" "keycloak_gitlab_client" {

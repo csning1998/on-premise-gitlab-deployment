@@ -1,4 +1,14 @@
 
+# GitLab HTTP backend credentials (read at plan time from gitignored file)
+locals {
+  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _state_auth = {
+    username = local._gl_creds.username
+    password = local._gl_creds.token
+  }
+}
+
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
   sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"

@@ -1,4 +1,14 @@
 
+# GitLab HTTP backend credentials (read at plan time from gitignored file)
+locals {
+  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _state_auth = {
+    username = local._gl_creds.username
+    password = local._gl_creds.token
+  }
+}
+
 # State Object
 locals {
   state = {
@@ -19,7 +29,7 @@ locals {
   global_volume_map = local.state.metadata.global_volume_map
 
   # 3. Extract unique pool names required for physical storage realization.
-  # This includes pools for segments without data disks (root disk pools) 
+  # This includes pools for segments without data disks (root disk pools)
   # and specific data volume pools.
   unique_pools = toset(distinct(concat(
     [for key, identity in local.global_identity_map : identity.storage_pool_name],

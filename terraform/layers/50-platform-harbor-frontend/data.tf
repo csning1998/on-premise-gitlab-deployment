@@ -1,63 +1,47 @@
 
 # Foundation Metadata State (SSoT)
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
 
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
-  backend = "local"
-  config = {
-    path = "../25-security-pki/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
 # Infrastructure VIPs
 data "terraform_remote_state" "redis" {
-  backend = "local"
-  config = {
-    path = "../30-infra-harbor-redis/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-redis" })
 }
 
 data "terraform_remote_state" "postgres" {
-  backend = "local"
-  config = {
-    path = "../30-infra-harbor-postgres/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-postgres" })
 }
 
 data "terraform_remote_state" "minio" {
-  backend = "local"
-  config = {
-    path = "../30-infra-harbor-minio/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-minio" })
 }
 
 # MicroK8s Cluster State
 data "terraform_remote_state" "microk8s_provision" {
-  backend = "local"
-  config = {
-    path = "../30-infra-harbor-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-frontend" })
 }
 
 # Harbor Bootstrapper State
 data "terraform_remote_state" "harbor_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "../40-provision-harbor-bootstrapper-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }
 
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)

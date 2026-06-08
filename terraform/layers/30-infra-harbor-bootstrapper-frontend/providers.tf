@@ -10,6 +10,7 @@ terraform {
       version = "0.9.7"
     }
   }
+  backend "http" {}
 }
 
 provider "libvirt" {

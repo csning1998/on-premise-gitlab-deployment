@@ -1,58 +1,42 @@
 
 data "terraform_remote_state" "metadata" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
 data "terraform_remote_state" "network" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../10-shared-load-balancer-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 data "terraform_remote_state" "vault_sys" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../15-shared-vault-frontend/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/15-shared-vault-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../20-security-vault-approle/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
 
 data "terraform_remote_state" "vault_pki" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../25-security-pki/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
 data "terraform_remote_state" "minio" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-gitlab-minio/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-minio" })
 }
 
 data "terraform_remote_state" "postgres" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-gitlab-postgres/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-postgres" })
 }
 
 data "terraform_remote_state" "redis" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../30-infra-gitlab-redis/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-redis" })
 }
 
 ephemeral "vault_kv_secret_v2" "db_vars" {

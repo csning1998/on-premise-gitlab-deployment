@@ -6,6 +6,7 @@ terraform {
       version = "5.5.0"
     }
   }
+  backend "http" {}
 }
 
 # Provider for retrieving credentials from local Seed Vault

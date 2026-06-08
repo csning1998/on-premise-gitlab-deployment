@@ -6,6 +6,7 @@ terraform {
       version = "5.5.0"
     }
   }
+  backend "http" {}
 }
 
 # Default for Bootstrap, connect to Local Podman Vault

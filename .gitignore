@@ -19,6 +19,10 @@ terraform/layers/**/ansible.cfg
 packer/output
 
 
+### GitLab HTTP Backend credentials
+terraform/backend-auth.hcl
+terraform/backend-state.json
+
 ### Ignore Terraform state files
 .terraform/
 .terraform.tfstate.lock.info

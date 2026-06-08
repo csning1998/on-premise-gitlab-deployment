@@ -10,6 +10,7 @@ terraform {
       version = "3.10.1"
     }
   }
+  backend "http" {}
 }
 
 

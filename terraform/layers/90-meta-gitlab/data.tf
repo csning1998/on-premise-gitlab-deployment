@@ -1,9 +1,7 @@
 
 data "terraform_remote_state" "vault_bootstrapper" {
-  backend = "local"
-  config = {
-    path = "${path.root}/../00-foundation-vault-bootstrapper/terraform.tfstate"
-  }
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-vault-bootstrapper" })
 }
 
 ephemeral "vault_kv_secret_v2" "gitlab_token" {
