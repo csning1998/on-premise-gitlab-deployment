@@ -58,5 +58,11 @@ data "terraform_remote_state" "redis" {
 ephemeral "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/databases"
+  name     = local.credential_paths["gitlab"]["postgres"]
+}
+
+ephemeral "vault_kv_secret_v2" "minio_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = local.credential_paths["gitlab"]["minio"]
 }

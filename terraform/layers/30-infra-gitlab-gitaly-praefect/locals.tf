@@ -5,14 +5,13 @@ locals {
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
 # Service credentials and per-role Vault Agent identities
 locals {
-  sec_app_creds = {
-    replication_password = data.vault_generic_secret.db_vars.data["pg_replication_password"]
-    superuser_password   = data.vault_generic_secret.db_vars.data["pg_superuser_password"]
-    vrrp_secret          = data.vault_generic_secret.db_vars.data["pg_vrrp_secret"]
-  }
-
   role_vault_agent_identities = {
     for role, base in module.context.all_vault_agent_identity_bases : role => merge(base, {
       secret_id = vault_approle_auth_backend_role_secret_id.component_agents[role].secret_id
@@ -73,13 +72,13 @@ locals {
 
   ansible_extra_vars = {
     gitlab_external_url     = "https://${data.terraform_remote_state.metadata.outputs.global_pki_map["gitlab-frontend"].dns_san[0]}"
-    gitlab_shell_secret     = random_password.gitlab_shell_secret.result
-    gitaly_auth_token       = random_password.gitaly_token.result
-    praefect_external_token = one(random_password.praefect_external_token[*].result)
-    praefect_db_password    = one(random_password.praefect_db_password[*].result)
-    pg_replication_password = random_password.pg_replication_password.result
-    pg_superuser_password   = random_password.pg_superuser_password.result
-    pg_vrrp_secret          = random_password.pg_vrrp_secret.result
+    gitlab_shell_secret     = data.vault_kv_secret_v2.gitaly_secrets.data["gitlab_shell_secret"]
+    gitaly_auth_token       = data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
+    praefect_external_token = lookup(data.vault_kv_secret_v2.gitaly_secrets.data, "praefect_external_token", null)
+    praefect_db_password    = lookup(data.vault_kv_secret_v2.gitaly_secrets.data, "praefect_db_password", null)
+    pg_replication_password = data.vault_kv_secret_v2.postgres_secrets.data["pg_replication_password"]
+    pg_superuser_password   = data.vault_kv_secret_v2.postgres_secrets.data["pg_superuser_password"]
+    pg_vrrp_secret          = data.vault_kv_secret_v2.postgres_secrets.data["pg_vrrp_secret"]
     vault_agent_cert_ttl    = tostring(data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent)
 
     vault_agent_identities_json = base64encode(jsonencode({

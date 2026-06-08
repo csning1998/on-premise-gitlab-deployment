@@ -9,18 +9,6 @@ output "service_vip" {
   value       = module.context.primary_net_config.lb_config.vip
 }
 
-output "credentials_system" {
-  description = "System-level access credentials for the cluster nodes."
-  value       = module.context.sec_vm_creds
-  sensitive   = true
-}
-
-output "credentials_app" {
-  description = "Application-level credentials for Keycloak."
-  value       = local.sec_app_creds
-  sensitive   = true
-}
-
 output "topology_node" {
   description = "The actual provisioned configuration for Keycloak node."
   value       = module.keycloak_cluster.cluster_nodes

@@ -1,32 +1,10 @@
 
 # Vault Storage: Centralized Credentials Logic
-# a. Postgres Credentials
-resource "vault_kv_secret_v2" "gitlab_db_keys" {
-  provider = vault.production
-  mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/database"
-
-  data_json = jsonencode({
-    username = local.state.provision_databases.postgres_connection_info.username
-    password = local.gitlab_db.password
-    database = local.state.provision_databases.postgres_connection_info.database
-    host     = local.state.provision_databases.postgres_connection_info.host
-    port     = local.state.provision_databases.postgres_connection_info.port
-
-    # TLS Context for the application
-    tls = {
-      crt = local.state.provision_databases.postgres_client_cert_b64.crt_b64
-      key = local.state.provision_databases.postgres_client_cert_b64.key_b64
-      ca  = local.state.provision_databases.postgres_client_cert_b64.ca_b64
-    }
-  })
-}
-
-# b. Redis Credentials
+# a. Redis Credentials
 resource "vault_kv_secret_v2" "gitlab_redis_keys" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/redis"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/redis"
 
   data_json = jsonencode({
     password = local.redis_password

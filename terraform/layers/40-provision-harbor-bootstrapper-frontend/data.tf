@@ -1,4 +1,11 @@
 
+data "terraform_remote_state" "metadata" {
+  backend = "local"
+  config = {
+    path = "${path.root}/../00-foundation-metadata/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "vault_sys" {
   backend = "local"
   config = {
@@ -37,11 +44,11 @@ data "terraform_remote_state" "keycloak_oidc" {
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
 }
 
 ephemeral "vault_kv_secret_v2" "guest_vm" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/guest_vm"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/guest_vm"
 }

@@ -58,11 +58,11 @@ data "terraform_remote_state" "redis" {
 ephemeral "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/databases"
+  name     = local.credential_paths["harbor"]["postgres"]
 }
 
-ephemeral "vault_kv_secret_v2" "harbor_vars" {
+ephemeral "vault_kv_secret_v2" "minio_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/app"
+  name     = local.credential_paths["harbor"]["minio"]
 }

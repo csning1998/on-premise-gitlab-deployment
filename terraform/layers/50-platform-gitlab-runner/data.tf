@@ -55,10 +55,10 @@ data "terraform_remote_state" "network" {
   }
 }
 
-data "vault_kv_secret_v2" "kubeconfig" {
+ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab-runner"
 }
 
 data "kubernetes_config_map" "kube_root_ca" {
@@ -71,5 +71,5 @@ data "kubernetes_config_map" "kube_root_ca" {
 data "vault_kv_secret_v2" "gitlab_runner" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/runner/kubernetes"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/runner/kubernetes"
 }

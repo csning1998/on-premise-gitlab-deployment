@@ -5,13 +5,18 @@ locals {
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
 # Service-specific credentials and Vault Agent identity
 locals {
   sec_app_creds = {
-    keycloak_admin_user     = data.vault_generic_secret.app_secrets.data["keycloak_admin_user"]
-    keycloak_admin_password = data.vault_generic_secret.app_secrets.data["keycloak_admin_password"]
-    keycloak_db_user        = data.vault_generic_secret.app_secrets.data["keycloak_db_user"]
-    keycloak_db_password    = data.vault_generic_secret.app_secrets.data["keycloak_db_password"]
+    keycloak_admin_user     = data.vault_kv_secret_v2.creds.data["keycloak_admin_user"]
+    keycloak_admin_password = data.vault_kv_secret_v2.creds.data["keycloak_admin_password"]
+    keycloak_db_user        = data.vault_kv_secret_v2.creds.data["keycloak_db_user"]
+    keycloak_db_password    = data.vault_kv_secret_v2.creds.data["keycloak_db_password"]
   }
 
   sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {

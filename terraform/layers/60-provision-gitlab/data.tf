@@ -31,11 +31,11 @@ data "terraform_remote_state" "keycloak_oidc" {
 ephemeral "vault_kv_secret_v2" "gitlab_internal" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
+  name     = local.credential_paths["gitlab"]["frontend"]
 }
 
 ephemeral "vault_kv_secret_v2" "gitlab_pat" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/pat"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/pat"
 }

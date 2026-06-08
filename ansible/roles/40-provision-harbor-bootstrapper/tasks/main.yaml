@@ -13,7 +13,7 @@
     url: "{{ vault_addr }}"
     engine_mount_point: "secret"
     auth_method: "approle"
-    path: "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+    path: "{{ vault_kv_namespace }}/harbor-bootstrapper/robot"
     role_id: "{{ vault_approle_role_id }}"
     secret_id: "{{ vault_approle_secret_id }}"
   register: harbor_creds

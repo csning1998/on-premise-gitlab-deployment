@@ -4,18 +4,6 @@ output "service_vip" {
   value       = module.context.primary_net_config.lb_config.vip
 }
 
-output "credentials_system" {
-  description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = module.context.sec_vm_creds
-  sensitive   = true
-}
-
-output "credentials_redis" {
-  description = "Redis access credentials and HA configuration."
-  value       = local.sec_app_creds
-  sensitive   = true
-}
-
 output "topology_cluster" {
   description = "The actual provisioned configuration for all Redis nodes."
   value       = module.infra_gitlab_redis.cluster_nodes

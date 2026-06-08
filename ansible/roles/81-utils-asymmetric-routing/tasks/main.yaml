@@ -1,36 +1,55 @@
 ---
-- name: "Step 1. Dynamically collect candidate host-only interfaces"
+# Static routes toward infrastructure VIPs must egress through the host-only LB VIP
+# instead of the default NAT gateway, otherwise the stateful firewall on the gateway
+# drops the asymmetric return traffic. The egress interface is identified by next-hop
+# reachability. Among all interfaces, only the host-only interface sits on the same
+# directly connected subnet as the route next-hop. This rule does not depend on
+# interface naming, docker0, CNI interfaces, or NAT DHCP timing, so it behaves
+# identically across Praefect, Patroni, kubeadm, microk8s, and Docker based clusters.
+
+- name: "Step 1. Store the next-hop gateway address"
   ansible.builtin.set_fact:
-    candidate_ifaces: "{{ candidate_ifaces | default([]) + [item] }}"
+    routing_next_hop_via: "{{ routing_static_routes[0].via }}"
+
+- name: "Step 2. Collect interfaces directly connected to the next-hop subnet"
+  ansible.builtin.set_fact:
+    routing_egress_ifaces: "{{ routing_egress_ifaces | default([]) + [item] }}"
   loop: "{{ ansible_facts.interfaces }}"
+  vars:
+    _ipv4: "{{ ansible_facts[item].ipv4 | default({'prefix': '32', 'network': '0.0.0.0'}) }}"
+    _divisor: "{{ (2 ** (32 - (_ipv4.prefix | int))) | int }}"
+    _gw_int: >-
+      {{  (routing_next_hop_via.split('.')[0] | int) * 2**24
+        + (routing_next_hop_via.split('.')[1] | int) * 2**16
+        + (routing_next_hop_via.split('.')[2] | int) * 2**8
+        + (routing_next_hop_via.split('.')[3] | int)
+      }}
+    _net_int: >-
+      {{  (_ipv4.network.split('.')[0] | int) * 2**24
+        + (_ipv4.network.split('.')[1] | int) * 2**16
+        + (_ipv4.network.split('.')[2] | int) * 2**8
+        + (_ipv4.network.split('.')[3] | int)
+      }}
   when:
-    - item != 'lo'
-    - item != 'docker0'
-    - not item.startswith('vbr-')
-    - not item.startswith('veth')
-    - not item.startswith('vxlan.')
-    - not item.startswith('cali')
-    - ansible_facts.default_ipv4 is defined
-    - item != ansible_facts.default_ipv4.interface
     - ansible_facts[item] is defined
     - ansible_facts[item].ipv4 is defined
+    - (_gw_int | int) // (_divisor | int) == (_net_int | int) // (_divisor | int)
 
-- name: "Step 2. Validate exactly one host-only interface is detected"
+- name: "Step 3. Validate exactly one egress interface matches the next-hop subnet"
   ansible.builtin.assert:
     that:
-      - candidate_ifaces is defined
-      - candidate_ifaces | length == 1
+      - routing_egress_ifaces | default([]) | length == 1
     fail_msg: |
-      Validation failed: Expected exactly 1 host-only interface, but found
-      {{ candidate_ifaces | default([]) | length }}.
-      Candidates: {{ candidate_ifaces | default([]) }}
-    success_msg: "Successfully identified host-only interface: {{ candidate_ifaces[0] }}"
+      Expected exactly 1 interface on the next-hop subnet of {{ routing_next_hop_via }},
+      but found {{ routing_egress_ifaces | default([]) | length }}.
+      Candidates: {{ routing_egress_ifaces | default([]) }}
+    success_msg: "Identified host-only egress interface: {{ routing_egress_ifaces[0] }}"
 
-- name: "Step 3. Finalize host-only interface variable"
+- name: "Step 4. Finalize host-only interface variable"
   ansible.builtin.set_fact:
-    hostonly_iface: "{{ candidate_ifaces[0] }}"
+    hostonly_iface: "{{ routing_egress_ifaces[0] }}"
 
-- name: "Step 4. Deploy Routing Fix Service"
+- name: "Step 5. Deploy Routing Fix Service"
   ansible.builtin.template:
     src: fix-routes.service.j2
     dest: /etc/systemd/system/fix-vault-routes.service
@@ -39,7 +58,7 @@
     mode: "0644"
   notify: Restart Asymmetric Route Service
 
-- name: "Step 5. Immediate Route Enforcement"
+- name: "Step 6. Immediate Route Enforcement"
   ansible.builtin.command:
     cmd: >-
       /usr/sbin/ip route replace {{ item.to }}

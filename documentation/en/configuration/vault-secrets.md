@@ -90,7 +90,6 @@ Following variables are required for provisioning Terraform layers for Patroni, 
 export VAULT_ADDR="https://172.16.136.250:443"
 export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
 export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
-vault secrets enable -path=secret kv-v2
 
 printf "Enter ssh Password: "
 read -s ssh_password
@@ -102,36 +101,6 @@ vault kv put secret/on-premise-gitlab-deployment/guest_vm \
     vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
     ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
     ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
-
-vault kv put secret/on-premise-gitlab-deployment/gitlab/databases \
-    pg_superuser_password="<YOUR_GITLAB_PG_SUPERUSER_PASSWORD>" \
-    pg_replication_password="<YOUR_GITLAB_PG_REPLICATION_PASSWORD>" \
-    pg_vrrp_secret="<YOUR_GITLAB_PG_VRRP_SECRET>" \
-    redis_requirepass="<YOUR_GITLAB_REDIS_REQUIREPASS>" \
-    redis_masterauth="<YOUR_GITLAB_REDIS_MASTERAUTH>" \
-    redis_vrrp_secret="<YOUR_GITLAB_REDIS_VRRP_SECRET>" \
-    minio_root_password="<YOUR_GITLAB_MINIO_ROOT_PASSWORD>" \
-    minio_vrrp_secret="<YOUR_GITLAB_MINIO_VRRP_SECRET>" \
-    minio_root_user="<YOUR_GITLAB_MINIO_ROOT_USER>"
-
-vault kv put secret/on-premise-gitlab-deployment/harbor/databases \
-    pg_superuser_password="<YOUR_HARBOR_PG_SUPERUSER_PASSWORD>" \
-    pg_replication_password="<YOUR_HARBOR_PG_REPLICATION_PASSWORD>" \
-    pg_vrrp_secret="<YOUR_HARBOR_PG_VRRP_SECRET>" \
-    redis_requirepass="<YOUR_HARBOR_REDIS_REQUIREPASS>" \
-    redis_masterauth="<YOUR_HARBOR_REDIS_MASTERAUTH>" \
-    redis_vrrp_secret="<YOUR_HARBOR_REDIS_VRRP_SECRET>" \
-    minio_root_password="<YOUR_HARBOR_MINIO_ROOT_PASSWORD>" \
-    minio_vrrp_secret="<YOUR_HARBOR_MINIO_VRRP_SECRET>" \
-    minio_root_user="<YOUR_HARBOR_MINIO_ROOT_USER>"
-
-vault kv put secret/on-premise-gitlab-deployment/harbor/app \
-    harbor_admin_password="<YOUR_HARBOR_ADMIN_PASSWORD>" \
-    harbor_pg_db_password="<YOUR_HARBOR_PG_DB_PASSWORD>"
-
-vault kv put secret/on-premise-gitlab-deployment/harbor-bootstrapper/app \
-    harbor_bootstrapper_admin_password="<YOUR_BOOTSTRAPPER_ADMIN_PASSWORD>" \
-    harbor_bootstrapper_pg_db_password="<YOUR_BOOTSTRAPPER_PG_DB_PASSWORD>"
 ```
 
 ---

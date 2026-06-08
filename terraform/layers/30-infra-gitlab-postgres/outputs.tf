@@ -4,18 +4,6 @@ output "service_vip" {
   value       = module.context.primary_net_config.lb_config.vip
 }
 
-output "credentials_system" {
-  description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = module.context.sec_vm_creds
-  sensitive   = true
-}
-
-output "credentials_postgres" {
-  description = "Database-level credentials for Patroni and PostgreSQL replication."
-  value       = local.sec_app_creds
-  sensitive   = true
-}
-
 output "topology_cluster" {
   description = "The actual provisioned configuration for all Postgres and Etcd nodes."
   value       = module.infra_gitlab_postgres.cluster_nodes

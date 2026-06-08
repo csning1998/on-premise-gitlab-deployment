@@ -69,7 +69,7 @@ data "terraform_remote_state" "gitaly_praefect" {
 data "vault_kv_secret_v2" "gitaly_secrets" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/gitaly"
+  name     = local.credential_paths["gitlab"]["gitaly"]
 }
 
 # 0. Infrastructure Provisioning State
@@ -92,7 +92,7 @@ data "terraform_remote_state" "harbor_bootstrapper" {
 data "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
 }
 
 # 1. Database Provisioning State
@@ -111,10 +111,10 @@ data "terraform_remote_state" "harbor" {
 }
 
 # 2. Fetch Kubeconfig from Production Vault
-data "vault_kv_secret_v2" "kubeconfig" {
+ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
 }
 
 # Fetch the Cluster CA
@@ -129,27 +129,27 @@ data "vault_kv_secret_v2" "gitlab_s3" {
   provider = vault.production
   for_each = local.minio_function_map
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/s3_credentials/${each.value}"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/s3_credentials/${each.value}"
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)
-data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
-# Database Credentials (Postgres/Redis)
+# Database Credentials (Redis)
 data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/databases"
+  name     = local.credential_paths["gitlab"]["redis"]
 }
 
-data "vault_kv_secret_v2" "app_vars" {
+data "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
 }
 
 # 3. Keycloak OIDC State & Client Secret
@@ -163,12 +163,12 @@ data "terraform_remote_state" "keycloak_oidc" {
 data "vault_kv_secret_v2" "keycloak_gitlab_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/oidc/clients/gitlab_frontend"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/keycloak/oidc/clients/gitlab_frontend"
 }
 
 # GitLab Internal Secrets (Persistent via Layer 30)
 data "vault_kv_secret_v2" "gitlab_internal_secrets" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app/internal"
+  name     = local.credential_paths["gitlab"]["frontend"]
 }

@@ -46,7 +46,20 @@ data "vault_generic_secret" "guest_vm" {
   path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }
 
-data "vault_generic_secret" "db_vars" {
+data "vault_kv_secret_v2" "gitaly_secrets" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/gitlab/databases"
+  mount    = "secret"
+  name     = local.credential_paths["gitlab"]["gitaly"]
+}
+
+data "vault_kv_secret_v2" "postgres_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = local.credential_paths["gitlab"]["praefect-patroni"]
+}
+
+data "vault_kv_secret_v2" "internal_secrets" {
+  provider = vault.production
+  mount    = "secret"
+  name     = local.credential_paths["gitlab"]["frontend"]
 }

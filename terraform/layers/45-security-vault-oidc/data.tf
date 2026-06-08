@@ -38,5 +38,5 @@ data "terraform_remote_state" "keycloak_provisioning" {
 data "vault_kv_secret_v2" "keycloak_vault_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/oidc/clients/vault_frontend"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/keycloak/oidc/clients/vault_frontend"
 }

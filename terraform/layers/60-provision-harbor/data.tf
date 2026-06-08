@@ -34,14 +34,14 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
-data "vault_kv_secret_v2" "harbor_vars" {
+ephemeral "vault_kv_secret_v2" "harbor_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/app"
+  name     = local.credential_paths["harbor"]["frontend"]
 }
 
 data "vault_kv_secret_v2" "keycloak_harbor_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/oidc/clients/harbor_frontend"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/keycloak/oidc/clients/harbor_frontend"
 }

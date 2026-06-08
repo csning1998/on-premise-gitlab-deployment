@@ -26,3 +26,8 @@ locals {
   # Minio Discovery
   minio_url = "https://${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
 }
+
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}

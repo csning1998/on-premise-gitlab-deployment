@@ -100,7 +100,7 @@ resource "gitlab_user_runner" "kubernetes_runner" {
 resource "vault_kv_secret_v2" "gitlab_runner_token" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/runner/kubernetes"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/runner/kubernetes"
 
   data_json = jsonencode({
     token = gitlab_user_runner.kubernetes_runner.token

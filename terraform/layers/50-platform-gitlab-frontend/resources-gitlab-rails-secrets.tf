@@ -10,7 +10,7 @@ resource "terraform_data" "seed_rails_secrets" {
     }
     interpreter = ["bash", "-c"]
     command = templatefile("${path.module}/templates/seed-rails-secrets.sh.tftpl", {
-      rails_path = "on-premise-gitlab-deployment/gitlab/app/rails-secrets"
+      rails_path = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
     })
   }
 }
@@ -75,7 +75,7 @@ resource "kubernetes_manifest" "gitlab_rails_secret_eso" {
         {
           secretKey = "secrets.yml"
           remoteRef = {
-            key      = "on-premise-gitlab-deployment/gitlab/app/rails-secrets"
+            key      = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
             property = "secrets_yml"
           }
         }

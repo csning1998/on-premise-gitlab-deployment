@@ -32,5 +32,5 @@ provider "vault" {
 provider "harbor" {
   url      = "https://${local.harbor_hostname}"
   username = "admin"
-  password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
+  password = ephemeral.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
 }

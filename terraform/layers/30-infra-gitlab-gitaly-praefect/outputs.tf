@@ -13,18 +13,6 @@ output "service_vips" {
   }
 }
 
-output "credentials_system" {
-  description = "System-level access credentials (SSH) for the cluster nodes."
-  value       = module.context.sec_vm_creds
-  sensitive   = true
-}
-
-output "credentials_postgres" {
-  description = "Database-level credentials for Patroni and PostgreSQL replication."
-  value       = local.sec_app_creds
-  sensitive   = true
-}
-
 output "topology_cluster" {
   description = "The actual provisioned configuration for all nodes."
   value       = module.infra_gitlab_gitaly_praefect.cluster_nodes

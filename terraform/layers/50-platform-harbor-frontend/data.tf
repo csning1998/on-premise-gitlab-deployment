@@ -60,51 +60,56 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   }
 }
 
-# 0. Database Provisioning State
-data "terraform_remote_state" "provision_databases" {
-  backend = "local"
-  config = {
-    path = "../40-provision-harbor-databases/terraform.tfstate"
-  }
-}
-
 # Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
 data "vault_kv_secret_v2" "harbor_bootstrapper_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
 }
 
 # 1. Fetch Harbor Secrets from Production Vault
 data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/databases"
+  name     = local.credential_paths["harbor"]["redis"]
 }
 
 data "vault_kv_secret_v2" "harbor_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/app"
+  name     = local.credential_paths["harbor"]["frontend"]
+}
+
+data "vault_kv_secret_v2" "harbor_app_database" {
+  provider = vault.production
+  mount    = "secret"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/database"
 }
 
 data "vault_kv_secret_v2" "s3_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor/s3_credentials/harbor-registry"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/s3_credentials/harbor-registry"
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)
-data "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
+ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
 # 2. Fetch Kubeconfig from Production Vault
-data "vault_kv_secret_v2" "kubeconfig" {
+ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/harbor"
 }
 
+# Fetch the Cluster CA from the in-cluster ConfigMap
+data "kubernetes_config_map" "kube_root_ca" {
+  metadata {
+    name      = "kube-root-ca.crt"
+    namespace = "kube-system"
+  }
+}

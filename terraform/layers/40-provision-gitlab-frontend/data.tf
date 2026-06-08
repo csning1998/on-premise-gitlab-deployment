@@ -71,7 +71,7 @@ data "terraform_remote_state" "harbor_bootstrapper" {
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
 }
 
 # 1. Database Provisioning State
@@ -86,7 +86,7 @@ data "terraform_remote_state" "provision_databases" {
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
 }
 
 # Fetch the Cluster CA
@@ -101,18 +101,18 @@ data "kubernetes_config_map" "kube_root_ca" {
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
-# Database Credentials (Postgres/Redis)
+# Database Credentials (Redis)
 data "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/databases"
+  name     = local.credential_paths["gitlab"]["redis"]
 }
 
-data "vault_kv_secret_v2" "app_vars" {
+data "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
 }

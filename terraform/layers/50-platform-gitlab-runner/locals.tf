@@ -15,7 +15,7 @@ locals {
 
 # 2. K8s Provider Authentication Context (Lossless from L50 GitLab)
 locals {
-  kubeconfig_raw = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
+  kubeconfig_raw = yamldecode(base64decode(ephemeral.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info   = element(local.kubeconfig_raw.clusters, 0).cluster
   user_info      = element(local.kubeconfig_raw.users, 0).user
 

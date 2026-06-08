@@ -37,5 +37,5 @@ data "terraform_remote_state" "keycloak" {
 ephemeral "vault_kv_secret_v2" "keycloak_admin" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/keycloak"
+  name     = local.credential_paths["keycloak"]["frontend"]
 }

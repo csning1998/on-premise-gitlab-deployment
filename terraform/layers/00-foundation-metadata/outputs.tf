@@ -19,6 +19,21 @@
  */
 
 # 1. Global Global/Governance Attributes
+output "vault_kv_namespace" {
+  description = "Project-level Vault KV namespace prefix for all generated credentials."
+  value       = var.vault_kv_namespace
+}
+
+output "global_credential_paths" {
+  description = "Mount-relative Vault KV paths for all service component credentials, derived from the service catalog."
+  value = {
+    for s_name, s in var.service_catalog : s_name => {
+      for c_name, c in s.components : c_name =>
+      "${var.vault_kv_namespace}/${s_name}/${c_name}"
+    }
+  }
+}
+
 output "global_domain_suffix" {
   description = "The root domain suffix (e.g., iac.local) for all downstream layers."
   value       = var.domain_suffix

@@ -48,17 +48,26 @@ module "minio_gitlab_config" {
   }
 
   minio_tenants            = var.gitlab_minio_tenants
-  vault_secret_path_prefix = "on-premise-gitlab-deployment/gitlab/app/s3_credentials"
+  vault_secret_path_prefix = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/s3_credentials"
   minio_server_url         = local.minio_url
 }
 
 # Persist generated database credentials to Vault (SSoT)
-resource "vault_kv_secret_v2" "gitlab_app_vars" {
+resource "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "on-premise-gitlab-deployment/gitlab/app"
+  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
 
   data_json = jsonencode({
-    gitlab_pg_db_password = random_password.gitlab_db_password.result
+    username = module.gitlab_db_init.users["gitlab"].name
+    password = random_password.gitlab_db_password.result
+    database = module.gitlab_db_init.databases["gitlabhq_production"].name
+    host     = local.postgres_vip
+    port     = local.postgres_rw_port
+    tls = {
+      crt = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.certificate)
+      key = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.private_key)
+      ca  = base64encode(vault_pki_secret_backend_cert.gitlab_db_client.ca_chain)
+    }
   })
 }

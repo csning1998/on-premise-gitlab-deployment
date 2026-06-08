@@ -17,6 +17,11 @@ variable "domain_suffix" {
   type        = string
 }
 
+variable "vault_kv_namespace" {
+  description = "Project-level Vault KV namespace used as path prefix for all generated credentials."
+  type        = string
+}
+
 variable "pki_settings" {
   description = "Global PKI Identity Settings (SSoT). Defines the legal identity of the infrastructure."
   type = object({

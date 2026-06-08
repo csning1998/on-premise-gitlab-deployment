@@ -9,12 +9,6 @@ output "cluster_name" {
   value       = module.context.svc_identity.cluster_name
 }
 
-output "credentials_system" {
-  description = "System-level access credentials for the cluster nodes."
-  value       = module.context.sec_vm_creds
-  sensitive   = true
-}
-
 output "kubernetes_config" {
   description = "Kubernetes cluster connection parameters."
   value       = local.ansible_template_vars

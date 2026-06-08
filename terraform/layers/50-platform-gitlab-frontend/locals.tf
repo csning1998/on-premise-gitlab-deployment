@@ -20,7 +20,7 @@ locals {
 
 # 2. K8s Provider Authentication Context
 locals {
-  kubeconfig   = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
+  kubeconfig   = yamldecode(base64decode(ephemeral.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info = local.kubeconfig.clusters[0].cluster
   user_info    = local.kubeconfig.users[0].user
 
@@ -89,11 +89,11 @@ locals {
 
   # GitLab Application Database Context
   gitlab_db = {
-    username = local.state.provision_databases.postgres_connection_info.username
-    password = data.vault_kv_secret_v2.app_vars.data["gitlab_pg_db_password"]
-    database = local.state.provision_databases.postgres_connection_info.database
-    host     = local.state.provision_databases.postgres_connection_info.host
-    port     = local.state.provision_databases.postgres_connection_info.port
+    username = data.vault_kv_secret_v2.gitlab_app_database.data["username"]
+    password = data.vault_kv_secret_v2.gitlab_app_database.data["password"]
+    database = data.vault_kv_secret_v2.gitlab_app_database.data["database"]
+    host     = data.vault_kv_secret_v2.gitlab_app_database.data["host"]
+    port     = tonumber(data.vault_kv_secret_v2.gitlab_app_database.data["port"])
   }
 
   # Infrastructure Credentials discovered from vault
@@ -178,4 +178,9 @@ locals {
       }
     }
   }
+}
+
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
 }

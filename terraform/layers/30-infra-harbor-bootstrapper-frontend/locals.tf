@@ -5,11 +5,16 @@ locals {
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
 # Service-specific credentials and Vault Agent identity
 locals {
   sec_app_creds = {
-    harbor_admin_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_admin_password"]
-    harbor_pg_db_password = data.vault_generic_secret.db_vars.data["harbor_bootstrapper_pg_db_password"]
+    harbor_admin_password = data.vault_kv_secret_v2.creds.data["harbor_bootstrapper_admin_password"]
+    harbor_pg_db_password = data.vault_kv_secret_v2.creds.data["harbor_bootstrapper_pg_db_password"]
   }
 
   sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {

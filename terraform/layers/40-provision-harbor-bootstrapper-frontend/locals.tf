@@ -9,6 +9,11 @@ locals {
   sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
 }
 
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
 locals {
   ansible_extra_vars = {
     harbor_robot_user       = harbor_robot_account.helm_pusher.full_name

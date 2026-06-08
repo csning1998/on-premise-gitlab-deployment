@@ -50,3 +50,8 @@ locals {
     "http://localhost:8250/oidc/callback"
   ]
 }
+
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}

@@ -14,6 +14,8 @@ locals {
 }
 
 locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+
   # Vault Address Calculation
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
@@ -25,7 +27,4 @@ locals {
 
   # Minio Discovery
   minio_url = "https://${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
-
-  # Harbor Context
-  harbor_pg_db_password = ephemeral.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
 }

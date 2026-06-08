@@ -47,7 +47,9 @@ data "vault_generic_secret" "guest_vm" {
   path     = "secret/on-premise-gitlab-deployment/guest_vm"
 }
 
-data "vault_generic_secret" "db_vars" {
+data "vault_kv_secret_v2" "creds" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/harbor-bootstrapper/app"
+  mount    = "secret"
+  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
 }
+

@@ -10,13 +10,12 @@ locals {
     microk8s_provision   = data.terraform_remote_state.microk8s_provision.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
-    provision_databases  = data.terraform_remote_state.provision_databases.outputs
   }
 }
 
 # K8s Provider Authentication Context
 locals {
-  kubeconfig   = yamldecode(base64decode(data.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
+  kubeconfig   = yamldecode(base64decode(ephemeral.vault_kv_secret_v2.kubeconfig.data["content_b64"]))
   cluster_info = local.kubeconfig.clusters[0].cluster
   user_info    = local.kubeconfig.users[0].user
 
@@ -50,8 +49,8 @@ locals {
   api_port     = local.state.metadata.global_topology_network["harbor"]["frontend"].ports["api-server"].frontend_port
   api_endpoint = "https://${local.harbor_vip}:${local.api_port}"
 
-  # Cluster CA from Kubeconfig
-  cluster_ca = local.api_server_connection.ca_cert
+  # Cluster CA from ConfigMap (SSoT for K8s API verification)
+  cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
 
   # Vault Connection
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
@@ -72,11 +71,11 @@ locals {
 locals {
   # Harbor Application Database Context
   harbor_db = {
-    username = local.state.provision_databases.postgres_connection_info.username
-    password = data.vault_kv_secret_v2.harbor_vars.data["harbor_pg_db_password"]
-    database = local.state.provision_databases.postgres_connection_info.database
-    host     = local.state.provision_databases.postgres_connection_info.host
-    port     = local.state.provision_databases.postgres_connection_info.port
+    username = data.vault_kv_secret_v2.harbor_app_database.data["username"]
+    password = data.vault_kv_secret_v2.harbor_app_database.data["password"]
+    database = data.vault_kv_secret_v2.harbor_app_database.data["database"]
+    host     = data.vault_kv_secret_v2.harbor_app_database.data["host"]
+    port     = tonumber(data.vault_kv_secret_v2.harbor_app_database.data["port"])
   }
 
   harbor_admin_password = data.vault_kv_secret_v2.harbor_vars.data["harbor_admin_password"]
@@ -145,4 +144,9 @@ locals {
     registry   = local._harbor_component_common
     trivy      = local._harbor_component_common
   }
+}
+
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
 }

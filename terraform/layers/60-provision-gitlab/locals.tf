@@ -15,6 +15,11 @@ locals {
   vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
 }
 
+# Credential path map alias derived from foundation metadata (L00 SSoT)
+locals {
+  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
 # 3. GitLab Identity & Secrets (For Provider)
 locals {
   gitlab_fqdn          = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]

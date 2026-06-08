@@ -25,7 +25,7 @@ resource "kubernetes_manifest" "gitlab_ci_signing_key_eso" {
         {
           secretKey = "private_key.pem"
           remoteRef = {
-            key      = "on-premise-gitlab-deployment/gitlab/app/ci-job-token-signing-key"
+            key      = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/ci-job-token-signing-key"
             property = "private_key_pem"
           }
         }
