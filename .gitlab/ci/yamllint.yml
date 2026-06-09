@@ -2,7 +2,12 @@
 yamllint:
   stage: lint
   image: pipelinecomponents/yamllint:latest
+  needs: []
+  interruptible: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "**/*.yml"
+        - "**/*.yaml"
   script:
     - yamllint .

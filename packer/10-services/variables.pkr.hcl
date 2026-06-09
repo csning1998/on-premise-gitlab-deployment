@@ -17,9 +17,9 @@ variable "vnc_port" {
 
 variable "common_spec" {
   type = object({
-    cpus         = number
-    memory       = number
-    disk_size    = number
+    cpus      = number
+    memory    = number
+    disk_size = number
   })
   description = "Defines common hardware parameters shareable across any OS."
 }
@@ -33,13 +33,13 @@ variable "os_spec" {
 }
 
 variable "source_image" {
-  type = string
+  type        = string
   description = "The relative path to the base image to use as a backing file."
 }
 
 variable "source_image_checksum" {
-  type    = string
-  default = "none"
+  type        = string
+  default     = "none"
   description = "The checksum of the source image. If 'none', the HCL will attempt to auto-discover it from a .sha256 file."
 }
 
@@ -54,12 +54,12 @@ variable "net_device" {
 }
 
 variable "secrets_path" {
-  type = string
+  type    = string
   default = "secret/data/on-premise-gitlab-deployment/guest_vm"
 }
 
 variable "vault_service_path" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
   description = "The Vault path for service-specific secrets."
 }

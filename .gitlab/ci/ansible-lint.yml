@@ -3,8 +3,13 @@ ansible-lint:
   stage: lint
   image: pipelinecomponents/ansible-lint:latest
   allow_failure: true
+  needs: []
+  interruptible: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "ansible/**"
+        - "ansible.cfg"
   script:
     - cd ansible
     - ansible-lint

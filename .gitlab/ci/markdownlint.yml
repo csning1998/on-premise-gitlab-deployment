@@ -3,7 +3,11 @@ markdownlint:
   stage: lint
   image: davidanson/markdownlint-cli2:latest
   allow_failure: true
+  needs: []
+  interruptible: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "**/*.md"
   script:
     - markdownlint-cli2 "**/*.md"

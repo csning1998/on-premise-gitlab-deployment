@@ -16,8 +16,11 @@ resource "gitlab_project" "this" {
   wiki_access_level   = "disabled"
 
   initialize_with_readme = false
-}
 
+  push_rules {
+    prevent_secrets = true
+  }
+}
 
 resource "gitlab_branch_protection" "main" {
   project = gitlab_project.this.id

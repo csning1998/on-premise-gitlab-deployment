@@ -1,4 +1,5 @@
 
+# test
 # This file defines all variables for the data-driven Packer build.
 
 # Build Control Variables
@@ -17,9 +18,9 @@ variable "vnc_port" {
 
 variable "common_spec" {
   type = object({
-    cpus         = number
-    memory       = number
-    disk_size    = number
+    cpus      = number
+    memory    = number
+    disk_size = number
   })
   description = "Defines common hardware parameters shareable across any OS."
 }
@@ -45,6 +46,6 @@ variable "net_device" {
 }
 
 variable "secrets_path" {
-  type = string
+  type    = string
   default = "secret/data/on-premise-gitlab-deployment/guest_vm"
 }

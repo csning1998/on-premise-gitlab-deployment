@@ -2,13 +2,13 @@
 # This file defines the single, data-driven QEMU source for ISO-based installation.
 
 locals {
-  ssh_username        = vault(var.secrets_path, "ssh_username")
-  ssh_password        = vault(var.secrets_path, "ssh_password")
-  ssh_password_hash   = vault(var.secrets_path, "ssh_password_hash")
+  ssh_username      = vault(var.secrets_path, "ssh_username")
+  ssh_password      = vault(var.secrets_path, "ssh_password")
+  ssh_password_hash = vault(var.secrets_path, "ssh_password_hash")
 
   # The final hostname is simple.
   final_hostname = var.build_name
-  final_vm_name = "${var.os_spec.distro}-${var.os_spec.version}-updated.qcow2"
+  final_vm_name  = "${var.os_spec.distro}-${var.os_spec.version}-updated.qcow2"
 }
 
 source "qemu" "ubuntu" {

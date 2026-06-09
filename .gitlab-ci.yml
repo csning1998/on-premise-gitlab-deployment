@@ -6,9 +6,12 @@ stages:
 
 include:
   - local: .gitlab/ci/terraform-fmt.yml
+  - local: .gitlab/ci/packer-fmt.yml
   - local: .gitlab/ci/go-fmt.yml
   - local: .gitlab/ci/go-lint.yml
+  - local: .gitlab/ci/go-build.yml
   - local: .gitlab/ci/ansible-lint.yml
   - local: .gitlab/ci/yamllint.yml
   - local: .gitlab/ci/markdownlint.yml
+  - local: .gitlab/ci/checkov.yml
   - local: .gitlab/ci/gemini-review.yml
