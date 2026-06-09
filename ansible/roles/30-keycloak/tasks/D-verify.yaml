@@ -10,15 +10,16 @@
 - name: "D2. Flush Handlers to Update Trust Store Immediately"
   ansible.builtin.meta: flush_handlers
 
-# - name: "D3. Verify Keycloak Readiness via FQDN (Insecure TLS)"
-#   ansible.builtin.uri:
-#     url: "https://{{ keycloak_fqdn }}:9000/health/ready"
-#     validate_certs: false
-#     status_code: 200
-#   register: fqdn_readiness
-#   until: fqdn_readiness.status == 200
-#   retries: 30
-#   delay: 10
+- name: "D3. Verify Keycloak Readiness via FQDN"
+  ansible.builtin.uri:
+    url: "https://{{ keycloak_fqdn }}:9000/health/ready"
+    validate_certs: true
+    ca_path: "/etc/ssl/certs/ca-certificates.crt"
+    status_code: 200
+  register: fqdn_readiness
+  until: fqdn_readiness.status == 200
+  retries: 30
+  delay: 10
 
 - name: "D4. Report Readiness Status"
   ansible.builtin.debug:
