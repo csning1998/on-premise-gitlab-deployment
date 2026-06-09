@@ -1,5 +1,5 @@
 ---
-gemini-code-review:
+claude-code-review:
   stage: review
   image: golang:1.26-alpine
   needs:
@@ -12,7 +12,7 @@ gemini-code-review:
     - job: go-build
       optional: true
   variables:
-    GEMINI_MODEL: "gemini-3.5-flash"
+    ANTHROPIC_MODEL: "claude-sonnet-4-6"
     GOTOOLCHAIN: "local"
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -21,4 +21,4 @@ gemini-code-review:
   interruptible: true
   script:
     - cd tools/ci
-    - go run ./cmd/gemini-review
+    - go run ./cmd/claude-review

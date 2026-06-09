@@ -1,8 +1,10 @@
 ---
 go-lint:
   stage: lint
-  image: golangci/golangci-lint:latest
-  needs: []
+  image: golangci/golangci-lint:v2.12.2-alpine
+  needs:
+    - job: go-build
+      optional: true
   interruptible: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

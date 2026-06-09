@@ -2,7 +2,9 @@
 go-build:
   stage: lint
   image: golang:1.26-alpine
-  needs: []
+  needs:
+    - job: go-fmt
+      optional: true
   interruptible: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

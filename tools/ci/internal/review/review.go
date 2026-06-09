@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"ci-tools/internal/gemini"
 	"ci-tools/internal/gitlab"
 )
+
+// LLMClient is the interface any language model client must satisfy.
+type LLMClient interface {
+	Name() string
+	Review(prompt string) (string, error)
+}
 
 const maxTotalDiff = 300000
 
@@ -32,7 +37,7 @@ Return ONLY a raw JSON array with no markdown fences or wrapper. Each element:
 
 If there are no significant issues across all files, return an empty array: []`
 
-// Comment is one Gemini finding. Missing or null JSON fields decode to the zero
+// Comment is one LLM finding. Missing or null JSON fields decode to the zero
 // value (empty string, nil pointer), so a null suggestion can never crash here.
 type Comment struct {
 	File        string `json:"file"`
@@ -45,11 +50,11 @@ type Comment struct {
 // Reviewer orchestrates a single MR review using the injected API clients.
 type Reviewer struct {
 	gitlab *gitlab.Client
-	gemini *gemini.Client
+	llm    LLMClient
 }
 
-func New(gl *gitlab.Client, gm *gemini.Client) *Reviewer {
-	return &Reviewer{gitlab: gl, gemini: gm}
+func New(gl *gitlab.Client, llm LLMClient) *Reviewer {
+	return &Reviewer{gitlab: gl, llm: llm}
 }
 
 func (r *Reviewer) Run() error {
@@ -65,27 +70,36 @@ func (r *Reviewer) Run() error {
 		return fmt.Errorf("diff_refs missing from MR data")
 	}
 
-	combined, fileMeta, skipped := buildCombinedDiff(mr.Changes)
+	combined, fileMeta, skipped := buildCombinedDiff(mr.Changes, r.llm.Name())
 	if len(fileMeta) == 0 {
 		fmt.Println("No reviewable changes after filtering.")
 		return nil
 	}
 
-	raw, err := r.gemini.Review(promptTemplate + "\n\n" + combined)
+	raw, err := r.llm.Review(promptTemplate + "\n\n" + combined)
 	if err != nil {
-		return fmt.Errorf("gemini call failed: %w", err)
+		return fmt.Errorf("llm call failed: %w", err)
 	}
 
+	cleaned := strings.TrimSpace(raw)
+	if idx := strings.Index(cleaned, "["); idx != -1 {
+		cleaned = cleaned[idx:]
+	}
+	if idx := strings.LastIndex(cleaned, "]"); idx != -1 {
+		cleaned = cleaned[:idx+1]
+	}
+	cleaned = strings.TrimSpace(cleaned)
+
 	var rawComments []json.RawMessage
-	if err := json.Unmarshal([]byte(raw), &rawComments); err != nil {
-		return fmt.Errorf("parse Gemini JSON: %w (raw: %.200s)", err, raw)
+	if err := json.Unmarshal([]byte(cleaned), &rawComments); err != nil {
+		return fmt.Errorf("parse llm response: %w (raw: %.200s)", err, cleaned)
 	}
 	if len(rawComments) == 0 {
 		fmt.Println("LGTM -- no issues found.")
 		return nil
 	}
 
-	fmt.Printf("Gemini returned %d comment(s). Posting ...\n", len(rawComments))
+	fmt.Printf("LLM returned %d comment(s). Posting ...\n", len(rawComments))
 	posted := 0
 	for _, rc := range rawComments {
 		var c Comment
@@ -139,7 +153,7 @@ func (r *Reviewer) deliver(refs gitlab.DiffRefs, fileMeta map[string]fileInfo, c
 		}
 	}
 
-	fallback := fmt.Sprintf("### Gemini Review -- `%s` (%s)\n\n%s", file, label, body)
+	fallback := fmt.Sprintf("### Code Review -- `%s` (%s)\n\n%s", file, label, body)
 	status, err := r.gitlab.PostNote(fallback)
 	if err != nil {
 		fmt.Printf("  -> note failed: %v\n", err)
@@ -189,9 +203,9 @@ func position(refs gitlab.DiffRefs, file string, info fileInfo, start, end int) 
 	return pos
 }
 
-// buildCombinedDiff assembles the annotated diff sent to Gemini and the per-file
+// buildCombinedDiff assembles the annotated diff sent to the LLM and the per-file
 // line maps used to anchor inline comments.
-func buildCombinedDiff(changes []gitlab.Change) (string, map[string]fileInfo, int) {
+func buildCombinedDiff(changes []gitlab.Change, llmName string) (string, map[string]fileInfo, int) {
 	fileMeta := map[string]fileInfo{}
 	var sections []string
 	total, skipped := 0, 0
@@ -237,6 +251,6 @@ func buildCombinedDiff(changes []gitlab.Change) (string, map[string]fileInfo, in
 		fmt.Printf("Queued %s (%d chars)\n", newPath, len(ch.Diff))
 	}
 
-	fmt.Printf("\nSending %d files (%d chars) to Gemini ...\n", len(fileMeta), total)
+	fmt.Printf("\nSending %d files (%d chars) to %s ...\n", len(fileMeta), total, llmName)
 	return strings.Join(sections, "\n\n"), fileMeta, skipped
 }

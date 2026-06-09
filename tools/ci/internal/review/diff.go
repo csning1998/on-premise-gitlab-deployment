@@ -13,12 +13,14 @@ var skipExtensions = map[string]bool{
 	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".ico": true,
 	".svg": true, ".webp": true, ".pdf": true, ".zip": true, ".tar": true,
 	".gz": true, ".woff": true, ".woff2": true, ".ttf": true, ".eot": true,
+	".pem": true, ".crt": true,
 }
 
 var skipFilenames = map[string]bool{
-	"package-lock.json": true, "yarn.lock": true, "go.sum": true,
-	"poetry.lock": true, "Pipfile.lock": true, "composer.lock": true,
-	"pnpm-lock.yaml": true,
+	"package-lock.json": true, "yarn.lock": true, "bun.lock": true,
+	"go.sum": true, "poetry.lock": true, "Pipfile.lock": true,
+	"composer.lock": true, "pnpm-lock.yaml": true,
+	".terraform.lock.hcl": true, "packer_manifest.json": true,
 }
 
 type diffLine struct {
@@ -45,7 +47,7 @@ func parseDiff(diff string) []diffLine {
 	var result []diffLine
 	var newLine, oldLine *int
 
-	for _, line := range strings.Split(diff, "\n") {
+	for _, line := range strings.Split(strings.TrimSuffix(diff, "\n"), "\n") {
 		if m := hunkRe.FindStringSubmatch(line); m != nil {
 			o, _ := strconv.Atoi(m[1])
 			n, _ := strconv.Atoi(m[2])

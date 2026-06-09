@@ -7,23 +7,33 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
+
+type redactedString string
+
+func (redactedString) String() string  { return "[REDACTED]" }
+func (s redactedString) value() string { return string(s) }
 
 // Client calls the Gemini generateContent endpoint for a fixed model.
 type Client struct {
-	url  string
-	http *http.Client
+	url    string
+	apiKey redactedString
+	http   *http.Client
 }
 
 func New(model, apiKey string) *Client {
 	return &Client{
 		url: fmt.Sprintf(
-			"https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-			model, apiKey,
+			"https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent",
+			model,
 		),
-		http: &http.Client{},
+		apiKey: redactedString(apiKey),
+		http:   &http.Client{Timeout: 120 * time.Second},
 	}
 }
+
+func (c *Client) Name() string { return "Gemini" }
 
 // Review sends the prompt and returns the concatenated text of the first candidate.
 func (c *Client) Review(prompt string) (result string, err error) {
@@ -37,6 +47,7 @@ func (c *Client) Review(prompt string) (result string, err error) {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", c.apiKey.value())
 
 	resp, err := c.http.Do(req)
 	if err != nil {

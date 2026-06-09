@@ -2,9 +2,13 @@
 checkov:
   stage: lint
   image:
-    name: bridgecrew/checkov:latest
+    name: bridgecrew/checkov:3.2.533
     entrypoint: [""]
-  needs: []
+  needs:
+    - job: terraform-fmt
+      optional: true
+    - job: packer-fmt
+      optional: true
   interruptible: true
   allow_failure: true
   rules:
