@@ -8,3 +8,8 @@ output "project_id" {
   description = "The ID of the GitLab project"
   value       = gitlab_project.this.id
 }
+
+output "runner_id" {
+  description = "The ID of the registered project runner"
+  value       = gitlab_user_runner.this.id
+}

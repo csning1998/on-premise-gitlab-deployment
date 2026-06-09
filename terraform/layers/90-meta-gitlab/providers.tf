@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/vault"
       version = "5.5.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.9.0"
+    }
   }
   backend "http" {}
 }

@@ -1,2 +1,5 @@
 
 visibility = "public"
+
+runner_description = "local-podman-runner"
+runner_tag_list    = ["podman", "local"]

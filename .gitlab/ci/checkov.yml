@@ -18,8 +18,9 @@ checkov:
         - "Containerfile"
   # --framework ansible scopes checks to Ansible-specific rules;
   # skipped IDs above are GitHub/GitLab/K8s provider checks that do not exist in this framework
+  # CKV_GLB_3 skipped: push_rules requires GitLab Premium; project runs on Free tier
   script:
     - checkov --directory terraform/ --framework terraform --compact --quiet
-      --skip-check CKV_GIT_1,CKV_GLB_1,CKV_GLB_4,CKV_K8S_21
+      --skip-check CKV_GIT_1,CKV_GLB_1,CKV_GLB_3,CKV_GLB_4,CKV_K8S_21
     # --soft-fail: ansible findings are acknowledged debt; exits 0 until all checks are resolved
     - checkov --directory ansible/ --framework ansible --compact --quiet --soft-fail

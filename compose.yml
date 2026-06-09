@@ -66,3 +66,15 @@ services:
     command: ["/bin/bash", "-c", "while true; do sleep 3600; done"]
     tty: true
     stdin_open: true
+
+  # Service 3: GitLab CI Project Runner
+  gitlab-runner:
+    image: docker.io/gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    network_mode: "host"
+    restart: always
+    security_opt:
+      - label=disable
+    volumes:
+      - ${UHOME}/.config/gitlab-runner:/etc/gitlab-runner:z
+      - /run/user/${HOST_UID}/podman/podman.sock:/run/podman/podman.sock:z
