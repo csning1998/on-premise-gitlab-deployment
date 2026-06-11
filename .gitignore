@@ -18,10 +18,12 @@ terraform/layers/**/ansible.cfg
 ### Ignore folder for output
 packer/output
 
-
 ### GitLab HTTP Backend credentials
 terraform/backend-auth.hcl
 terraform/backend-state.json
+
+### GitLab Runner configuration
+runner-config/
 
 ### Ignore Terraform state files
 .terraform/

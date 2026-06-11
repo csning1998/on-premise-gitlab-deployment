@@ -37,7 +37,7 @@ resource "gitlab_user_runner" "this" {
 }
 
 resource "local_file" "runner_config" {
-  filename = pathexpand("~/.config/gitlab-runner/config.toml")
+  filename = "${path.root}/../../../runner-config/config.toml"
   content = templatefile("${path.module}/templates/config.toml.tftpl", {
     runner_name  = var.runner_description
     runner_token = gitlab_user_runner.this.token

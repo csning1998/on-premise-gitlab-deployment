@@ -76,5 +76,5 @@ services:
     security_opt:
       - label=disable
     volumes:
-      - ${UHOME}/.config/gitlab-runner:/etc/gitlab-runner:z
+      - ./runner-config:/etc/gitlab-runner:z
       - /run/user/${HOST_UID}/podman/podman.sock:/run/podman/podman.sock:z

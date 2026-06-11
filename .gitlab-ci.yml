@@ -1,18 +1,10 @@
 ---
-stages:
-  - format
-  - lint
-  - review
-
 include:
-  - local: .gitlab/ci/terraform-fmt.yml
-  - local: .gitlab/ci/packer-fmt.yml
-  - local: .gitlab/ci/go-fmt.yml
-  - local: .gitlab/ci/go-lint.yml
-  - local: .gitlab/ci/go-build.yml
-  - local: .gitlab/ci/ansible-lint.yml
-  - local: .gitlab/ci/yamllint.yml
-  - local: .gitlab/ci/markdownlint.yml
-  - local: .gitlab/ci/checkov.yml
-  - local: .gitlab/ci/gemini-review.yml
-  - local: .gitlab/ci/claude-review.yml
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/core@1.0.1
+    inputs:
+      reviewer_image: $CI_REGISTRY/csning1998/gitlab-ci-with-code-reviewer/reviewer:1.0.1
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-terraform@1.0.1
+    inputs:
+      checkov_skip: "CKV_GIT_1,CKV_GLB_1,CKV_GLB_3,CKV_GLB_4,CKV_K8S_21"
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-ansible@1.0.1
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-packer@1.0.1
