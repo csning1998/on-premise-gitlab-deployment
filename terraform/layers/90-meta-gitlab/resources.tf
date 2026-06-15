@@ -9,7 +9,8 @@ resource "gitlab_project" "this" {
   squash_option = "always"
 
   # MR Workflow
-  remove_source_branch_after_merge = true
+  remove_source_branch_after_merge         = true
+  ci_push_repository_for_job_token_allowed = true # required by prettier-fmt auto-commit
 
   # Features
   issues_access_level    = "enabled"

@@ -71,7 +71,7 @@ vault/keys/
 
 # Only for recording by commit messages personally.
 commit-message.md
-pull-request.md
+merge-request.md
 *.bak
 terraform/layers/**/*.output.json
 .gitignore

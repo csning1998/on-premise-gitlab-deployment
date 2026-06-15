@@ -10,7 +10,14 @@ terraform {
       version = "0.11.1"
     }
   }
-  backend "http" {}
+  backend "http" {
+    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/25-security-pki"
+    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/25-security-pki/lock"
+    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/25-security-pki/lock"
+    lock_method    = "POST"
+    unlock_method  = "DELETE"
+    retry_wait_min = 5
+  }
 }
 
 # Production Provider (Layer 10 Vault)
