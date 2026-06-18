@@ -47,7 +47,7 @@ Refer to `terraform/layers/40-provision-keycloak-oidc/terraform.tfvars.example` 
 
 ## Harbor CI Registry Credentials
 
-Each team subgroup receives the credentials of its dedicated Harbor `ci-{team}` robot as group level CI/CD variables. A pipeline running under a team subgroup authenticates to Production Harbor as that robot and pushes images into the matching `team-{name}` project. The robot accounts and their Vault entries are created by `60-provision-harbor`, so that layer must be applied before this one.
+Each team subgroup receives the credentials of its dedicated Harbor `ci-{team}` robot as group level CI/CD variables. A pipeline running under a team subgroup authenticates to Production Harbor as that robot and pushes images into the matching `team-{name}` project. The robot accounts and their Vault entries are created by `60-provision-harbor-platform`, so that layer must be applied before this one.
 
 Teams are the subgroups under the target org whose Keycloak `type` attribute is `team`. Role groups such as `dev-leads` have no Harbor robot and are excluded. The variables are provisioned by `resources-harbor-ci-vars.tf`, which reads each robot from Vault and sets two group variables.
 

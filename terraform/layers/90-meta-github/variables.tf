@@ -13,7 +13,7 @@ variable "repository_name" {
 variable "repository_description" {
   description = "Description of the repository"
   type        = string
-  default     = "IaC PoC for GitLab Foundation on KVM. Automates HA Kubeadm/MicroK8s cluster & HA Stateful Services (Patroni, Sentinel, and MinIO), and HA HashiCorp Vault as Bastion, with Packer, Terraform, and Ansible."
+  default     = "IaC MVP for GitLab Foundation on KVM. Automates HA Kubeadm/MicroK8s cluster & HA Stateful Services (Patroni, Sentinel, and MinIO), and HA HashiCorp Vault as Bastion, with Packer, Terraform, and Ansible."
 }
 
 variable "visibility" {

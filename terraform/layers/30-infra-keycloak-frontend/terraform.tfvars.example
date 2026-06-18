@@ -1,7 +1,8 @@
 
-target_cluster_name = "core-keycloak-frontend"
+target_clusters = { "keycloak" = "core-keycloak-frontend" }
+primary_role    = "keycloak"
 
-keycloak_config = {
+service_config = {
   "keycloak" = {
     role            = "keycloak"
     network_tier    = "default"

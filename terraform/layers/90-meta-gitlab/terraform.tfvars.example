@@ -3,3 +3,5 @@ visibility = "public"
 
 runner_description = "local-podman-runner"
 runner_tag_list    = ["podman", "local"]
+
+repository_description = "[MVP] IaC Automated deployment of HA GitLab on on-premise KVM/QEMU environment. Provisions HA Kubeadm / MicroK8s cluster, HA Patroni (Postgres), Redis Sentinel, MinIO, and HA HashiCorp Vault with PKI (Sidecar) and AppRole using Packer, Terraform, and Ansible."

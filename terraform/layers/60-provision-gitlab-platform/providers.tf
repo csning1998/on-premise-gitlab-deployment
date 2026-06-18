@@ -11,9 +11,9 @@ terraform {
     }
   }
   backend "http" {
-    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab"
-    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab/lock"
-    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab/lock"
+    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab-platform"
+    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab-platform/lock"
+    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/60-provision-gitlab-platform/lock"
     lock_method    = "POST"
     unlock_method  = "DELETE"
     retry_wait_min = 5

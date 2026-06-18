@@ -190,7 +190,7 @@ Re-apply `50-platform-harbor-frontend` to update the Helm release.
 
 ### OIDC Duplicate User Conflict
 
-See [`60-provision-harbor/README.md`](../../../terraform/layers/60-provision-harbor/README.md)
+See [`60-provision-harbor-platform/README.md`](../../../terraform/layers/60-provision-harbor-platform/README.md)
 for the database cleanup procedure.
 
 ### Harbor admin 401 during Terraform apply (refresh phase)
@@ -205,5 +205,5 @@ changes. Existing state is trusted as-is.
 terraform apply -refresh=false
 ```
 
-The Harbor provider in `60-provision-harbor` uses `admin` basic auth (which works even
+The Harbor provider in `60-provision-harbor-platform` uses `admin` basic auth (which works even
 with OIDC `primary_auth_mode = true` via the `/api/v2.0` endpoint).

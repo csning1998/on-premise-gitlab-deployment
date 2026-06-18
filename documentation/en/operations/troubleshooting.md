@@ -21,9 +21,9 @@ Caused by `rails-secret` / `db_key_base` being regenerated (via `terraform destr
 
 ## OIDC / Identity
 
-| Symptom                                                      | Layer                 | Reference                                                         |
-| ------------------------------------------------------------ | --------------------- | ----------------------------------------------------------------- |
-| Duplicate user conflict after OIDC re-login (Identity Drift) | `60-provision-harbor` | [README](../../../terraform/layers/60-provision-harbor/README.md) |
+| Symptom                                                      | Layer                          | Reference                                                                  |
+| ------------------------------------------------------------ | ------------------------------ | -------------------------------------------------------------------------- |
+| Duplicate user conflict after OIDC re-login (Identity Drift) | `60-provision-harbor-platform` | [README](../../../terraform/layers/60-provision-harbor-platform/README.md) |
 
 ## Harbor Bootstrapper
 
@@ -41,7 +41,7 @@ First-time setup steps that don't fit neatly into the main provisioning flow.
 
 ### GitLab Platform (L60)
 
-[`60-provision-gitlab/README.md`](../../../terraform/layers/60-provision-gitlab/README.md)
+[`60-provision-gitlab-platform/README.md`](../../../terraform/layers/60-provision-gitlab-platform/README.md)
 
 Covers:
 

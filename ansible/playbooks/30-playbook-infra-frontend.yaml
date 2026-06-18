@@ -20,7 +20,7 @@
   hosts: "{{ 'keycloak' if 'keycloak' in groups else [] }}"
   become: true
   roles:
-    - 30-keycloak
+    - 30-infra-keycloak
 
 # 3. Generic MicroK8s Cluster
 - name: "Play [Kubernetes]: Provision and Configure MicroK8s Cluster"

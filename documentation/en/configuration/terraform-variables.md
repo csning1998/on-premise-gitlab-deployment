@@ -33,7 +33,7 @@ Support for additional Linux Guest OS such as Fedora 43 or RHEL 10 is planned.
 - Use menu option `7) Build Packer Base Image` to generate base images. See [Packer Build](../operations/packer-build.md) for details.
 - **[Note]**: The `Provision Terraform Layer` interactive menu has been removed. Please manually navigate to the `terraform/layers/` directories and execute `tofu apply` for deployment.
 
-    Occasionally, when rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate*.backup` from `terraform/layers/60-provision-harbor` before re-executing `tofu apply`.
+    Occasionally, when rebuilding Harbor in Layer 60, a `module.harbor_system_config.harbor_garbage_collection.gc` "Resource not found" error may occur. Resolved by removing `terraform.tfstate` and `terraform.tfstate*.backup` from `terraform/layers/60-provision-harbor-platform` before re-executing `tofu apply`.
 
 ## 4. Resource Cleanup
 

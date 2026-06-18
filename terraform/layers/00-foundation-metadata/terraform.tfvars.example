@@ -1,5 +1,6 @@
 
-domain_suffix = "iac.internal"
+domain_suffix      = "iac.internal"
+vault_kv_namespace = "on-premise-gitlab-deployment"
 
 network_baseline = {
   cidr_block    = "172.16.0.0/16"
@@ -114,11 +115,17 @@ service_catalog = {
         ip_range   = { start_ip = 200, end_ip = 200 }
         ports = {
           "https" = {
-            frontend_port          = 443,
-            backend_port           = 8080,
-            health_check_port      = 9000,
-            health_check_type      = "http",
-            health_check_http_path = "/health/ready"
+            frontend_port     = 443,
+            backend_port      = 8080,
+            health_check_port = 9000,
+            health_check_type = "tcp",
+            health_check_ssl  = false
+          }
+          "mgmt" = {
+            frontend_port     = 9000,
+            backend_port      = 9000,
+            health_check_type = "tcp",
+            health_check_ssl  = false
           }
 
         }
@@ -144,6 +151,7 @@ service_catalog = {
           "api-server"    = { frontend_port = 6443, backend_port = 6443 }
           "ingress-http"  = { frontend_port = 80, backend_port = 30080, send_proxy_v2 = true }
           "ingress-https" = { frontend_port = 443, backend_port = 30443, send_proxy_v2 = true }
+          "gitlab-ssh"    = { frontend_port = 32022, backend_port = 32022 }
         }
         ingress = {
           "frontend" = { subdomains = ["gitlab", "kas"], node_groups = ["master", "worker"] }

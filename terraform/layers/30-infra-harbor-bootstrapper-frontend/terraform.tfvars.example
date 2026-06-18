@@ -1,7 +1,8 @@
 
-target_cluster_name = "core-harbor-bootstrapper-frontend"
+target_clusters = { "harbor_bootstrapper" = "core-harbor-bootstrapper-frontend" }
+primary_role    = "harbor_bootstrapper"
 
-harbor_bootstrapper_config = {
+service_config = {
   "harbor_bootstrapper" = {
     role            = "harbor_bootstrapper"
     network_tier    = "default"

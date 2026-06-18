@@ -108,7 +108,7 @@ When migrating all layers, initialize in dependency order so that upstream state
 50-platform-gitlab-frontend
 50-platform-gitlab-runner
 50-platform-harbor-frontend
-60-provision-gitlab
-60-provision-harbor
+60-provision-gitlab-platform
+60-provision-harbor-platform
 90-meta-gitlab
 ```
