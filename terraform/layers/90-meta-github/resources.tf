@@ -1,8 +1,9 @@
 
 resource "github_repository" "this" {
-  name        = var.repository_name
-  description = var.repository_description
-  visibility  = var.visibility
+  name         = var.repository_name
+  description  = var.repository_description
+  homepage_url = var.homepage_url
+  visibility   = var.visibility
 
   # Squash and Merge
   allow_merge_commit = false

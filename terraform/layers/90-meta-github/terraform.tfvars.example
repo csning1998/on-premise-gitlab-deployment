@@ -1,4 +1,6 @@
 
 github_owner = "forker-or-cloner's-account"
+homepage_url = "https://gitlab.com/<your-gitlab-username>/on-premise-gitlab-deployment"
+visibility   = "public"
 
-visibility = "public"
+repository_description = "[MVP] Multi-layer Terraform IaC for on-premise GitLab deployment on KVM/QEMU. HA: Kubeadm control plane, Patroni/Postgres, Redis Sentinel, MinIO (erasure coding), Gitaly/Praefect, Vault (hierarchical PKI and AppRole), Harbor Registry, and GitLab Runner. Standalone: Harbor Bootstrapper and Keycloak OIDC SSO. Via Packer, Terraform, and Ansible."

@@ -1,4 +1,4 @@
-# MVP: Deploy Distributed GitLab Helm Chart on KVM with Packer, Terraform, Vault, and Ansible
+# MVP: On-Premise GitLab HA on KVM/QEMU, Provisioned via Multi-Layer Terraform, Packer, and Ansible
 
 > [!NOTE]
 > Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
