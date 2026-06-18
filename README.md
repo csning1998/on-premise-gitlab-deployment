@@ -109,7 +109,12 @@ Services currently provisioned:
 7. Harbor Bootstrapper as OCI seed registry for Helm charts and images
 8. Keycloak OIDC for SSO integration for GitLab, Harbor (both), and Vault
 9. Standalone Gitaly
-10. HA Gitaly with Praefect
+10. HA Gitaly with (HA) Praefect + subordinated Patroni
 11. GitLab Runner on MicroK8s
-12. **[WIP]** Remote Terraform States
-13. **[Pending]** Prometheus / Grafana / Loki Integration
+12. Remote Terraform States
+13. Centralized CI/CD Pipeline
+14. **[WIP]** Documentation
+15. **[Waiting]** Prometheus / Grafana / Loki Integration
+
+> [!NOTE]
+> **Standalone Gitaly** and **(HA) Praefect with subordinated Patroni** configurations support bidirectional migration. Refer to [README of 30-infra-gitaly-praefect](ansible/roles/30-infra-gitaly-praefect/README.md) for more detail.
