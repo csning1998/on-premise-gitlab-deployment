@@ -4,6 +4,7 @@
 minio_root_user     = "admin"
 keycloak_admin_user = "admin"
 keycloak_db_user    = "admin"
+grafana_admin_user  = "admin"
 
 # Set to false if the GitLab topology does not run Praefect.
 gitlab_enable_praefect = true

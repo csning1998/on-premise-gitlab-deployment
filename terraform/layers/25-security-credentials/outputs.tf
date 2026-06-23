@@ -15,5 +15,7 @@ output "credential_paths" {
     gitlab_praefect_patroni      = module.gitlab_app_postgres.path
     gitlab_frontend              = module.gitlab_app_internal.path
     harbor_frontend              = module.harbor_app_internal.path
+    observability_frontend       = module.observability_frontend.path
+    observability_minio          = module.observability_minio.path
   }
 }

@@ -247,3 +247,49 @@ module "harbor_app_internal" {
     vault.production = vault.production
   }
 }
+
+# Observability stack credentials
+
+module "observability_minio" {
+  source = "../../modules/configuration/vault-credential"
+
+  domain    = "observability"
+  component = "minio"
+
+  static = {
+    minio_root_user = var.minio_root_user
+  }
+
+  generate = {
+    minio_root_password = { length = 32 }
+    minio_vrrp_secret   = { length = 32 }
+  }
+
+  vault_kv_namespace = local.vault_kv_namespace
+
+  providers = {
+    vault.production = vault.production
+  }
+}
+
+module "observability_frontend" {
+  source = "../../modules/configuration/vault-credential"
+
+  domain    = "observability"
+  component = "frontend"
+
+  static = {
+    grafana_admin_user = var.grafana_admin_user
+  }
+
+  generate = {
+    grafana_admin_password = { length = 32 }
+    grafana_secret_key     = { length = 64 }
+  }
+
+  vault_kv_namespace = local.vault_kv_namespace
+
+  providers = {
+    vault.production = vault.production
+  }
+}

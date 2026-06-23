@@ -2,18 +2,18 @@
 
 ## DNS Host Update Failure on Existing Networks
 
-When a new service is added to `00-foundation-metadata`, running `terraform apply` in this layer will fail with the following error on one or more existing networks:
+When a new service is added to `00-foundation-metadata`, `terraform apply` in this layer will fail on one or more existing networks with the following error:
 
 > Provider produced inconsistent result after apply
 > .dns.host: element N has vanished.
 
 ### Root Cause
 
-The `dmacvicar/libvirt` provider uses `virNetworkDefineXML()` to update existing networks. For networks that are currently active, this call updates only the persistent on-disk configuration. The provider then reads back the result using `virNetworkGetXMLDesc()` with `flags=0`, which returns the active in-memory configuration.
+The `dmacvicar/libvirt` provider uses `virNetworkDefineXML()` to update existing networks. For networks that are currently active, this call only updates the persistent on-disk configuration. The provider then reads the result back using `virNetworkGetXMLDesc()` with `flags=0`, which returns the active in-memory configuration rather than the updated persistent one.
 
-Because the active configuration is not reloaded by `DefineXML`, the newly added DNS host entry is absent in the read-back, and Terraform reports the inconsistency.
+Because `DefineXML` does not reload the active configuration, the newly added DNS host entry is absent from the read-back, and Terraform reports the inconsistency.
 
-Newly created networks are not affected because creation uses `DefineXML` followed by `virNetworkCreate()`, which activates the network with the full configuration including the new entry.
+Newly created networks are not affected. Creation uses `DefineXML` followed by `virNetworkCreate()`, which starts the network with the full updated configuration already in place.
 
 ### Recovery Procedure
 
@@ -25,17 +25,17 @@ Newly created networks are not affected because creation uses `DefineXML` follow
     sudo virsh net-dumpxml --inactive core-gitlab-minio | grep -c "<ip address>"
     ```
 
-    If the count matches the expected number of DNS host entries, the persistent configuration is correct and only the active configuration needs updating.
+    If the count matches the expected number of DNS host entries, the persistent configuration is correct and only the active configuration needs to be updated.
 
 2. **Update the active configuration of all existing networks.**
 
-    Replace the `XML` value with the DNS host block for the newly added service, then run the script. All 40 existing networks (20 hostonly + 20 NAT) require the update.
+    Set the `XML` variable to the DNS host block for the newly added service, then run the script. All 40 existing networks (20 hostonly + 20 NAT) require the update.
 
     ```bash
     XML='<host ip="<NEW_SERVICE_VIP>"><hostname><HOSTNAME_1></hostname></host>'
     ```
 
-    If the service has $k$ hostnames, then $k$ sets of `<hostname><HOSTNAME_i></hostname>` XML blocks are required, where $i \in [1, k]$. Refer to the Reference Values sections at the bottom of this document for concrete examples of filled-in XML blocks.
+    If the service has $k$ hostnames, include $k$ `<hostname><HOSTNAME_i></hostname>` elements in the block, where $i \in [1, k]$. The Reference Values sections at the bottom of this document provide filled-in examples.
 
     ```bash
     for net in \
@@ -53,12 +53,12 @@ Newly created networks are not affected because creation uses `DefineXML` follow
         core-observability-frontend \
         core-observability-minio; \
     do
-        sudo virsh net-update "$net"       add dns-host --xml "$XML" --live
-        sudo virsh net-update "${net}-nat" add dns-host --xml "$XML" --live
+        sudo virsh net-update "$net"       add dns-host --xml "$XML" --live --config
+        sudo virsh net-update "${net}-nat" add dns-host --xml "$XML" --live --config
     done
     ```
 
-    When a new service is provisioned and its network is added to this list, add both the hostonly and NAT network names to the loop.
+    When a new service is provisioned, add both its hostonly and NAT network names to this loop.
 
 3. **Synchronise the Terraform state.**
 
@@ -66,7 +66,7 @@ Newly created networks are not affected because creation uses `DefineXML` follow
     terraform plan -refresh-only
     ```
 
-    Review the output to confirm only the expected DNS drift is reported, then apply:
+    Review the output to confirm that only the expected DNS drift is reported, then apply:
 
     ```bash
     terraform apply -refresh-only
@@ -130,6 +130,25 @@ This applies to L10, L15, and all L30 layers. The script below discovers `cloud_
         (cd "$layer_dir" && terraform apply -auto-approve "${replace_args[@]}")
     done
     ```
+
+### Post-Domain-Replace Cloud-Init Resync
+
+Replacing `cloud_init_iso` updates the ISO file on disk, but that alone does not cause cloud-init to re-apply its configuration to an already-running or newly-started VM.
+
+When `libvirt_domain` is replaced via `terraform apply -replace` without also replacing the OS disk (`libvirt_volume`), the new VM boots from the existing OS disk. That disk still holds the cached cloud-init state at `/var/lib/cloud/`, including the `instance-id` from the original run. On startup, cloud-init compares the ISO's `instance-id` against the cached value, and if they match, it skips all reconfiguration, including the network-config stage, even if the ISO now contains updated NIC definitions.
+
+Two conditions can trigger this:
+
+- A new service segment is added to the SSoT and L10 is re-applied to update the `libvirt_domain` NIC definitions.
+- The `libvirt_domain` is force-replaced to work around a provider diff-detection bug.
+
+**Recovery**: After Ansible provisioning finishes on the affected nodes, clear the instance cache to force a full cloud-init run on the next reboot:
+
+```bash
+sudo cloud-init clean --logs && sudo reboot
+```
+
+After the reboot, confirm that all expected interfaces appear in `/etc/netplan/50-cloud-init.yaml` with addresses assigned before running any further Ansible plays.
 
 ---
 

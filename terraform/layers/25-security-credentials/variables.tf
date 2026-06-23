@@ -22,3 +22,9 @@ variable "gitlab_enable_praefect" {
   type        = bool
   default     = true
 }
+
+variable "grafana_admin_user" {
+  description = "Grafana admin username (human-managed)."
+  type        = string
+  sensitive   = true
+}

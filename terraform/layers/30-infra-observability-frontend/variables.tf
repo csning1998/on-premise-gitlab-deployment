@@ -1,17 +1,22 @@
 
 variable "target_clusters" {
-  description = "Map of role to physical cluster names."
+  description = "Map of role to physical cluster names from SSoT."
   type        = map(string)
 }
 
 variable "primary_role" {
-  description = "The primary role for this layer (e.g. 'postgres')."
+  description = "Primary role key within target_clusters."
   type        = string
 }
 
+variable "vault_dev_addr" {
+  description = "The address of the Vault server."
+  type        = string
+  default     = "https://127.0.0.1:8200"
+}
 
 variable "service_config" {
-  description = "Compute topology for Postgres service"
+  description = "Compute topology for Observability Microk8s cluster. Key must match primary_role."
   type = map(object({
     role            = string
     network_tier    = string

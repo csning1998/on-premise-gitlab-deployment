@@ -111,6 +111,9 @@ locals {
     "gitlab-runner" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
+    "observability-frontend" = {
+      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
+    }
 
     # Human/Management Identities
     "oidc-admin" = {

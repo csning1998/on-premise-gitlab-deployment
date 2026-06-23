@@ -1,21 +1,21 @@
 
-variable "primary_role" {
-  description = "The primary role for this layer (e.g. 'minio')."
-  type        = string
+variable "target_clusters" {
+  description = "Mapping of logical component roles to physical SSoT cluster names."
+  type        = map(string)
 }
 
-variable "target_clusters" {
-  description = "Map of role to physical cluster names."
-  type        = map(string)
+variable "primary_role" {
+  description = "The logical role designated as the primary service entrypoint."
+  type        = string
 }
 
 
 variable "service_config" {
-  description = "Compute topology for MinIO service"
+  description = "Compute configuration for Observability MinIO service"
   type = map(object({
     role            = string
-    network_tier    = string
     base_image_path = string
+    network_tier    = optional(string, "default")
     nodes = map(object({
       ip_suffix            = number
       vcpu                 = number
