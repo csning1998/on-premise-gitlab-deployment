@@ -353,4 +353,41 @@ service_catalog = {
       }
     }
   },
+  "observability" = {
+    owner        = "devops"
+    project_code = "core"
+    stage        = "production"
+    components = {
+      "frontend" = {
+        provider   = "kvm"
+        runtime    = "microk8s"
+        cidr_index = 143
+        ip_range   = { start_ip = 200, end_ip = 202 }
+        ports = {
+          "api-server"    = { frontend_port = 16443, backend_port = 16443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 80, send_proxy_v2 = true }
+          "ingress-https" = { frontend_port = 443, backend_port = 443, send_proxy_v2 = true }
+        }
+        ingress = {
+          "frontend" = { subdomains = ["grafana"] }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
+      },
+      "minio" = {
+        provider   = "kvm"
+        runtime    = "baremetal"
+        cidr_index = 144
+        tags       = []
+        ip_range   = { start_ip = 200, end_ip = 203 }
+        ports = {
+          "api"     = { frontend_port = 9000, backend_port = 9000 }
+          "console" = { frontend_port = 9001, backend_port = 9001 }
+        }
+        data_disks = [
+          { name_suffix = "drive1", capacity_gib = 20 },
+          { name_suffix = "drive2", capacity_gib = 20 }
+        ]
+      }
+    }
+  },
 }

@@ -14,14 +14,14 @@ vrrp_script chk_haproxy {
 {# Sync Group ensures all VIPs failover together #}
 vrrp_sync_group VG_ALL {
     group {
-{% for segment in lb_service_segments %}
+{% for segment in lb_keepalived_segments %}
         VI_{{ segment.name | upper | replace('-', '_') }}
 {% endfor %}
     }
 }
 
 {# Iterate to generate VRRP Instance #}
-{% for segment in lb_service_segments %}
+{% for segment in lb_keepalived_segments %}
 vrrp_instance VI_{{ segment.name | upper | replace('-', '_') }} {
     state {{ 'MASTER' if inventory_hostname == groups['load_balancer'][0] else 'BACKUP' }}
     {# Bind to the specific interface alias defined in Inventory, e.g. v_gitlab-frontend #}

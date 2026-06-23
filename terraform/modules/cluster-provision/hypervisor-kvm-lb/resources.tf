@@ -166,6 +166,10 @@ resource "libvirt_volume" "cloud_init_iso" {
       url = libvirt_cloudinit_disk.cloud_init[each.key].path
     }
   }
+
+  lifecycle {
+    replace_triggered_by = [libvirt_cloudinit_disk.cloud_init[each.key]]
+  }
 }
 
 resource "libvirt_domain" "nodes" {

@@ -30,6 +30,11 @@
       when: vault_ca_cert_b64 is defined
       notify: Restart HAProxy
 
+- name: "Task B1. Build lb_keepalived_segments filtered to interfaces present in OS"
+  ansible.builtin.set_fact:
+    lb_keepalived_segments: >-
+      {{ lb_service_segments | selectattr('interface_alias', 'in', ansible_facts['interfaces']) | list }}
+
 - name: "Block B2: Configure Keepalived and HAProxy"
   block:
     - name: "B2a. Render Keepalived configuration"
