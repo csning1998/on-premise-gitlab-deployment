@@ -16,13 +16,12 @@ variable "helm_config" {
 }
 
 variable "grafana_config" {
-  description = "Grafana application configuration including FQDN and admin credentials"
+  description = "Grafana application configuration including FQDN and reference to K8s Secret holding admin credentials"
   type = object({
-    fqdn           = string
-    admin_password = string
-    dns_sans       = list(string)
+    fqdn                       = string
+    admin_existing_secret_name = string
+    dns_sans                   = list(string)
   })
-  sensitive = true
 }
 
 variable "ingress_config" {

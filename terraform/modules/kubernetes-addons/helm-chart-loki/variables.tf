@@ -18,14 +18,12 @@ variable "helm_config" {
 }
 
 variable "storage_config" {
-  description = "External MinIO S3 backend connection and bucket configuration for Loki chunk, ruler, and admin storage"
-  sensitive   = true
+  description = "External MinIO S3 backend connection, bucket names, and reference to K8s Secret containing S3 credentials as environment variables"
   type = object({
-    endpoint      = string
-    access_key    = string
-    secret_key    = string
-    chunks_bucket = string
-    ruler_bucket  = string
-    admin_bucket  = string
+    endpoint                = string
+    s3_existing_secret_name = string
+    chunks_bucket           = string
+    ruler_bucket            = string
+    admin_bucket            = string
   })
 }

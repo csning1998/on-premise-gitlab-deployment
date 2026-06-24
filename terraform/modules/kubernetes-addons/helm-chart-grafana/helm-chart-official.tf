@@ -8,7 +8,11 @@ resource "helm_release" "grafana" {
   timeout          = var.helm_config.timeout
 
   values = [yamlencode({
-    adminPassword = var.grafana_config.admin_password
+    admin = {
+      existingSecret = var.grafana_config.admin_existing_secret_name
+      userKey        = "admin-user"
+      passwordKey    = "admin-password"
+    }
 
     image = {
       registry   = var.helm_config.image_registry

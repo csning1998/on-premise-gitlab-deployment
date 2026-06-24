@@ -9,19 +9,7 @@ variable "trust_engine_config" {
   default = {
     issuer_name           = "vault-issuer"
     issuer_kind           = "ClusterIssuer"
-    authorized_namespaces = ["cert-manager", "monitoring"]
-  }
-}
-
-variable "cert_manager_config" {
-  description = "Configuration for Cert-Manager Helm Chart"
-  type = object({
-    version   = string
-    namespace = string
-  })
-  default = {
-    version   = "v1.14.0"
-    namespace = "cert-manager"
+    authorized_namespaces = ["cert-manager", "observability"]
   }
 }
 
@@ -43,7 +31,7 @@ variable "certificate_config" {
   }
 }
 
-variable "monitoring_stack_config" {
+variable "observability_stack_config" {
   description = "Helm chart versions and shared namespace for the Grafana, Mimir, and Loki observability stack"
   type = object({
     grafana_version = string
@@ -55,18 +43,18 @@ variable "monitoring_stack_config" {
     grafana_version = "12.4.9"
     mimir_version   = "6.0.6"
     loki_version    = "17.4.10"
-    namespace       = "monitoring"
+    namespace       = "observability"
   }
   validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.monitoring_stack_config.grafana_version))
-    error_message = "monitoring_stack_config.grafana_version must be a stable semver string."
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.observability_stack_config.grafana_version))
+    error_message = "observability_stack_config.grafana_version must be a stable semver string."
   }
   validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.monitoring_stack_config.mimir_version))
-    error_message = "monitoring_stack_config.mimir_version must be a stable semver string."
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.observability_stack_config.mimir_version))
+    error_message = "observability_stack_config.mimir_version must be a stable semver string."
   }
   validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.monitoring_stack_config.loki_version))
-    error_message = "monitoring_stack_config.loki_version must be a stable semver string."
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.observability_stack_config.loki_version))
+    error_message = "observability_stack_config.loki_version must be a stable semver string."
   }
 }

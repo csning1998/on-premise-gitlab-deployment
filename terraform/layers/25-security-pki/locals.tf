@@ -113,6 +113,8 @@ locals {
     }
     "observability-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
+      "secret/data/on-premise-gitlab-deployment/observability/frontend"                  = { capabilities = ["read"] }
+      "secret/data/on-premise-gitlab-deployment/observability/app/s3_credentials/*"      = { capabilities = ["read"] }
     }
 
     # Human/Management Identities

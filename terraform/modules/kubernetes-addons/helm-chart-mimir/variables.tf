@@ -18,16 +18,10 @@ variable "helm_config" {
 }
 
 variable "storage_config" {
-  description = "External MinIO S3 backend connection and per-bucket credentials for each Mimir storage subsystem"
-  sensitive   = true
+  description = "External MinIO S3 backend connection, bucket names, and reference to K8s Secret containing per-bucket credentials as environment variables"
   type = object({
     endpoint                = string
-    blocks_access_key       = string
-    blocks_secret_key       = string
-    ruler_access_key        = string
-    ruler_secret_key        = string
-    alertmanager_access_key = string
-    alertmanager_secret_key = string
+    s3_existing_secret_name = string
     blocks_bucket           = string
     ruler_bucket            = string
     alertmanager_bucket     = string

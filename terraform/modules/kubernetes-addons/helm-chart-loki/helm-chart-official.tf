@@ -29,8 +29,8 @@ resource "helm_release" "loki" {
         s3 = {
           endpoint         = var.storage_config.endpoint
           region           = "us-east-1"
-          accessKeyId      = var.storage_config.access_key
-          secretAccessKey  = var.storage_config.secret_key
+          accessKeyId      = "$${LOKI_ACCESS_KEY}"
+          secretAccessKey  = "$${LOKI_SECRET_KEY}"
           s3ForcePathStyle = true
           http_config = {
             ca_file = "/etc/ssl/certs/custom-ca.crt"
@@ -53,7 +53,11 @@ resource "helm_release" "loki" {
     }
 
     singleBinary = {
-      replicas = 1
+      replicas  = 1
+      extraArgs = ["-config.expand-env=true"]
+      extraEnvFrom = [{
+        secretRef = { name = var.storage_config.s3_existing_secret_name }
+      }]
       extraVolumes = [{
         name = "ca-bundle"
         secret = {

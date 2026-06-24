@@ -5,9 +5,7 @@ trust_engine_config = {
   authorized_namespaces = ["cert-manager", "observability"]
 }
 
-observability_stack_config = {
-  grafana_version = "12.4.9"
-  mimir_version   = "6.0.6"
-  loki_version    = "17.4.10"
-  namespace       = "observability"
+cert_manager_config = {
+  version   = "v1.14.0"
+  namespace = "cert-manager"
 }
