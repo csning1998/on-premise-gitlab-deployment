@@ -71,27 +71,6 @@ resource "helm_release" "loki" {
         readOnly  = true
       }]
     }
-
-    read = {
-      replicas = 0
-    }
-
-    write = {
-      replicas = 0
-    }
-
-    backend = {
-      replicas = 0
-    }
-
-    minio = {
-      enabled = false
-    }
-
-    chunksCache = {
-      allocatedMemory = 1024
-    }
-
     gateway = {
       nginxConfig = {
         resolver = var.helm_config.dns_resolver
@@ -104,5 +83,17 @@ resource "helm_release" "loki" {
       }
     }
 
+    read    = { replicas = 0 }
+    write   = { replicas = 0 }
+    backend = { replicas = 0 }
+    minio   = { enabled = false }
+
+    # chunksCache reduces S3 round-trips for repeated log chunk reads;
+    # resultsCache short-circuits re-execution of identical LogQL queries.
+    # Both are external Memcached StatefulSets and are disabled here
+    # since MinIO runs on the same node (loopback latency),
+    # making the cache benefit negligible while each pod claims 1229 Mi of memory requests.
+    chunksCache  = { enabled = false }
+    resultsCache = { enabled = false }
   })]
 }

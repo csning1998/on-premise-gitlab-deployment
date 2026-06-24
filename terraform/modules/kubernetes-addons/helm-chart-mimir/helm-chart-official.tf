@@ -92,6 +92,10 @@ resource "helm_release" "mimir" {
       zoneAwareReplication = {
         enabled = false
       }
+      resources = {
+        requests = { memory = "256Mi" }
+        limits   = { memory = "1Gi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -103,6 +107,10 @@ resource "helm_release" "mimir" {
       zoneAwareReplication = {
         enabled = false
       }
+      resources = {
+        requests = { memory = "128Mi" }
+        limits   = { memory = "512Mi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -110,7 +118,11 @@ resource "helm_release" "mimir" {
     }
 
     compactor = {
-      replicas          = 1
+      replicas = 1
+      resources = {
+        requests = { memory = "128Mi" }
+        limits   = { memory = "512Mi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -118,7 +130,11 @@ resource "helm_release" "mimir" {
     }
 
     alertmanager = {
-      replicas          = 1
+      replicas = 1
+      resources = {
+        requests = { memory = "32Mi" }
+        limits   = { memory = "128Mi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -126,7 +142,11 @@ resource "helm_release" "mimir" {
     }
 
     ruler = {
-      replicas          = 1
+      replicas = 1
+      resources = {
+        requests = { memory = "64Mi" }
+        limits   = { memory = "256Mi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -134,7 +154,11 @@ resource "helm_release" "mimir" {
     }
 
     querier = {
-      replicas          = 1
+      replicas = 1
+      resources = {
+        requests = { memory = "64Mi" }
+        limits   = { memory = "256Mi" }
+      }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -143,14 +167,26 @@ resource "helm_release" "mimir" {
 
     distributor = {
       replicas = 1
+      resources = {
+        requests = { memory = "64Mi" }
+        limits   = { memory = "256Mi" }
+      }
     }
 
     query_frontend = {
       replicas = 1
+      resources = {
+        requests = { memory = "64Mi" }
+        limits   = { memory = "128Mi" }
+      }
     }
 
     query_scheduler = {
       replicas = 1
+      resources = {
+        requests = { memory = "64Mi" }
+        limits   = { memory = "128Mi" }
+      }
     }
 
     gateway = {
