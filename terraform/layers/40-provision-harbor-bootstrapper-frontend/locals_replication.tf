@@ -57,5 +57,17 @@ locals {
       registry_key  = "ghcr_io"
       resource_name = "rancher/local-path-provisioner"
     }
+    grafana = {
+      registry_key  = "ghcr_io"
+      resource_name = "grafana-community/helm-charts/grafana"
+    }
+    loki = {
+      registry_key  = "ghcr_io"
+      resource_name = "grafana-community/helm-charts/loki"
+    }
+    mimir_distributed = {
+      registry_key  = "ghcr_io"
+      resource_name = "grafana/helm-charts/mimir-distributed"
+    }
   }
 }

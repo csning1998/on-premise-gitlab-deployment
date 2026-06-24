@@ -1,0 +1,18 @@
+
+trust_engine_config = {
+  issuer_name           = "vault-issuer"
+  issuer_kind           = "ClusterIssuer"
+  authorized_namespaces = ["cert-manager", "monitoring"]
+}
+
+cert_manager_config = {
+  version   = "v1.14.0"
+  namespace = "cert-manager"
+}
+
+monitoring_stack_config = {
+  grafana_version = "12.4.9"
+  mimir_version   = "6.0.6"
+  loki_version    = "17.4.10"
+  namespace       = "monitoring"
+}

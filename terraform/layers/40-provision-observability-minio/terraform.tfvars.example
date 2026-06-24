@@ -1,0 +1,39 @@
+
+observability_minio_tenants = {
+  "mimir-blocks" = {
+    user_name      = "mimir-blocks-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "mimir-blocks"
+  }
+  "mimir-ruler" = {
+    user_name      = "mimir-ruler-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "mimir-ruler"
+  }
+  "mimir-alertmanager" = {
+    user_name      = "mimir-alertmanager-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "mimir-alertmanager"
+  }
+  "loki-chunks" = {
+    user_name      = "loki-chunks-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "loki-chunks"
+  }
+  "loki-ruler" = {
+    user_name      = "loki-ruler-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "loki-ruler"
+  }
+  "loki-admin" = {
+    user_name      = "loki-admin-user"
+    enable_version = false
+    policy_rw      = true
+    function       = "loki-admin"
+  }
+}

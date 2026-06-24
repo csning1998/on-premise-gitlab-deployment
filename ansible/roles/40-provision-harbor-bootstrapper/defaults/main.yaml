@@ -59,3 +59,18 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "2.5.0"
     repo: "https://charts.external-secrets.io"
     is_oci: false
+
+  - name: "grafana"
+    version: "12.4.9"
+    repo: "oci://ghcr.io/grafana-community/helm-charts"
+    is_oci: true
+
+  - name: "loki"
+    version: "17.4.10"
+    repo: "oci://ghcr.io/grafana-community/helm-charts"
+    is_oci: true
+
+  - name: "mimir-distributed"
+    version: "6.0.6"
+    repo: "oci://ghcr.io/grafana/helm-charts"
+    is_oci: true
