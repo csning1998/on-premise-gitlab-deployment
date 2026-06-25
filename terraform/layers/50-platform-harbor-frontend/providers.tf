@@ -5,10 +5,6 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "2.38.0"
     }
-    kubectl = { # Hack method for ClusterIssuer
-      source  = "gavinbunney/kubectl"
-      version = "1.19.0"
-    }
     helm = {
       source  = "hashicorp/helm"
       version = "3.0.2"
@@ -28,7 +24,6 @@ terraform {
   }
 }
 
-# Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
   address      = local.vault_address
@@ -45,14 +40,6 @@ provider "vault" {
 }
 
 provider "kubernetes" {
-  host                   = local.api_server_connection.host
-  cluster_ca_certificate = local.api_server_connection.ca_cert
-  client_certificate     = local.api_server_connection.client_certificate
-  client_key             = local.api_server_connection.client_key
-}
-
-provider "kubectl" {
-  load_config_file       = false
   host                   = local.api_server_connection.host
   cluster_ca_certificate = local.api_server_connection.ca_cert
   client_certificate     = local.api_server_connection.client_certificate

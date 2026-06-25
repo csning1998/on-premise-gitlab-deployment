@@ -1,23 +1,27 @@
 
 terraform {
   required_providers {
-    vault = {
-      source  = "hashicorp/vault"
-      version = "5.5.0"
-    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "2.38.0"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "1.19.0"
     }
     helm = {
       source  = "hashicorp/helm"
       version = "3.0.2"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "5.5.0"
+    }
   }
   backend "http" {
-    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/50-platform-gitlab-runner"
-    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/50-platform-gitlab-runner/lock"
-    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/50-platform-gitlab-runner/lock"
+    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/40-provision-gitlab-runner"
+    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/40-provision-gitlab-runner/lock"
+    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/40-provision-gitlab-runner/lock"
     lock_method    = "POST"
     unlock_method  = "DELETE"
     retry_wait_min = 5
@@ -46,6 +50,14 @@ provider "kubernetes" {
   client_key             = local.api_server_connection.client_key
 }
 
+provider "kubectl" {
+  load_config_file       = false
+  host                   = local.api_server_connection.host
+  cluster_ca_certificate = local.api_server_connection.ca_cert
+  client_certificate     = local.api_server_connection.client_certificate
+  client_key             = local.api_server_connection.client_key
+}
+
 provider "helm" {
   kubernetes = {
     host                   = local.api_server_connection.host
@@ -53,4 +65,12 @@ provider "helm" {
     client_certificate     = local.api_server_connection.client_certificate
     client_key             = local.api_server_connection.client_key
   }
+
+  registries = [
+    {
+      url      = "oci://${local.harbor_registry}"
+      username = ephemeral.vault_kv_secret_v2.harbor_bootstrapper_robot.data["username_puller"]
+      password = ephemeral.vault_kv_secret_v2.harbor_bootstrapper_robot.data["password_puller"]
+    }
+  ]
 }

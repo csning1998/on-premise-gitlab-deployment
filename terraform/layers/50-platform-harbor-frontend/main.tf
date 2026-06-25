@@ -1,79 +1,13 @@
 
-module "felix_config" {
-  source = "../../modules/kubernetes-addons/calico-felix-config"
-}
-
-# [REFACTORED] Trust Engine Integration
-module "platform_trust_engine" {
-  source = "../../modules/kubernetes-addons/platform-trust-engine"
-  providers = {
-    vault = vault.production
-  }
-
-  # 1. K8s Cluster Connection (for Vault to call back)
-  api_server_connection = {
-    host    = local.api_endpoint
-    ca_cert = local.cluster_ca
-  }
-
-  # 2. Vault Connection (for Cert-Manager to authenticate)
-  vault_config = {
-    address   = local.vault_address
-    ca_cert   = local.vault_ca_cert
-    auth_path = local.vault_auth_path
-  }
-
-  # 3. Issuer Configuration (The "Contract" between K8s and Vault)
-  issuer_config = {
-    name            = var.trust_engine_config.issuer_name
-    issue_path      = "sign"
-    vault_role_name = local.vault_role_name
-    pki_mount_path  = local.vault_pki_path
-  }
-
-  # 4. Reviewer Identity (The entity that validates tokens)
-  reviewer_service_account = {
-    name      = "vault-reviewer"
-    namespace = "default"
-  }
-
-  # 5. Helm Chart Installation
-  helm_config = {
-    install          = true
-    version          = var.cert_manager_config.version
-    namespace        = var.cert_manager_config.namespace
-    create_namespace = true
-    image_registry   = local.harbor_registry
-    image_repository = "${local.harbor_quay_proxy}/jetstack"
-    chart_project    = local.helm_chart_project
-  }
-}
-
-# Ingress Controller
-module "ingress_controller" {
-  source = "../../modules/kubernetes-addons/microk8s-ingress"
-
-  ingress_vip        = data.terraform_remote_state.microk8s_provision.outputs.harbor_microk8s_virtual_ip
-  ingress_class_name = "nginx"
-  image_registry     = local.harbor_registry
-  chart_project      = local.helm_chart_project
-}
-
-# CoreDNS Configuration
-module "coredns_config" {
-  source = "../../modules/kubernetes-addons/coredns-config"
-
-  hosts = local.dns_hosts
-}
-
-module "reloader" {
-  source            = "../../modules/kubernetes-addons/reloader"
-  harbor_oci_config = local.reloader_oci_config
-}
-
 resource "kubernetes_namespace" "harbor" {
   metadata {
     name = "harbor"
+  }
+}
+
+resource "kubernetes_namespace" "observability" {
+  metadata {
+    name = "observability"
   }
 }
 
@@ -84,14 +18,44 @@ resource "random_password" "harbor_core_secret_key" {
   upper   = true
 }
 
+module "alloy_client_cert" {
+  source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
+  depends_on = [kubernetes_namespace.observability]
+
+  name         = "alloy-client-cert"
+  namespace    = kubernetes_namespace.observability.metadata[0].name
+  common_name  = local.mimir_fqdn
+  dns_sans     = []
+  issuer_name  = local.issuer_name
+  issuer_kind  = local.issuer_kind
+  duration     = local.state.vault_pki.pki_configuration.lease_durations.default
+  renew_before = local.state.vault_pki.pki_configuration.lease_durations.agent
+}
+
+module "alloy" {
+  source     = "../../modules/kubernetes-addons/helm-chart-alloy"
+  depends_on = [module.alloy_client_cert, kubernetes_namespace.observability]
+
+  helm_config = {
+    version          = var.alloy_version
+    namespace        = kubernetes_namespace.observability.metadata[0].name
+    timeout          = 300
+    image_registry   = local.harbor_registry
+    chart_project    = local.helm_chart_project
+    image_repository = local.harbor_docker_proxy
+  }
+
+  alloy_config = {
+    remote_write_url      = local.mimir_remote_write_url
+    cluster_label         = "harbor"
+    tenant_id             = "harbor"
+    mtls_cert_secret_name = module.alloy_client_cert.secret_name
+  }
+}
+
 module "harbor_core" {
-  source = "../../modules/kubernetes-addons/helm-chart-harbor"
-  depends_on = [
-    module.platform_trust_engine,
-    module.coredns_config,
-    module.reloader,
-    kubernetes_namespace.harbor
-  ]
+  source     = "../../modules/kubernetes-addons/helm-chart-harbor"
+  depends_on = [kubernetes_namespace.harbor]
 
   ca_bundle = local.ca_bundle_config
 
@@ -121,8 +85,8 @@ module "harbor_core" {
   ingress_config = {
     class_name      = var.harbor_helm_config.ingress_class
     tls_secret_name = var.harbor_helm_config.tls_secret_name
-    issuer_name     = var.trust_engine_config.issuer_name
-    issuer_kind     = var.trust_engine_config.issuer_kind
+    issuer_name     = local.issuer_name
+    issuer_kind     = local.issuer_kind
   }
 
   external_services = {

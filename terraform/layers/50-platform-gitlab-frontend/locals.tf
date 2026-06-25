@@ -68,6 +68,7 @@ locals {
 
   # Harbor Bootstrapper (Registry Redirection)
   harbor_registry     = local.fqdn_harbor_bootstrapper
+  harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
   harbor_gitlab_proxy = local.state.harbor_bootstrapper.proxy_caches.gitlab_com.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
@@ -193,4 +194,10 @@ locals {
 # Credential path map alias derived from foundation metadata (L00 SSoT)
 locals {
   credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+}
+
+# 8. Observability Endpoint Context
+locals {
+  mimir_fqdn             = [for san in local.state.metadata.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
+  mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
 }

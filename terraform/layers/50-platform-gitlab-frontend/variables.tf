@@ -126,3 +126,13 @@ variable "ci_signing_key_rotation_version" {
   type        = number
   default     = 1
 }
+
+variable "alloy_version" {
+  description = "Grafana Alloy Helm chart version"
+  type        = string
+  default     = "1.10.0"
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.alloy_version))
+    error_message = "alloy_version must be a stable semver string."
+  }
+}

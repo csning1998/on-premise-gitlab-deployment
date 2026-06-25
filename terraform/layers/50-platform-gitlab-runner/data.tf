@@ -19,19 +19,14 @@ data "terraform_remote_state" "gitlab_frontend" {
   config  = merge(local._state_auth, { address = "${local._state_base}/50-platform-gitlab-frontend" })
 }
 
-data "terraform_remote_state" "runner_cluster" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-runner" })
-}
-
-data "terraform_remote_state" "harbor_bootstrapper" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-bootstrapper-frontend" })
-}
-
 data "terraform_remote_state" "harbor_bootstrapper_oci" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
+}
+
+data "terraform_remote_state" "provision" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-gitlab-runner" })
 }
 
 data "terraform_remote_state" "network" {
@@ -43,13 +38,6 @@ ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
   name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab-runner"
-}
-
-data "kubernetes_config_map" "kube_root_ca" {
-  metadata {
-    name      = "kube-root-ca.crt"
-    namespace = "default"
-  }
 }
 
 data "vault_kv_secret_v2" "gitlab_runner" {

@@ -18,6 +18,12 @@ resource "kubernetes_namespace" "gitlab_ns" {
   }
 }
 
+resource "kubernetes_namespace" "observability" {
+  metadata {
+    name = "observability"
+  }
+}
+
 module "gitlab_core" {
   source = "../../modules/kubernetes-addons/helm-chart-gitlab"
   depends_on = [
@@ -130,4 +136,39 @@ module "gitlab_core" {
 
   gitlab_shell_node_port = local.shell_port
   ca_bundle              = local.ca_bundle_config
+}
+
+module "alloy_client_cert" {
+  source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
+  depends_on = [kubernetes_namespace.observability]
+
+  name         = "alloy-client-cert"
+  namespace    = kubernetes_namespace.observability.metadata[0].name
+  common_name  = local.mimir_fqdn
+  dns_sans     = []
+  issuer_name  = local.issuer_name
+  issuer_kind  = local.issuer_kind
+  duration     = local.vault_pki_lease_default
+  renew_before = local.vault_pki_lease_agent
+}
+
+module "alloy" {
+  source     = "../../modules/kubernetes-addons/helm-chart-alloy"
+  depends_on = [module.alloy_client_cert, kubernetes_namespace.observability]
+
+  helm_config = {
+    version          = var.alloy_version
+    namespace        = kubernetes_namespace.observability.metadata[0].name
+    timeout          = 300
+    image_registry   = local.harbor_registry
+    chart_project    = local.helm_chart_project
+    image_repository = local.harbor_docker_proxy
+  }
+
+  alloy_config = {
+    remote_write_url      = local.mimir_remote_write_url
+    cluster_label         = "gitlab"
+    tenant_id             = "gitlab"
+    mtls_cert_secret_name = module.alloy_client_cert.secret_name
+  }
 }

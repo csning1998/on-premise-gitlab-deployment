@@ -16,10 +16,11 @@ variable "helm_config" {
 }
 
 variable "alloy_config" {
-  description = "Alloy metrics collection configuration including remote write target, cluster identity label, and Mimir tenant ID"
+  description = "Alloy metrics collection configuration including remote write target, cluster identity label, Mimir tenant ID, and optional mTLS client certificate secret name"
   type = object({
-    remote_write_url = string
-    cluster_label    = string
-    tenant_id        = string
+    remote_write_url      = string
+    cluster_label         = string
+    tenant_id             = string
+    mtls_cert_secret_name = optional(string, null)
   })
 }

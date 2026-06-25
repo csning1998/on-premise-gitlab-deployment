@@ -47,7 +47,8 @@ locals {
       if contains([
         "vault-frontend", "keycloak-frontend",
         "harbor-bootstrapper-frontend",
-        "harbor-postgres", "harbor-redis", "harbor-minio"
+        "harbor-postgres", "harbor-redis", "harbor-minio",
+        "observability-frontend"
       ], name)
     ]
 

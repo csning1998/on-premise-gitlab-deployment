@@ -56,6 +56,13 @@ prometheus.remote_write "mimir" {
     headers = {
       "X-Scope-OrgID" = "${tenant_id}",
     }
+%{ if mtls_enabled }
+    tls_config {
+      cert_file = "/etc/alloy/mtls/tls.crt"
+      key_file  = "/etc/alloy/mtls/tls.key"
+      ca_file   = "/etc/alloy/mtls/ca.crt"
+    }
+%{ endif }
   }
   external_labels = {
     cluster = "${cluster_label}",
