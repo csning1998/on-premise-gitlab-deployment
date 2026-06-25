@@ -46,10 +46,14 @@ resource "helm_release" "mimir" {
 
     mimir = {
       structuredConfig = {
+        multitenancy_enabled = true
         ingest_storage = {
           enabled = false
         }
         ingester = {
+          ring = {
+            replication_factor = 1
+          }
           push_grpc_method_enabled = true
         }
         common = {

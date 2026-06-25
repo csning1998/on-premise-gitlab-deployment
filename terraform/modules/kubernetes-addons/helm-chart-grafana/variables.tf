@@ -43,10 +43,11 @@ variable "certificate_config" {
 }
 
 variable "datasources_config" {
-  description = "Internal Kubernetes service URLs for preconfigured Grafana datasources"
+  description = "Internal Kubernetes service URLs and tenant configuration for preconfigured Grafana datasources"
   type = object({
-    mimir_url = string
-    loki_url  = string
+    mimir_url       = string
+    mimir_tenant_id = string
+    loki_url        = string
   })
 }
 

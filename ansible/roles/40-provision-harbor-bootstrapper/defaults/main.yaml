@@ -74,3 +74,8 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "6.0.6"
     repo: "oci://ghcr.io/grafana/helm-charts"
     is_oci: true
+
+  - name: "alloy"
+    version: "1.10.0"
+    repo: "https://grafana.github.io/helm-charts"
+    is_oci: false

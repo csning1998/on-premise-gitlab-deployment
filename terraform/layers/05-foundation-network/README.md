@@ -82,6 +82,76 @@ Newly created networks are not affected. Creation uses `DefineXML` followed by `
 
 ---
 
+## DNS Host Insertion-Order Mismatch
+
+When two or more services are added to `00-foundation-metadata` in the same commit and applied together, `terraform apply` in this layer may fail with:
+
+> Provider produced inconsistent result after apply
+> .dns.host[N].ip: was cty.StringVal("A"), but now cty.StringVal("B").
+> .dns.host[N+1].ip: was cty.StringVal("B"), but now cty.StringVal("A").
+> .dns.host[N].hostnames: element M has vanished.
+
+The error reports two adjacent host entries with swapped IPs, and a hostname count mismatch at one of those positions.
+
+### Cause
+
+The `global_dns_hosts` local in L05 sorts host entries by IP using Terraform's `sort()` function. However, when Terraform first creates or updates the networks, the `for_each` on `net_infrastructure` processes map keys in a non-deterministic order (Go map iteration is randomised at runtime). The resulting insertion order in the libvirt active configuration may differ from the sorted order Terraform expects.
+
+Since `GetXMLDesc(flags=0)` returns the active configuration (in insertion order), and Terraform plans against the sorted order, every subsequent apply detects a diff, calls `DefineXML`, and reads back the same insertion-order active config. This creates a permanent mismatch loop: `DefineXML` updates the persistent config to sorted order, but `GetXMLDesc` always returns the active config in its original insertion order.
+
+**Observed instance (2026-06-24)**: When `observability-frontend` (`172.16.143.250`) and `observability-minio` (`172.16.144.250`) were deployed in the same apply, the provider inserted `172.16.144.250` before `172.16.143.250` in all 40 networks. Terraform's `sort()` expects `143.250` at index 18 and `144.250` at index 19; the active config had them reversed.
+
+Confirmed via:
+
+```bash
+sudo virsh net-dumpxml core-keycloak-frontend-nat | grep "143.250\|144.250"
+# Output showed 144.250 before 143.250
+```
+
+### Recovery
+
+Delete the out-of-order entry from all networks and re-add it. `virsh net-update add dns-host` always appends to the end of the list, so deleting and re-adding the higher-IP entry moves it after the lower-IP entry, restoring sorted order.
+
+In the observed instance, `172.16.144.250` must be moved after `172.16.143.250`:
+
+```bash
+XML_144='<host ip="172.16.144.250"><hostname>core-observability-minio.production.homelab-infra.dev</hostname></host>'
+
+for net in \
+    core-central-lb-frontend \
+    core-gitlab-postgres core-gitlab-etcd \
+    core-gitlab-redis core-gitlab-minio \
+    core-gitlab-frontend core-gitlab-runner \
+    core-gitlab-gitaly core-gitlab-praefect \
+    core-gitlab-praefect-patroni \
+    core-harbor-bootstrapper-frontend \
+    core-harbor-postgres core-harbor-etcd \
+    core-harbor-redis core-harbor-minio \
+    core-harbor-frontend \
+    core-keycloak-frontend core-vault-frontend \
+    core-observability-frontend \
+    core-observability-minio; \
+do
+    sudo virsh net-update "$net"       delete dns-host --xml "$XML_144" --live --config
+    sudo virsh net-update "$net"       add    dns-host --xml "$XML_144" --live --config
+    sudo virsh net-update "${net}-nat" delete dns-host --xml "$XML_144" --live --config
+    sudo virsh net-update "${net}-nat" add    dns-host --xml "$XML_144" --live --config
+done
+```
+
+Then synchronise state and verify:
+
+```bash
+terraform apply -refresh-only
+terraform apply -auto-approve
+```
+
+The plan should show no changes.
+
+**General pattern**: When this error appears for two adjacent IPs after a multi-service deploy, compare the swapped positions against the expected `sort()` order to identify which IP is displaced. Delete and re-add the higher IP to push it past the lower one. Only `--live` is strictly required to fix the active config, but passing `--config` as well keeps persistent and active in sync.
+
+---
+
 ## Cloud Init ISO Replacement
 
 ### Timing of Operation
@@ -154,12 +224,13 @@ After the reboot, confirm that all expected interfaces appear in `/etc/netplan/5
 
 ### Reference Values for `observability.frontend` (`cidr_index` 143)
 
-The following values were used when the `observability.frontend` component was added:
+The following values reflect the current state after adding the `mimir` ingress subdomain. When a new subdomain is added to an existing VIP (rather than a new service being introduced), use `modify dns-host` instead of `add dns-host` to update the active configuration.
 
 ```text
 VIP:        172.16.143.250
 Hostnames:  core-observability-frontend.production.homelab-infra.dev
             grafana.observability.production.homelab-infra.dev
+            mimir.observability.production.homelab-infra.dev
             observability.production.homelab-infra.dev
 ```
 
@@ -169,6 +240,7 @@ XML block:
 <host ip="172.16.143.250">
     <hostname>core-observability-frontend.production.homelab-infra.dev</hostname>
     <hostname>grafana.observability.production.homelab-infra.dev</hostname>
+    <hostname>mimir.observability.production.homelab-infra.dev</hostname>
     <hostname>observability.production.homelab-infra.dev</hostname>
 </host>
 ```

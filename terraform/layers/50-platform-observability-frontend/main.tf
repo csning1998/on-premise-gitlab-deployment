@@ -61,6 +61,40 @@ module "loki" {
   }
 }
 
+module "alloy" {
+  source     = "../../modules/kubernetes-addons/helm-chart-alloy"
+  depends_on = [module.mimir, kubernetes_namespace.observability]
+
+  helm_config = {
+    version          = var.observability_stack_config.alloy_version
+    namespace        = var.observability_stack_config.namespace
+    timeout          = 300
+    image_registry   = local.harbor_registry
+    chart_project    = local.helm_chart_project
+    image_repository = local.harbor_docker_proxy
+  }
+
+  alloy_config = {
+    remote_write_url = module.mimir.remote_write_url
+    cluster_label    = var.observability_stack_config.cluster_name
+    tenant_id        = var.observability_stack_config.cluster_name
+  }
+}
+
+module "alloy_client_cert" {
+  source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
+  depends_on = [kubernetes_namespace.observability]
+
+  name         = "alloy-client-cert"
+  namespace    = var.observability_stack_config.namespace
+  common_name  = local.grafana_fqdn
+  dns_sans     = []
+  issuer_name  = local.issuer_name
+  issuer_kind  = local.issuer_kind
+  duration     = local.state.vault_pki.pki_configuration.lease_durations.default
+  renew_before = local.state.vault_pki.pki_configuration.lease_durations.agent
+}
+
 module "grafana" {
   source = "../../modules/kubernetes-addons/helm-chart-grafana"
   depends_on = [
@@ -88,8 +122,8 @@ module "grafana" {
   ingress_config = {
     class_name      = var.ingress_class_name
     tls_secret_name = "grafana-ingress-cert"
-    issuer_name     = var.trust_engine_config.issuer_name
-    issuer_kind     = var.trust_engine_config.issuer_kind
+    issuer_name     = local.issuer_name
+    issuer_kind     = local.issuer_kind
   }
 
   certificate_config = {
@@ -98,8 +132,9 @@ module "grafana" {
   }
 
   datasources_config = {
-    mimir_url = module.mimir.query_url
-    loki_url  = module.loki.service_url
+    loki_url        = module.loki.service_url
+    mimir_url       = module.mimir.query_url
+    mimir_tenant_id = var.observability_stack_config.cluster_name
   }
 
   ca_bundle = { secret_name = local.ca_bundle_config.secret_name }

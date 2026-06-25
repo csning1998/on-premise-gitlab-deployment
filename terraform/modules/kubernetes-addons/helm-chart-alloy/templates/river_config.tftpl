@@ -1,0 +1,63 @@
+
+discovery.kubernetes "nodes" {
+  role = "node"
+}
+
+discovery.relabel "kubelet" {
+  targets = discovery.kubernetes.nodes.targets
+  rule {
+    action        = "replace"
+    source_labels = ["__address__"]
+    regex         = "^([^:]+)(?::\\d+)?$"
+    target_label  = "__address__"
+    replacement   = "$${1}:10250"
+  }
+}
+
+discovery.relabel "cadvisor" {
+  targets = discovery.kubernetes.nodes.targets
+  rule {
+    action        = "replace"
+    source_labels = ["__address__"]
+    regex         = "^([^:]+)(?::\\d+)?$"
+    target_label  = "__address__"
+    replacement   = "$${1}:10250"
+  }
+  rule {
+    action       = "replace"
+    target_label = "__metrics_path__"
+    replacement  = "/metrics/cadvisor"
+  }
+}
+
+prometheus.scrape "kubelet" {
+  targets    = discovery.relabel.kubelet.output
+  scheme     = "https"
+  tls_config {
+    ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  }
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  forward_to        = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.scrape "cadvisor" {
+  targets    = discovery.relabel.cadvisor.output
+  scheme     = "https"
+  tls_config {
+    ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  }
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  forward_to        = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "${remote_write_url}"
+    headers = {
+      "X-Scope-OrgID" = "${tenant_id}",
+    }
+  }
+  external_labels = {
+    cluster = "${cluster_label}",
+  }
+}

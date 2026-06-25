@@ -48,6 +48,11 @@ ephemeral "vault_kv_secret_v2" "kubeconfig" {
   name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/observability"
 }
 
+data "terraform_remote_state" "provision" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-observability-frontend" })
+}
+
 # CoreDNS ClusterIP (used as nginx resolver in Mimir and Loki gateway)
 data "kubernetes_service" "kube_dns" {
   metadata {

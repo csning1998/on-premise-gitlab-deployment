@@ -18,7 +18,14 @@ locals {
     minio_provision      = data.terraform_remote_state.minio_provision.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
+    provision            = data.terraform_remote_state.provision.outputs
   }
+}
+
+# Trust Engine Context (sourced from provision layer state, aligned with GitLab pattern)
+locals {
+  issuer_name = local.state.provision.trust_context.issuer_name
+  issuer_kind = local.state.provision.trust_context.issuer_kind
 }
 
 # K8s Provider Authentication Context
@@ -64,6 +71,14 @@ locals {
 locals {
   minio_fqdn = local.state.metadata.global_pki_map["observability-minio"].dns_san[0]
   minio_port = local.state.minio.minio_api_port
+}
+
+# Mimir External FQDN (derived from PKI map; startswith guards against base SANs)
+locals {
+  mimir_fqdn = [
+    for san in local.state.metadata.global_pki_map["observability-frontend"].dns_san :
+    san if startswith(san, "mimir.")
+  ][0]
 }
 
 # Credential path map alias derived from foundation metadata (L00 SSoT)

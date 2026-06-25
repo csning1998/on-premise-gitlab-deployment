@@ -56,6 +56,12 @@ resource "helm_release" "grafana" {
             url       = var.datasources_config.mimir_url
             access    = "proxy"
             isDefault = true
+            jsonData = {
+              httpHeaderName1 = "X-Scope-OrgID"
+            }
+            secureJsonData = {
+              httpHeaderValue1 = var.datasources_config.mimir_tenant_id
+            }
           },
           {
             name   = "Loki"
