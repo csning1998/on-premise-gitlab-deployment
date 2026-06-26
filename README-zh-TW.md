@@ -115,8 +115,8 @@
 
 1. HashiCorp Vault HA Raft cluster for PKI with Sidecar, ACL, AppRole, RBAC
 2. Postgres / Patroni (with etcd)
-3. Redis / 哨兵模式
-4. Distributed MinIO 針對物件儲存
+3. Redis / Sentinel
+4. Distributed MinIO for object storage
 5. Harbor for Production container registry for GitLab Runner
 6. GitLab with full Helm chart deployment on Kubeadm
 7. Harbor Bootstrapper as OCI seed registry for Helm charts and images
