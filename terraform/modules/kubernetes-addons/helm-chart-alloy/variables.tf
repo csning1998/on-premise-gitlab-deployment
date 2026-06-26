@@ -24,3 +24,14 @@ variable "alloy_config" {
     mtls_cert_secret_name = optional(string, null)
   })
 }
+
+# TODO rename to static_scrape_targets for naming consistency with alloy_config (Phase 3+ naming MR)
+variable "vm_static_targets" {
+  description = "Optional static scrape targets for bare-metal VM metrics endpoints; each entry is inlined directly into prometheus.scrape vm_static targets"
+  type = list(object({
+    address = string
+    job     = string
+    labels  = optional(map(string), {})
+  }))
+  default = []
+}

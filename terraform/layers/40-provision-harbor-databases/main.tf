@@ -41,6 +41,11 @@ module "harbor_db_init" {
       password = random_password.harbor_db_password.result
       roles    = []
     }
+    "postgres_exporter" = {
+      password = data.vault_kv_secret_v2.db_vars.data["pg_exporter_password"]
+      login    = true
+      roles    = ["pg_monitor"]
+    }
   }
 }
 

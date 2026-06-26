@@ -13,6 +13,7 @@ postgres_base:
       components: "main"
       filename: "pgdg"
 
+  # TODO align packages structure to flat list like 05-base-redis for consistency (naming/style MR)
   packages:
     apt:
       postgres:
@@ -21,6 +22,8 @@ postgres_base:
       patroni_deps:
         - python3-venv
         - libpq-dev
+      exporters:
+        - prometheus-postgres-exporter
 
 # Apt Repo (PostgreSQL)
 _postgres_base_repo_data: "{{ postgres_base.apt_repositories | selectattr('id', 'equalto', 'postgresql') | first }}"

@@ -51,6 +51,12 @@ module "alloy" {
     tenant_id             = "harbor"
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
+
+  vm_static_targets = [
+    { address = "${local.vip_postgres}:${local.port_postgres_exporter}", job = "harbor-postgres-exporter", labels = { component = "postgres" } },
+    { address = "${local.vip_redis}:${local.port_redis_exporter}", job = "harbor-redis-exporter", labels = { component = "redis" } },
+    { address = "${local.vip_etcd}:${local.port_etcd_client}", job = "harbor-etcd", labels = { component = "etcd" } },
+  ]
 }
 
 module "harbor_core" {

@@ -39,6 +39,12 @@ data "terraform_remote_state" "redis" {
   config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-redis" })
 }
 
+data "vault_kv_secret_v2" "db_vars" {
+  provider = vault.production
+  mount    = "secret"
+  name     = local.credential_paths["harbor"]["postgres"]
+}
+
 ephemeral "vault_kv_secret_v2" "db_vars" {
   provider = vault.production
   mount    = "secret"

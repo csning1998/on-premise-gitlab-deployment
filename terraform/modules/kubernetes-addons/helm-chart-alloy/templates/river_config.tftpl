@@ -50,6 +50,19 @@ prometheus.scrape "cadvisor" {
   forward_to        = [prometheus.remote_write.mimir.receiver]
 }
 
+%{ if length(vm_static_targets) > 0 ~}
+# vm_static_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
+# static alphanumeric label strings; the variable type contract enforces this at the Terraform layer.
+prometheus.scrape "vm_static" {
+  targets = [
+%{ for t in vm_static_targets ~}
+    {"__address__" = "${t.address}", "job" = "${t.job}"%{ for k, v in t.labels ~}, "${k}" = "${v}"%{ endfor ~}},
+%{ endfor ~}
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
 prometheus.remote_write "mimir" {
   endpoint {
     url = "${remote_write_url}"

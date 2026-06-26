@@ -11,6 +11,7 @@ module "gitlab_postgres" {
     pg_superuser_password   = { length = 32 }
     pg_replication_password = { length = 32 }
     pg_vrrp_secret          = { length = 32 }
+    pg_exporter_password    = { length = 32 }
   }
 
   vault_kv_namespace = local.vault_kv_namespace
@@ -73,6 +74,7 @@ module "harbor_postgres" {
     pg_superuser_password   = { length = 32 }
     pg_replication_password = { length = 32 }
     pg_vrrp_secret          = { length = 32 }
+    pg_exporter_password    = { length = 32 }
   }
 
   vault_kv_namespace = local.vault_kv_namespace

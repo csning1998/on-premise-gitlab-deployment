@@ -1,0 +1,21 @@
+[Unit]
+Description=Vault Agent KV for Redis Exporter credentials
+Documentation=https://www.vaultproject.io/docs/agent
+Requires=network-online.target vault-agent.service
+After=network-online.target vault-agent.service
+
+[Service]
+User=root
+Group=root
+RuntimeDirectory=vault-agent-redis-exporter
+RuntimeDirectoryMode=0700
+ExecStart=/usr/local/bin/vault agent -config=/etc/vault.d/vault-agent-redis-exporter.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

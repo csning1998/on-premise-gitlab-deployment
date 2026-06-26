@@ -11,10 +11,11 @@ resource "helm_release" "alloy" {
     alloy = {
       configMap = {
         content = templatefile("${path.module}/templates/river_config.tftpl", {
-          remote_write_url = var.alloy_config.remote_write_url
-          cluster_label    = var.alloy_config.cluster_label
-          tenant_id        = var.alloy_config.tenant_id
-          mtls_enabled     = var.alloy_config.mtls_cert_secret_name != null
+          remote_write_url  = var.alloy_config.remote_write_url
+          cluster_label     = var.alloy_config.cluster_label
+          tenant_id         = var.alloy_config.tenant_id
+          mtls_enabled      = var.alloy_config.mtls_cert_secret_name != null
+          vm_static_targets = var.vm_static_targets
         })
       }
       image = {

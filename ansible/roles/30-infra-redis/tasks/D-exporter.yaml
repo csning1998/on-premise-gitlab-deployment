@@ -1,0 +1,58 @@
+---
+- name: "Step 1. Deploy vault-agent-kv config for redis-exporter"
+  become: true
+  ansible.builtin.template:
+    src: vault-agent-redis-exporter.hcl.j2
+    dest: /etc/vault.d/vault-agent-redis-exporter.hcl
+    owner: root
+    group: root
+    mode: "0600"
+  register: _redis_exporter_vault_hcl
+
+- name: "Step 2. Deploy vault-agent-kv service for redis-exporter"
+  become: true
+  ansible.builtin.template:
+    src: vault-agent-redis-exporter.service.j2
+    dest: /etc/systemd/system/vault-agent-redis-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: _redis_exporter_vault_svc
+
+- name: "Step 3. Enable and start vault-agent-redis-exporter"
+  become: true
+  ansible.builtin.systemd:
+    name: vault-agent-redis-exporter
+    state: started
+    enabled: true
+    daemon_reload: "{{ _redis_exporter_vault_svc.changed }}"
+
+- name: "Step 4. Restart vault-agent-redis-exporter if config changed"
+  become: true
+  ansible.builtin.systemd:
+    name: vault-agent-redis-exporter
+    state: restarted
+  when: _redis_exporter_vault_hcl.changed or _redis_exporter_vault_svc.changed
+
+- name: "Step 5. Wait for env file to be rendered"
+  become: true
+  ansible.builtin.wait_for:
+    path: /etc/default/prometheus-redis-exporter
+    timeout: 30
+
+- name: "Step 6. Copy Redis CA cert for prometheus-redis-exporter"
+  become: true
+  ansible.builtin.copy:
+    src: /etc/redis/certs/ca.crt
+    dest: /etc/ssl/certs/redis-ca.crt
+    owner: root
+    group: root
+    mode: "0644"
+    remote_src: true
+
+- name: "Step 7. Enable and start prometheus-redis-exporter"
+  become: true
+  ansible.builtin.systemd:
+    name: prometheus-redis-exporter
+    state: started
+    enabled: true
