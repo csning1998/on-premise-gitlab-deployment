@@ -36,6 +36,11 @@ module "gitlab_db_init" {
       superuser       = false
       create_database = false
     }
+    "postgres_exporter" = {
+      password = data.vault_kv_secret_v2.db_vars.data["pg_exporter_password"]
+      login    = true
+      roles    = ["pg_monitor"]
+    }
   }
 }
 

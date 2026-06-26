@@ -99,6 +99,18 @@ locals {
 #    Key must correspond to service_catalog of "${service_name}-${component_name}"
 locals {
   workload_identity_extra_rules = {
+    "gitlab-postgres" = {
+      "secret/data/on-premise-gitlab-deployment/gitlab/postgres" = { capabilities = ["read"] }
+    }
+    "gitlab-redis" = {
+      "secret/data/on-premise-gitlab-deployment/gitlab/redis" = { capabilities = ["read"] }
+    }
+    "harbor-postgres" = {
+      "secret/data/on-premise-gitlab-deployment/harbor/postgres" = { capabilities = ["read"] }
+    }
+    "harbor-redis" = {
+      "secret/data/on-premise-gitlab-deployment/harbor/redis" = { capabilities = ["read"] }
+    }
     "harbor-bootstrapper-frontend" = {
       "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" = { capabilities = ["read"] }
     }

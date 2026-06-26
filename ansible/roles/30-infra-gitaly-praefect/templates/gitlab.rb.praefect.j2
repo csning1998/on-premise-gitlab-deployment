@@ -22,6 +22,7 @@ praefect['auto_migrate'] = {{ 'true' if inventory_hostname in (groups['primary']
 
 praefect['configuration'] = {
   listen_addr: '0.0.0.0:2305',
+  prometheus_listen_addr: '0.0.0.0:9652',
 {% if praefect_tls_enabled | default(false) %}
   tls_listen_addr: '0.0.0.0:2306',
   tls: {

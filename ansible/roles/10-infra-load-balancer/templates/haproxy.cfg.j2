@@ -33,6 +33,7 @@ defaults
 listen stats
     bind {{ ansible_host }}:{{ haproxy_stats_port }} ssl crt /etc/haproxy/certs/vault.pem
     mode http
+    http-request use-service prometheus-exporter if { path /metrics }
     stats enable
     stats uri /
     stats refresh 10s

@@ -73,3 +73,6 @@
 
 - name: "Section D. Manage Patroni Service"
   ansible.builtin.include_tasks: D-service.yaml
+
+- name: "Section E. Configure PostgreSQL Exporter"
+  ansible.builtin.include_tasks: E-exporter.yaml

@@ -13,10 +13,12 @@ redis_base:
     apt:
       - redis-server
       - redis-sentinel
+      - prometheus-redis-exporter
 
   services_to_disable:
     - redis-server
     - redis-sentinel
+    - prometheus-redis-exporter
 
   os_config:
     fstab_path: "/etc/fstab"

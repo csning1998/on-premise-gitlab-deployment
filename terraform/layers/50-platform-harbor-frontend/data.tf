@@ -5,6 +5,16 @@ data "terraform_remote_state" "metadata" {
   config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
 }
 
+data "terraform_remote_state" "postgres" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-postgres" })
+}
+
+data "terraform_remote_state" "redis" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-redis" })
+}
+
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
@@ -24,6 +34,11 @@ data "terraform_remote_state" "provision" {
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
+}
+
+data "terraform_remote_state" "minio" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-minio" })
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)

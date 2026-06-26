@@ -169,6 +169,7 @@ service_catalog = {
           "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
           "api"      = { frontend_port = 8008, backend_port = 8008 }
           "stats"    = { frontend_port = 7000, backend_port = 7000 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
       }
@@ -189,7 +190,8 @@ service_catalog = {
         tags       = []
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "main" = { frontend_port = 6379, backend_port = 6379 }
+          "main"    = { frontend_port = 6379, backend_port = 6379 }
+          "metrics" = { frontend_port = 9121, backend_port = 9121 }
         }
       }
       "minio" = {
@@ -242,6 +244,7 @@ service_catalog = {
           "rw-proxy" = { frontend_port = 5432, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
           "api"      = { frontend_port = 8008, backend_port = 8008 }
           "etcd"     = { frontend_port = 2379, backend_port = 2379 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
       }
@@ -313,6 +316,7 @@ service_catalog = {
           "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
           "api"      = { frontend_port = 8008, backend_port = 8008 }
           "stats"    = { frontend_port = 7000, backend_port = 7000 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
       }
@@ -333,7 +337,8 @@ service_catalog = {
         tags       = []
         ip_range   = { start_ip = 200, end_ip = 202 }
         ports = {
-          "main" = { frontend_port = 6379, backend_port = 6379 }
+          "main"    = { frontend_port = 6379, backend_port = 6379 }
+          "metrics" = { frontend_port = 9121, backend_port = 9121 }
         }
       }
       "minio" = {

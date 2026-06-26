@@ -29,3 +29,15 @@
         name: "{{ _postgres_base_versioned_packages }}"
         state: present
         update_cache: true
+
+    - name: "Step 5. Install PostgreSQL metrics exporter"
+      ansible.builtin.apt:
+        name: "{{ postgres_base.packages.apt.exporters }}"
+        state: present
+
+    - name: "Step 6. Disable exporter service (no database available at image build time)"
+      ansible.builtin.systemd:
+        name: prometheus-postgres-exporter
+        state: stopped
+        enabled: false
+      failed_when: false

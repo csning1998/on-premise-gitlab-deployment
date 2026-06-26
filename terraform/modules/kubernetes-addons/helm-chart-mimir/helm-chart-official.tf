@@ -160,8 +160,8 @@ resource "helm_release" "mimir" {
     querier = {
       replicas = 1
       resources = {
-        requests = { memory = "64Mi" }
-        limits   = { memory = "256Mi" }
+        requests = { memory = "128Mi" }
+        limits   = { memory = "512Mi" }
       }
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
@@ -180,8 +180,8 @@ resource "helm_release" "mimir" {
     query_frontend = {
       replicas = 1
       resources = {
-        requests = { memory = "64Mi" }
-        limits   = { memory = "128Mi" }
+        requests = { memory = "128Mi" }
+        limits   = { memory = "256Mi" }
       }
     }
 

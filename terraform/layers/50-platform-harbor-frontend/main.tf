@@ -51,6 +51,32 @@ module "alloy" {
     tenant_id             = "harbor"
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
+
+  vm_static_targets = concat(
+    [
+      {
+        address = "${local.vip_postgres}:${local.port_postgres_exporter}",
+        job     = "harbor-postgres-exporter",
+        labels  = { component = "postgres" }
+      },
+      {
+        address = "${local.vip_redis}:${local.port_redis_exporter}",
+        job     = "harbor-redis-exporter",
+        labels  = { component = "redis" }
+      },
+    ],
+    [for ip in local.etcd_ips : {
+      address = "${ip}:${local.port_etcd_client}"
+      job     = "harbor-etcd"
+      labels  = { component = "etcd", instance = ip }
+    }]
+  )
+
+  minio_scrape_targets = [{
+    address = "${local.vip_minio}:${local.minio_port}"
+    job     = "harbor-minio"
+    labels  = { component = "minio" }
+  }]
 }
 
 module "harbor_core" {

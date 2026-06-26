@@ -1,0 +1,37 @@
+
+pid_file = "/var/run/vault-agent-postgres-exporter.pid"
+
+vault {
+  address = "{{ vault_addr | trim('/') }}"
+  ca_cert = "/etc/vault.d/vault-ca.crt"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/{{ _pg_exporter_vault_auth_path | trim('/') }}"
+    config = {
+      role_id_file_path                   = "/etc/vault.d/approle/role_id"
+      secret_id_file_path                 = "/etc/vault.d/approle/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/run/vault-agent-postgres-exporter/token"
+      mode = 0600
+    }
+  }
+}
+
+template {
+  destination = "/etc/default/prometheus-postgres-exporter"
+  perms       = "0640"
+  contents    = <<EOH
+{# service_identifier follows the fixed format "core-{domain}-{component}" defined by L00 naming; split("-")[1] extracts the domain token (gitlab or harbor) #}
+{{ '{{- with secret "secret/' ~ vault_kv_namespace ~ '/' ~ service_identifier.split("-")[1] ~ '/postgres" -}}' }}
+DATA_SOURCE_NAME=postgresql://postgres_exporter:{{ '{{ .Data.data.pg_exporter_password }}' }}@{{ advertise_ip }}:{{ postgres_port }}/postgres?sslmode=verify-full&sslrootcert=/etc/postgresql/certs/ca.crt
+{{ '{{- end -}}' }}
+EOH
+  command = "systemctl is-active prometheus-postgres-exporter && systemctl restart prometheus-postgres-exporter || true"
+}

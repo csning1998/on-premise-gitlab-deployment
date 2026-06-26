@@ -27,3 +27,6 @@
 
 - name: "Section C. Manage Redis Services"
   ansible.builtin.include_tasks: C-service.yaml
+
+- name: "Section D. Configure Redis Exporter"
+  ansible.builtin.include_tasks: D-exporter.yaml

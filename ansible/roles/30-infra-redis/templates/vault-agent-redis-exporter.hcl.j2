@@ -1,0 +1,39 @@
+
+pid_file = "/var/run/vault-agent-redis-exporter.pid"
+
+vault {
+  address = "{{ vault_addr | trim('/') }}"
+  ca_cert = "/etc/vault.d/vault-ca.crt"
+}
+
+auto_auth {
+  method "approle" {
+    mount_path = "auth/{{ vault_auth_path | trim('/') }}"
+    config = {
+      role_id_file_path                   = "/etc/vault.d/approle/role_id"
+      secret_id_file_path                 = "/etc/vault.d/approle/secret_id"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/run/vault-agent-redis-exporter/token"
+      mode = 0600
+    }
+  }
+}
+
+template {
+  destination = "/etc/default/prometheus-redis-exporter"
+  perms       = "0640"
+  contents    = <<EOH
+{# service_identifier follows the fixed format "core-{domain}-{component}" defined by L00 naming; split("-")[1] extracts the domain token (gitlab or harbor) #}
+{{ '{{- with secret "secret/' ~ vault_kv_namespace ~ '/' ~ service_identifier.split("-")[1] ~ '/redis" -}}' }}
+REDIS_ADDR=rediss://{{ advertise_ip }}:{{ redis_tls_port }}
+REDIS_PASSWORD={{ '{{ .Data.data.redis_requirepass }}' }}
+REDIS_EXPORTER_TLS_CA_CERT_FILE=/etc/ssl/certs/redis-ca.crt
+{{ '{{- end -}}' }}
+EOH
+  command = "systemctl is-active prometheus-redis-exporter && systemctl restart prometheus-redis-exporter || true"
+}
