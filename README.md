@@ -7,7 +7,7 @@
 
 ## Introduction
 
-A Proof of Concept for Infrastructure as Code which automated deployment of High Availability Kubernetes clusters (Kubeadm / MicroK8s) in a pure on-premise QEMU-KVM environment. Developed during an internship at Cathay General Hospital. Objective: establish an on-premise GitLab instance with a fully automated IaC pipeline reusable for legacy systems.
+A Proof of Concept for Infrastructure as Code which automated deployment of High Availability Kubernetes clusters (Kubeadm / MicroK8s) in a pure on-premise QEMU-KVM environment. Developed during an internship at Cathay General Hospital. The objective is to establish an on-premise GitLab instance with a fully automated IaC pipeline reusable for legacy systems.
 
 1. This repo has been authorized for public release by the relevant company department as part of a technical portfolio.
 
