@@ -120,8 +120,8 @@
 11. GitLab Runner on MicroK8s
 12. Remote Terraform States
 13. Centralized CI/CD Pipeline
-14. **[WIP]** Documentation
-15. **[Waiting]** Prometheus / Grafana / Loki Integration
+14. **[WIP]** Prometheus + LGTM Stack (Observability Stack)
+15. **[WIP]** Documentation
 
 > [!NOTE]
 > **Standalone Gitaly** 與 **(HA) Praefect 即從屬 Patroni** 組態可以雙向同步。可參考 [30-infra-gitaly-praefect 的 README](ansible/roles/30-infra-gitaly-praefect/README.md)

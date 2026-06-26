@@ -120,8 +120,8 @@ Services currently provisioned:
 11. GitLab Runner on MicroK8s
 12. Remote Terraform States
 13. Centralized CI/CD Pipeline
-14. **[WIP]** Documentation
-15. **[Waiting]** Prometheus / Grafana / Loki Integration
+14. **[WIP]** Prometheus + LGTM Stack (Observability Stack)
+15. **[WIP]** Documentation
 
 > [!NOTE]
 > **Standalone Gitaly** and **(HA) Praefect with subordinated Patroni** configurations support bidirectional migration. Refer to [README of 30-infra-gitaly-praefect](ansible/roles/30-infra-gitaly-praefect/README.md) for more detail.
