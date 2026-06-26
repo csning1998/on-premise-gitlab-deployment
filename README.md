@@ -80,28 +80,31 @@ Full setup, configuration, and architecture documentation is in [`documentation/
 
 | Usage               | Unit RAM | Basic Qty | Subtotal RAM Basic | HA Min Qty | Subtotal RAM HA |
 | ------------------- | -------- | --------- | ------------------ | ---------- | --------------- |
-| Central LB          | 0.5 GiB  | 2         | 1,024 MiB          | 2          | 1,024 MiB       |
-| Kubeadm Cluster     | 3.0 GiB  | 1         | 3,072 MiB          | 3          | 9,216 MiB       |
-| Kubeadm Cluster     | 6.0 GiB  | 2         | 12,288 MiB         | 2          | 12,288 MiB      |
-| Postgres            | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
-| Etcd                | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
-| Redis               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
-| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
-| MicroK8s Cluster    | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
-| Postgres            | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
-| Etcd                | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
-| Redis               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
-| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
-| Vault               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
-| Harbor Bootstrapper | 1.5 GiB  | 1         | 1,536 MiB          | 1          | 1,536 MiB       |
-| Gitaly              | 2.0 GiB  | 1         | 2,048 MiB          | 3          | 6,144 MiB       |
-| GitLab Runner       | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
-| Praefect            | 4.0 GiB  | 0         | 0 MiB              | 3          | 12,288 MiB      |
-| Patroni (Praefect)  | 2.0 GiB  | 0         | 0 MiB              | 3          | 6,144 MiB       |
-| Keycloak SSO        | 1.5 GiB  | 1         | 1,536 MiB          | 1          | 1,536 MiB       |
-| Observability Stack | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
-| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
-| **Total**           |          | 21        | **42,496 MiB**     | 60         | **116,224 MiB** |
+| Central LB          | 0.5      | 2         | 1.0                | 2          | 1.0             |
+| Kubeadm Cluster     | 3.0      | 1         | 3.0                | 3          | 9.0             |
+| Kubeadm Cluster     | 6.0      | 2         | 12.0               | 2          | 12.0            |
+| Postgres            | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Etcd                | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Redis               | 0.5      | 1         | 0.5                | 3          | 1.5             |
+| MinIO               | 1.0      | 1         | 1.0                | 4          | 4.0             |
+| MicroK8s Cluster    | 4.0      | 1         | 4.0                | 3          | 12.0            |
+| Postgres            | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Etcd                | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Redis               | 0.5      | 1         | 0.5                | 3          | 1.5             |
+| MinIO               | 1.0      | 1         | 1.0                | 4          | 4.0             |
+| Vault               | 0.5      | 1         | 0.5                | 3          | 1.5             |
+| Harbor Bootstrapper | 1.5      | 1         | 1.5                | 1          | 1.5             |
+| Gitaly              | 2.0      | 1         | 2.0                | 3          | 6.0             |
+| GitLab Runner       | 4.0      | 1         | 4.0                | 3          | 12.0            |
+| Praefect            | 4.0      | 0         | 0.0                | 3          | 12.0            |
+| Patroni (Praefect)  | 2.0      | 0         | 0.0                | 3          | 6.0             |
+| Keycloak SSO        | 1.5      | 1         | 1.5                | 1          | 1.5             |
+| Observability Stack | 4.0      | 1         | 4.0                | 3          | 12.0            |
+| MinIO               | 1.0      | 1         | 1.0                | 4          | 4.0             |
+| **Total**           |          | 21        | **41.5**           | 60         | **113.5**       |
+
+> [!NOTE]
+> The unit of RAM in the table is GiB.
 
 ## Progress
 
