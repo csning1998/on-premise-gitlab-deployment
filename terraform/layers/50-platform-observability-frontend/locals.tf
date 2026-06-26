@@ -58,6 +58,13 @@ locals {
   vault_auth_path = local.state.metadata.global_pki_map["observability-frontend"].auth_config.path
 }
 
+# Observability VM Scrape Targets
+locals {
+  port_haproxy_stats    = local.state.metadata.global_topology_network["central-lb"]["frontend"].ports["stats"].frontend_port
+  central_lb_ips        = local.state.metadata.global_topology_network["central-lb"]["frontend"].node_ips
+  vault_metrics_address = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+}
+
 # CA Bundle Configuration
 locals {
   ca_bundle_config = {

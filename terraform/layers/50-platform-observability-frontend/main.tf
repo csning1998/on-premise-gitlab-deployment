@@ -75,10 +75,21 @@ module "alloy" {
   }
 
   alloy_config = {
-    remote_write_url = module.mimir.remote_write_url
-    cluster_label    = var.observability_stack_config.cluster_name
-    tenant_id        = var.observability_stack_config.cluster_name
+    remote_write_url      = module.mimir.remote_write_url
+    cluster_label         = var.observability_stack_config.cluster_name
+    tenant_id             = var.observability_stack_config.cluster_name
+    ca_bundle_secret_name = local.ca_bundle_config.secret_name
   }
+
+  vm_static_targets = [
+    for ip in local.central_lb_ips : {
+      address = "${ip}:${local.port_haproxy_stats}"
+      job     = "central-lb-haproxy"
+      labels  = { component = "haproxy", instance = ip }
+    }
+  ]
+
+  vault_metrics_address = local.vault_metrics_address
 }
 
 module "alloy_client_cert" {

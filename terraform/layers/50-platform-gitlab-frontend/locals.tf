@@ -204,8 +204,20 @@ locals {
   port_postgres_exporter = local.state.metadata.global_topology_network["gitlab"]["postgres"].ports["metrics"].frontend_port
   port_redis_exporter    = local.state.metadata.global_topology_network["gitlab"]["redis"].ports["metrics"].frontend_port
   port_etcd_client       = local.state.metadata.global_topology_network["gitlab"]["etcd"].ports["client"].frontend_port
+  port_minio_metrics     = local.state.metadata.global_topology_network["gitlab"]["minio"].ports["api"].frontend_port
+  # MinIO serves Prometheus metrics on the same API port (9000); there is no separate metrics port.
 
   vip_postgres = local.state.postgres.service_vip
   vip_redis    = local.state.redis.service_vip
-  vip_etcd     = local.state.network["core-gitlab-etcd"].lb_config.vip
+  vip_minio    = local.state.minio.service_vip
+  etcd_ips     = local.state.metadata.global_topology_network["gitlab"]["etcd"].node_ips
+
+  port_gitaly_metrics          = local.state.metadata.global_topology_network["gitlab"]["gitaly"].ports["metrics"].frontend_port
+  port_praefect_metrics        = local.state.metadata.global_topology_network["gitlab"]["praefect"].ports["metrics"].frontend_port
+  port_praefect_patroni_pg_exp = local.state.metadata.global_topology_network["gitlab"]["praefect-patroni"].ports["metrics"].frontend_port
+  port_praefect_patroni_etcd   = local.state.metadata.global_topology_network["gitlab"]["praefect-patroni"].ports["etcd"].frontend_port
+
+  gitaly_ips           = local.state.metadata.global_topology_network["gitlab"]["gitaly"].node_ips
+  praefect_ips         = local.state.metadata.global_topology_network["gitlab"]["praefect"].node_ips
+  praefect_patroni_ips = local.state.metadata.global_topology_network["gitlab"]["praefect-patroni"].node_ips
 }

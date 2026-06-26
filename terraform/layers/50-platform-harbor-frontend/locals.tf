@@ -13,13 +13,13 @@ locals {
 locals {
   state = {
     metadata             = data.terraform_remote_state.metadata.outputs
-    network              = data.terraform_remote_state.network.outputs.infrastructure_map
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     provision            = data.terraform_remote_state.provision.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
     redis                = data.terraform_remote_state.redis.outputs
+    minio                = data.terraform_remote_state.minio.outputs
   }
 }
 
@@ -122,8 +122,6 @@ locals {
 
   vip_postgres = local.state.postgres.service_vip
   vip_redis    = local.state.redis.service_vip
-  vip_etcd     = local.state.network["core-harbor-etcd"].lb_config.vip
-
-  mimir_fqdn             = [for san in local.state.metadata.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
-  mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
+  vip_minio    = local.state.minio.service_vip
+  etcd_ips     = local.state.metadata.global_topology_network["harbor"]["etcd"].node_ips
 }

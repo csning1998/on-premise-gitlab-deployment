@@ -16,3 +16,6 @@ MINIO_SERVER_URL="https://{{ minio_ha_virtual_ip }}:9000"
 
 # Add Site Replication etc. here
 # MINIO_REGION="us-east-1"
+
+# Expose Prometheus metrics without JWT auth; network-level access controls apply
+MINIO_PROMETHEUS_AUTH_TYPE=public

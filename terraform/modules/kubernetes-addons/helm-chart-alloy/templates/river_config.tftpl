@@ -51,14 +51,67 @@ prometheus.scrape "cadvisor" {
 }
 
 %{ if length(vm_static_targets) > 0 ~}
-# vm_static_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
-# static alphanumeric label strings; the variable type contract enforces this at the Terraform layer.
+// vm_static_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
+// static alphanumeric label strings; the variable type contract enforces this at the Terraform layer.
 prometheus.scrape "vm_static" {
   targets = [
 %{ for t in vm_static_targets ~}
     {"__address__" = "${t.address}", "job" = "${t.job}"%{ for k, v in t.labels ~}, "${k}" = "${v}"%{ endfor ~}},
 %{ endfor ~}
   ]
+  forward_to = [prometheus.relabel.vm_cardinality.receiver]
+}
+
+// Reduces cardinality on high-dimensional gRPC metrics scraped from Gitaly and Praefect.
+// grpc_server_handling_seconds_bucket contributes ~5700 series via histogram bucket label combinations.
+// grpc_code on grpc_server_handled_total has ~14 status code values that multiply series count by that factor.
+prometheus.relabel "vm_cardinality" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "grpc_server_handling_seconds_bucket"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "grpc_server_handled_total"
+    target_label  = "grpc_code"
+    replacement   = ""
+  }
+}
+
+%{ endif ~}
+%{ if length(minio_scrape_targets) > 0 ~}
+// minio_scrape_targets: per-node MinIO metrics at /minio/v2/metrics/node over HTTPS.
+// MinIO server certs are issued by the same Vault PKI as the Alloy mTLS cert, so ca.crt resolves without a separate bundle.
+prometheus.scrape "minio" {
+  targets = [
+%{ for t in minio_scrape_targets ~}
+    {"__address__" = "${t.address}", "job" = "${t.job}"%{ for k, v in t.labels ~}, "${k}" = "${v}"%{ endfor ~}},
+%{ endfor ~}
+  ]
+  metrics_path = "/minio/v2/metrics/cluster"
+  scheme       = "https"
+  tls_config {
+    ca_file = "/etc/alloy/mtls/ca.crt"
+  }
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
+%{ if vault_metrics_address != null ~}
+// vault_metrics_address is constrained to host:port derived from L00 vault service VIP and api frontend_port;
+// unauthenticated_metrics_access is enabled on the Vault listener for internal network scraping.
+prometheus.scrape "vault_metrics" {
+  targets      = [{"__address__" = "${vault_metrics_address}", "job" = "vault"}]
+  metrics_path = "/v1/sys/metrics"
+  params       = { format = ["prometheus"] }
+  scheme       = "https"
+  tls_config {
+    ca_file = "/etc/alloy/ca-bundle/ca.crt"
+  }
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 

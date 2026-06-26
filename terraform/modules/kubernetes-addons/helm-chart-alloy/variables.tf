@@ -16,18 +16,36 @@ variable "helm_config" {
 }
 
 variable "alloy_config" {
-  description = "Alloy metrics collection configuration including remote write target, cluster identity label, Mimir tenant ID, and optional mTLS client certificate secret name"
+  description = "Alloy metrics collection configuration including remote write target, cluster identity label, Mimir tenant ID, optional mTLS client certificate secret name, and optional CA bundle secret name for external TLS verification"
   type = object({
     remote_write_url      = string
     cluster_label         = string
     tenant_id             = string
     mtls_cert_secret_name = optional(string, null)
+    ca_bundle_secret_name = optional(string, null)
   })
+}
+
+variable "vault_metrics_address" {
+  description = "Optional host:port for Vault Prometheus metrics endpoint; when set, a dedicated prometheus.scrape component is added using /v1/sys/metrics path"
+  type        = string
+  nullable    = true
+  default     = null
 }
 
 # TODO rename to static_scrape_targets for naming consistency with alloy_config (Phase 3+ naming MR)
 variable "vm_static_targets" {
   description = "Optional static scrape targets for bare-metal VM metrics endpoints; each entry is inlined directly into prometheus.scrape vm_static targets"
+  type = list(object({
+    address = string
+    job     = string
+    labels  = optional(map(string), {})
+  }))
+  default = []
+}
+
+variable "minio_scrape_targets" {
+  description = "Optional MinIO node addresses for per-node metrics scraping at /minio/v2/metrics/node over HTTPS; uses the Alloy mTLS CA for server certificate verification"
   type = list(object({
     address = string
     job     = string

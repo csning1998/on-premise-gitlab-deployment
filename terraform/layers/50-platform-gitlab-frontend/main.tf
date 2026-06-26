@@ -172,9 +172,49 @@ module "alloy" {
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 
-  vm_static_targets = [
-    { address = "${local.vip_postgres}:${local.port_postgres_exporter}", job = "gitlab-postgres-exporter", labels = { component = "postgres" } },
-    { address = "${local.vip_redis}:${local.port_redis_exporter}", job = "gitlab-redis-exporter", labels = { component = "redis" } },
-    { address = "${local.vip_etcd}:${local.port_etcd_client}", job = "gitlab-etcd", labels = { component = "etcd" } },
-  ]
+  vm_static_targets = concat(
+    [
+      {
+        address = "${local.vip_postgres}:${local.port_postgres_exporter}",
+        job     = "gitlab-postgres-exporter",
+        labels  = { component = "postgres" }
+      },
+      {
+        address = "${local.vip_redis}:${local.port_redis_exporter}",
+        job     = "gitlab-redis-exporter",
+        labels  = { component = "redis" }
+      },
+    ],
+    [for ip in local.etcd_ips : {
+      address = "${ip}:${local.port_etcd_client}"
+      job     = "gitlab-etcd"
+      labels  = { component = "etcd", instance = ip }
+    }],
+    [for ip in local.gitaly_ips : {
+      address = "${ip}:${local.port_gitaly_metrics}"
+      job     = "gitlab-gitaly"
+      labels  = { component = "gitaly", instance = ip }
+    }],
+    local.has_praefect ? [for ip in local.praefect_ips : {
+      address = "${ip}:${local.port_praefect_metrics}"
+      job     = "gitlab-praefect"
+      labels  = { component = "praefect", instance = ip }
+    }] : [],
+    local.has_praefect ? [for ip in local.praefect_patroni_ips : {
+      address = "${ip}:${local.port_praefect_patroni_pg_exp}"
+      job     = "gitlab-praefect-patroni-postgres"
+      labels  = { component = "praefect-patroni-postgres", instance = ip }
+    }] : [],
+    local.has_praefect ? [for ip in local.praefect_patroni_ips : {
+      address = "${ip}:${local.port_praefect_patroni_etcd}"
+      job     = "gitlab-praefect-patroni-etcd"
+      labels  = { component = "praefect-patroni-etcd", instance = ip }
+    }] : []
+  )
+
+  minio_scrape_targets = [{
+    address = "${local.vip_minio}:${local.port_minio_metrics}"
+    job     = "gitlab-minio"
+    labels  = { component = "minio" }
+  }]
 }
