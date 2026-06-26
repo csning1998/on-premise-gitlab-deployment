@@ -6,9 +6,11 @@ resource "github_repository" "this" {
   visibility   = var.visibility
 
   # Squash and Merge
-  allow_merge_commit = false
-  allow_squash_merge = true
-  allow_rebase_merge = false
+  allow_merge_commit   = false
+  allow_squash_merge   = true
+  allow_rebase_merge   = false
+  merge_commit_title   = "PR_TITLE"
+  merge_commit_message = "PR_BODY"
 
   # PR Workflow
   allow_update_branch    = true
