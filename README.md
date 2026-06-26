@@ -2,6 +2,8 @@
 
 > [!NOTE]
 > Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
+>
+> The titles and tables in the Traditional Chinese version of the documentation will remain in English.
 
 ## Introduction
 
@@ -24,7 +26,7 @@ A Proof of Concept for Infrastructure as Code which automated deployment of High
 
 ## Documentation
 
-Full setup, configuration, and architecture documentation is in [`documentation/`](documentation/README.md).
+Full setup, configuration, and architecture documentation is in [`documentation/`](documentation/README.md). It's still under construction.
 
 | Section                                                                       | Description                                              |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------- |
@@ -48,53 +50,58 @@ Full setup, configuration, and architecture documentation is in [`documentation/
 - **RAM:** Micron Crucial Pro 64 GB (32 GB × 2) DDR5-5600
 - **SSD:** WD PC SN560 1 TB
 
-### Single-Host Resource Allocation
+### Network Segment & VIP Allocation
 
-| Network Segment (CIDR) | Service Tier  | Usage (Service)     | HA-able? | VIP (HAProxy/Ingress) | Component (Role) | Basic Qty | Unit RAM | Subtotal RAM   |
-| ---------------------- | ------------- | ------------------- | -------- | --------------------- | ---------------- | --------- | -------- | -------------- |
-| 172.16.125.0/24        | Shared        | Central LB          | True     | 172.16.125.250        | HAProxy          | 2         | 0.5 GiB  | 1,024 MiB      |
-| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster     | True     | 172.16.126.250        | Kubeadm Master   | 1         | 3.0 GiB  | 3,072 MiB      |
-|                        |               |                     |          |                       | Kubeadm Worker   | 2         | 6.0 GiB  | 12,288 MiB     |
-| 172.16.127.0/24        | Data (GitLab) | Postgres            | True     | 172.16.127.250        | Postgres         | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.128.0/24        | Data (GitLab) | Etcd                | True     | 172.16.128.250        | Etcd             | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.129.0/24        | Data (GitLab) | Redis               | True     | 172.16.129.250        | Redis            | 1         | 0.5 GiB  | 512 MiB        |
-| 172.16.130.0/24        | Data (GitLab) | MinIO               | True     | 172.16.130.250        | MinIO            | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster    | True     | 172.16.131.250        | MicroK8s         | 1         | 4.0 GiB  | 4,096 MiB      |
-| 172.16.132.0/24        | Data (Harbor) | Postgres            | True     | 172.16.132.250        | Postgres         | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.133.0/24        | Data (Harbor) | Etcd                | True     | 172.16.133.250        | Etcd             | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.134.0/24        | Data (Harbor) | Redis               | True     | 172.16.134.250        | Redis            | 1         | 0.5 GiB  | 512 MiB        |
-| 172.16.135.0/24        | Data (Harbor) | MinIO               | True     | 172.16.135.250        | MinIO            | 1         | 1.0 GiB  | 1,024 MiB      |
-| 172.16.136.0/24        | Shared        | Vault               | True     | 172.16.136.250        | Vault (Raft)     | 1         | 0.5 GiB  | 512 MiB        |
-| 172.16.137.0/24        | App (Harbor)  | Harbor Bootstrapper | False    | 172.16.137.250        | Docker Engine    | 1         | 1.5 GiB  | 1,536 MiB      |
-| 172.16.138.0/24        | Data (GitLab) | Gitaly              | True     | 172.16.138.250        | Gitaly           | 1         | 2.0 GiB  | 2,048 MiB      |
-| 172.16.139.0/24        | App (GitLab)  | GitLab Runner       | True     | 172.16.139.250        | MicroK8s         | 1         | 4.0 GiB  | 4,096 MiB      |
-| 172.16.142.0/24        | Shared        | Keycloak SSO        | False    | 172.16.142.250        | Docker Engine    | 1         | 1.5 GiB  | 1,536 MiB      |
-| **Total**              |               |                     |          |                       |                  | 18        |          | **37,376 MiB** |
+| Usage (Service)     | Component (Role) | Network Segment (CIDR) | Service Tier  | HA-able? | VIP (HAProxy/Ingress) |
+| ------------------- | ---------------- | ---------------------- | ------------- | -------- | --------------------- |
+| Central LB          | HAProxy          | 172.16.125.0/24        | Shared        | True     | 172.16.125.250        |
+| Kubeadm Cluster     | Kubeadm Master   | 172.16.126.0/24        | App (GitLab)  | True     | 172.16.126.250        |
+|                     | Kubeadm Worker   |                        |               |          |                       |
+| Postgres            | Postgres         | 172.16.127.0/24        | Data (GitLab) | True     | 172.16.127.250        |
+| Etcd                | Etcd             | 172.16.128.0/24        | Data (GitLab) | True     | 172.16.128.250        |
+| Redis               | Redis            | 172.16.129.0/24        | Data (GitLab) | True     | 172.16.129.250        |
+| MinIO               | MinIO            | 172.16.130.0/24        | Data (GitLab) | True     | 172.16.130.250        |
+| MicroK8s Cluster    | MicroK8s         | 172.16.131.0/24        | App (Harbor)  | True     | 172.16.131.250        |
+| Postgres            | Postgres         | 172.16.132.0/24        | Data (Harbor) | True     | 172.16.132.250        |
+| Etcd                | Etcd             | 172.16.133.0/24        | Data (Harbor) | True     | 172.16.133.250        |
+| Redis               | Redis            | 172.16.134.0/24        | Data (Harbor) | True     | 172.16.134.250        |
+| MinIO               | MinIO            | 172.16.135.0/24        | Data (Harbor) | True     | 172.16.135.250        |
+| Vault               | Vault (Raft)     | 172.16.136.0/24        | Shared        | True     | 172.16.136.250        |
+| Harbor Bootstrapper | Docker Engine    | 172.16.137.0/24        | App (Harbor)  | False    | 172.16.137.250        |
+| Gitaly              | Gitaly           | 172.16.138.0/24        | Data (GitLab) | True     | 172.16.138.250        |
+| GitLab Runner       | MicroK8s         | 172.16.139.0/24        | App (GitLab)  | True     | 172.16.139.250        |
+| Praefect            | Praefect         | 172.16.140.0/24        | Data (GitLab) | True     | 172.16.138.250        |
+| Patroni (Praefect)  | Postgres         | 172.16.141.0/24        | Data (GitLab) | True     | 172.16.138.250        |
+| Keycloak SSO        | Docker Engine    | 172.16.142.0/24        | Shared        | False    | 172.16.142.250        |
+| Observability Stack | MicroK8s         | 172.16.143.0/24        | Shared        | True     | 172.16.143.250        |
+| MinIO               | MinIO            | 172.16.144.0/24        | Shared        | True     | 172.16.144.250        |
 
-### Quorum-Minimum HA Resource Allocation
+### Compute Resource & RAM Allocation
 
-| Network Segment (CIDR) | Service Tier  | Usage (Service)     | HA-able? | VIP (HAProxy/Ingress) | Component (Role) | HA Min Qty | Unit RAM | Subtotal RAM   |
-| ---------------------- | ------------- | ------------------- | -------- | --------------------- | ---------------- | ---------- | -------- | -------------- |
-| 172.16.125.0/24        | Shared        | Central LB          | True     | 172.16.125.250        | HAProxy          | 2          | 0.5 GiB  | 1,024 MiB      |
-| 172.16.126.0/24        | App (GitLab)  | Kubeadm Cluster     | True     | 172.16.126.250        | Kubeadm Master   | 3          | 3.0 GiB  | 9,216 MiB      |
-|                        |               |                     |          |                       | Kubeadm Worker   | 2          | 6.0 GiB  | 12,288 MiB     |
-| 172.16.127.0/24        | Data (GitLab) | Postgres            | True     | 172.16.127.250        | Postgres         | 3          | 1.0 GiB  | 3,072 MiB      |
-| 172.16.128.0/24        | Data (GitLab) | Etcd                | True     | 172.16.128.250        | Etcd             | 3          | 1.0 GiB  | 3,072 MiB      |
-| 172.16.129.0/24        | Data (GitLab) | Redis               | True     | 172.16.129.250        | Redis            | 3          | 0.5 GiB  | 1,536 MiB      |
-| 172.16.130.0/24        | Data (GitLab) | MinIO               | True     | 172.16.130.250        | MinIO            | 4          | 1.0 GiB  | 4,096 MiB      |
-| 172.16.131.0/24        | App (Harbor)  | MicroK8s Cluster    | True     | 172.16.131.250        | MicroK8s         | 3          | 4.0 GiB  | 12,288 MiB     |
-| 172.16.132.0/24        | Data (Harbor) | Postgres            | True     | 172.16.132.250        | Postgres         | 3          | 1.0 GiB  | 3,072 MiB      |
-| 172.16.133.0/24        | Data (Harbor) | Etcd                | True     | 172.16.133.250        | Etcd             | 3          | 1.0 GiB  | 3,072 MiB      |
-| 172.16.134.0/24        | Data (Harbor) | Redis               | True     | 172.16.134.250        | Redis            | 3          | 0.5 GiB  | 1,536 MiB      |
-| 172.16.135.0/24        | Data (Harbor) | MinIO               | True     | 172.16.135.250        | MinIO            | 4          | 1.0 GiB  | 4,096 MiB      |
-| 172.16.136.0/24        | Shared        | Vault               | True     | 172.16.136.250        | Vault (Raft)     | 3          | 0.5 GiB  | 1,536 MiB      |
-| 172.16.137.0/24        | App (Harbor)  | Harbor Bootstrapper | False    | 172.16.137.250        | Docker Engine    | 1          | 1.5 GiB  | 1,536 MiB      |
-| 172.16.138.0/24        | Data (GitLab) | Gitaly              | True     | 172.16.138.250        | Gitaly           | 3          | 2.0 GiB  | 6,144 MiB      |
-| 172.16.139.0/24        | App (GitLab)  | GitLab Runner       | True     | 172.16.139.250        | MicroK8s         | 3          | 4.0 GiB  | 12,288 MiB     |
-| 172.16.140.0/24        | Data (GitLab) | Praefect            | True     | 172.16.138.250        | Praefect         | 3          | 4.0 GiB  | 12,288 MiB     |
-| 172.16.141.0/24        | Data (GitLab) | Patroni (Praefect)  | True     | 172.16.138.250        | Postgres         | 3          | 2.0 GiB  | 6,144 MiB      |
-| 172.16.142.0/24        | Shared        | Keycloak SSO        | False    | 172.16.142.250        | Docker Engine    | 1          | 1.5 GiB  | 1,536 MiB      |
-| **Total**              |               |                     |          |                       |                  | 53         |          | **99,840 MiB** |
+| Usage               | Unit RAM | Basic Qty | Subtotal RAM Basic | HA Min Qty | Subtotal RAM HA |
+| ------------------- | -------- | --------- | ------------------ | ---------- | --------------- |
+| Central LB          | 0.5 GiB  | 2         | 1,024 MiB          | 2          | 1,024 MiB       |
+| Kubeadm Cluster     | 3.0 GiB  | 1         | 3,072 MiB          | 3          | 9,216 MiB       |
+| Kubeadm Cluster     | 6.0 GiB  | 2         | 12,288 MiB         | 2          | 12,288 MiB      |
+| Postgres            | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
+| Etcd                | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
+| Redis               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
+| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
+| MicroK8s Cluster    | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
+| Postgres            | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
+| Etcd                | 1.0 GiB  | 1         | 1,024 MiB          | 3          | 3,072 MiB       |
+| Redis               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
+| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
+| Vault               | 0.5 GiB  | 1         | 512 MiB            | 3          | 1,536 MiB       |
+| Harbor Bootstrapper | 1.5 GiB  | 1         | 1,536 MiB          | 1          | 1,536 MiB       |
+| Gitaly              | 2.0 GiB  | 1         | 2,048 MiB          | 3          | 6,144 MiB       |
+| GitLab Runner       | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
+| Praefect            | 4.0 GiB  | 0         | 0 MiB              | 3          | 12,288 MiB      |
+| Patroni (Praefect)  | 2.0 GiB  | 0         | 0 MiB              | 3          | 6,144 MiB       |
+| Keycloak SSO        | 1.5 GiB  | 1         | 1,536 MiB          | 1          | 1,536 MiB       |
+| Observability Stack | 4.0 GiB  | 1         | 4,096 MiB          | 3          | 12,288 MiB      |
+| MinIO               | 1.0 GiB  | 1         | 1,024 MiB          | 4          | 4,096 MiB       |
+| **Total**           |          | 21        | **42,496 MiB**     | 60         | **116,224 MiB** |
 
 ## Progress
 
