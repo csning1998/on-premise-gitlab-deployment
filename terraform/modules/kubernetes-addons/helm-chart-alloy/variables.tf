@@ -44,6 +44,13 @@ variable "vm_static_targets" {
   default = []
 }
 
+variable "keycloak_metrics_address" {
+  description = "Optional host:port for Keycloak management metrics endpoint; when set, a prometheus.scrape component is added using /metrics path over HTTPS with ca-bundle verification"
+  type        = string
+  nullable    = true
+  default     = null
+}
+
 variable "minio_scrape_targets" {
   description = "Optional MinIO node addresses for per-node metrics scraping at /minio/v2/metrics/node over HTTPS; uses the Alloy mTLS CA for server certificate verification"
   type = list(object({

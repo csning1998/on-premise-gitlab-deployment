@@ -1,4 +1,9 @@
 
+output "mimir_tenant_id" {
+  description = "Mimir tenant ID for this cluster's Alloy remote write; used by the observability layer to provision a Grafana datasource per tenant"
+  value       = local.mimir_tenant_id
+}
+
 output "trust_context" {
   description = "Cert-Manager issuer details for services to consume"
   value = {

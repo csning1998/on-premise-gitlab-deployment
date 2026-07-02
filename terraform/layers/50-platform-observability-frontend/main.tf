@@ -81,15 +81,23 @@ module "alloy" {
     ca_bundle_secret_name = local.ca_bundle_config.secret_name
   }
 
-  vm_static_targets = [
-    for ip in local.central_lb_ips : {
-      address = "${ip}:${local.port_haproxy_stats}"
-      job     = "central-lb-haproxy"
-      labels  = { component = "haproxy", instance = ip }
-    }
-  ]
+  vm_static_targets = concat(
+    [
+      for ip in local.central_lb_ips : {
+        address = "${ip}:${local.port_haproxy_stats}"
+        job     = "central-lb-haproxy"
+        labels  = { component = "haproxy", instance = ip }
+      }
+    ],
+    [{
+      address = local.harbor_bootstrapper_metrics_address
+      job     = "harbor-bootstrapper"
+      labels  = { component = "harbor" }
+    }]
+  )
 
-  vault_metrics_address = local.vault_metrics_address
+  vault_metrics_address    = local.vault_metrics_address
+  keycloak_metrics_address = local.keycloak_metrics_address
 }
 
 module "alloy_client_cert" {
@@ -143,9 +151,10 @@ module "grafana" {
   }
 
   datasources_config = {
-    loki_url        = module.loki.service_url
-    mimir_url       = module.mimir.query_url
-    mimir_tenant_id = var.observability_stack_config.cluster_name
+    loki_url            = module.loki.service_url
+    mimir_url           = module.mimir.query_url
+    mimir_tenant_id     = var.observability_stack_config.cluster_name
+    mimir_tenants_extra = local.mimir_tenants_extra
   }
 
   ca_bundle = { secret_name = local.ca_bundle_config.secret_name }

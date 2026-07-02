@@ -116,6 +116,7 @@ locals {
 
 # Observability Endpoint Context
 locals {
+  mimir_tenant_id        = "harbor"
   port_postgres_exporter = local.state.metadata.global_topology_network["harbor"]["postgres"].ports["metrics"].frontend_port
   port_redis_exporter    = local.state.metadata.global_topology_network["harbor"]["redis"].ports["metrics"].frontend_port
   port_etcd_client       = local.state.metadata.global_topology_network["harbor"]["etcd"].ports["client"].frontend_port

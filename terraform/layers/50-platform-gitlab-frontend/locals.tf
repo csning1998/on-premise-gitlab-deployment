@@ -200,6 +200,7 @@ locals {
 locals {
   mimir_fqdn             = [for san in local.state.metadata.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
+  mimir_tenant_id        = "gitlab"
 
   port_postgres_exporter = local.state.metadata.global_topology_network["gitlab"]["postgres"].ports["metrics"].frontend_port
   port_redis_exporter    = local.state.metadata.global_topology_network["gitlab"]["redis"].ports["metrics"].frontend_port

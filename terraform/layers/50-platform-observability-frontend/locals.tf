@@ -19,6 +19,8 @@ locals {
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision            = data.terraform_remote_state.provision.outputs
+    gitlab_frontend      = data.terraform_remote_state.gitlab_frontend.outputs
+    harbor_frontend      = data.terraform_remote_state.harbor_frontend.outputs
   }
 }
 
@@ -60,9 +62,15 @@ locals {
 
 # Observability VM Scrape Targets
 locals {
-  port_haproxy_stats    = local.state.metadata.global_topology_network["central-lb"]["frontend"].ports["stats"].frontend_port
-  central_lb_ips        = local.state.metadata.global_topology_network["central-lb"]["frontend"].node_ips
-  vault_metrics_address = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  port_haproxy_stats                  = local.state.metadata.global_topology_network["central-lb"]["frontend"].ports["stats"].frontend_port
+  central_lb_ips                      = local.state.metadata.global_topology_network["central-lb"]["frontend"].node_ips
+  vault_metrics_address               = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  keycloak_metrics_address            = "${local.state.metadata.global_topology_network["keycloak"]["frontend"].node_ips[0]}:${local.state.metadata.global_topology_network["keycloak"]["frontend"].ports["mgmt"].frontend_port}"
+  harbor_bootstrapper_metrics_address = "${local.state.metadata.global_topology_network["harbor-bootstrapper"]["frontend"].node_ips[0]}:${local.state.metadata.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port}"
+  mimir_tenants_extra = [
+    local.state.gitlab_frontend.mimir_tenant_id,
+    local.state.harbor_frontend.mimir_tenant_id,
+  ]
 }
 
 # CA Bundle Configuration

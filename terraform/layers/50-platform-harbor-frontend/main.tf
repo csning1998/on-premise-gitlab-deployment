@@ -47,8 +47,8 @@ module "alloy" {
 
   alloy_config = {
     remote_write_url      = local.mimir_remote_write_url
-    cluster_label         = "harbor"
-    tenant_id             = "harbor"
+    cluster_label         = local.mimir_tenant_id
+    tenant_id             = local.mimir_tenant_id
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 

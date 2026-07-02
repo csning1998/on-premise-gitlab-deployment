@@ -20,6 +20,7 @@
     vault_agent_secret_id: "{{ vault_agent_secret_id }}"
     vault_ca_cert_b64: "{{ vault_ca_cert_b64 }}"
     vault_agent_common_name: "{{ vault_agent_common_name }}"
+    vault_agent_ip_sans: "{{ advertise_ip }}"
     vault_agent_owner: "1000"
     vault_agent_group: "1000"
     vault_agent_cert_dirs:

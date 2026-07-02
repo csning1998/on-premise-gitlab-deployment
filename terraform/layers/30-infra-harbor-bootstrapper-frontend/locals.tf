@@ -44,6 +44,7 @@ locals {
     bstrap_harbor_mtls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
     vault_vip                      = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["vault-frontend"]
     global_mss                     = module.context.global_mss
+    harbor_metrics_port            = data.terraform_remote_state.metadata.outputs.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port
 
     bstrap_harbor_cluster_ips = [
       for comp_name, comp_config in var.service_config : [
