@@ -147,7 +147,7 @@ resource "vault_kv_secret_v2" "team_robot_creds" {
   provider = vault.production
   for_each = local.team_groups
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/robots/${each.key}"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/robots/${each.key}"
 
   data_json = jsonencode({
     username = harbor_robot_account.team_ci[each.key].full_name

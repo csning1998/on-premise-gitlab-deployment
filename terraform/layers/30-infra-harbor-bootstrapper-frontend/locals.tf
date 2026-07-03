@@ -11,13 +11,13 @@ locals {
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }
 
 # Service-specific credentials and Vault Agent identity
@@ -44,7 +44,7 @@ locals {
     bstrap_harbor_mtls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
     vault_vip                      = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["vault-frontend"]
     global_mss                     = module.context.global_mss
-    harbor_metrics_port            = data.terraform_remote_state.metadata.outputs.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port
+    harbor_metrics_port            = data.terraform_remote_state.load_balancer.outputs.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port
 
     bstrap_harbor_cluster_ips = [
       for comp_name, comp_config in var.service_config : [

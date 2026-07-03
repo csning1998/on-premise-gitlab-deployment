@@ -49,7 +49,7 @@ module "gitlab_core" {
   gitlab_config = {
     hostname             = local.fqdn_gitlab
     edition              = "ce"
-    dns_sans             = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
+    dns_sans             = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san
     omniauth_secret_name = local.gitlab_config.omniauth_secret_name
     rails_secret_name    = local.gitlab_config.rails_secret_name
   }

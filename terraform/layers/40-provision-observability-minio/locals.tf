@@ -12,7 +12,7 @@ locals {
 # State Object
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
+    network              = data.terraform_remote_state.network.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     minio                = data.terraform_remote_state.minio.outputs
@@ -21,14 +21,14 @@ locals {
 
 locals {
   # Vault Address Calculation
-  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 
   # MinIO Discovery
   minio_url = "https://${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

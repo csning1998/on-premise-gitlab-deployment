@@ -135,7 +135,7 @@ module "grafana" {
   grafana_config = {
     fqdn                       = local.grafana_fqdn
     admin_existing_secret_name = "grafana-admin-secret"
-    dns_sans                   = local.state.metadata.global_pki_map["observability-frontend"].dns_san
+    dns_sans                   = local.state.vault_pki.global_pki_map["observability-frontend"].dns_san
   }
 
   ingress_config = {

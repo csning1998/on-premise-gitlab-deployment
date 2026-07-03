@@ -12,16 +12,15 @@ locals {
 locals {
   state = {
     vault_pki           = data.terraform_remote_state.vault_pki.outputs
-    vault_sys           = data.terraform_remote_state.vault_sys.outputs
+    credentials         = data.terraform_remote_state.credentials.outputs
     harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
   }
 
-  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
+  sys_vault_addr = "https://${local.state.vault_pki.vault_service_vip}:443"
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = local.state.credentials.global_credential_paths
 }
 
 locals {

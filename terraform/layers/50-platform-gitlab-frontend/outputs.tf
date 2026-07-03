@@ -15,9 +15,9 @@ output "trust_context" {
 output "ingress_context" {
   description = "Ingress controller details formatted for SSoT consumption"
   value = {
-    load_balancer_ip = local.state.kubeadm.service_vip
-    http_node_port   = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["ingress-http"].backend_port
-    https_node_port  = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["ingress-https"].backend_port
+    load_balancer_ip = local.state.provision.kubernetes_context.service_vip
+    http_node_port   = local.state.network.global_topology_network["gitlab"]["frontend"].ports["ingress-http"].backend_port
+    https_node_port  = local.state.network.global_topology_network["gitlab"]["frontend"].ports["ingress-https"].backend_port
   }
 }
 

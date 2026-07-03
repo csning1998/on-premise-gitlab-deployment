@@ -1,13 +1,7 @@
 
-# Foundation Metadata State (SSoT)
-data "terraform_remote_state" "metadata" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
-}
-
 data "terraform_remote_state" "network" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/05-foundation-network" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
@@ -21,26 +15,9 @@ data "terraform_remote_state" "vault_pki" {
   config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
-# Infrastructure VIPs
-data "terraform_remote_state" "redis" {
+data "terraform_remote_state" "credentials" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-redis" })
-}
-
-data "terraform_remote_state" "postgres" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-postgres" })
-}
-
-data "terraform_remote_state" "minio" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-minio" })
-}
-
-# Kubeadm Cluster State
-data "terraform_remote_state" "kubeadm" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-credentials" })
 }
 
 data "terraform_remote_state" "gitaly_praefect" {
@@ -79,16 +56,12 @@ data "terraform_remote_state" "provision_databases" {
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-gitlab-databases" })
 }
 
-data "terraform_remote_state" "harbor" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/50-platform-harbor-frontend" })
-}
 
 # 2. Fetch Kubeconfig from Production Vault
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
 }
 
 # Fetch the Cluster CA
@@ -103,14 +76,14 @@ data "vault_kv_secret_v2" "gitlab_s3" {
   provider = vault.production
   for_each = local.minio_function_map
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/s3_credentials/${each.value}"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/s3_credentials/${each.value}"
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
 # Database Credentials (Redis)
@@ -123,7 +96,7 @@ data "vault_kv_secret_v2" "db_vars" {
 data "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/database"
 }
 
 # 3. Keycloak OIDC State & Client Secret
@@ -135,7 +108,7 @@ data "terraform_remote_state" "keycloak_oidc" {
 data "vault_kv_secret_v2" "keycloak_gitlab_client" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/keycloak/oidc/clients/gitlab_frontend"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/keycloak/oidc/clients/gitlab_frontend"
 }
 
 # GitLab Internal Secrets (Persistent via Layer 30)

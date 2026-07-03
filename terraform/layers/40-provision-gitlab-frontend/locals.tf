@@ -12,8 +12,7 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
-    network              = data.terraform_remote_state.network.outputs.infrastructure_map
+    network              = data.terraform_remote_state.network.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     redis                = data.terraform_remote_state.redis.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
@@ -46,15 +45,15 @@ locals {
 # 3. Addons & Trust Engine Context
 locals {
   # Network Context
-  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.network.global_network_baseline.global_mtu
 
   # FQDNs
-  fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
-  fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-  fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-  fqdn_minio               = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
-  fqdn_postgres            = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
-  fqdn_redis               = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
+  fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  fqdn_vault               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+  fqdn_harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  fqdn_minio               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
+  fqdn_postgres            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
+  fqdn_redis               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
 
   # Compatibility Aliases
   gitlab_fqdn = local.fqdn_gitlab
@@ -75,7 +74,7 @@ locals {
   gitlab_image_repository = "${local.harbor_gitlab_proxy}/gitlab-org/build/cng"
 
   # K8s API Endpoint for Vault Callback (Standardized)
-  api_port     = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["api-server"].frontend_port
+  api_port     = local.state.network.global_topology_network["gitlab"]["frontend"].ports["api-server"].frontend_port
   api_endpoint = "https://${local.state.kubeadm.service_vip}:${local.api_port}"
 
   # Cluster CA from ConfigMap
@@ -83,7 +82,7 @@ locals {
   postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
-  vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port          = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert           = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
@@ -91,8 +90,8 @@ locals {
   vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent
 
   # Map to the specific component identity in Vault PKI (SSoT Driven)
-  vault_role_name   = local.state.metadata.global_pki_map["gitlab-frontend"].role_name
-  vault_auth_path   = local.state.metadata.global_pki_map["gitlab-frontend"].auth_config.path
+  vault_role_name   = local.state.vault_pki.global_pki_map["gitlab-frontend"].role_name
+  vault_auth_path   = local.state.vault_pki.global_pki_map["gitlab-frontend"].auth_config.path
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 
   # Kubelet Serving Certificate Approval Configuration
@@ -102,14 +101,14 @@ locals {
 # 4. External Service Address & Ports
 locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
-  postgres_rw_port = local.state.network["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
-  redis_port       = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-  minio_port       = local.state.network["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+  postgres_rw_port = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
+  redis_port       = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.ports["main"].frontend_port
+  minio_port       = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.ports["api"].frontend_port
 
   # VIPs from LB Infrastructure
-  postgres_vip  = local.state.network["core-gitlab-postgres"].lb_config.vip
-  redis_vip     = local.state.network["core-gitlab-redis"].lb_config.vip
-  minio_vip     = local.state.network["core-gitlab-minio"].lb_config.vip
+  postgres_vip  = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip
+  redis_vip     = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip
+  minio_vip     = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
 
   # GitLab Application Database Context
@@ -139,7 +138,7 @@ locals {
 
       # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
       # resolve domain name; CoreDNS must resolve this via static hosts entry)
-      "${local.state.network["core-harbor-bootstrapper-frontend"].lb_config.vip}" = local.fqdn_harbor_bootstrapper
+      "${local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip}" = local.fqdn_harbor_bootstrapper
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
     merge([
@@ -191,7 +190,7 @@ locals {
   }
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

@@ -104,7 +104,7 @@ resource "vault_kv_secret_v2" "oidc_clients" {
   provider = vault.production
   for_each = keycloak_openid_client.clients
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/keycloak/oidc/clients/${each.key}"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/keycloak/oidc/clients/${each.key}"
 
   data_json = jsonencode({
     client_id     = each.value.client_id

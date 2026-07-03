@@ -1,13 +1,9 @@
 
 # Foundation Metadata State (SSoT)
-data "terraform_remote_state" "metadata" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
-}
 
 data "terraform_remote_state" "network" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/05-foundation-network" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
@@ -66,7 +62,7 @@ data "terraform_remote_state" "provision_databases" {
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab"
 }
 
 # Fetch the Cluster CA
@@ -81,7 +77,7 @@ data "kubernetes_config_map" "kube_root_ca" {
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
 # Database Credentials (Redis)
@@ -94,5 +90,5 @@ data "vault_kv_secret_v2" "db_vars" {
 data "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/database"
 }

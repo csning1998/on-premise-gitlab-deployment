@@ -12,11 +12,9 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    metadata                = data.terraform_remote_state.metadata.outputs
     network                 = data.terraform_remote_state.network.outputs
     vault_pki               = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap    = data.terraform_remote_state.vault_prod_bootstrap.outputs
-    gitlab_frontend         = data.terraform_remote_state.gitlab_frontend.outputs
     harbor_bootstrapper_oci = data.terraform_remote_state.harbor_bootstrapper_oci.outputs
     provision               = data.terraform_remote_state.provision.outputs
   }
@@ -41,17 +39,17 @@ locals {
 
 # 3. Application Context
 locals {
-  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.network.global_network_baseline.global_mtu
 
-  fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
-  fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  fqdn_harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
 
   harbor_registry     = local.fqdn_harbor_bootstrapper
   harbor_docker_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["docker_hub"].project_name
   harbor_gitlab_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["gitlab_com"].project_name
   helm_chart_project  = local.state.harbor_bootstrapper_oci.proxy_oci["helm_charts"].name
 
-  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 }
 
@@ -62,6 +60,6 @@ locals {
     secret_name = "gitlab-ca-bundle" # Helm Chart Reference Name
     content     = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   }
-  mimir_fqdn             = [for san in local.state.metadata.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
+  mimir_fqdn             = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
 }

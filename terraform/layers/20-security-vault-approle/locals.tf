@@ -12,7 +12,6 @@ locals {
 # State Object
 locals {
   state = {
-    metadata           = data.terraform_remote_state.metadata.outputs
     vault_sys          = data.terraform_remote_state.vault_sys.outputs
     vault_bootstrapper = data.terraform_remote_state.vault_bootstrapper.outputs # Seed Vault is in Layer 00
   }

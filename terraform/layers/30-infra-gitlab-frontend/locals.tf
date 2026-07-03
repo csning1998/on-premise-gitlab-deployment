@@ -11,7 +11,7 @@ locals {
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -54,7 +54,7 @@ locals {
     kubeadm_nat_subnet_prefix = join(".", slice(split(".", module.context.primary_net_config.network.nat.gateway), 0, 3))
     global_mss                = module.context.global_mss
 
-    kubeadm_registry_host        = data.terraform_remote_state.metadata.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
+    kubeadm_registry_host        = data.terraform_remote_state.vault_pki.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
     kubeadm_registry_vip         = data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]
     kubeadm_image_repository     = "${data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}"
     kubeadm_dns_image_repository = "${data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}/coredns"

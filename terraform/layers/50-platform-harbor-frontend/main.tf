@@ -103,7 +103,7 @@ module "harbor_core" {
     admin_password = local.harbor_admin_password
     notary_prefix  = var.harbor_helm_config.notary_prefix
     secret_key     = random_password.harbor_core_secret_key.result
-    dns_sans       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san
+    dns_sans       = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san
   }
 
   helm_values_override = local.harbor_helm_overrides

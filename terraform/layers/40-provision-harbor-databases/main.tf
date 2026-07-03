@@ -16,7 +16,7 @@ module "minio_harbor_config" {
   }
 
   minio_tenants            = var.harbor_minio_tenants
-  vault_secret_path_prefix = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/s3_credentials"
+  vault_secret_path_prefix = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/app/s3_credentials"
   minio_server_url         = local.minio_url
 }
 
@@ -53,7 +53,7 @@ module "harbor_db_init" {
 resource "vault_kv_secret_v2" "harbor_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/database"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/app/database"
   data_json = jsonencode({
     username = module.harbor_db_init.users[var.db_init_config.db_user].name
     password = random_password.harbor_db_password.result

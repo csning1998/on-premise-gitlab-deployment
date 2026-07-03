@@ -58,3 +58,29 @@ output "management_policies" {
   description = "Map of management policy names"
   value       = { for k in local.management_identities : k => module.vault_workload_identity_approle[k].policy_name }
 }
+
+output "vault_kv_namespace" {
+  description = "Pass-through of L00 Vault KV namespace prefix; consumed by L30+ for credential path construction without reading L00 directly."
+  value       = local.state.metadata.vault_kv_namespace
+}
+
+output "global_pki_map" {
+  description = "Pass-through of L00 PKI role map (DNS SANs, role names, auth config); consumed by L30+ for TLS certificate configuration."
+  value       = local.state.metadata.global_pki_map
+}
+
+output "global_credential_paths" {
+  description = "Pass-through of L00 credential path map; consumed by L30+ for Vault KV path construction."
+  value       = local.state.metadata.global_credential_paths
+}
+
+output "ca_cert_path" {
+  description = "Pass-through of L15 Bootstrap CA certificate file path; consumed by L30+ for Vault provider TLS verification."
+  value       = local.state.vault_sys.ca_cert_path
+}
+
+output "global_vault_pki_b64" {
+  description = "Pass-through of L00 Bootstrap Vault TLS artifacts (CA cert, server cert/key, HAProxy bundle); consumed by L30+ as the trust chain root."
+  value       = local.state.metadata.global_vault_pki_b64
+  sensitive   = true
+}

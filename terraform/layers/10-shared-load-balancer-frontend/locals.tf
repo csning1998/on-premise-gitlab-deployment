@@ -12,8 +12,8 @@ locals {
 # State Object
 locals {
   state = {
-    metadata = data.terraform_remote_state.metadata.outputs
     network  = data.terraform_remote_state.network.outputs
+    metadata = data.terraform_remote_state.metadata.outputs
   }
   secrets = {
     credentials    = data.vault_generic_secret.credentials.data # AppRole
@@ -26,10 +26,10 @@ locals {
 locals {
   # Zip Identity, Network, and VIP properties into a single O(1) lookup map.
   segments_map = merge([
-    for s_name, components in local.state.metadata.global_topology_identity : {
+    for s_name, components in local.state.network.global_topology_identity : {
       for c_name, identity in components : identity.cluster_name => {
         identity = identity
-        network  = local.state.metadata.global_topology_network[s_name][c_name]
+        network  = local.state.network.global_topology_network[s_name][c_name]
         vip      = lookup(local.state.network.infrastructure_map, identity.cluster_name, { lb_config = { vip = null } }).lb_config.vip
         s_name   = s_name
         c_name   = c_name
@@ -52,7 +52,7 @@ locals {
 
   svc_identity    = local.svc_context.identity
   svc_network     = local.svc_context.network
-  svc_fqdn        = local.state.metadata.global_domain_suffix
+  svc_fqdn        = local.state.network.global_domain_suffix
   svc_node_prefix = local.svc_identity.node_name_prefix
 }
 
@@ -90,7 +90,7 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca_b64 = local.state.metadata.global_vault_pki_b64
+  pki_global_ca_b64 = local.state.network.global_vault_pki_b64
 
   # System Level Credentials (OS/SSH)
   sec_vm_creds = {
@@ -112,8 +112,8 @@ locals {
 
   ansible_extra_vars = {
     terraform_runner_subnet = local.net_lb_config.hostonly.cidr
-    global_mss              = local.state.metadata.global_network_baseline.global_mss
-    global_mtu              = local.state.metadata.global_network_baseline.global_mtu
+    global_mss              = local.state.network.global_network_baseline.global_mss
+    global_mtu              = local.state.network.global_network_baseline.global_mtu
   }
 }
 

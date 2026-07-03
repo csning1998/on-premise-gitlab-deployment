@@ -13,7 +13,7 @@ data "vault_kv_secret_v2" "harbor_ci_robot" {
   for_each = local.team_subgroups
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/robots/${each.key}"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/robots/${each.key}"
 }
 
 resource "gitlab_group_variable" "ci_registry_user" {

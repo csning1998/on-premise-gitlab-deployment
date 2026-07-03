@@ -41,7 +41,7 @@ provider "vault" {
 }
 
 provider "minio" {
-  minio_server      = "${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
+  minio_server      = "${local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip}:${local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.ports["api"].frontend_port}"
   minio_user        = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_user"]
   minio_password    = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_password"]
   minio_ssl         = true

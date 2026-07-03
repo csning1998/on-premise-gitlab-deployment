@@ -1,4 +1,9 @@
 
+output "global_credential_paths" {
+  description = "Pass-through of the L00 credential path map for downstream layer consumption."
+  value       = local.state.metadata.global_credential_paths
+}
+
 # Vault KV paths written by this layer, for documentation and cross-layer reference.
 output "credential_paths" {
   description = "Mount-relative Vault KV paths of all generated credentials."

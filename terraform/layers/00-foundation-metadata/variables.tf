@@ -70,6 +70,16 @@ variable "network_baseline" {
   }
 }
 
+variable "observability_config" {
+  description = "Observability stack metadata consumed by the observability layer to provision per-tenant Grafana datasources and Alloy remote_write configuration."
+  type = object({
+    mimir_tenants = list(string)
+  })
+  default = {
+    mimir_tenants = []
+  }
+}
+
 variable "service_catalog" {
   description = "The Single Source of Truth (SSoT) for all services, component, ingress, and dependencies."
   type = map(object({

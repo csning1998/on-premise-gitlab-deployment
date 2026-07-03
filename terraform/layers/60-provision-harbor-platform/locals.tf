@@ -12,8 +12,9 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
+    network              = data.terraform_remote_state.network.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
+    credentials          = data.terraform_remote_state.credentials.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     keycloak_oidc        = data.terraform_remote_state.keycloak_oidc.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
@@ -23,17 +24,16 @@ locals {
 # 2. Vault Connection Context (For Provider)
 locals {
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = local.state.credentials.global_credential_paths
 }
 
 # 3. Harbor Identity (For Provider)
 locals {
-  harbor_hostname = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
+  harbor_hostname = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
 }
 
 # 4. OIDC Configuration Context

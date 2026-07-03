@@ -1,18 +1,7 @@
 
-# Foundation Metadata State (SSoT)
-data "terraform_remote_state" "metadata" {
+data "terraform_remote_state" "network" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
-}
-
-data "terraform_remote_state" "postgres" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-postgres" })
-}
-
-data "terraform_remote_state" "redis" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-redis" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
@@ -23,6 +12,11 @@ data "terraform_remote_state" "vault_prod_bootstrap" {
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
+}
+
+data "terraform_remote_state" "credentials" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/25-security-credentials" })
 }
 
 data "terraform_remote_state" "provision" {
@@ -36,23 +30,23 @@ data "terraform_remote_state" "harbor_bootstrapper" {
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }
 
-data "terraform_remote_state" "minio" {
+data "terraform_remote_state" "provision_databases" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-minio" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-databases" })
 }
 
 # Harbor Bootstrapper Robot Account (RBAC)
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
 }
 
 # Fetch Kubeconfig from Production Vault
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/infrastructure/kubeconfig/harbor"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/infrastructure/kubeconfig/harbor"
 }
 
 # Fetch Harbor Secrets from Production Vault
@@ -71,11 +65,11 @@ data "vault_kv_secret_v2" "harbor_vars" {
 data "vault_kv_secret_v2" "harbor_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/database"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/app/database"
 }
 
 data "vault_kv_secret_v2" "s3_vars" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/app/s3_credentials/harbor-registry"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/app/s3_credentials/harbor-registry"
 }

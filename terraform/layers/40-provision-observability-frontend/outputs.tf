@@ -11,8 +11,8 @@ output "ingress_context" {
   description = "Ingress controller details for downstream consumption"
   value = {
     load_balancer_ip = local.observability_vip
-    http_node_port   = local.state.metadata.global_topology_network["observability"]["frontend"].ports["ingress-http"].backend_port
-    https_node_port  = local.state.metadata.global_topology_network["observability"]["frontend"].ports["ingress-https"].backend_port
+    http_node_port   = local.state.network.global_topology_network["observability"]["frontend"].ports["ingress-http"].backend_port
+    https_node_port  = local.state.network.global_topology_network["observability"]["frontend"].ports["ingress-https"].backend_port
   }
 }
 
