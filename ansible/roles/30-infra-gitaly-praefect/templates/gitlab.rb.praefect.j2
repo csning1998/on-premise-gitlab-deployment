@@ -36,7 +36,7 @@ praefect['configuration'] = {
   },
   # Database connection to the Praefect Patroni DB cluster
   database: {
-    host: '{{ postgres_ha_virtual_ip }}',
+    host: '{{ postgres_ha_vip }}',
     port: 5432,
     user: '{{ praefect_db_user | default("praefect") }}',
     password: '{{ praefect_db_password }}',

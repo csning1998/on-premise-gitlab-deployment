@@ -1,17 +1,17 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -22,7 +22,7 @@ locals {
 
 # Service-specific credentials and Vault Agent identity
 locals {
-  sec_app_creds = {
+  sec_app_credentials = {
     masterauth  = data.vault_kv_secret_v2.creds.data["redis_masterauth"]
     requirepass = data.vault_kv_secret_v2.creds.data["redis_requirepass"]
     vrrp_secret = data.vault_kv_secret_v2.creds.data["redis_vrrp_secret"]
@@ -35,11 +35,11 @@ locals {
 
 # Ansible Configuration
 locals {
-  ansible_template_vars = {
+  ansible_template_config = {
     service_identifier   = module.context.svc_identity.cluster_name
     redis_service_domain = module.context.svc_fqdn
 
-    redis_ha_virtual_ip   = module.context.primary_net_config.lb_config.vip
+    redis_ha_vip          = module.context.primary_net_config.lb_config.vip
     redis_tls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
     redis_tls_port        = module.context.primary_net_config.lb_config.ports["main"].frontend_port
     vault_vip             = module.context.vault_sys_vip
@@ -61,10 +61,10 @@ locals {
     cluster_name = module.context.svc_identity.cluster_name
   }
 
-  ansible_extra_vars = {
-    redis_masterauth        = local.sec_app_creds.masterauth
-    redis_requirepass       = local.sec_app_creds.requirepass
-    redis_vrrp_secret       = local.sec_app_creds.vrrp_secret
+  ansible_extra_config = {
+    redis_masterauth        = local.sec_app_credentials.masterauth
+    redis_requirepass       = local.sec_app_credentials.requirepass
+    redis_vrrp_secret       = local.sec_app_credentials.vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent
   }

@@ -1,5 +1,5 @@
 
-variable "vault_addr" {
+variable "vault_endpoint" {
   description = "The address of the Vault server"
   type        = string
 }

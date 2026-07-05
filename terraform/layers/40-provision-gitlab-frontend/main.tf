@@ -27,7 +27,7 @@ module "platform_trust_engine" {
 
   # 2. Vault Connection (for Cert-Manager to authenticate)
   vault_config = {
-    address   = local.vault_address
+    address   = local.vault_endpoint
     ca_cert   = local.vault_ca_cert
     auth_path = local.vault_auth_path
   }

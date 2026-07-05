@@ -22,7 +22,7 @@ variable "vault_kv_namespace" {
   type        = string
 }
 
-variable "pki_settings" {
+variable "pki_config" {
   description = "Global PKI Identity Settings (SSoT). Defines the legal identity of the infrastructure."
   type = object({
     root_ca_common_name         = string

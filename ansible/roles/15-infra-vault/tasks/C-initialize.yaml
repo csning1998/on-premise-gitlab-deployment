@@ -27,14 +27,14 @@
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
         validate_certs: false
-      register: bootstrapper_creds
+      register: bootstrapper_credentials
       delegate_to: localhost
       become: false
 
     - name: "C1d. Set AppRole Credentials"
       ansible.builtin.set_fact:
-        vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
-        vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
+        vault_approle_role_id: "{{ bootstrapper_credentials.secret.role_id }}"
+        vault_approle_secret_id: "{{ bootstrapper_credentials.secret.secret_id }}"
 
     - name: "C1e. Write Merged Secrets back to Vault"
       community.hashi_vault.vault_kv2_write:

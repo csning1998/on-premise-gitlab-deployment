@@ -1,17 +1,17 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -39,7 +39,7 @@ locals {
 
 # Ansible Configuration
 locals {
-  ansible_template_vars = {
+  ansible_template_config = {
     service_identifier = "${module.context.svc_identity.cluster_name}-kubeadm-cluster"
 
     kubeadm_master_nodes = var.service_config["master"].nodes
@@ -49,7 +49,7 @@ locals {
       for node_suffix, node_data in var.service_config["master"].nodes :
       cidrhost(module.context.primary_net_config.network.hostonly.cidr, node_data.ip_suffix)
     ]
-    kubeadm_ha_virtual_ip     = module.context.primary_net_config.lb_config.vip
+    kubeadm_ha_vip            = module.context.primary_net_config.lb_config.vip
     kubeadm_pod_subnet        = var.kubernetes_cluster_configuration.pod_subnet
     kubeadm_nat_subnet_prefix = join(".", slice(split(".", module.context.primary_net_config.network.nat.gateway), 0, 3))
     global_mss                = module.context.global_mss
@@ -84,11 +84,11 @@ locals {
     pod_subnet = var.kubernetes_cluster_configuration.pod_subnet
   }
 
-  ansible_extra_vars = {
+  ansible_extra_config = {
     vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id     = local.sec_vault_agent_identity.role_id
     vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
-    vault_addr              = module.context.sys_vault_addr
+    vault_endpoint          = module.context.sys_vault_endpoint
     vault_role_name         = local.sec_vault_agent_identity.role_name
     vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name

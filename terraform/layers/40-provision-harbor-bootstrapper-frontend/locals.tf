@@ -16,7 +16,7 @@ locals {
     harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
   }
 
-  sys_vault_addr = "https://${local.state.vault_pki.vault_service_vip}:443"
+  sys_vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:443"
 }
 
 locals {
@@ -28,7 +28,7 @@ locals {
     harbor_robot_user       = harbor_robot_account.helm_pusher.full_name
     harbor_registry         = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
     harbor_project          = local.proxy_oci["helm_charts"].name
-    vault_addr              = local.sys_vault_addr
+    vault_endpoint          = local.sys_vault_endpoint
     vault_approle_role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
     vault_approle_secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
   }

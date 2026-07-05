@@ -1,17 +1,17 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -22,7 +22,7 @@ locals {
 
 # Service-specific credentials and Vault Agent identity
 locals {
-  sec_db_creds = {
+  sec_db_credentials = {
     minio_root_user     = data.vault_kv_secret_v2.creds.data["minio_root_user"]
     minio_root_password = data.vault_kv_secret_v2.creds.data["minio_root_password"]
     minio_vrrp_secret   = data.vault_kv_secret_v2.creds.data["minio_vrrp_secret"]
@@ -35,12 +35,12 @@ locals {
 
 # Ansible Configuration
 locals {
-  ansible_template_vars = {
+  ansible_template_config = {
     service_identifier   = module.context.svc_identity.cluster_name
     minio_cluster_name   = "${module.context.svc_identity.cluster_name}-minio-cluster"
     minio_service_domain = module.context.svc_fqdn
 
-    minio_ha_virtual_ip         = module.context.primary_net_config.lb_config.vip
+    minio_ha_vip                = module.context.primary_net_config.lb_config.vip
     minio_tls_node_subnet       = module.context.primary_net_config.network.hostonly.cidr
     minio_nat_subnet_prefix     = join(".", slice(split(".", module.context.primary_net_config.network.nat.gateway), 0, 3))
     minio_frontend_port_api     = module.context.primary_net_config.lb_config.ports["api"].frontend_port
@@ -61,10 +61,10 @@ locals {
     minio_vip    = module.context.primary_net_config.lb_config.vip
   }
 
-  ansible_extra_vars = {
-    minio_root_user         = local.sec_db_creds.minio_root_user
-    minio_root_password     = local.sec_db_creds.minio_root_password
-    minio_vrrp_secret       = local.sec_db_creds.minio_vrrp_secret
+  ansible_extra_config = {
+    minio_root_user         = local.sec_db_credentials.minio_root_user
+    minio_root_password     = local.sec_db_credentials.minio_root_password
+    minio_vrrp_secret       = local.sec_db_credentials.minio_vrrp_secret
     vault_agent_common_name = local.sec_vault_agent_identity.common_name
     vault_agent_cert_ttl    = data.terraform_remote_state.vault_pki.outputs.pki_configuration.lease_durations.agent
   }

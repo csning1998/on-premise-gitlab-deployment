@@ -49,7 +49,7 @@ locals {
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   vault_api_port = local.state.provision.network_context.vault_api_port
-  vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 
   pg_port = local.state.provision_databases.postgres_connection_info.port
 }

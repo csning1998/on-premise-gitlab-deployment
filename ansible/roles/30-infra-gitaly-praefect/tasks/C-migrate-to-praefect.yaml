@@ -33,7 +33,7 @@
   ansible.builtin.command:
     cmd: /opt/gitlab/embedded/bin/psql -tAc "SELECT relative_path FROM repositories"
   environment:
-    PGHOST: "{{ postgres_ha_virtual_ip }}"
+    PGHOST: "{{ postgres_ha_vip }}"
     PGPORT: "5432"
     PGDATABASE: "{{ praefect_db_name | default('praefect_production') }}"
     PGUSER: "{{ praefect_db_user | default('praefect') }}"

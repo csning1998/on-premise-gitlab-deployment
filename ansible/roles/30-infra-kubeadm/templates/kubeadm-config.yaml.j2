@@ -20,10 +20,10 @@ kubernetesVersion: "{{ kubeadm_version }}"
 imageRepository: "{{ kubeadm_registry_vip }}/k8s-proxy"
 dns:
   imageRepository: "{{ kubeadm_registry_vip }}/k8s-proxy/coredns"
-controlPlaneEndpoint: "{{ kubeadm_ha_virtual_ip }}:6443"
+controlPlaneEndpoint: "{{ kubeadm_ha_vip }}:6443"
 apiServer:
   certSANs:
-    - "{{ kubeadm_ha_virtual_ip }}"
+    - "{{ kubeadm_ha_vip }}"
 {% for san in kubeadm_extra_sans %}
     - "{{ san }}"
 {% endfor %}

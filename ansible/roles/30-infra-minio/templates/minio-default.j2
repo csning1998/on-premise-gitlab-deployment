@@ -12,7 +12,7 @@ MINIO_ROOT_PASSWORD={{ minio_root_password }}
 
 # Network binding
 MINIO_OPTS="--address :9000 --console-address :9001 --certs-dir /etc/minio/certs"
-MINIO_SERVER_URL="https://{{ minio_ha_virtual_ip }}:9000"
+MINIO_SERVER_URL="https://{{ minio_vip }}:9000"
 
 # Add Site Replication etc. here
 # MINIO_REGION="us-east-1"

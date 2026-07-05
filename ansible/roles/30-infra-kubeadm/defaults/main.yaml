@@ -23,7 +23,7 @@ k8s_cgroup_driver: "systemd"
 
 # Networking Defaults
 kubeadm_pod_subnet: "{{ kubeadm_pod_subnet | default('10.244.0.0/16') }}"
-kubeadm_ha_virtual_ip: "{{ kubeadm_ha_virtual_ip | default('') }}"
+kubeadm_ha_vip: "{{ kubeadm_ha_vip | default('') }}"
 kubeadm_master_ips: "{{ kubeadm_master_ips | default([]) }}"
 
 # API Server Cert SANs

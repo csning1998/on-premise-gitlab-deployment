@@ -24,7 +24,7 @@
 
     - name: "B1f. Download Vault PKI Issuing CA directly from Vault API"
       ansible.builtin.get_url:
-        url: "{{ vault_addr | trim('/') }}/v1/pki/prod/ca/pem"
+        url: "{{ vault_endpoint | trim('/') }}/v1/pki/prod/ca/pem"
         dest: /usr/local/share/ca-certificates/vault-pki-issuing-ca.crt
         mode: "0644"
         owner: root

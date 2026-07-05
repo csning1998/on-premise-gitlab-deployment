@@ -11,7 +11,7 @@ locals {
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -68,7 +68,7 @@ locals {
     vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id     = local.sec_vault_agent_identity.role_id
     vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
-    vault_addr              = module.context.sys_vault_addr
+    vault_endpoint          = module.context.sys_vault_endpoint
     vault_role_name         = local.sec_vault_agent_identity.role_name
     vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name

@@ -50,7 +50,7 @@ locals {
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   vault_api_port  = local.state.provision.vault_api_port
-  vault_address   = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_endpoint  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_role_name = local.state.vault_pki.global_pki_map["observability-frontend"].role_name
   vault_auth_path = local.state.vault_pki.global_pki_map["observability-frontend"].auth_config.path
 }

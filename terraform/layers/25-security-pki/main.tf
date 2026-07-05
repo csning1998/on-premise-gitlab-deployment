@@ -14,8 +14,8 @@ module "vault_pki_setup" {
     vault = vault.production
   }
 
-  vault_addr        = local.sys_vault_addr
-  pki_settings      = local.state.metadata.global_pki_settings
+  vault_endpoint    = local.sys_vault_endpoint
+  pki_settings      = local.state.metadata.global_pki_config
   pki_roles         = local.all_roles
   pki_engine_config = var.vault_pki_engine_config
 }

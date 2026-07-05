@@ -17,8 +17,8 @@ locals {
     keycloak_oidc        = data.terraform_remote_state.keycloak_provisioning.outputs
   }
 
-  vault_address = "https://${local.state.vault_sys.service_vip}:443"
-  vault_fqdn    = "https://${local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]}"
+  vault_endpoint = "https://${local.state.vault_sys.service_vip}:443"
+  vault_fqdn     = "https://${local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]}"
 
   # OIDC Configuration
   oidc_discovery_url = local.state.keycloak_oidc.issuer_url

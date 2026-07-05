@@ -31,7 +31,7 @@ provider "libvirt" {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.sys_vault_endpoint
   ca_cert_file = local.vault_pki_cert_path
 
   auth_login {

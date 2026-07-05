@@ -49,7 +49,7 @@
     vault_agent_group: "{{ postgres_group }}"
     vault_agent_cert_base_dir: "/etc/postgresql/certs"
     vault_agent_post_command: "systemctl is-active patroni && systemctl restart patroni || true"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_ha_virtual_ip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ postgres_vip }}"
     vault_agent_role_id: >-
       {{ _postgres_vault_identity.role_id
         if _postgres_vault_identity is defined

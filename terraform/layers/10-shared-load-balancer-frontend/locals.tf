@@ -1,11 +1,11 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
@@ -93,24 +93,24 @@ locals {
   pki_global_ca_b64 = local.state.network.global_vault_pki_b64
 
   # System Level Credentials (OS/SSH)
-  sec_vm_creds = {
+  sec_vm_credentials = {
     username             = local.secrets.guest_vm["vm_username"]
     password             = local.secrets.guest_vm["vm_password"]
     ssh_public_key_path  = local.secrets.guest_vm["ssh_public_key_path"]
     ssh_private_key_path = local.secrets.guest_vm["ssh_private_key_path"]
   }
 
-  sec_haproxy_creds = {
+  sec_haproxy_credentials = {
     haproxy_stats_pass   = local.secrets.infrastructure["haproxy_stats_pass"]
     keepalived_auth_pass = local.secrets.infrastructure["keepalived_auth_pass"]
   }
 
-  ansible_template_vars = {
+  ansible_template_config = {
     service_domain = local.svc_fqdn
     service_name   = local.svc_cluster_name
   }
 
-  ansible_extra_vars = {
+  ansible_extra_config = {
     terraform_runner_subnet = local.net_lb_config.hostonly.cidr
     global_mss              = local.state.network.global_network_baseline.global_mss
     global_mtu              = local.state.network.global_network_baseline.global_mtu

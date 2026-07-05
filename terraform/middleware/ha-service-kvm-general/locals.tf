@@ -114,7 +114,7 @@ locals {
   }
 
   ansible_extra_vars_vault = var.security_vault_agent_identity != null ? {
-    vault_addr              = var.security_vault_agent_identity.vault_address
+    vault_endpoint          = var.security_vault_agent_identity.vault_endpoint
     vault_ca_cert_b64       = var.security_vault_agent_identity.ca_cert_b64
     vault_agent_role_id     = var.security_vault_agent_identity.role_id
     vault_agent_secret_id   = var.security_vault_agent_identity.secret_id

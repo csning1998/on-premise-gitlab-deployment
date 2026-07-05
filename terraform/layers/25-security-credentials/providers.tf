@@ -22,7 +22,7 @@ terraform {
 
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.sys_vault_endpoint
   ca_cert_file = local.ca_cert_path
 
   auth_login {

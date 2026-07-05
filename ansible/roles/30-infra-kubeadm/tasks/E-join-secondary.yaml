@@ -28,7 +28,7 @@
 
     - name: "E3b. Wait for API Server VIP to be reachable before joining"
       ansible.builtin.wait_for:
-        host: "{{ kubeadm_ha_virtual_ip }}"
+        host: "{{ kubeadm_ha_vip }}"
         port: 6443
         state: started
         timeout: 30

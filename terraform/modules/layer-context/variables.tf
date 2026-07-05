@@ -40,7 +40,7 @@ variable "infrastructure_map" {
 
 # Vault integration inputs (optional — only required for 30-* layers with Vault Agent)
 variable "vault_sys_vip" {
-  description = "Vault system VIP for sys_vault_addr construction. Required for layers with Vault Agent integration."
+  description = "Vault system VIP for sys_vault_endpoint construction. Required for layers with Vault Agent integration."
   type        = string
   default     = null
 }

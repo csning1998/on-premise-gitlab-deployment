@@ -23,7 +23,7 @@ resource "kubernetes_manifest" "observability_vault_secret_store" {
     spec = {
       provider = {
         vault = {
-          server   = local.vault_address
+          server   = local.vault_endpoint
           path     = "secret"
           version  = "v2"
           caBundle = local.state.vault_pki.bootstrap_ca_b64.content_b64

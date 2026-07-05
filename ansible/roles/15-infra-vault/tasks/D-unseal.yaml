@@ -18,7 +18,7 @@
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
         validate_certs: false
-      register: bootstrapper_creds
+      register: bootstrapper_credentials
       delegate_to: localhost
       become: false
       when:
@@ -29,9 +29,9 @@
 
     - name: "D1c. Set AppRole Credentials"
       ansible.builtin.set_fact:
-        vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
-        vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
-      when: bootstrapper_creds is not skipped
+        vault_approle_role_id: "{{ bootstrapper_credentials.secret.role_id }}"
+        vault_approle_secret_id: "{{ bootstrapper_credentials.secret.secret_id }}"
+      when: bootstrapper_credentials is not skipped
       no_log: true
 
     - name: "D1d. Fetch Unseal Keys from Bootstrap Vault"
@@ -91,7 +91,7 @@
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
         validate_certs: false
-      register: bootstrapper_creds
+      register: bootstrapper_credentials
       delegate_to: localhost
       become: false
       when:
@@ -102,9 +102,9 @@
 
     - name: "D2c. Set AppRole Credentials"
       ansible.builtin.set_fact:
-        vault_approle_role_id: "{{ bootstrapper_creds.secret.role_id }}"
-        vault_approle_secret_id: "{{ bootstrapper_creds.secret.secret_id }}"
-      when: bootstrapper_creds is not skipped
+        vault_approle_role_id: "{{ bootstrapper_credentials.secret.role_id }}"
+        vault_approle_secret_id: "{{ bootstrapper_credentials.secret.secret_id }}"
+      when: bootstrapper_credentials is not skipped
       no_log: true
 
     - name: "D2d. Fetch Unseal Keys from Bootstrap Vault"
@@ -119,7 +119,7 @@
       register: unseal_secrets
       delegate_to: localhost
       become: false
-      when: bootstrapper_creds is not skipped
+      when: bootstrapper_credentials is not skipped
       no_log: true
 
     - name: "D2e. Parse Unseal Keys"

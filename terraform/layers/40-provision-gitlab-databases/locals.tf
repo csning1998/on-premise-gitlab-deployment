@@ -24,7 +24,7 @@ locals {
 locals {
   # Vault Address Calculation
   vault_api_port = local.state.vault_frontend.vault_api_port
-  vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 
   # Postgres Discovery
   postgres_rw_port  = local.state.postgres.connection_info.port

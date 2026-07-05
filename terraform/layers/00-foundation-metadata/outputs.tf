@@ -44,9 +44,9 @@ output "global_network_baseline" {
   value       = var.network_baseline
 }
 
-output "global_pki_settings" {
+output "global_pki_config" {
   description = "Global PKI Identity Settings for downstream layers (e.g. Vault PKI)."
-  value       = var.pki_settings
+  value       = var.pki_config
 }
 
 # 2. Domain Topology Outputs (MECE Split)

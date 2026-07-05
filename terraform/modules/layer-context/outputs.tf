@@ -34,9 +34,9 @@ output "tier_network_map" {
   value       = local.tier_network_map
 }
 
-output "sec_vm_creds" {
+output "sec_vm_credentials" {
   description = "VM system credentials."
-  value       = local.sec_vm_creds
+  value       = local.sec_vm_credentials
   sensitive   = true
 }
 
@@ -45,9 +45,9 @@ output "global_vault_pki_b64" {
   value       = var.global_vault_pki_b64
 }
 
-output "sys_vault_addr" {
+output "sys_vault_endpoint" {
   description = "Vault HTTPS address constructed from vault_sys_vip. Null for layers without Vault Agent integration."
-  value       = local.sys_vault_addr
+  value       = local.sys_vault_endpoint
 }
 
 output "storage_pool_name" {

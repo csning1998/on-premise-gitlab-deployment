@@ -30,7 +30,7 @@
     vault_agent_ca_name: "CAs/root_ca.crt"
     vault_agent_wait_file: "/etc/minio/certs/public.crt"
     vault_agent_post_command: "systemctl restart minio"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ minio_ha_virtual_ip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ minio_vip }}"
 
 - name: "Section C. Manage MinIO Service"
   ansible.builtin.include_tasks: C-service.yaml

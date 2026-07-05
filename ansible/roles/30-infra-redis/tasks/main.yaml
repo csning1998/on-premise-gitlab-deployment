@@ -23,7 +23,7 @@
     vault_agent_group: "{{ redis_group }}"
     vault_agent_cert_base_dir: "/etc/redis/certs"
     vault_agent_post_command: "systemctl restart redis-server redis-sentinel"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ redis_ha_virtual_ip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ redis_vip }}"
 
 - name: "Section C. Manage Redis Services"
   ansible.builtin.include_tasks: C-service.yaml

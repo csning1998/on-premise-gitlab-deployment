@@ -11,7 +11,7 @@ output "cluster_name" {
 
 output "kubernetes_config" {
   description = "Kubernetes cluster connection parameters."
-  value       = local.ansible_template_vars
+  value       = local.ansible_template_config
   sensitive   = true
 }
 

@@ -15,6 +15,6 @@ vrrp_instance VI_1 {
     priority {{ 100 - groups['master'].index(inventory_hostname) }}
     
     virtual_ipaddress {
-        {{ kubeadm_ha_virtual_ip }}
+        {{ kubeadm_ha_vip }}
     }
 }

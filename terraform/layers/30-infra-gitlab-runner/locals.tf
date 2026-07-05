@@ -1,17 +1,17 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -29,7 +29,7 @@ locals {
 
 # Ansible Configuration
 locals {
-  ansible_template_vars = {
+  ansible_template_config = {
     service_identifier         = module.context.svc_identity.cluster_name
     microk8s_ingress_vip       = module.context.primary_net_config.lb_config.vip
     api_server_vip             = module.context.primary_net_config.lb_config.vip
@@ -63,11 +63,11 @@ locals {
     harbor_k8s_proxy    = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name
   }
 
-  ansible_extra_vars = {
+  ansible_extra_config = {
     vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id     = local.sec_vault_agent_identity.role_id
     vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
-    vault_addr              = module.context.sys_vault_addr
+    vault_endpoint          = module.context.sys_vault_endpoint
     vault_role_name         = local.sec_vault_agent_identity.role_name
     vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name

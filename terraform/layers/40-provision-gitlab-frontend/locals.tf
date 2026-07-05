@@ -84,7 +84,7 @@ locals {
 
   # Vault Connection (Standardized)
   vault_api_port          = local.state.vault_frontend.vault_api_port
-  vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_endpoint          = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert           = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
   vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default

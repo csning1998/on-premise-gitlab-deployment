@@ -108,13 +108,13 @@ variable "credentials_system" {
 variable "security_vault_agent_identity" {
   description = "Identity configurations for Vault Agent"
   type = object({
-    vault_address = string
-    role_id       = string
-    secret_id     = string
-    role_name     = string
-    ca_cert_b64   = string
-    common_name   = string
-    auth_path     = string
+    vault_endpoint = string
+    role_id        = string
+    secret_id      = string
+    role_name      = string
+    ca_cert_b64    = string
+    common_name    = string
+    auth_path      = string
   })
   sensitive = true
   default   = null

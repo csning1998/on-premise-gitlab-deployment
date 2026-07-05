@@ -4,9 +4,9 @@
     _svc_routes: "{{ gitaly_static_routes | default([])
       if node_role == 'gitaly'
       else praefect_static_routes | default([]) }}"
-    _svc_ha_vip: "{{ gitaly_ha_virtual_ip | default('')
+    _svc_ha_vip: "{{ gitaly_ha_vip | default('')
       if node_role == 'gitaly'
-      else praefect_ha_virtual_ip | default('') }}"
+      else praefect_ha_vip | default('') }}"
     _svc_ports: "{{ ['8075', '8076']
       if node_role == 'gitaly'
       else ['2305', '2306'] }}"

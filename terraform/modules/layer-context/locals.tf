@@ -56,9 +56,9 @@ locals {
 
 # 3. Security & Credentials
 locals {
-  sys_vault_addr = var.vault_sys_vip != null ? "https://${var.vault_sys_vip}:443" : null
+  sys_vault_endpoint = var.vault_sys_vip != null ? "https://${var.vault_sys_vip}:443" : null
 
-  sec_vm_creds = {
+  sec_vm_credentials = {
     username             = var.guest_vm_data["vm_username"]
     password             = var.guest_vm_data["vm_password"]
     ssh_public_key_path  = var.guest_vm_data["ssh_public_key_path"]
@@ -85,12 +85,12 @@ locals {
 locals {
   all_vault_agent_identity_bases = var.vault_pki_outputs != null ? {
     for role, ctx in local.components_context : role => {
-      vault_address = local.sys_vault_addr
-      auth_path     = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].auth_path
-      role_id       = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].role_id
-      role_name     = var.vault_pki_outputs.pki_configuration.pki_roles[var.global_pki_map[ctx.pki_key].key].name
-      ca_cert_b64   = var.vault_pki_outputs.bootstrap_ca_b64.content_b64
-      common_name   = var.global_pki_map[ctx.pki_key].dns_san[0]
+      vault_endpoint = local.sys_vault_endpoint
+      auth_path      = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].auth_path
+      role_id        = var.vault_pki_outputs.workload_identities_approle[var.global_pki_map[ctx.pki_key].key].role_id
+      role_name      = var.vault_pki_outputs.pki_configuration.pki_roles[var.global_pki_map[ctx.pki_key].key].name
+      ca_cert_b64    = var.vault_pki_outputs.bootstrap_ca_b64.content_b64
+      common_name    = var.global_pki_map[ctx.pki_key].dns_san[0]
     }
   } : {}
 

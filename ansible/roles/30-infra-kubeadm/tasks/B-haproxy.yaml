@@ -25,5 +25,5 @@
 
     - name: "B1c. Clean up stale VIP configurations"
       ansible.builtin.shell: |
-        ip addr del {{ kubeadm_ha_virtual_ip }}/32 dev enp0s4 || true
+        ip addr del {{ kubeadm_ha_vip }}/32 dev enp0s4 || true
       changed_when: false
