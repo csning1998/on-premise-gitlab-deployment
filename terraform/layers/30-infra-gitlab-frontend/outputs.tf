@@ -20,7 +20,27 @@ output "topology_cluster" {
   value       = module.infra_gitlab_frontend.cluster_nodes
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.infra_gitlab_frontend.ansible_inventory
+output "global_network_mtu" {
+  description = "Global MTU for K8s pod network CNI configuration."
+  value       = module.context.global_mtu
+}
+
+output "k8s_api_port" {
+  description = "K8s API server frontend port for L40 consumption."
+  value       = module.context.svc_network.ports["api-server"].frontend_port
+}
+
+output "gitlab_ssh_port" {
+  description = "GitLab SSH frontend port for L40/L50 consumption."
+  value       = module.context.svc_network.ports["gitlab-ssh"].frontend_port
+}
+
+output "ingress_http_node_port" {
+  description = "K8s ingress HTTP backend nodePort for L40/L50 consumption."
+  value       = module.context.svc_network.ports["ingress-http"].backend_port
+}
+
+output "ingress_https_node_port" {
+  description = "K8s ingress HTTPS backend nodePort for L40/L50 consumption."
+  value       = module.context.svc_network.ports["ingress-https"].backend_port
 }

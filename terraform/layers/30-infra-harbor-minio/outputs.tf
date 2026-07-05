@@ -14,7 +14,10 @@ output "harbor_minio_cluster_name" {
   value       = module.context.svc_identity.cluster_name
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.infra_harbor_minio.ansible_inventory
+output "connection_info" {
+  description = "MinIO load-balancer endpoint for L40 consumption."
+  value = {
+    host = module.context.primary_net_config.lb_config.vip
+    port = module.context.primary_net_config.lb_config.ports["api"].frontend_port
+  }
 }

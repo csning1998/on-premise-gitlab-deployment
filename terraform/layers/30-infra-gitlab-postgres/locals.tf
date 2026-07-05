@@ -40,7 +40,7 @@ locals {
     postgres_cluster_name = module.context.svc_identity.cluster_name
 
     postgres_ha_virtual_ip    = module.context.primary_net_config.lb_config.vip
-    postgres_mtls_node_subnet = "${module.context.primary_net_config.network.hostonly.cidr} ${data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}"
+    postgres_mtls_node_subnet = "${module.context.primary_net_config.network.hostonly.cidr} ${data.terraform_remote_state.load_balancer.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr}"
     vault_vip                 = module.context.vault_sys_vip
     global_mss                = module.context.global_mss
 

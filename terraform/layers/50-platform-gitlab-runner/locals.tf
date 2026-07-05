@@ -12,7 +12,6 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    network                 = data.terraform_remote_state.network.outputs
     vault_pki               = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap    = data.terraform_remote_state.vault_prod_bootstrap.outputs
     harbor_bootstrapper_oci = data.terraform_remote_state.harbor_bootstrapper_oci.outputs
@@ -39,7 +38,7 @@ locals {
 
 # 3. Application Context
 locals {
-  pod_network_mtu = local.state.network.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.provision.network_context.global_network_mtu
 
   fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
   fqdn_harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
@@ -49,7 +48,7 @@ locals {
   harbor_gitlab_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["gitlab_com"].project_name
   helm_chart_project  = local.state.harbor_bootstrapper_oci.proxy_oci["helm_charts"].name
 
-  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.provision.network_context.vault_api_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 }
 

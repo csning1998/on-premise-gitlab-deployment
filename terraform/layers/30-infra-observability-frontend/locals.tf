@@ -20,6 +20,13 @@ locals {
   registry_pki_key = data.terraform_remote_state.harbor_bootstrapper.outputs.pki_key
 }
 
+# External network topologies for scrape targets
+locals {
+  network_central_lb          = module.context.global_topology_network["central-lb"]["frontend"]
+  network_keycloak            = module.context.global_topology_network["keycloak"]["frontend"]
+  network_harbor_bootstrapper = module.context.global_topology_network["harbor-bootstrapper"]["frontend"]
+}
+
 # Vault Agent identity
 locals {
   sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {

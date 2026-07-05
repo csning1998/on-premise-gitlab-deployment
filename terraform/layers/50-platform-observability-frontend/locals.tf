@@ -12,7 +12,6 @@ locals {
 # External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     credentials          = data.terraform_remote_state.credentials.outputs
     minio_provision      = data.terraform_remote_state.minio_provision.outputs
@@ -50,7 +49,7 @@ locals {
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
-  vault_api_port  = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port  = local.state.provision.vault_api_port
   vault_address   = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_role_name = local.state.vault_pki.global_pki_map["observability-frontend"].role_name
   vault_auth_path = local.state.vault_pki.global_pki_map["observability-frontend"].auth_config.path
@@ -58,12 +57,12 @@ locals {
 
 # Observability VM Scrape Targets
 locals {
-  port_haproxy_stats                  = local.state.network.global_topology_network["central-lb"]["frontend"].ports["stats"].frontend_port
-  central_lb_ips                      = local.state.network.global_topology_network["central-lb"]["frontend"].node_ips
+  port_haproxy_stats                  = local.state.provision.vm_scrape_targets.haproxy_stats_port
+  central_lb_ips                      = local.state.provision.vm_scrape_targets.central_lb_ips
   vault_metrics_address               = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  keycloak_metrics_address            = "${local.state.network.global_topology_network["keycloak"]["frontend"].node_ips[0]}:${local.state.network.global_topology_network["keycloak"]["frontend"].ports["mgmt"].frontend_port}"
-  harbor_bootstrapper_metrics_address = "${local.state.network.global_topology_network["harbor-bootstrapper"]["frontend"].node_ips[0]}:${local.state.network.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port}"
-  mimir_tenants_extra                 = local.state.network.mimir_tenants
+  keycloak_metrics_address            = local.state.provision.vm_scrape_targets.keycloak_metrics_address
+  harbor_bootstrapper_metrics_address = local.state.provision.vm_scrape_targets.harbor_bootstrapper_metrics_address
+  mimir_tenants_extra                 = local.state.provision.vm_scrape_targets.mimir_tenants
 }
 
 # CA Bundle Configuration

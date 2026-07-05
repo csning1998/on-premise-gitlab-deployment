@@ -4,12 +4,6 @@ variable "target_cluster_name" {
   type        = string
 }
 
-variable "vault_dev_addr" {
-  description = "The address of the Vault server"
-  type        = string
-  default     = "https://127.0.0.1:8200"
-}
-
 variable "node_config" {
   description = "Configuration for Load Balancer nodes (resources and IP suffix)."
   type = map(object({

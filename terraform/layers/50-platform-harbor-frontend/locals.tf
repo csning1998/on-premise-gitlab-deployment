@@ -12,7 +12,6 @@ locals {
 # External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     credentials          = data.terraform_remote_state.credentials.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
@@ -49,10 +48,10 @@ locals {
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
-  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.provision.network_context.vault_api_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 
-  pg_port = local.state.network.global_topology_network["harbor"]["postgres"].ports["rw-proxy"].frontend_port
+  pg_port = local.state.provision_databases.postgres_connection_info.port
 }
 
 # Vault KV Secrets
@@ -86,7 +85,7 @@ locals {
   redis_fqdn    = local.state.vault_pki.global_pki_map["harbor-redis"].dns_san[0]
   postgres_fqdn = local.state.vault_pki.global_pki_map["harbor-postgres"].dns_san[0]
   minio_fqdn    = local.state.vault_pki.global_pki_map["harbor-minio"].dns_san[0]
-  minio_port    = local.state.network.global_topology_network["harbor"]["minio"].ports["api"].frontend_port
+  minio_port    = local.state.provision_databases.minio_connection_info.port
   mimir_fqdn    = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
 
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
@@ -115,12 +114,12 @@ locals {
 # Observability Endpoint Context
 locals {
   mimir_tenant_id        = "harbor"
-  port_postgres_exporter = local.state.network.global_topology_network["harbor"]["postgres"].ports["metrics"].frontend_port
-  port_redis_exporter    = local.state.network.global_topology_network["harbor"]["redis"].ports["metrics"].frontend_port
-  port_etcd_client       = local.state.network.global_topology_network["harbor"]["etcd"].ports["client"].frontend_port
+  port_postgres_exporter = local.state.provision_databases.observability_targets.port_postgres_exporter
+  port_redis_exporter    = local.state.provision_databases.observability_targets.port_redis_exporter
+  port_etcd_client       = local.state.provision_databases.observability_targets.port_etcd_client
 
   vip_postgres = local.state.provision_databases.postgres_connection_info.host
   vip_redis    = local.state.provision_databases.redis_connection_info.host
   vip_minio    = local.state.provision_databases.minio_connection_info.host
-  etcd_ips     = local.state.network.global_topology_network["harbor"]["etcd"].node_ips
+  etcd_ips     = local.state.provision_databases.observability_targets.etcd_ips
 }

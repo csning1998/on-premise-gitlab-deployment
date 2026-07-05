@@ -53,11 +53,6 @@ locals {
       }
     }
   }
-
-  credentials_vm = {
-    username             = ephemeral.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    ssh_private_key_path = ephemeral.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
-  }
 }
 
 locals {

@@ -45,7 +45,6 @@ module "platform_trust_engine" {
 module "ingress_controller" {
   source = "../../modules/kubernetes-addons/microk8s-ingress"
 
-  ingress_vip        = local.observability_vip
   ingress_class_name = "nginx"
   image_registry     = local.harbor_registry
   chart_project      = local.helm_chart_project

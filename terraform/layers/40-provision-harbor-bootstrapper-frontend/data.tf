@@ -1,4 +1,12 @@
 
+/**
+ * Implicit sub-ordering within tier 40:
+ * this layer reads keycloak_oidc (40-provision-keycloak-oidc),
+ * which must apply first so that Keycloak OIDC client credentials exist before Harbor SSO is configured.
+ * Downstream layers that read this layer's outputs (gitlab-frontend, gitlab-runner, harbor-frontend,
+ * observability-frontend) therefore have an implicit three-level sequence within tier 40:
+ * (1) keycloak-oidc, (2) harbor-bootstrapper-frontend, (3) the above consumers.
+ */
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
@@ -29,10 +37,4 @@ ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
   name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
-}
-
-ephemeral "vault_kv_secret_v2" "guest_vm" {
-  provider = vault.production
-  mount    = "secret"
-  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/guest_vm"
 }

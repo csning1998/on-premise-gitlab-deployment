@@ -20,11 +20,6 @@ data "terraform_remote_state" "provision" {
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-gitlab-runner" })
 }
 
-data "terraform_remote_state" "network" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
-}
-
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
   provider = vault.production
   mount    = "secret"

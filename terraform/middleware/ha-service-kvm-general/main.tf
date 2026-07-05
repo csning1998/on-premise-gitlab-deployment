@@ -34,7 +34,6 @@ module "ansible_runner" {
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_data = local.ansible_inventory_data
-  credentials_vm = local.vm_credentials_for_ssh
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path

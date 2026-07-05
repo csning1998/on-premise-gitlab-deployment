@@ -12,7 +12,7 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
+    vault_frontend       = data.terraform_remote_state.vault_frontend.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     credentials          = data.terraform_remote_state.credentials.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
@@ -24,7 +24,7 @@ locals {
 # 2. Vault Connection Context (For Provider)
 locals {
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.vault_frontend.vault_api_port
 }
 
 locals {

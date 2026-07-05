@@ -12,14 +12,12 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     credentials          = data.terraform_remote_state.credentials.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
     provision            = data.terraform_remote_state.provision.outputs
-    gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
   }
 }
 
@@ -77,7 +75,7 @@ locals {
 
   # Vault Connection (Standardized)
   vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  vault_api_port          = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port          = local.state.provision.network_context.vault_api_port
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
   vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default
   vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent
@@ -86,9 +84,9 @@ locals {
 # 4. External Service Address & Ports
 locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
-  redis_port = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-  minio_port = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.ports["api"].frontend_port
-  shell_port = local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.ports["gitlab-ssh"].frontend_port
+  redis_port = local.state.provision_databases.redis_connection_info.port
+  minio_port = local.state.provision_databases.minio_connection_info.port
+  shell_port = local.state.provision.network_context.gitlab_ssh_port
 
   # VIPs from LB Infrastructure
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
@@ -144,9 +142,8 @@ locals {
     }
   }
 
-  # Detect Gitaly endpoint automatically depending on whether Praefect cluster nodes are provisioned in the remote state
-  has_praefect    = length([for name, node in local.state.gitaly_praefect.topology_cluster : name if length(regexall("praefect", name)) > 0]) > 0
-  gitaly_endpoint = local.has_praefect ? "${local.state.network.infrastructure_map["core-gitlab-praefect"].lb_config.vip}:2305" : "${local.state.network.infrastructure_map["core-gitlab-gitaly"].lb_config.vip}:8075"
+  has_praefect    = local.state.provision.has_praefect
+  gitaly_endpoint = local.state.provision.gitaly_endpoint
 
   gitlab_reloader_annotations = {
     global = {
@@ -196,23 +193,23 @@ locals {
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
   mimir_tenant_id        = "gitlab"
 
-  port_postgres_exporter = local.state.network.global_topology_network["gitlab"]["postgres"].ports["metrics"].frontend_port
-  port_redis_exporter    = local.state.network.global_topology_network["gitlab"]["redis"].ports["metrics"].frontend_port
-  port_etcd_client       = local.state.network.global_topology_network["gitlab"]["etcd"].ports["client"].frontend_port
-  port_minio_metrics     = local.state.network.global_topology_network["gitlab"]["minio"].ports["api"].frontend_port
+  port_postgres_exporter = local.state.provision_databases.observability_targets.port_postgres_exporter
+  port_redis_exporter    = local.state.provision_databases.observability_targets.port_redis_exporter
+  port_etcd_client       = local.state.provision_databases.observability_targets.port_etcd_client
+  port_minio_metrics     = local.state.provision_databases.observability_targets.port_minio_metrics
   # MinIO serves Prometheus metrics on the same API port (9000); there is no separate metrics port.
 
   vip_postgres = local.state.provision_databases.postgres_connection_info.host
   vip_redis    = local.state.provision_databases.redis_connection_info.host
   vip_minio    = local.state.provision_databases.minio_connection_info.host
-  etcd_ips     = local.state.network.global_topology_network["gitlab"]["etcd"].node_ips
+  etcd_ips     = local.state.provision_databases.observability_targets.etcd_ips
 
-  port_gitaly_metrics          = local.state.network.global_topology_network["gitlab"]["gitaly"].ports["metrics"].frontend_port
-  port_praefect_metrics        = local.state.network.global_topology_network["gitlab"]["praefect"].ports["metrics"].frontend_port
-  port_praefect_patroni_pg_exp = local.state.network.global_topology_network["gitlab"]["praefect-patroni"].ports["metrics"].frontend_port
-  port_praefect_patroni_etcd   = local.state.network.global_topology_network["gitlab"]["praefect-patroni"].ports["etcd"].frontend_port
+  port_gitaly_metrics          = local.state.provision.gitaly_observability_targets.gitaly_metrics_port
+  port_praefect_metrics        = local.state.provision.gitaly_observability_targets.praefect_metrics_port
+  port_praefect_patroni_pg_exp = local.state.provision.gitaly_observability_targets.praefect_patroni_metrics_port
+  port_praefect_patroni_etcd   = local.state.provision.gitaly_observability_targets.praefect_patroni_etcd_port
 
-  gitaly_ips           = local.state.network.global_topology_network["gitlab"]["gitaly"].node_ips
-  praefect_ips         = local.state.network.global_topology_network["gitlab"]["praefect"].node_ips
-  praefect_patroni_ips = local.state.network.global_topology_network["gitlab"]["praefect-patroni"].node_ips
+  gitaly_ips           = local.state.provision.gitaly_observability_targets.gitaly_node_ips
+  praefect_ips         = local.state.provision.gitaly_observability_targets.praefect_node_ips
+  praefect_patroni_ips = local.state.provision.gitaly_observability_targets.praefect_patroni_node_ips
 }

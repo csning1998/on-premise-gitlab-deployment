@@ -1,9 +1,9 @@
 
 # Foundation Metadata State (SSoT)
 
-data "terraform_remote_state" "network" {
+data "terraform_remote_state" "vault_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/15-shared-vault-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
@@ -37,6 +37,11 @@ data "terraform_remote_state" "minio" {
 data "terraform_remote_state" "kubeadm" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-frontend" })
+}
+
+data "terraform_remote_state" "gitaly_praefect" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-gitaly-praefect" })
 }
 
 # Harbor Bootstrapper State

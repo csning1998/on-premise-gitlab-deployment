@@ -40,6 +40,18 @@ locals {
   }
 
   primary_net_config = local.network_infrastructure_map[var.service_config[var.primary_role].network_tier]
+
+  # Full global_topology_network entry per network_tier, exposing ports (frontend and backend)
+  # and node_ips for downstream layers that need non-LB topology data such as metrics endpoints.
+  # The ...[0] grouping mirrors network_infrastructure_map. duplicate tiers always resolve to the same cluster.
+  tier_network_map_grouped = {
+    for role, ctx in local.components_context :
+    var.service_config[role].network_tier => ctx.network...
+  }
+
+  tier_network_map = {
+    for k, v in local.tier_network_map_grouped : k => v[0]
+  }
 }
 
 # 3. Security & Credentials

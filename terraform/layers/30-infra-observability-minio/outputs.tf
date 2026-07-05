@@ -13,8 +13,3 @@ output "observability_minio_cluster_name" {
   description = "Observability MinIO cluster name."
   value       = module.context.svc_identity.cluster_name
 }
-
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.infra_observability_minio.ansible_inventory
-}

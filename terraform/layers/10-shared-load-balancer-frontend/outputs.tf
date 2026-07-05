@@ -17,10 +17,6 @@ output "central_lb_info" {
   value       = data.terraform_remote_state.network.outputs.central_lb_info
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory for the Central LB cluster."
-  value       = module.shared_load_balancer.ansible_inventory
-}
 
 output "infrastructure_vips" {
   description = "Aggregated list of all internal service VIPs requiring static route overrides."

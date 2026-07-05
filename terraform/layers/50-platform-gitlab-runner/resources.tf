@@ -74,7 +74,7 @@ resource "helm_release" "gitlab_runner" {
 
       hostAliases = [
         {
-          ip        = local.state.network.infrastructure_map["core-gitlab-frontend"].lb_config.vip
+          ip        = local.state.provision.network_context.vip_gitlab_frontend
           hostnames = [local.fqdn_gitlab]
         }
       ]

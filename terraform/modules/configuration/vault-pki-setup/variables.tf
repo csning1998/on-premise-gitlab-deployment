@@ -4,11 +4,6 @@ variable "vault_addr" {
   type        = string
 }
 
-variable "root_domain" {
-  description = "The root domain of the organization"
-  type        = string
-}
-
 variable "pki_settings" {
   description = "Global PKI Identity Settings (Root -> Intermediate)"
   type = object({
@@ -31,15 +26,6 @@ variable "pki_roles" {
   }))
 }
 
-variable "auth_backends" {
-  description = "Map of Auth Backends to enable"
-  type = map(object({
-    type = string
-    path = string
-  }))
-  default = {}
-}
-
 variable "pki_engine_config" {
   description = "Configuration for the PKI Secrets Engine"
   type = object({
@@ -47,16 +33,4 @@ variable "pki_engine_config" {
     default_lease_ttl_seconds = number
     max_lease_ttl_seconds     = number
   })
-}
-
-variable "intermediate_ca_bundle" {
-  description = "The signed intermediate CA certificate bundle (PEM format)"
-  type        = string
-  default     = null
-}
-
-variable "root_ca_cert" {
-  description = "The infrastructure root CA certificate (PEM)"
-  type        = string
-  sensitive   = true
 }

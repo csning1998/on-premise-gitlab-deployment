@@ -1,18 +1,12 @@
 
 output "postgres_connection_info" {
   description = "Postgres primary proxy connection info for L50 consumption"
-  value = {
-    host = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip
-    port = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
-  }
+  value       = local.state.postgres.connection_info
 }
 
 output "redis_connection_info" {
   description = "Redis connection info for Layer 50 credentials"
-  value = {
-    host = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip
-    port = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-  }
+  value       = local.state.redis.connection_info
 }
 
 output "minio_server_url" {
@@ -40,8 +34,16 @@ output "minio_credentials" {
 
 output "minio_connection_info" {
   description = "MinIO connection info for L50 consumption"
+  value       = local.state.minio.connection_info
+}
+
+output "observability_targets" {
+  description = "Aggregated observability metrics ports and IPs for L50"
   value = {
-    host = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip
-    port = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+    port_postgres_exporter = local.state.postgres.observability_targets.postgres_metrics_port
+    port_etcd_client       = local.state.postgres.observability_targets.etcd_client_port
+    etcd_ips               = local.state.postgres.observability_targets.etcd_node_ips
+    port_redis_exporter    = local.state.redis.observability_targets.redis_metrics_port
+    port_minio_metrics     = local.state.minio.observability_targets.minio_metrics_port
   }
 }

@@ -55,9 +55,9 @@ locals {
     global_mss                = module.context.global_mss
 
     kubeadm_registry_host        = data.terraform_remote_state.vault_pki.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
-    kubeadm_registry_vip         = data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]
-    kubeadm_image_repository     = "${data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}"
-    kubeadm_dns_image_repository = "${data.terraform_remote_state.network.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}/coredns"
+    kubeadm_registry_vip         = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]
+    kubeadm_image_repository     = "${data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}"
+    kubeadm_dns_image_repository = "${data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]}/${data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name}/coredns"
 
     kubeadm_http_nodeport  = module.context.primary_net_config.lb_config.ports["ingress-http"].backend_port
     kubeadm_https_nodeport = module.context.primary_net_config.lb_config.ports["ingress-https"].backend_port
@@ -67,7 +67,7 @@ locals {
     harbor_k8s_proxy    = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name
 
     kubeadm_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.primary_net_config.lb_config.vip
         metric = 100

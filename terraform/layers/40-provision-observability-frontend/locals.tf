@@ -12,7 +12,7 @@ locals {
 # External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
+    vault_frontend       = data.terraform_remote_state.vault_frontend.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     minio                = data.terraform_remote_state.minio.outputs
     microk8s_provision   = data.terraform_remote_state.microk8s_provision.outputs
@@ -37,7 +37,7 @@ locals {
 
 # Addons & Trust Engine Context
 locals {
-  pod_network_mtu = local.state.network.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.microk8s_provision.global_network_mtu
 
   harbor_registry     = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
@@ -47,12 +47,12 @@ locals {
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   observability_vip = local.state.microk8s_provision.observability_microk8s_virtual_ip
-  api_port          = local.state.network.global_topology_network["observability"]["frontend"].ports["api-server"].frontend_port
+  api_port          = local.state.microk8s_provision.k8s_api_port
   api_endpoint      = "https://${local.observability_vip}:${local.api_port}"
 
   cluster_ca = data.kubernetes_config_map.kube_root_ca.data["ca.crt"]
 
-  vault_api_port = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port = local.state.vault_frontend.vault_api_port
   vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert  = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path = local.state.vault_pki.pki_configuration.path

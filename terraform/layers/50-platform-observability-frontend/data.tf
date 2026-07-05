@@ -1,9 +1,4 @@
 
-data "terraform_remote_state" "network" {
-  backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
-}
-
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })

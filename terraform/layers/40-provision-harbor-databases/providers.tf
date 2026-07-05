@@ -41,7 +41,7 @@ provider "vault" {
 }
 
 provider "minio" {
-  minio_server      = "${local.state.network.infrastructure_map["core-harbor-minio"].lb_config.vip}:${local.state.network.infrastructure_map["core-harbor-minio"].lb_config.ports["api"].frontend_port}"
+  minio_server      = "${local.state.minio.connection_info.host}:${local.state.minio.connection_info.port}"
   minio_user        = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_user"]
   minio_password    = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_password"]
   minio_ssl         = true

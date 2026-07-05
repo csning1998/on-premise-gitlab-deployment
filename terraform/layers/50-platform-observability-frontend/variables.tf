@@ -1,17 +1,4 @@
 
-variable "trust_engine_config" {
-  description = "Configuration for the Vault-based Trust Engine (Cert-Manager Issuer)"
-  type = object({
-    issuer_name           = string
-    issuer_kind           = string
-    authorized_namespaces = list(string)
-  })
-  default = {
-    issuer_name           = "vault-issuer"
-    issuer_kind           = "ClusterIssuer"
-    authorized_namespaces = ["cert-manager", "observability"]
-  }
-}
 
 variable "ingress_class_name" {
   description = "Ingress class name"
@@ -19,17 +6,6 @@ variable "ingress_class_name" {
   default     = "nginx"
 }
 
-variable "certificate_config" {
-  description = "Configuration for Ingress Certificate duration"
-  type = object({
-    duration     = string
-    renew_before = string
-  })
-  default = {
-    duration     = "2160h"
-    renew_before = "12h"
-  }
-}
 
 variable "observability_stack_config" {
   description = "Helm chart versions, namespace, and cluster identity for the Grafana, Mimir, Loki, and Alloy observability stack"

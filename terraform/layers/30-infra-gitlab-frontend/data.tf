@@ -5,7 +5,7 @@ data "terraform_remote_state" "volume" {
   config  = merge(local._state_auth, { address = "${local._state_base}/05-foundation-volume" })
 }
 
-data "terraform_remote_state" "network" {
+data "terraform_remote_state" "load_balancer" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/10-shared-load-balancer-frontend" })
 }

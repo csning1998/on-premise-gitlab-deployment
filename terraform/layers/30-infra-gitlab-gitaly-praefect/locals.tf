@@ -41,17 +41,17 @@ locals {
     postgres_mtls_node_subnet = join(" ", compact([
       module.context.network_infrastructure_map["praefect-patroni"].network.hostonly.cidr,
       module.context.network_infrastructure_map["praefect"].network.hostonly.cidr,
-      data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr,
+      data.terraform_remote_state.load_balancer.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr,
     ]))
     vault_vip  = module.context.vault_sys_vip
     global_mss = module.context.global_mss
 
     gitaly_ha_virtual_ip   = module.context.network_infrastructure_map["gitaly"].lb_config.vip
     praefect_ha_virtual_ip = module.context.network_infrastructure_map["praefect"].lb_config.vip
-    gitlab_frontend_vip    = data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].lb_config.vip
+    gitlab_frontend_vip    = data.terraform_remote_state.load_balancer.outputs.infrastructure_map["core-gitlab-frontend"].lb_config.vip
 
     gitaly_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["gitaly"].lb_config.vip
         metric = 100
@@ -60,7 +60,7 @@ locals {
     ]
 
     praefect_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["praefect"].lb_config.vip
         metric = 100
@@ -69,7 +69,7 @@ locals {
     ]
 
     postgres_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["praefect-patroni"].lb_config.vip
         metric = 100

@@ -50,7 +50,6 @@ module "ansible_runner" {
   status_trigger = module.ssh_manager.ssh_access_ready_trigger
 
   inventory_data = module.ansible_inventory.ansible_inventory_data
-  credentials_vm = local.credentials_vm_for_ssh
   extra_vars     = local.ansible_extra_vars
 
   ansible_config = {

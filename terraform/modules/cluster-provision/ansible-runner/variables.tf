@@ -19,29 +19,12 @@ variable "inventory_data" {
   type        = any
 }
 
-variable "credentials_vm" {
-  description = "SSH credentials for Ansible"
-  ephemeral   = true
-  type = object({
-    username             = string
-    ssh_private_key_path = string
-  })
-  # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
-  sensitive = true
-}
-
 variable "extra_vars" {
   description = "Map of sensitive/extra variables to pass to Ansible CLI (-e)"
   type        = map(string)
   default     = {}
   # Note: Turn off `sensitive = true` if and only if in development. It must be enabled for production.
   sensitive = true
-}
-
-variable "pre_run_commands" {
-  description = "List of shell commands to execute before running the playbook (e.g., cleanup)"
-  type        = list(string)
-  default     = []
 }
 
 variable "status_trigger" {

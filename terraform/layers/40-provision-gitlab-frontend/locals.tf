@@ -12,12 +12,13 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    network              = data.terraform_remote_state.network.outputs
+    vault_frontend       = data.terraform_remote_state.vault_frontend.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     redis                = data.terraform_remote_state.redis.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
     minio                = data.terraform_remote_state.minio.outputs
     kubeadm              = data.terraform_remote_state.kubeadm.outputs
+    gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
@@ -45,7 +46,7 @@ locals {
 # 3. Addons & Trust Engine Context
 locals {
   # Network Context
-  pod_network_mtu = local.state.network.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.kubeadm.global_network_mtu
 
   # FQDNs
   fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
@@ -74,7 +75,7 @@ locals {
   gitlab_image_repository = "${local.harbor_gitlab_proxy}/gitlab-org/build/cng"
 
   # K8s API Endpoint for Vault Callback (Standardized)
-  api_port     = local.state.network.global_topology_network["gitlab"]["frontend"].ports["api-server"].frontend_port
+  api_port     = local.state.kubeadm.k8s_api_port
   api_endpoint = "https://${local.state.kubeadm.service_vip}:${local.api_port}"
 
   # Cluster CA from ConfigMap
@@ -82,7 +83,7 @@ locals {
   postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
-  vault_api_port          = local.state.network.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
+  vault_api_port          = local.state.vault_frontend.vault_api_port
   vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert           = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
@@ -101,14 +102,14 @@ locals {
 # 4. External Service Address & Ports
 locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
-  postgres_rw_port = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
-  redis_port       = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-  minio_port       = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+  postgres_rw_port = local.state.postgres.connection_info.port
+  redis_port       = local.state.redis.connection_info.port
+  minio_port       = local.state.minio.connection_info.port
 
   # VIPs from LB Infrastructure
-  postgres_vip  = local.state.network.infrastructure_map["core-gitlab-postgres"].lb_config.vip
-  redis_vip     = local.state.network.infrastructure_map["core-gitlab-redis"].lb_config.vip
-  minio_vip     = local.state.network.infrastructure_map["core-gitlab-minio"].lb_config.vip
+  postgres_vip  = local.state.postgres.connection_info.host
+  redis_vip     = local.state.redis.connection_info.host
+  minio_vip     = local.state.minio.connection_info.host
   minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
 
   # GitLab Application Database Context
@@ -122,6 +123,13 @@ locals {
   }
 
   redis_password = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
+
+  # Gitaly / Praefect storage backend context
+  _has_praefect  = length([for name, node in local.state.gitaly_praefect.topology_cluster : name if length(regexall("praefect", name)) > 0]) > 0
+  _praefect_vip  = local.state.gitaly_praefect.praefect_connection_info.host
+  _praefect_port = local.state.gitaly_praefect.praefect_connection_info.port
+  _gitaly_vip    = local.state.gitaly_praefect.gitaly_connection_info.host
+  _gitaly_port   = local.state.gitaly_praefect.gitaly_connection_info.port
 }
 
 # 5. DNS Configuration (Standardized)
@@ -138,7 +146,7 @@ locals {
 
       # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
       # resolve domain name; CoreDNS must resolve this via static hosts entry)
-      "${local.state.network.infrastructure_map["core-harbor-bootstrapper-frontend"].lb_config.vip}" = local.fqdn_harbor_bootstrapper
+      "${local.state.harbor_bootstrapper.service_vip}" = local.fqdn_harbor_bootstrapper
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
     merge([
