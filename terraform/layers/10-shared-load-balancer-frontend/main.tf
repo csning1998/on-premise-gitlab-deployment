@@ -20,8 +20,8 @@ module "shared_load_balancer" {
 
   # Secrets & PKI
   security_pki_bundle_b64 = local.pki_global_ca_b64
-  credentials_vm          = local.sec_vm_creds
-  credentials_application = local.sec_haproxy_creds
+  credentials_vm          = local.sec_vm_credentials
+  credentials_application = local.sec_haproxy_credentials
 
   # Infrastructure Setup (Networks are managed by 05-foundation-network layer)
   network_infrastructure_map = {
@@ -31,7 +31,7 @@ module "shared_load_balancer" {
 
   # Embedded Ansible Configurations
   ansible_generic_config = {
-    template_vars = local.ansible_template_vars
-    extra_vars    = local.ansible_extra_vars
+    template_vars = local.ansible_template_config
+    extra_vars    = local.ansible_extra_config
   }
 }

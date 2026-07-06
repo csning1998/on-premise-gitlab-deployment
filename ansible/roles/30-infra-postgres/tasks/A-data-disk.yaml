@@ -42,6 +42,11 @@
         opts: defaults
         state: mounted
 
+  rescue:
+    - name: "A2. Initialize vdb failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "A3. Enforce ownership on vdb mount root"
   ansible.builtin.file:
     path: /var/lib/postgresql

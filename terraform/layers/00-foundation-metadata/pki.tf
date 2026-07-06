@@ -44,7 +44,7 @@ resource "tls_self_signed_cert" "root_ca" {
   private_key_pem = tls_private_key.root_ca.private_key_pem
 
   subject {
-    common_name  = var.pki_settings.root_ca_common_name
+    common_name  = var.pki_config.root_ca_common_name
     organization = "On-Premise GitLab Deployment"
   }
 

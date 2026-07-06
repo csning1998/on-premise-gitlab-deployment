@@ -12,9 +12,7 @@ locals {
 # State Object
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
-    network              = data.terraform_remote_state.network.outputs.infrastructure_map
-    vault_sys            = data.terraform_remote_state.vault_sys.outputs
+    vault_frontend       = data.terraform_remote_state.vault_frontend.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
@@ -25,19 +23,19 @@ locals {
 
 locals {
   # Vault Address Calculation
-  vault_api_port = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
-  vault_address  = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_api_port = local.state.vault_frontend.vault_api_port
+  vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 
   # Postgres Discovery
-  postgres_rw_port  = local.state.network["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
-  postgres_vip      = local.state.network["core-gitlab-postgres"].lb_config.vip
+  postgres_rw_port  = local.state.postgres.connection_info.port
+  postgres_vip      = local.state.postgres.connection_info.host
   postgres_password = ephemeral.vault_kv_secret_v2.db_vars.data["pg_superuser_password"]
 
   # Minio Discovery
-  minio_url = "https://${data.terraform_remote_state.minio.outputs.service_vip}:${data.terraform_remote_state.minio.outputs.minio_api_port}"
+  minio_url = "https://${local.state.minio.connection_info.host}:${local.state.minio.connection_info.port}"
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

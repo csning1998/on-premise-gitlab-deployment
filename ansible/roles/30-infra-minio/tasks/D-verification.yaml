@@ -49,7 +49,7 @@
 
 - name: "D7. Wait for MinIO Cluster Readiness"
   ansible.builtin.uri:
-    url: "https://{{ minio_ha_virtual_ip }}:9000/minio/health/ready"
+    url: "https://{{ minio_vip }}:9000/minio/health/ready"
     validate_certs: true
     ca_path: "/usr/local/share/ca-certificates/vault-root-ca.crt"
   register: minio_readiness
@@ -61,7 +61,7 @@
   ansible.builtin.command:
     cmd: >-
       mc alias set myminio
-      https://{{ minio_ha_virtual_ip }}:9000
+      https://{{ minio_vip }}:9000
       {{ minio_root_user }}
       {{ minio_root_password }}
   register: mc_alias_result

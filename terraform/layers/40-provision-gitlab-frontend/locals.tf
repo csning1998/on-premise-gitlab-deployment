@@ -12,13 +12,13 @@ locals {
 # 1. External State Context
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
-    network              = data.terraform_remote_state.network.outputs.infrastructure_map
+    vault_frontend       = data.terraform_remote_state.vault_frontend.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     redis                = data.terraform_remote_state.redis.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
     minio                = data.terraform_remote_state.minio.outputs
     kubeadm              = data.terraform_remote_state.kubeadm.outputs
+    gitaly_praefect      = data.terraform_remote_state.gitaly_praefect.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     provision_databases  = data.terraform_remote_state.provision_databases.outputs
@@ -46,22 +46,18 @@ locals {
 # 3. Addons & Trust Engine Context
 locals {
   # Network Context
-  pod_network_mtu = local.state.metadata.global_network_baseline.global_mtu
+  pod_network_mtu = local.state.kubeadm.global_network_mtu
 
   # FQDNs
-  fqdn_gitlab              = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
-  fqdn_vault               = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-  fqdn_harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-  fqdn_minio               = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
-  fqdn_postgres            = local.state.metadata.global_pki_map["gitlab-postgres"].dns_san[0]
-  fqdn_redis               = local.state.metadata.global_pki_map["gitlab-redis"].dns_san[0]
-
-  # Compatibility Aliases
-  gitlab_fqdn = local.fqdn_gitlab
-  vault_fqdn  = local.fqdn_vault
+  gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  vault_fqdn               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  minio_fqdn               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
+  postgres_fqdn            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
+  redis_fqdn               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
 
   # Harbor Bootstrapper (Registry Redirection)
-  harbor_registry     = local.fqdn_harbor_bootstrapper
+  harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
@@ -75,7 +71,7 @@ locals {
   gitlab_image_repository = "${local.harbor_gitlab_proxy}/gitlab-org/build/cng"
 
   # K8s API Endpoint for Vault Callback (Standardized)
-  api_port     = local.state.metadata.global_topology_network["gitlab"]["frontend"].ports["api-server"].frontend_port
+  api_port     = local.state.kubeadm.k8s_api_port
   api_endpoint = "https://${local.state.kubeadm.service_vip}:${local.api_port}"
 
   # Cluster CA from ConfigMap
@@ -83,16 +79,16 @@ locals {
   postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
-  vault_api_port          = local.state.metadata.global_topology_network["vault"]["frontend"].ports["api"].frontend_port
-  vault_address           = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
+  vault_api_port          = local.state.vault_frontend.vault_api_port
+  vault_endpoint          = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_ca_cert           = base64decode(local.state.vault_pki.bootstrap_ca_b64.content_b64)
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
   vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default
   vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent
 
   # Map to the specific component identity in Vault PKI (SSoT Driven)
-  vault_role_name   = local.state.metadata.global_pki_map["gitlab-frontend"].role_name
-  vault_auth_path   = local.state.metadata.global_pki_map["gitlab-frontend"].auth_config.path
+  vault_role_name   = local.state.vault_pki.global_pki_map["gitlab-frontend"].role_name
+  vault_auth_path   = local.state.vault_pki.global_pki_map["gitlab-frontend"].auth_config.path
   vault_policy_name = "${local.vault_role_name}-pki-policy"
 
   # Kubelet Serving Certificate Approval Configuration
@@ -102,15 +98,15 @@ locals {
 # 4. External Service Address & Ports
 locals {
   # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
-  postgres_rw_port = local.state.network["core-gitlab-postgres"].lb_config.ports["rw-proxy"].frontend_port
-  redis_port       = local.state.network["core-gitlab-redis"].lb_config.ports["main"].frontend_port
-  minio_port       = local.state.network["core-gitlab-minio"].lb_config.ports["api"].frontend_port
+  postgres_rw_port = local.state.postgres.connection_info.port
+  redis_port       = local.state.redis.connection_info.port
+  minio_port       = local.state.minio.connection_info.port
 
   # VIPs from LB Infrastructure
-  postgres_vip  = local.state.network["core-gitlab-postgres"].lb_config.vip
-  redis_vip     = local.state.network["core-gitlab-redis"].lb_config.vip
-  minio_vip     = local.state.network["core-gitlab-minio"].lb_config.vip
-  minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
+  postgres_vip  = local.state.postgres.connection_info.host
+  redis_vip     = local.state.redis.connection_info.host
+  minio_vip     = local.state.minio.connection_info.host
+  minio_address = "https://${local.minio_fqdn}:${local.minio_port}"
 
   # GitLab Application Database Context
   # Directly sourcing from Vault to avoid state output dependencies
@@ -123,23 +119,30 @@ locals {
   }
 
   redis_password = data.vault_kv_secret_v2.db_vars.data["redis_requirepass"]
+
+  # Gitaly / Praefect storage backend context
+  _has_praefect  = length([for name, node in local.state.gitaly_praefect.topology_cluster : name if length(regexall("praefect", name)) > 0]) > 0
+  _praefect_vip  = local.state.gitaly_praefect.praefect_connection_info.host
+  _praefect_port = local.state.gitaly_praefect.praefect_connection_info.port
+  _gitaly_vip    = local.state.gitaly_praefect.gitaly_connection_info.host
+  _gitaly_port   = local.state.gitaly_praefect.gitaly_connection_info.port
 }
 
 # 5. DNS Configuration (Standardized)
 locals {
   dns_hosts = merge(
     {
-      "${local.state.kubeadm.service_vip}"         = local.fqdn_gitlab
-      "${local.state.vault_pki.vault_service_vip}" = local.fqdn_vault
+      "${local.state.kubeadm.service_vip}"         = local.gitlab_frontend_fqdn
+      "${local.state.vault_pki.vault_service_vip}" = local.vault_fqdn
 
       # Dependency Roles
-      "${local.state.redis.service_vip}"    = local.fqdn_redis
-      "${local.state.postgres.service_vip}" = local.fqdn_postgres
-      "${local.state.minio.service_vip}"    = local.fqdn_minio
+      "${local.state.redis.service_vip}"    = local.redis_fqdn
+      "${local.state.postgres.service_vip}" = local.postgres_fqdn
+      "${local.state.minio.service_vip}"    = local.minio_fqdn
 
       # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
       # resolve domain name; CoreDNS must resolve this via static hosts entry)
-      "${local.state.network["core-harbor-bootstrapper-frontend"].lb_config.vip}" = local.fqdn_harbor_bootstrapper
+      "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_bootstrapper_fqdn
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
     merge([
@@ -191,7 +194,7 @@ locals {
   }
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

@@ -44,12 +44,12 @@ listen stats
 {% for segment in lb_service_segments %}
 # Service: {{ segment.name }}
 {% if segment.ports %}
-{% for port_name, port_cfg in segment.ports.items() %}
-{% set port_suffix = port_name | replace('-', '_') %}
-{% set backend_name = "be_" ~ (segment.name | replace('-', '_')) ~ "_" ~ port_suffix %}
+{% for port_id, port_config in segment.ports.items() %}
+{% set port_id_suffix = port_id | replace('-', '_') %}
+{% set backend_name = "be_" ~ (segment.name | replace('-', '_')) ~ "_" ~ port_id_suffix %}
 
-frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_suffix }}
-    bind {{ segment.vip }}:{{ port_cfg.frontend }}
+frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_id_suffix }}
+    bind {{ segment.vip }}:{{ port_config.frontend }}
     mode tcp
     option tcplog
     default_backend {{ backend_name }}
@@ -57,12 +57,12 @@ frontend fe_{{ segment.name | replace('-', '_') }}_{{ port_suffix }}
 backend {{ backend_name }}
     mode tcp
     balance roundrobin
-    {% if port_cfg.health_check_type == 'http' %}
-    option httpchk GET {{ port_cfg.health_check_http_path | default('/') }}
-    http-check expect {{ port_cfg.health_check_http_expect | default('status 200') }}
+    {% if port_config.health_check_type == 'http' %}
+    option httpchk GET {{ port_config.health_check_http_path | default('/') }}
+    http-check expect {{ port_config.health_check_http_expect | default('status 200') }}
     {% endif %}
     {% for server in segment.backend_servers %}
-    server {{ server.name }} {{ server.ip }}:{{ port_cfg.backend }} check{% if port_cfg.health_check_port %} port {{ port_cfg.health_check_port }}{% endif %} inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{% if port_cfg.health_check_ssl | default(false) %} check-ssl verify required ca-file {{ haproxy_ca_path }}{% if port_cfg.health_check_sni %} sni str({{ port_cfg.health_check_sni }}){% endif %}{% endif %}{% if port_cfg.send_proxy_v2 | default(false) %} send-proxy-v2{% endif %}
+    server {{ server.name }} {{ server.ip }}:{{ port_config.backend }} check{% if port_config.health_check_port %} port {{ port_config.health_check_port }}{% endif %} inter {{ haproxy_health_check_inter }} fall {{ haproxy_health_check_fall }} rise {{ haproxy_health_check_rise }}{% if port_config.health_check_ssl | default(false) %} check-ssl verify required ca-file {{ haproxy_ca_path }}{% if port_config.health_check_sni %} sni str({{ port_config.health_check_sni }}){% endif %}{% endif %}{% if port_config.send_proxy_v2 | default(false) %} send-proxy-v2{% endif %}
 
     {% endfor %}
 {% endfor %}

@@ -32,6 +32,11 @@
         - { path: "/var/lib/etcd", owner: "etcd", group: "etcd", mode: "0700" }
         - { path: "/etc/etcd", owner: "root", group: "root", mode: "0755" }
 
+  rescue:
+    - name: "Section A: Prepare etcd User and Directories failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Section B: Configure etcd Service"
   block:
     - name: "Step B1. Create etcd config file from template"
@@ -66,6 +71,11 @@
       loop: "{{ postgres_mtls_node_subnet.split(' ') }}"
       when: ufw_stat.stat.exists
 
+  rescue:
+    - name: "Section B: Configure etcd Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Section C: Start and Enable etcd Service"
   block:
     - name: "Step C1. Reload systemd daemon"
@@ -77,3 +87,8 @@
         name: etcd
         state: started
         enabled: true
+
+  rescue:
+    - name: "Section C: Start and Enable etcd Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

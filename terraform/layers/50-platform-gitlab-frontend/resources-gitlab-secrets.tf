@@ -4,7 +4,7 @@
 resource "vault_kv_secret_v2" "gitlab_redis_keys" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/redis"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/redis"
 
   data_json = jsonencode({
     password = local.redis_password
@@ -32,7 +32,7 @@ resource "kubernetes_secret" "gitlab_keycloak_oidc" {
         client_options = {
           identifier   = "gitlab-infra"
           secret       = data.vault_kv_secret_v2.keycloak_gitlab_client.data["client_secret"]
-          redirect_uri = "https://${local.fqdn_gitlab}/users/auth/openid_connect/callback"
+          redirect_uri = "https://${local.gitlab_frontend_fqdn}/users/auth/openid_connect/callback"
         }
       }
     })

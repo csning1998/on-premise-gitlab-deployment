@@ -27,7 +27,7 @@ terraform {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.vault_address
+  address      = local.vault_endpoint
   ca_cert_file = local.state.vault_pki.bootstrap_ca_b64.path
 
   auth_login {
@@ -41,7 +41,7 @@ provider "vault" {
 }
 
 provider "minio" {
-  minio_server      = "${local.state.minio.service_vip}:${local.state.minio.minio_api_port}"
+  minio_server      = "${local.state.minio.connection_info.host}:${local.state.minio.connection_info.port}"
   minio_user        = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_user"]
   minio_password    = ephemeral.vault_kv_secret_v2.minio_vars.data["minio_root_password"]
   minio_ssl         = true

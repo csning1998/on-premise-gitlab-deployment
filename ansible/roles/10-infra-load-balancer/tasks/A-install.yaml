@@ -58,6 +58,11 @@
         state: present
       notify: Restart sshd Service
 
+  rescue:
+    - name: "Block A1: Kernel Parameter Tuning failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block A2: Package Installation & User Prep"
   block:
     - name: "A2a. Ensure Service Groups exist"
@@ -79,3 +84,8 @@
       loop:
         - haproxy
         - keepalived
+
+  rescue:
+    - name: "Block A2: Package Installation & User Prep failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

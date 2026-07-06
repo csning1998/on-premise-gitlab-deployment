@@ -3,8 +3,8 @@
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
   vars:
-    routing_static_routes: "{{ bstrap_harbor_static_routes }}"
-  when: bstrap_harbor_static_routes is defined
+    routing_static_routes: "{{ harbor_bootstrapper_static_routes }}"
+  when: harbor_bootstrapper_static_routes is defined
 
 - name: "Section A. Setup Harbor Environment"
   ansible.builtin.include_tasks: A-setup.yaml
@@ -23,7 +23,7 @@
       - "{{ harbor_pki_dir }}"
       - "{{ harbor_config_cert_dir }}"
     vault_agent_wait_file: "{{ harbor_cert_path }}"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ bstrap_harbor_vip }}"
+    vault_agent_ip_sans: "{{ advertise_ip }},{{ harbor_bootstrapper_vip }}"
     vault_agent_post_command: |
       cp {{ harbor_cert_path }} {{ harbor_config_cert_dir }}/server.crt
       cp {{ harbor_key_path }} {{ harbor_config_cert_dir }}/server.key

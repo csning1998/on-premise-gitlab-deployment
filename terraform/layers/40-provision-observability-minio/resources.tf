@@ -41,7 +41,7 @@ resource "minio_iam_user_policy_attachment" "loki_service" {
 resource "vault_kv_secret_v2" "loki_service_creds" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/observability/app/s3_credentials/loki-service"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/observability/app/s3_credentials/loki-service"
 
   data_json = jsonencode({
     bucket     = join(",", local.loki_buckets)

@@ -1,8 +1,7 @@
 
-# Foundation Metadata State (SSoT)
-data "terraform_remote_state" "metadata" {
+data "terraform_remote_state" "vault_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/15-shared-vault-frontend" })
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {

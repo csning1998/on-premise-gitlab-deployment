@@ -9,7 +9,19 @@ output "topology_cluster" {
   value       = module.infra_gitlab_postgres.cluster_nodes
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.infra_gitlab_postgres.ansible_inventory
+output "connection_info" {
+  description = "PostgreSQL load-balancer endpoint for L40 consumption."
+  value = {
+    host = module.context.primary_net_config.lb_config.vip
+    port = module.context.primary_net_config.lb_config.ports["rw-proxy"].frontend_port
+  }
+}
+
+output "observability_targets" {
+  description = "Observability scrape endpoints for PostgreSQL and Etcd."
+  value = {
+    postgres_metrics_port = module.context.svc_network.ports["metrics"].frontend_port
+    etcd_client_port      = module.context.tier_network_map["etcd"].ports["client"].frontend_port
+    etcd_node_ips         = module.context.tier_network_map["etcd"].node_ips
+  }
 }

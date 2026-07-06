@@ -6,3 +6,8 @@
       ansible.builtin.apt:
         name: "{{ postgres_base.packages.apt.patroni_deps }}"
         state: present
+
+  rescue:
+    - name: "Block B: Install Patroni Runtime Dependencies failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

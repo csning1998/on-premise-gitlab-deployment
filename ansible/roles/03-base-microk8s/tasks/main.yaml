@@ -35,6 +35,11 @@
       until: snap_check.rc == 0
       changed_when: false
 
+  rescue:
+    - name: "Block Pre: Revive Snapd (Required for MicroK8s) failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block A: Ensure Snapd service is ready"
   become: true
   block:
@@ -50,6 +55,11 @@
       changed_when: false
       retries: 10
       delay: 5
+
+  rescue:
+    - name: "Block A: Ensure Snapd service is ready failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block B: Install MicroK8s and create aliases"
   become: true
@@ -76,7 +86,12 @@
       ansible.builtin.pip:
         name: kubernetes
         state: present
-        extra_args: "--break-system-packages"
+        extra_args: "--break-system-packages --ignore-installed"
+
+  rescue:
+    - name: "Block B: Install MicroK8s and create aliases failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block C: Add SSH user to the 'microk8s' group for basic access"
   become: true
@@ -86,6 +101,11 @@
         name: "{{ ssh_user }}"
         groups: "{{ microk8s_base.user_group }}"
         append: true
+
+  rescue:
+    - name: "Block C: Add SSH user to the 'microk8s' group for basic access failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block D: Reset MicroK8s state for golden image"
   become: true
@@ -109,3 +129,8 @@
         cmd: "{{ microk8s_base.commands.stop }}"
       register: microk8s_stop_result
       changed_when: "'Stopped' in microk8s_stop_result.stdout"
+
+  rescue:
+    - name: "Block D: Reset MicroK8s state for golden image failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

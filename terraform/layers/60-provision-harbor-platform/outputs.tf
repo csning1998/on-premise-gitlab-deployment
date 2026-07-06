@@ -22,6 +22,6 @@ output "team_robot_vault_paths" {
   description = "Vault KV paths for each team's CI robot credentials"
   value = {
     for k in keys(local.team_groups) :
-    k => "secret/${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/harbor/robots/${k}"
+    k => "secret/${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/robots/${k}"
   }
 }

@@ -41,3 +41,8 @@
         name: "{{ ssh_user }}"
         shell: /usr/bin/zsh
       become: true
+
+  rescue:
+    - name: "Configure ZSH failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

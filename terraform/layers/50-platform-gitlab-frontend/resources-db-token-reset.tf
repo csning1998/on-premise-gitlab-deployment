@@ -45,7 +45,7 @@ resource "kubernetes_job" "gitlab_db_token_reset" {
 
           env {
             name  = "DB_HOST"
-            value = local.fqdn_postgres
+            value = local.postgres_fqdn
           }
           env {
             name  = "DB_PORT"

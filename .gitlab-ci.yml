@@ -5,6 +5,6 @@ include:
       reviewer_image: $CI_REGISTRY/csning1998/gitlab-ci-with-code-reviewer/reviewer:1.0.1
   - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-terraform@1.0.1
     inputs:
-      checkov_skip: "CKV_GIT_1,CKV_GLB_1,CKV_GLB_3,CKV_GLB_4,CKV_K8S_21"
+      checkov_skip: "CKV_GIT_1,CKV_GLB_1,CKV_GLB_3,CKV_GLB_4"
   - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-ansible@1.0.1
   - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-packer@1.0.1

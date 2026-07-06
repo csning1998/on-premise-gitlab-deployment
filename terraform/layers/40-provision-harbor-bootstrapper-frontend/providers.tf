@@ -24,7 +24,7 @@ terraform {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.sys_vault_endpoint
   ca_cert_file = local.state.vault_pki.bootstrap_ca_b64.path
 
   auth_login {
@@ -38,7 +38,7 @@ provider "vault" {
 }
 
 provider "harbor" {
-  url      = "https://${data.terraform_remote_state.harbor_bootstrapper.outputs.bstrap_harbor_fqdn}"
+  url      = "https://${data.terraform_remote_state.harbor_bootstrapper.outputs.harbor_bootstrapper_fqdn}"
   username = "admin"
   password = ephemeral.vault_kv_secret_v2.harbor_bootstrapper.data["harbor_bootstrapper_admin_password"]
 }

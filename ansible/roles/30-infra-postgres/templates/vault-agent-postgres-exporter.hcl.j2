@@ -2,7 +2,7 @@
 pid_file = "/var/run/vault-agent-postgres-exporter.pid"
 
 vault {
-  address = "{{ vault_addr | trim('/') }}"
+  address = "{{ vault_endpoint | trim('/') }}"
   ca_cert = "/etc/vault.d/vault-ca.crt"
 }
 

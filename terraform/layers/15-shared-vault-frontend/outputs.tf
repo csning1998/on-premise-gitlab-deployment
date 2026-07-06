@@ -15,7 +15,7 @@ output "ca_cert_path" {
   value       = abspath(local_file.bootstrap_ca.filename)
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory for the Vault cluster."
-  value       = module.shared_vault.ansible_inventory
+output "vault_api_port" {
+  description = "Vault API frontend port for L40 consumption."
+  value       = module.context.primary_net_config.lb_config.ports["api"].frontend_port
 }

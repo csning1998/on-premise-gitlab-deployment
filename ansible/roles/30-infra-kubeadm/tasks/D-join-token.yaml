@@ -44,3 +44,8 @@
         kubeadm_ca_hash: "{{ kubeadm_ca_hash_result.stdout }}"
         kubeadm_cert_key: "{{ cert_key_result.stdout_lines | last }}"
         cacheable: true
+
+  rescue:
+    - name: "Block D1: Generate and register cluster join parameters failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

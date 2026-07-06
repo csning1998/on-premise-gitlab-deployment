@@ -23,7 +23,7 @@ terraform {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.sys_vault_endpoint
   ca_cert_file = local.bootstrap_ca_path
 
   auth_login {

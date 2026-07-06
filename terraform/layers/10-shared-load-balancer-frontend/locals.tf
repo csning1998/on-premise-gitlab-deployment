@@ -1,24 +1,24 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # State Object
 locals {
   state = {
-    metadata = data.terraform_remote_state.metadata.outputs
     network  = data.terraform_remote_state.network.outputs
+    metadata = data.terraform_remote_state.metadata.outputs
   }
   secrets = {
-    credentials    = data.vault_generic_secret.credentials.data # AppRole
-    guest_vm       = data.vault_generic_secret.guest_vm.data
-    infrastructure = data.vault_generic_secret.infrastructure.data
+    credentials    = data.vault_kv_secret_v2.credentials.data # AppRole
+    guest_vm       = data.vault_kv_secret_v2.guest_vm.data
+    infrastructure = data.vault_kv_secret_v2.infrastructure.data
   }
 }
 
@@ -26,10 +26,10 @@ locals {
 locals {
   # Zip Identity, Network, and VIP properties into a single O(1) lookup map.
   segments_map = merge([
-    for s_name, components in local.state.metadata.global_topology_identity : {
+    for s_name, components in local.state.network.global_topology_identity : {
       for c_name, identity in components : identity.cluster_name => {
         identity = identity
-        network  = local.state.metadata.global_topology_network[s_name][c_name]
+        network  = local.state.network.global_topology_network[s_name][c_name]
         vip      = lookup(local.state.network.infrastructure_map, identity.cluster_name, { lb_config = { vip = null } }).lb_config.vip
         s_name   = s_name
         c_name   = c_name
@@ -52,7 +52,7 @@ locals {
 
   svc_identity    = local.svc_context.identity
   svc_network     = local.svc_context.network
-  svc_fqdn        = local.state.metadata.global_domain_suffix
+  svc_fqdn        = local.state.network.global_domain_suffix
   svc_node_prefix = local.svc_identity.node_name_prefix
 }
 
@@ -90,30 +90,30 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca_b64 = local.state.metadata.global_vault_pki_b64
+  pki_global_ca_b64 = local.state.network.global_vault_pki_b64
 
   # System Level Credentials (OS/SSH)
-  sec_vm_creds = {
+  sec_vm_credentials = {
     username             = local.secrets.guest_vm["vm_username"]
     password             = local.secrets.guest_vm["vm_password"]
     ssh_public_key_path  = local.secrets.guest_vm["ssh_public_key_path"]
     ssh_private_key_path = local.secrets.guest_vm["ssh_private_key_path"]
   }
 
-  sec_haproxy_creds = {
+  sec_haproxy_credentials = {
     haproxy_stats_pass   = local.secrets.infrastructure["haproxy_stats_pass"]
     keepalived_auth_pass = local.secrets.infrastructure["keepalived_auth_pass"]
   }
 
-  ansible_template_vars = {
+  ansible_template_config = {
     service_domain = local.svc_fqdn
     service_name   = local.svc_cluster_name
   }
 
-  ansible_extra_vars = {
+  ansible_extra_config = {
     terraform_runner_subnet = local.net_lb_config.hostonly.cidr
-    global_mss              = local.state.metadata.global_network_baseline.global_mss
-    global_mtu              = local.state.metadata.global_network_baseline.global_mtu
+    global_mss              = local.state.network.global_network_baseline.global_mss
+    global_mtu              = local.state.network.global_network_baseline.global_mtu
   }
 }
 

@@ -1,10 +1,4 @@
 
-trust_engine_config = {
-  issuer_name           = "vault-issuer"
-  issuer_kind           = "ClusterIssuer"
-  authorized_namespaces = ["cert-manager", "observability"]
-}
-
 observability_stack_config = {
   grafana_version = "12.4.9"
   mimir_version   = "6.0.6"

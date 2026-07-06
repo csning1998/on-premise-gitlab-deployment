@@ -61,8 +61,8 @@ resource "vault_pki_secret_backend_intermediate_set_signed" "prod_int_signed" {
 resource "vault_pki_secret_backend_config_urls" "config_urls" {
   backend = vault_mount.pki_prod.path
 
-  issuing_certificates    = ["${var.vault_addr}/v1/${vault_mount.pki_prod.path}/ca"]
-  crl_distribution_points = ["${var.vault_addr}/v1/${vault_mount.pki_prod.path}/crl"]
+  issuing_certificates    = ["${var.vault_endpoint}/v1/${vault_mount.pki_prod.path}/ca"]
+  crl_distribution_points = ["${var.vault_endpoint}/v1/${vault_mount.pki_prod.path}/crl"]
 }
 
 # Unified PKI Role Definition

@@ -47,20 +47,20 @@ module "alloy" {
 
   alloy_config = {
     remote_write_url      = local.mimir_remote_write_url
-    cluster_label         = "harbor"
-    tenant_id             = "harbor"
+    cluster_label         = local.mimir_tenant_id
+    tenant_id             = local.mimir_tenant_id
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 
   vm_static_targets = concat(
     [
       {
-        address = "${local.vip_postgres}:${local.port_postgres_exporter}",
+        address = "${local.postgres_vip}:${local.port_postgres_exporter}",
         job     = "harbor-postgres-exporter",
         labels  = { component = "postgres" }
       },
       {
-        address = "${local.vip_redis}:${local.port_redis_exporter}",
+        address = "${local.redis_vip}:${local.port_redis_exporter}",
         job     = "harbor-redis-exporter",
         labels  = { component = "redis" }
       },
@@ -73,7 +73,7 @@ module "alloy" {
   )
 
   minio_scrape_targets = [{
-    address = "${local.vip_minio}:${local.minio_port}"
+    address = "${local.minio_vip}:${local.minio_port}"
     job     = "harbor-minio"
     labels  = { component = "minio" }
   }]
@@ -99,11 +99,11 @@ module "harbor_core" {
   }
 
   harbor_config = {
-    hostname       = local.harbor_fqdn
+    hostname       = local.harbor_frontend_fqdn
     admin_password = local.harbor_admin_password
     notary_prefix  = var.harbor_helm_config.notary_prefix
     secret_key     = random_password.harbor_core_secret_key.result
-    dns_sans       = local.state.metadata.global_pki_map["harbor-frontend"].dns_san
+    dns_sans       = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san
   }
 
   helm_values_override = local.harbor_helm_overrides

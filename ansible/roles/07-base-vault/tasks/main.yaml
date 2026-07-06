@@ -12,6 +12,11 @@
         name: unzip
         state: present
 
+  rescue:
+    - name: "Block A: Install Dependencies failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block B: Install Vault Binary"
   become: true
   block:
@@ -60,6 +65,11 @@
         create_home: false
         home: /etc/vault.d
 
+  rescue:
+    - name: "Block B: Install Vault Binary failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block C: Disable Swap"
   become: true
   block:
@@ -79,3 +89,8 @@
         path: /etc/fstab
         regexp: '^([^#].*?\sswap\s+.*)$'
         replace: '# \1'
+
+  rescue:
+    - name: "Block C: Disable Swap failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

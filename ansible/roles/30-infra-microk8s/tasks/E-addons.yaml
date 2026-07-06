@@ -26,3 +26,8 @@
       retries: 5
       delay: 10
       until: metallb_result.rc == 0
+
+  rescue:
+    - name: "Block E1: Configure and enable MicroK8s addons failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

@@ -106,3 +106,8 @@
         - praefect_db_password | length > 0
         - patroni_leader_status is defined
         - patroni_leader_status.status == 200
+
+  rescue:
+    - name: "Block C1: Start and Enable Patroni Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

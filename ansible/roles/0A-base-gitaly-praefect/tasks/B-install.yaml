@@ -41,3 +41,8 @@
       ansible.builtin.file:
         path: /etc/gitlab/skip-auto-reconfigure
         state: absent
+
+  rescue:
+    - name: "Block B: Install Gitaly & Praefect Package failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

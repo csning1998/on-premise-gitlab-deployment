@@ -17,7 +17,7 @@
     vault_agent_group: "root"
     vault_agent_cert_base_dir: "/etc/kubernetes/certs"
     vault_agent_post_command: "systemctl restart containerd"
-    vault_agent_ip_sans: "{{ kubeadm_advertise_ip }},{{ kubeadm_ha_virtual_ip }}"
+    vault_agent_ip_sans: "{{ kubeadm_advertise_ip }},{{ kubeadm_ha_vip }}"
 
 - name: "Section B. Configure HAProxy (Masters)"
   ansible.builtin.include_tasks: B-haproxy.yaml

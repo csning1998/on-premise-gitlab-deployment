@@ -16,8 +16,8 @@
     validate_certs: true
     ca_path: "/etc/ssl/certs/ca-certificates.crt"
     status_code: 200
-  register: fqdn_readiness
-  until: fqdn_readiness.status == 200
+  register: readiness_fqdn
+  until: readiness_fqdn.status == 200
   retries: 30
   delay: 10
 

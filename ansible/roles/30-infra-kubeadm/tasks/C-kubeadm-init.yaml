@@ -54,6 +54,11 @@
       changed_when: true
       notify: "Restart kubelet"
 
+  rescue:
+    - name: "C7. Update cluster configuration if needed (Day 2) failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "C8. Run kubeadm init command"
   ansible.builtin.command: >-
     kubeadm init

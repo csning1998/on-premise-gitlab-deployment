@@ -25,7 +25,7 @@ resource "kubernetes_manifest" "gitlab_ci_signing_key_eso" {
         {
           secretKey = "private_key.pem"
           remoteRef = {
-            key      = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/ci-job-token-signing-key"
+            key      = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/ci-job-token-signing-key"
             property = "private_key_pem"
           }
         }
@@ -47,7 +47,7 @@ resource "kubernetes_config_map" "ci_signing_job_gitlab_config" {
     "gitlab.yml" = yamlencode({
       production = {
         gitlab = {
-          host  = local.fqdn_gitlab
+          host  = local.gitlab_frontend_fqdn
           https = true
           port  = 443
         }
@@ -72,7 +72,7 @@ resource "kubernetes_secret" "ci_signing_job_db_config" {
       production = {
         adapter     = "postgresql"
         encoding    = "unicode"
-        host        = local.fqdn_postgres
+        host        = local.postgres_fqdn
         port        = local.gitlab_db.port
         username    = local.gitlab_db.username
         database    = local.gitlab_db.database

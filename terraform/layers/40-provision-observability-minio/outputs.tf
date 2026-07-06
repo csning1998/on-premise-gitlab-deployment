@@ -21,3 +21,8 @@ output "minio_credentials" {
   value       = module.minio_observability_config.service_accounts
   sensitive   = true
 }
+
+output "minio_api_port" {
+  description = "Pass-through MinIO API port from L30 infra state for L50 consumption"
+  value       = local.state.minio.minio_api_port
+}

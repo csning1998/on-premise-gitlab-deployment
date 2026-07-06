@@ -275,8 +275,9 @@ service_catalog = {
         tags       = []
         ip_range   = { start_ip = 200, end_ip = 200 }
         ports = {
-          "http"  = { frontend_port = 80, backend_port = 80 }
-          "https" = { frontend_port = 443, backend_port = 443 }
+          "http"    = { frontend_port = 80, backend_port = 80 }
+          "https"   = { frontend_port = 443, backend_port = 443 }
+          "metrics" = { frontend_port = 9090, backend_port = 9090 }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
         ingress = {

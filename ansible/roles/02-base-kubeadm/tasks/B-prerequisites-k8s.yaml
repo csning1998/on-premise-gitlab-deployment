@@ -31,3 +31,8 @@
         path: /etc/fstab
         regexp: '^([^#].*?\sswap\s+.*)$'
         replace: '# \1'
+
+  rescue:
+    - name: "Block B. Run Kubernetes prerequisites setup failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

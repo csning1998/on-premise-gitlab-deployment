@@ -1,9 +1,4 @@
 
-variable "ingress_class_name" {
-  description = "Ingress class name"
-  type        = string
-  default     = "nginx"
-}
 
 variable "harbor_helm_config" {
   description = "Configuration for Harbor Helm Chart Deployment"
@@ -24,17 +19,6 @@ variable "object_storage_config" {
   })
 }
 
-variable "certificate_config" {
-  description = "Configuration for Harbor Ingress Certificate"
-  type = object({
-    duration     = string
-    renew_before = string
-  })
-  default = {
-    duration     = "2160h"
-    renew_before = "12h" # Must be less than Vault's 24h declared duration.
-  }
-}
 
 variable "alloy_version" {
   description = "Grafana Alloy Helm chart version"

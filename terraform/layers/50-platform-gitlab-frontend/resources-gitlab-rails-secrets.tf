@@ -3,14 +3,14 @@
 resource "terraform_data" "seed_rails_secrets" {
   provisioner "local-exec" {
     environment = {
-      VAULT_ADDR      = local.vault_address
+      VAULT_ADDR      = local.vault_endpoint
       VAULT_CACERT    = local.state.vault_pki.bootstrap_ca_b64.path
       VAULT_ROLE_ID   = local.state.vault_prod_bootstrap.production_role_id
       VAULT_SECRET_ID = local.state.vault_prod_bootstrap.production_secret_id
     }
     interpreter = ["bash", "-c"]
     command = templatefile("${path.module}/templates/seed-rails-secrets.sh.tftpl", {
-      rails_path = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
+      rails_path = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
     })
   }
 }
@@ -27,7 +27,7 @@ resource "kubernetes_manifest" "gitlab_vault_secret_store" {
     spec = {
       provider = {
         vault = {
-          server   = "https://${local.fqdn_vault}:8200"
+          server   = "https://${local.vault_fqdn}:8200"
           path     = "secret"
           version  = "v2"
           caBundle = local.state.vault_pki.bootstrap_ca_b64.content_b64
@@ -75,7 +75,7 @@ resource "kubernetes_manifest" "gitlab_rails_secret_eso" {
         {
           secretKey = "secrets.yml"
           remoteRef = {
-            key      = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
+            key      = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/rails-secrets"
             property = "secrets_yml"
           }
         }
