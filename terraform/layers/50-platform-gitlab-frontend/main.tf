@@ -5,7 +5,7 @@ module "platform_mtls_certificate" {
 
   name         = local.postgres_ca
   namespace    = kubernetes_namespace.gitlab_ns.metadata[0].name
-  common_name  = local.fqdn_gitlab
+  common_name  = local.gitlab_frontend_fqdn
   issuer_name  = local.issuer_name
   issuer_kind  = local.issuer_kind
   duration     = local.vault_pki_lease_default
@@ -47,7 +47,7 @@ module "gitlab_core" {
 
   # GitLab Application Configuration
   gitlab_config = {
-    hostname             = local.fqdn_gitlab
+    hostname             = local.gitlab_frontend_fqdn
     edition              = "ce"
     dns_sans             = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san
     omniauth_secret_name = local.gitlab_config.omniauth_secret_name
@@ -75,7 +75,7 @@ module "gitlab_core" {
   # External Services Connection
   external_services = {
     postgres = {
-      host       = local.fqdn_postgres
+      host       = local.postgres_fqdn
       port       = local.gitlab_db.port
       password   = local.gitlab_db.password
       username   = local.gitlab_db.username
@@ -84,14 +84,14 @@ module "gitlab_core" {
     }
 
     redis = {
-      host     = local.fqdn_redis
+      host     = local.redis_fqdn
       port     = local.redis_port
       password = local.redis_password
       scheme   = "rediss"
     }
 
     minio = {
-      hostname   = local.fqdn_minio
+      hostname   = local.minio_fqdn
       endpoint   = local.minio_address
       access_key = ""
       secret_key = ""
@@ -175,12 +175,12 @@ module "alloy" {
   vm_static_targets = concat(
     [
       {
-        address = "${local.vip_postgres}:${local.port_postgres_exporter}",
+        address = "${local.postgres_vip}:${local.port_postgres_exporter}",
         job     = "gitlab-postgres-exporter",
         labels  = { component = "postgres" }
       },
       {
-        address = "${local.vip_redis}:${local.port_redis_exporter}",
+        address = "${local.redis_vip}:${local.port_redis_exporter}",
         job     = "gitlab-redis-exporter",
         labels  = { component = "redis" }
       },
@@ -213,7 +213,7 @@ module "alloy" {
   )
 
   minio_scrape_targets = [{
-    address = "${local.vip_minio}:${local.port_minio_metrics}"
+    address = "${local.minio_vip}:${local.port_minio_metrics}"
     job     = "gitlab-minio"
     labels  = { component = "minio" }
   }]

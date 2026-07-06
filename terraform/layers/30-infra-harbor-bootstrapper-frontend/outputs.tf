@@ -1,5 +1,5 @@
 
-output "bstrap_harbor_fqdn" {
+output "harbor_bootstrapper_fqdn" {
   description = "The FQDN of the Bootstrap Harbor service."
   value       = module.context.svc_fqdn
 }

@@ -46,7 +46,7 @@ locals {
   harbor_ghcr_proxy   = local.state.harbor_bootstrapper.proxy_caches.ghcr_io.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
-  observability_vip = local.state.microk8s_provision.observability_microk8s_virtual_ip
+  observability_vip = local.state.microk8s_provision.observability_microk8s_vip
   api_port          = local.state.microk8s_provision.k8s_api_port
   api_endpoint      = "https://${local.observability_vip}:${local.api_port}"
 

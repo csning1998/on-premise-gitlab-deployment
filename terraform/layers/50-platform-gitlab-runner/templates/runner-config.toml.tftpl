@@ -5,7 +5,7 @@
   # Copy the CA cert to the Kaniko-specific path so Kaniko containers can verify
   # internal registries (Harbor). For non-Kaniko containers the /kaniko path is
   # irrelevant; the mkdir/cp is harmless and suppressed on failure.
-  pre_build_script = "mkdir -p /kaniko/ssl/certs && cp /etc/ssl/certs/${fqdn_gitlab}.crt /kaniko/ssl/certs/ca-bundle.crt 2>/dev/null || true"
+  pre_build_script = "mkdir -p /kaniko/ssl/certs && cp /etc/ssl/certs/${gitlab_frontend_fqdn}.crt /kaniko/ssl/certs/ca-bundle.crt 2>/dev/null || true"
   [runners.custom_build_dir]
   [runners.cache]
     MaxUploadedArchiveSize = 0
@@ -24,6 +24,6 @@
     # A single volume is sufficient; Kaniko's path is handled by pre_build_script.
     [[runners.kubernetes.volumes.secret]]
       name = "${gitlab_ca_bundle_name}"
-      mount_path = "/etc/ssl/certs/${fqdn_gitlab}.crt"
+      mount_path = "/etc/ssl/certs/${gitlab_frontend_fqdn}.crt"
       read_only = true
-      sub_path = "${fqdn_gitlab}.crt"
+      sub_path = "${gitlab_frontend_fqdn}.crt"

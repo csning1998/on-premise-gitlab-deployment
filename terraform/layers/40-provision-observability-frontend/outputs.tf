@@ -38,8 +38,3 @@ output "vault_api_port" {
   description = "Vault API frontend port for L50 consumption."
   value       = local.state.vault_frontend.vault_api_port
 }
-
-output "observability_vip" {
-  description = "Observability MicroK8s ingress VIP for same-tier L40 consumption."
-  value       = local.observability_vip
-}

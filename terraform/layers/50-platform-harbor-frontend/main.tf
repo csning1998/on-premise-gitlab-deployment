@@ -55,12 +55,12 @@ module "alloy" {
   vm_static_targets = concat(
     [
       {
-        address = "${local.vip_postgres}:${local.port_postgres_exporter}",
+        address = "${local.postgres_vip}:${local.port_postgres_exporter}",
         job     = "harbor-postgres-exporter",
         labels  = { component = "postgres" }
       },
       {
-        address = "${local.vip_redis}:${local.port_redis_exporter}",
+        address = "${local.redis_vip}:${local.port_redis_exporter}",
         job     = "harbor-redis-exporter",
         labels  = { component = "redis" }
       },
@@ -73,7 +73,7 @@ module "alloy" {
   )
 
   minio_scrape_targets = [{
-    address = "${local.vip_minio}:${local.minio_port}"
+    address = "${local.minio_vip}:${local.minio_port}"
     job     = "harbor-minio"
     labels  = { component = "minio" }
   }]
@@ -99,7 +99,7 @@ module "harbor_core" {
   }
 
   harbor_config = {
-    hostname       = local.harbor_fqdn
+    hostname       = local.harbor_frontend_fqdn
     admin_password = local.harbor_admin_password
     notary_prefix  = var.harbor_helm_config.notary_prefix
     secret_key     = random_password.harbor_core_secret_key.result

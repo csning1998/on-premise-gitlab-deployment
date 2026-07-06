@@ -35,12 +35,9 @@ data "terraform_remote_state" "microk8s_provision" {
   config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-harbor-frontend" })
 }
 
-# Reads a sibling L40 layer instead of an L30 layer. 40-provision-observability-frontend
-# must be applied before this layer, since the Mimir FQDN/VIP produced there is consumed
-# below for the metrics-ingestion host alias.
-data "terraform_remote_state" "observability_provision" {
+data "terraform_remote_state" "observability_infra" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-observability-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-observability-frontend" })
 }
 
 data "terraform_remote_state" "harbor_bootstrapper" {

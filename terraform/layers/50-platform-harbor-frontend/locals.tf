@@ -40,7 +40,7 @@ locals {
 
 # Application Context
 locals {
-  harbor_fqdn = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
+  harbor_frontend_fqdn = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
 
   harbor_registry     = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
@@ -118,8 +118,8 @@ locals {
   port_redis_exporter    = local.state.provision_databases.observability_targets.port_redis_exporter
   port_etcd_client       = local.state.provision_databases.observability_targets.port_etcd_client
 
-  vip_postgres = local.state.provision_databases.postgres_connection_info.host
-  vip_redis    = local.state.provision_databases.redis_connection_info.host
-  vip_minio    = local.state.provision_databases.minio_connection_info.host
+  postgres_vip = local.state.provision_databases.postgres_connection_info.host
+  redis_vip    = local.state.provision_databases.redis_connection_info.host
+  minio_vip    = local.state.provision_databases.minio_connection_info.host
   etcd_ips     = local.state.provision_databases.observability_targets.etcd_ips
 }

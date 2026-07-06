@@ -47,7 +47,7 @@ resource "kubernetes_config_map" "ci_signing_job_gitlab_config" {
     "gitlab.yml" = yamlencode({
       production = {
         gitlab = {
-          host  = local.fqdn_gitlab
+          host  = local.gitlab_frontend_fqdn
           https = true
           port  = 443
         }
@@ -72,7 +72,7 @@ resource "kubernetes_secret" "ci_signing_job_db_config" {
       production = {
         adapter     = "postgresql"
         encoding    = "unicode"
-        host        = local.fqdn_postgres
+        host        = local.postgres_fqdn
         port        = local.gitlab_db.port
         username    = local.gitlab_db.username
         database    = local.gitlab_db.database

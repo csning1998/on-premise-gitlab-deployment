@@ -22,6 +22,7 @@ locals {
     postgres                = data.terraform_remote_state.postgres.outputs
     redis                   = data.terraform_remote_state.redis.outputs
     minio                   = data.terraform_remote_state.minio.outputs
+    observability_infra     = data.terraform_remote_state.observability_infra.outputs
   }
 }
 
@@ -46,15 +47,15 @@ locals {
 locals {
   pod_network_mtu = local.state.runner_cluster.global_network_mtu
 
-  fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
-  fqdn_vault               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
-  fqdn_harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-  fqdn_harbor              = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
-  fqdn_minio               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
-  fqdn_postgres            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
-  fqdn_redis               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
+  gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  vault_fqdn               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  harbor_frontend_fqdn     = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
+  minio_fqdn               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
+  postgres_fqdn            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
+  redis_fqdn               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
 
-  harbor_registry     = local.fqdn_harbor_bootstrapper
+  harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_quay_proxy   = local.state.harbor_bootstrapper_oci.proxy_caches["quay_io"].project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper_oci.proxy_caches["k8s_io"].project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["docker_hub"].project_name
@@ -76,23 +77,23 @@ locals {
 
 # 4. DNS Configuration
 locals {
-  vip_gitlab        = local.state.gitlab_frontend.service_vip
-  vip_vault         = local.state.vault_pki.vault_service_vip
-  vip_redis         = local.state.redis.connection_info.host
-  vip_postgres      = local.state.postgres.connection_info.host
-  vip_minio         = local.state.minio.connection_info.host
-  vip_harbor        = local.state.harbor_frontend.harbor_microk8s_virtual_ip
-  vip_observability = data.terraform_remote_state.observability_provision.outputs.observability_vip
+  gitlab_vip          = local.state.gitlab_frontend.service_vip
+  vault_vip           = local.state.vault_pki.vault_service_vip
+  redis_vip           = local.state.redis.connection_info.host
+  postgres_vip        = local.state.postgres.connection_info.host
+  minio_vip           = local.state.minio.connection_info.host
+  harbor_frontend_vip = local.state.harbor_frontend.harbor_microk8s_virtual_ip
+  observability_vip   = local.state.observability_infra.observability_microk8s_vip
 
   mimir_fqdn = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
 
   dns_hosts = {
-    "${local.vip_gitlab}"        = local.fqdn_gitlab
-    "${local.vip_vault}"         = local.fqdn_vault
-    "${local.vip_redis}"         = local.fqdn_redis
-    "${local.vip_postgres}"      = local.fqdn_postgres
-    "${local.vip_minio}"         = local.fqdn_minio
-    "${local.vip_harbor}"        = local.fqdn_harbor
-    "${local.vip_observability}" = local.mimir_fqdn
+    "${local.gitlab_vip}"          = local.gitlab_frontend_fqdn
+    "${local.vault_vip}"           = local.vault_fqdn
+    "${local.redis_vip}"           = local.redis_fqdn
+    "${local.postgres_vip}"        = local.postgres_fqdn
+    "${local.minio_vip}"           = local.minio_fqdn
+    "${local.harbor_frontend_vip}" = local.harbor_frontend_fqdn
+    "${local.observability_vip}"   = local.mimir_fqdn
   }
 }

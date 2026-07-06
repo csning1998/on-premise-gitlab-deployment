@@ -15,7 +15,7 @@ output "service_vip" {
 }
 
 output "harbor_registry_fqdn" {
-  value = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
+  value = local.state.harbor_bootstrapper.harbor_bootstrapper_fqdn
 }
 
 output "helm_pusher_robot_username" {

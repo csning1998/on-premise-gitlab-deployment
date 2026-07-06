@@ -49,19 +49,15 @@ locals {
   pod_network_mtu = local.state.kubeadm.global_network_mtu
 
   # FQDNs
-  fqdn_gitlab              = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
-  fqdn_vault               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
-  fqdn_harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
-  fqdn_minio               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
-  fqdn_postgres            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
-  fqdn_redis               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
-
-  # Compatibility Aliases
-  gitlab_fqdn = local.fqdn_gitlab
-  vault_fqdn  = local.fqdn_vault
+  gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  vault_fqdn               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  minio_fqdn               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
+  postgres_fqdn            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
+  redis_fqdn               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
 
   # Harbor Bootstrapper (Registry Redirection)
-  harbor_registry     = local.fqdn_harbor_bootstrapper
+  harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
@@ -110,7 +106,7 @@ locals {
   postgres_vip  = local.state.postgres.connection_info.host
   redis_vip     = local.state.redis.connection_info.host
   minio_vip     = local.state.minio.connection_info.host
-  minio_address = "https://${local.fqdn_minio}:${local.minio_port}"
+  minio_address = "https://${local.minio_fqdn}:${local.minio_port}"
 
   # GitLab Application Database Context
   # Directly sourcing from Vault to avoid state output dependencies
@@ -136,17 +132,17 @@ locals {
 locals {
   dns_hosts = merge(
     {
-      "${local.state.kubeadm.service_vip}"         = local.fqdn_gitlab
-      "${local.state.vault_pki.vault_service_vip}" = local.fqdn_vault
+      "${local.state.kubeadm.service_vip}"         = local.gitlab_frontend_fqdn
+      "${local.state.vault_pki.vault_service_vip}" = local.vault_fqdn
 
       # Dependency Roles
-      "${local.state.redis.service_vip}"    = local.fqdn_redis
-      "${local.state.postgres.service_vip}" = local.fqdn_postgres
-      "${local.state.minio.service_vip}"    = local.fqdn_minio
+      "${local.state.redis.service_vip}"    = local.redis_fqdn
+      "${local.state.postgres.service_vip}" = local.postgres_fqdn
+      "${local.state.minio.service_vip}"    = local.minio_fqdn
 
       # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
       # resolve domain name; CoreDNS must resolve this via static hosts entry)
-      "${local.state.harbor_bootstrapper.service_vip}" = local.fqdn_harbor_bootstrapper
+      "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_bootstrapper_fqdn
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)
     merge([

@@ -69,13 +69,13 @@ resource "helm_release" "gitlab_runner" {
 
   values = [
     yamlencode({
-      gitlabUrl = "https://${local.fqdn_gitlab}"
+      gitlabUrl = "https://${local.gitlab_frontend_fqdn}"
       rbac      = { create = true }
 
       hostAliases = [
         {
-          ip        = local.state.provision.network_context.vip_gitlab_frontend
-          hostnames = [local.fqdn_gitlab]
+          ip        = local.state.provision.network_context.gitlab_frontend_vip
+          hostnames = [local.gitlab_frontend_fqdn]
         }
       ]
 
@@ -96,7 +96,7 @@ resource "helm_release" "gitlab_runner" {
           service_account       = kubernetes_service_account.gitlab_ci_deployer.metadata[0].name
           pod_network_mtu       = local.pod_network_mtu
           gitlab_ca_bundle_name = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
-          fqdn_gitlab           = local.fqdn_gitlab
+          gitlab_frontend_fqdn  = local.gitlab_frontend_fqdn
         })
       }
     })

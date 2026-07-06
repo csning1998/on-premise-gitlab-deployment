@@ -38,7 +38,7 @@ provider "vault" {
 }
 
 provider "harbor" {
-  url      = "https://${data.terraform_remote_state.harbor_bootstrapper.outputs.bstrap_harbor_fqdn}"
+  url      = "https://${data.terraform_remote_state.harbor_bootstrapper.outputs.harbor_bootstrapper_fqdn}"
   username = "admin"
   password = ephemeral.vault_kv_secret_v2.harbor_bootstrapper.data["harbor_bootstrapper_admin_password"]
 }
