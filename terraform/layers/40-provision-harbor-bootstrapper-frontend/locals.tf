@@ -12,16 +12,15 @@ locals {
 locals {
   state = {
     vault_pki           = data.terraform_remote_state.vault_pki.outputs
-    vault_sys           = data.terraform_remote_state.vault_sys.outputs
+    credentials         = data.terraform_remote_state.credentials.outputs
     harbor_bootstrapper = data.terraform_remote_state.harbor_bootstrapper.outputs
   }
 
-  sys_vault_addr = "https://${local.state.vault_sys.service_vip}:443"
+  sys_vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:443"
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = local.state.credentials.global_credential_paths
 }
 
 locals {
@@ -29,7 +28,7 @@ locals {
     harbor_robot_user       = harbor_robot_account.helm_pusher.full_name
     harbor_registry         = local.state.harbor_bootstrapper.bstrap_harbor_fqdn
     harbor_project          = local.proxy_oci["helm_charts"].name
-    vault_addr              = local.sys_vault_addr
+    vault_endpoint          = local.sys_vault_endpoint
     vault_approle_role_id   = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_role_id
     vault_approle_secret_id = data.terraform_remote_state.vault_prod_bootstrap.outputs.production_secret_id
   }
@@ -53,11 +52,6 @@ locals {
         }
       }
     }
-  }
-
-  credentials_vm = {
-    username             = ephemeral.vault_kv_secret_v2.guest_vm.data["vm_username"]
-    ssh_private_key_path = ephemeral.vault_kv_secret_v2.guest_vm.data["ssh_private_key_path"]
   }
 }
 

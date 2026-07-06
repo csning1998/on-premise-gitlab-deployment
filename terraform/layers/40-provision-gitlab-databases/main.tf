@@ -53,7 +53,7 @@ module "minio_gitlab_config" {
   }
 
   minio_tenants            = var.gitlab_minio_tenants
-  vault_secret_path_prefix = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/s3_credentials"
+  vault_secret_path_prefix = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/s3_credentials"
   minio_server_url         = local.minio_url
 }
 
@@ -61,7 +61,7 @@ module "minio_gitlab_config" {
 resource "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/database"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/database"
 
   data_json = jsonencode({
     username = module.gitlab_db_init.users["gitlab"].name

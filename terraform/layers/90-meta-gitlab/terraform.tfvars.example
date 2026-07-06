@@ -4,4 +4,4 @@ visibility = "public"
 runner_description = "local-podman-runner"
 runner_tag_list    = ["podman", "local"]
 
-repository_description = "[MVP] Multi-layer Terraform IaC for on-premise GitLab deployment on KVM/QEMU (Libvirt). All core components support HA: Kubeadm control plane, Patroni/Postgres, Redis Sentinel, MinIO (erasure coding), Gitaly/Praefect, HashiCorp Vault with hierarchical PKI and AppRole, Harbor Registry, and GitLab Runner. Includes standalone Harbor Bootstrapper and Keycloak OIDC SSO. Provisioned end-to-end via Packer, Terraform, and Ansible."
+repository_description = "[MVP] Multi-layer Terraform IaC for on-premise GitLab deployment on KVM/QEMU (Libvirt). Highly available core components include Kubeadm control plane, Patroni Postgres, Redis Sentinel, MinIO erasure coding, Gitaly Praefect, HashiCorp Vault with hierarchical PKI and AppRole, Harbor Registry, and GitLab Runner. The setup also integrates Keycloak OIDC SSO, standalone Harbor Bootstrapper, and LGTM observability stack. Provisioned end-to-end via Packer, Terraform, and Ansible."

@@ -11,8 +11,6 @@ locals {
 
 locals {
   state = {
-    metadata             = data.terraform_remote_state.metadata.outputs
-    vault_sys            = data.terraform_remote_state.vault_sys.outputs
     vault_pki            = data.terraform_remote_state.vault_pki.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     keycloak             = data.terraform_remote_state.keycloak.outputs
@@ -21,13 +19,13 @@ locals {
 
 locals {
   fdqn = {
-    keycloak_frontend   = local.state.metadata.global_pki_map["keycloak-frontend"].dns_san[0]
-    vault_frontend      = local.state.metadata.global_pki_map["vault-frontend"].dns_san[0]
-    gitlab_frontend     = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san[0]
-    gitlab_minio        = local.state.metadata.global_pki_map["gitlab-minio"].dns_san[0]
-    harbor_frontend     = local.state.metadata.global_pki_map["harbor-frontend"].dns_san[0]
-    harbor_minio        = local.state.metadata.global_pki_map["harbor-minio"].dns_san[0]
-    harbor_bootstrapper = local.state.metadata.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+    keycloak_frontend   = local.state.vault_pki.global_pki_map["keycloak-frontend"].dns_san[0]
+    vault_frontend      = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+    gitlab_frontend     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+    gitlab_minio        = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
+    harbor_frontend     = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
+    harbor_minio        = local.state.vault_pki.global_pki_map["harbor-minio"].dns_san[0]
+    harbor_bootstrapper = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
   }
 }
 
@@ -61,7 +59,7 @@ locals {
   ]
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

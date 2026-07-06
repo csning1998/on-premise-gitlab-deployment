@@ -57,3 +57,8 @@
         - "'already known to dqlite' not in join_command_output.stderr"
         - "'already known to dqlite' not in join_command_output.stdout"
         - join_command_output.rc > 0
+
+  rescue:
+    - name: "Block D1: Join this node to the MicroK8s HA cluster failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

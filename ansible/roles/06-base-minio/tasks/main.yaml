@@ -12,6 +12,11 @@
         name: "{{ minio_base.go_package }}"
         state: present
 
+  rescue:
+    - name: "Block A: Install Golang failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block B: Install MinIO via Go"
   become: true
   block:
@@ -51,6 +56,11 @@
     - name: "Step B6. Print mc version"
       ansible.builtin.debug:
         msg: "MinIO Client installed: {{ mc_version.stdout }}"
+
+  rescue:
+    - name: "Block B: Install MinIO via Go failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block C: System Configuration"
   become: true
@@ -98,3 +108,8 @@
         name: minio
         enabled: false
         state: stopped
+
+  rescue:
+    - name: "Block C: System Configuration failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

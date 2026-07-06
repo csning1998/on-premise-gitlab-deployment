@@ -1,7 +1,7 @@
 ---
 - name: "C1. Retrieve Harbor Credentials"
   community.hashi_vault.vault_kv2_get:
-    url: "{{ vault_addr }}"
+    url: "{{ vault_endpoint }}"
     path: "{{ vault_kv_namespace }}/harbor-bootstrapper/frontend"
     engine_mount_point: "secret"
     auth_method: approle

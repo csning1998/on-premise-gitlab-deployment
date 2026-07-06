@@ -24,7 +24,7 @@ terraform {
 # Production Provider (Layer 10 Vault)
 provider "vault" {
   alias        = "production"
-  address      = local.sys_vault_addr
+  address      = local.sys_vault_endpoint
   ca_cert_file = local.state.vault_pki.bootstrap_ca_b64.path
 
   auth_login {

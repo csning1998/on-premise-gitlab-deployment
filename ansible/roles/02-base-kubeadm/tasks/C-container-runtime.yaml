@@ -80,3 +80,8 @@
           timeout: 10
           debug: false
         mode: "0644"
+
+  rescue:
+    - name: "Block C. Install and Configure container runtime failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

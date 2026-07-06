@@ -62,6 +62,11 @@ trivy:
   insecure: false
   debug_mode: false
 
+metric:
+  enabled: true
+  port: {{ harbor_metrics_port }}
+  path: /metrics
+
 # Proxy Configuration for OIDC Session Stability
 proxy:
   http_proxy:

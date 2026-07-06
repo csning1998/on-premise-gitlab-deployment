@@ -32,3 +32,8 @@
         enabled: false
       loop: "{{ redis_base.services_to_disable }}"
       failed_when: false
+
+  rescue:
+    - name: "Block B: Install Redis Server from Official Repository failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

@@ -19,11 +19,6 @@ output "pki_key" {
   value       = module.context.primary_context.pki_key
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.keycloak_cluster.ansible_inventory
-}
-
 output "ssh_config_file_path" {
   description = "The path to the generated SSH configuration file."
   value       = module.keycloak_cluster.ssh_config_file_path

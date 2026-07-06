@@ -7,8 +7,8 @@ module "context" {
   global_pki_map           = data.terraform_remote_state.metadata.outputs.global_pki_map
   global_network_baseline  = data.terraform_remote_state.metadata.outputs.global_network_baseline
   global_vault_pki_b64     = data.terraform_remote_state.metadata.outputs.global_vault_pki_b64
-  infrastructure_map       = data.terraform_remote_state.network.outputs.infrastructure_map
-  guest_vm_data            = data.vault_generic_secret.guest_vm.data
+  infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
+  guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
 
   target_clusters = var.target_clusters
   primary_role    = var.primary_role
@@ -31,12 +31,12 @@ module "shared_vault" {
   node_identities            = module.context.node_identities
   topology_cluster           = module.context.topology_cluster
   network_infrastructure_map = module.context.network_infrastructure_map
-  credentials_system         = module.context.sec_vm_creds
+  credentials_system         = module.context.sec_vm_credentials
   static_routes              = module.context.asymmetric_static_routes
   storage_infrastructure_map = data.terraform_remote_state.volume.outputs.storage_infrastructure_map
 
   ansible_generic_config = {
-    template_vars = local.ansible_template_vars
-    extra_vars    = local.ansible_extra_vars
+    template_vars = local.ansible_template_config
+    extra_vars    = local.ansible_extra_config
   }
 }

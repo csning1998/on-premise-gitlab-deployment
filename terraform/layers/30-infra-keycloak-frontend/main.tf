@@ -2,13 +2,13 @@
 module "context" {
   source = "../../modules/layer-context"
 
-  global_topology_identity = data.terraform_remote_state.metadata.outputs.global_topology_identity
-  global_topology_network  = data.terraform_remote_state.metadata.outputs.global_topology_network
-  global_pki_map           = data.terraform_remote_state.metadata.outputs.global_pki_map
-  global_network_baseline  = data.terraform_remote_state.metadata.outputs.global_network_baseline
-  guest_vm_data            = data.vault_generic_secret.guest_vm.data
+  global_topology_identity = data.terraform_remote_state.load_balancer.outputs.global_topology_identity
+  global_topology_network  = data.terraform_remote_state.load_balancer.outputs.global_topology_network
+  global_pki_map           = data.terraform_remote_state.vault_pki.outputs.global_pki_map
+  global_network_baseline  = data.terraform_remote_state.load_balancer.outputs.global_network_baseline
+  guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
   infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
-  vault_sys_vip            = data.terraform_remote_state.vault_sys.outputs.service_vip
+  vault_sys_vip            = data.terraform_remote_state.vault_pki.outputs.vault_service_vip
   vault_pki_outputs        = data.terraform_remote_state.vault_pki.outputs
 
   target_clusters = var.target_clusters
@@ -23,7 +23,7 @@ module "keycloak_cluster" {
   node_identities               = module.context.node_identities
   topology_cluster              = module.context.topology_cluster
   network_infrastructure_map    = module.context.network_infrastructure_map
-  credentials_system            = module.context.sec_vm_creds
+  credentials_system            = module.context.sec_vm_credentials
   static_routes                 = module.context.asymmetric_static_routes
   storage_infrastructure_map    = data.terraform_remote_state.volume.outputs.storage_infrastructure_map
   security_vault_agent_identity = local.sec_vault_agent_identity

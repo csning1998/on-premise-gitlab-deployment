@@ -3,9 +3,17 @@ module "felix_config" {
   source = "../../modules/kubernetes-addons/calico-felix-config"
 }
 
+# Each L40 layer targets its own Kubernetes cluster, so this namespace is declared
+# independently per layer rather than shared; it is not a duplicate to be consolidated.
+resource "kubernetes_namespace" "vault_auth" {
+  metadata {
+    name = "vault-auth"
+  }
+}
+
 module "platform_trust_engine" {
   source     = "../../modules/kubernetes-addons/platform-trust-engine"
-  depends_on = [module.felix_config]
+  depends_on = [module.felix_config, kubernetes_namespace.vault_auth]
   providers  = { vault = vault.production }
 
   api_server_connection = {
@@ -14,7 +22,7 @@ module "platform_trust_engine" {
   }
 
   vault_config = {
-    address   = local.vault_address
+    address   = local.vault_endpoint
     ca_cert   = local.vault_ca_cert
     auth_path = local.vault_auth_path
   }
@@ -28,7 +36,7 @@ module "platform_trust_engine" {
 
   reviewer_service_account = {
     name      = "vault-reviewer"
-    namespace = "default"
+    namespace = kubernetes_namespace.vault_auth.metadata[0].name
   }
 
   helm_config = {
@@ -45,7 +53,6 @@ module "platform_trust_engine" {
 module "ingress_controller" {
   source = "../../modules/kubernetes-addons/microk8s-ingress"
 
-  ingress_vip        = local.observability_vip
   ingress_class_name = "nginx"
   image_registry     = local.harbor_registry
   chart_project      = local.helm_chart_project

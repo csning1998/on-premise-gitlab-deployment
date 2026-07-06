@@ -44,9 +44,9 @@ output "global_network_baseline" {
   value       = var.network_baseline
 }
 
-output "global_pki_settings" {
+output "global_pki_config" {
   description = "Global PKI Identity Settings for downstream layers (e.g. Vault PKI)."
-  value       = var.pki_settings
+  value       = var.pki_config
 }
 
 # 2. Domain Topology Outputs (MECE Split)
@@ -82,6 +82,11 @@ output "global_pki_map" {
 output "global_dns_records" {
   description = "SSoT mapping of all infrastructure hostnames to their respective VIPs."
   value       = local.global_dns_records
+}
+
+output "mimir_tenants" {
+  description = "Ordered list of Mimir tenant IDs for external K8s cluster Alloys; consumed by the observability layer for Grafana datasource provisioning."
+  value       = var.observability_config.mimir_tenants
 }
 
 output "global_vault_pki_b64" {

@@ -11,7 +11,7 @@ locals {
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
@@ -57,7 +57,7 @@ locals {
       cidrhost(module.context.primary_net_config.network.hostonly.cidr, node_data.ip_suffix)
     ]
 
-    registry_host       = data.terraform_remote_state.metadata.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
+    registry_host       = data.terraform_remote_state.vault_pki.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
     registry_vip        = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]
     harbor_docker_proxy = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["quay_io"].project_name
@@ -68,7 +68,7 @@ locals {
     vault_ca_cert_b64       = local.sec_vault_agent_identity.ca_cert_b64
     vault_agent_role_id     = local.sec_vault_agent_identity.role_id
     vault_agent_secret_id   = local.sec_vault_agent_identity.secret_id
-    vault_addr              = module.context.sys_vault_addr
+    vault_endpoint          = module.context.sys_vault_endpoint
     vault_role_name         = local.sec_vault_agent_identity.role_name
     vault_auth_path         = local.sec_vault_agent_identity.auth_path
     vault_agent_common_name = local.sec_vault_agent_identity.common_name

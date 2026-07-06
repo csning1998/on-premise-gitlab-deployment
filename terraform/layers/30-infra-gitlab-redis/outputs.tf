@@ -9,7 +9,18 @@ output "topology_cluster" {
   value       = module.infra_gitlab_redis.cluster_nodes
 }
 
-output "ansible_inventory" {
-  description = "The generated Ansible inventory content and file path."
-  value       = module.infra_gitlab_redis.ansible_inventory
+output "connection_info" {
+  description = "Redis load-balancer endpoint for L40 consumption."
+  value = {
+    host = module.context.primary_net_config.lb_config.vip
+    port = module.context.primary_net_config.lb_config.ports["main"].frontend_port
+  }
+}
+
+output "observability_targets" {
+  description = "Observability scrape endpoint for Redis."
+  value = {
+    redis_metrics_port = module.context.svc_network.ports["metrics"].frontend_port
+    redis_node_ips     = module.context.svc_network.node_ips
+  }
 }

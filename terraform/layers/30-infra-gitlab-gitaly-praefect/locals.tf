@@ -1,23 +1,23 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
 # Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
 locals {
-  sys_vault_addr      = "https://${data.terraform_remote_state.vault_sys.outputs.service_vip}:443"
+  sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
 }
 
-# Credential path map alias derived from foundation metadata (L00 SSoT)
+# Credential path map alias passed through from L25 security-pki
 locals {
-  credential_paths = data.terraform_remote_state.metadata.outputs.global_credential_paths
+  credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }
 
 # Service credentials and per-role Vault Agent identities
@@ -33,25 +33,25 @@ locals {
 
 # Ansible Configuration
 locals {
-  ansible_template_vars = {
+  ansible_template_config = {
     service_identifier    = module.context.svc_identity.cluster_name
     postgres_cluster_name = lookup(var.target_clusters, "praefect-patroni", "") != "" ? var.target_clusters["praefect-patroni"] : ""
 
-    postgres_ha_virtual_ip = module.context.network_infrastructure_map["praefect-patroni"].lb_config.vip
+    postgres_ha_vip = module.context.network_infrastructure_map["praefect-patroni"].lb_config.vip
     postgres_mtls_node_subnet = join(" ", compact([
       module.context.network_infrastructure_map["praefect-patroni"].network.hostonly.cidr,
       module.context.network_infrastructure_map["praefect"].network.hostonly.cidr,
-      data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr,
+      data.terraform_remote_state.load_balancer.outputs.infrastructure_map["core-gitlab-frontend"].network.hostonly.cidr,
     ]))
     vault_vip  = module.context.vault_sys_vip
     global_mss = module.context.global_mss
 
-    gitaly_ha_virtual_ip   = module.context.network_infrastructure_map["gitaly"].lb_config.vip
-    praefect_ha_virtual_ip = module.context.network_infrastructure_map["praefect"].lb_config.vip
-    gitlab_frontend_vip    = data.terraform_remote_state.network.outputs.infrastructure_map["core-gitlab-frontend"].lb_config.vip
+    gitaly_ha_vip       = module.context.network_infrastructure_map["gitaly"].lb_config.vip
+    praefect_ha_vip     = module.context.network_infrastructure_map["praefect"].lb_config.vip
+    gitlab_frontend_vip = data.terraform_remote_state.load_balancer.outputs.infrastructure_map["core-gitlab-frontend"].lb_config.vip
 
     gitaly_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["gitaly"].lb_config.vip
         metric = 100
@@ -60,7 +60,7 @@ locals {
     ]
 
     praefect_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["praefect"].lb_config.vip
         metric = 100
@@ -69,7 +69,7 @@ locals {
     ]
 
     postgres_static_routes = [
-      for name, vip in data.terraform_remote_state.network.outputs.infrastructure_vips : {
+      for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.network_infrastructure_map["praefect-patroni"].lb_config.vip
         metric = 100
@@ -80,8 +80,8 @@ locals {
     postgres_vault_role_key = "praefect-patroni"
   }
 
-  ansible_extra_vars = {
-    gitlab_external_url     = "https://${data.terraform_remote_state.metadata.outputs.global_pki_map["gitlab-frontend"].dns_san[0]}"
+  ansible_extra_config = {
+    gitlab_external_url     = "https://${data.terraform_remote_state.vault_pki.outputs.global_pki_map["gitlab-frontend"].dns_san[0]}"
     gitlab_shell_secret     = data.vault_kv_secret_v2.gitaly_secrets.data["gitlab_shell_secret"]
     gitaly_auth_token       = data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
     praefect_external_token = lookup(data.vault_kv_secret_v2.gitaly_secrets.data, "praefect_external_token", null)
@@ -93,12 +93,12 @@ locals {
 
     vault_agent_identities_json = base64encode(jsonencode({
       for role, id in local.role_vault_agent_identities : role => {
-        vault_addr  = id.vault_address
-        role_id     = id.role_id
-        secret_id   = id.secret_id
-        role_name   = id.role_name
-        auth_path   = id.auth_path
-        common_name = id.common_name
+        vault_endpoint = id.vault_endpoint
+        role_id        = id.role_id
+        secret_id      = id.secret_id
+        role_name      = id.role_name
+        auth_path      = id.auth_path
+        common_name    = id.common_name
       }
     }))
   }

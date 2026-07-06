@@ -9,12 +9,6 @@ variable "primary_role" {
   type        = string
 }
 
-variable "vault_dev_addr" {
-  description = "The address of the Vault server."
-  type        = string
-  default     = "https://127.0.0.1:8200"
-}
-
 variable "service_config" {
   description = "Compute topology for Harbor Microk8s cluster. Key must match primary_role."
   type = map(object({

@@ -116,6 +116,19 @@ prometheus.scrape "vault_metrics" {
 }
 
 %{ endif ~}
+%{ if keycloak_metrics_address != null ~}
+// keycloak_metrics_address references KC_MANAGEMENT_PORT (9000); KC_METRICS_ENABLED=true exposes /metrics
+// without authentication on this interface; cert verified by the same ca-bundle as Vault.
+prometheus.scrape "keycloak" {
+  targets      = [{"__address__" = "${keycloak_metrics_address}", "job" = "keycloak"}]
+  scheme       = "https"
+  tls_config {
+    ca_file = "/etc/alloy/ca-bundle/ca.crt"
+  }
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
 prometheus.remote_write "mimir" {
   endpoint {
     url = "${remote_write_url}"

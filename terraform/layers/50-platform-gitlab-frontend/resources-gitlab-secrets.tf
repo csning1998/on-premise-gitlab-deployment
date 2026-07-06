@@ -4,7 +4,7 @@
 resource "vault_kv_secret_v2" "gitlab_redis_keys" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.metadata.outputs.vault_kv_namespace}/gitlab/app/redis"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/redis"
 
   data_json = jsonencode({
     password = local.redis_password

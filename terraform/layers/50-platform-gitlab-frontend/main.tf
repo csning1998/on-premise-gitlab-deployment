@@ -49,7 +49,7 @@ module "gitlab_core" {
   gitlab_config = {
     hostname             = local.fqdn_gitlab
     edition              = "ce"
-    dns_sans             = local.state.metadata.global_pki_map["gitlab-frontend"].dns_san
+    dns_sans             = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san
     omniauth_secret_name = local.gitlab_config.omniauth_secret_name
     rails_secret_name    = local.gitlab_config.rails_secret_name
   }
@@ -167,8 +167,8 @@ module "alloy" {
 
   alloy_config = {
     remote_write_url      = local.mimir_remote_write_url
-    cluster_label         = "gitlab"
-    tenant_id             = "gitlab"
+    cluster_label         = local.mimir_tenant_id
+    tenant_id             = local.mimir_tenant_id
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 

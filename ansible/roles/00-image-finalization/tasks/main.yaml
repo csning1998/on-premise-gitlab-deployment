@@ -23,3 +23,8 @@
     - name: "Step 4. Clean cloud-init state to prepare image for cloning"
       ansible.builtin.command: cloud-init clean --logs --seed
       changed_when: true
+
+  rescue:
+    - name: "Section E. Finalize image and clean up failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

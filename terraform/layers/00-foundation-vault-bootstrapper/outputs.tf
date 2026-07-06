@@ -20,7 +20,7 @@ output "secret_id" {
   sensitive   = true
 }
 
-output "vault_addr" {
+output "vault_dev_endpoint" {
   description = "The address of the Vault server"
-  value       = var.vault_dev_addr
+  value       = var.vault_dev_endpoint
 }

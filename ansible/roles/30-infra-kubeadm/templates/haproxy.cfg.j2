@@ -16,7 +16,7 @@ defaults
 
 # GitLab HTTP Ingress (Port 80 -> NodePort 30080)
 frontend gitlab_http
-    bind {{ kubeadm_ha_virtual_ip }}:80
+    bind {{ kubeadm_ha_vip }}:80
     mode tcp
     default_backend gitlab_http_backend
 
@@ -30,7 +30,7 @@ backend gitlab_http_backend
 
 # GitLab HTTPS Ingress (Port 443 -> NodePort 30443)
 frontend gitlab_https
-    bind {{ kubeadm_ha_virtual_ip }}:443
+    bind {{ kubeadm_ha_vip }}:443
     mode tcp
     default_backend gitlab_https_backend
 

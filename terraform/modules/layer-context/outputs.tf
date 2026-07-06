@@ -29,9 +29,14 @@ output "primary_net_config" {
   value       = local.primary_net_config
 }
 
-output "sec_vm_creds" {
+output "tier_network_map" {
+  description = "Full global_topology_network entry keyed by network_tier, exposing ports and node_ips for downstream layers needing non-LB topology data (e.g. metrics endpoints)."
+  value       = local.tier_network_map
+}
+
+output "sec_vm_credentials" {
   description = "VM system credentials."
-  value       = local.sec_vm_creds
+  value       = local.sec_vm_credentials
   sensitive   = true
 }
 
@@ -40,9 +45,9 @@ output "global_vault_pki_b64" {
   value       = var.global_vault_pki_b64
 }
 
-output "sys_vault_addr" {
+output "sys_vault_endpoint" {
   description = "Vault HTTPS address constructed from vault_sys_vip. Null for layers without Vault Agent integration."
-  value       = local.sys_vault_addr
+  value       = local.sys_vault_endpoint
 }
 
 output "storage_pool_name" {
@@ -69,6 +74,11 @@ output "vault_agent_identity_base" {
 output "global_mss" {
   description = "Global MSS value from network baseline."
   value       = var.global_network_baseline.global_mss
+}
+
+output "global_mtu" {
+  description = "Global MTU value from network baseline."
+  value       = var.global_network_baseline.global_mtu
 }
 
 output "primary_context" {
@@ -103,4 +113,9 @@ output "all_vault_agent_identity_bases" {
   description = "Per-role Vault Agent identity bases (excludes secret_id). Keyed by target_clusters role. Empty map for layers without Vault integration."
   value       = local.all_vault_agent_identity_bases
   sensitive   = true
+}
+
+output "global_topology_network" {
+  description = "Pass-through of SSoT network map for resolving external component ports safely through context."
+  value       = var.global_topology_network
 }

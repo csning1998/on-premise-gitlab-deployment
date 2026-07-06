@@ -1,11 +1,11 @@
 
 # GitLab HTTP backend credentials (read at plan time from gitignored file)
 locals {
-  _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-  _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
+  _gl_credentials = jsondecode(file("${path.root}/../../backend-state.json"))
+  _state_base     = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
   _state_auth = {
-    username = local._gl_creds.username
-    password = local._gl_creds.token
+    username = local._gl_credentials.username
+    password = local._gl_credentials.token
   }
 }
 
@@ -17,7 +17,7 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
   }
 
-  sys_vault_addr     = "https://${local.state.vault_sys.service_vip}:443"
+  sys_vault_endpoint = "https://${local.state.vault_sys.service_vip}:443"
   ca_cert_path       = local.state.vault_sys.ca_cert_path
   vault_kv_namespace = local.state.metadata.vault_kv_namespace
 }

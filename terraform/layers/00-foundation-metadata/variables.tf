@@ -22,7 +22,7 @@ variable "vault_kv_namespace" {
   type        = string
 }
 
-variable "pki_settings" {
+variable "pki_config" {
   description = "Global PKI Identity Settings (SSoT). Defines the legal identity of the infrastructure."
   type = object({
     root_ca_common_name         = string
@@ -67,6 +67,16 @@ variable "network_baseline" {
   validation {
     condition     = var.network_baseline.vip_offset < 255 && var.network_baseline.node_ip_start < 255
     error_message = "IP offsets must be less than 255 to fit within a /24 subnet."
+  }
+}
+
+variable "observability_config" {
+  description = "Observability stack metadata consumed by the observability layer to provision per-tenant Grafana datasources and Alloy remote_write configuration."
+  type = object({
+    mimir_tenants = list(string)
+  })
+  default = {
+    mimir_tenants = []
   }
 }
 
