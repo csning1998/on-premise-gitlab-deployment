@@ -14,6 +14,6 @@ output "network_context" {
   value = {
     global_network_mtu  = local.state.runner_cluster.global_network_mtu
     vault_api_port      = local.state.vault_frontend.vault_api_port
-    vip_gitlab_frontend = data.terraform_remote_state.gitlab_frontend.outputs.service_vip
+    gitlab_frontend_vip = data.terraform_remote_state.gitlab_frontend.outputs.service_vip
   }
 }

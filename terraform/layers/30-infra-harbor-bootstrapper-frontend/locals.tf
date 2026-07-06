@@ -35,25 +35,25 @@ locals {
 # Ansible Configuration
 locals {
   ansible_template_vars = {
-    service_identifier           = module.context.primary_context.s_name
-    bstrap_harbor_fqdn           = module.context.svc_fqdn
-    bstrap_harbor_service_domain = module.context.svc_identity.cluster_name
+    service_identifier                 = module.context.primary_context.s_name
+    harbor_bootstrapper_fqdn           = module.context.svc_fqdn
+    harbor_bootstrapper_service_domain = module.context.svc_identity.cluster_name
 
-    bstrap_harbor_vip              = module.context.primary_net_config.lb_config.vip
-    bstrap_harbor_tls_port         = module.context.primary_net_config.lb_config.ports["https"].frontend_port
-    bstrap_harbor_mtls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
-    vault_vip                      = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["vault-frontend"]
-    global_mss                     = module.context.global_mss
-    harbor_metrics_port            = data.terraform_remote_state.load_balancer.outputs.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port
+    harbor_bootstrapper_vip              = module.context.primary_net_config.lb_config.vip
+    harbor_bootstrapper_tls_port         = module.context.primary_net_config.lb_config.ports["https"].frontend_port
+    harbor_bootstrapper_mtls_node_subnet = module.context.primary_net_config.network.hostonly.cidr
+    vault_vip                            = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["vault-frontend"]
+    global_mss                           = module.context.global_mss
+    harbor_metrics_port                  = data.terraform_remote_state.load_balancer.outputs.global_topology_network["harbor-bootstrapper"]["frontend"].ports["metrics"].frontend_port
 
-    bstrap_harbor_cluster_ips = [
+    harbor_bootstrapper_cluster_ips = [
       for comp_name, comp_config in var.service_config : [
         for node_suffix, node_data in comp_config.nodes :
         cidrhost(module.context.primary_net_config.network.hostonly.cidr, node_data.ip_suffix)
       ]
     ][0]
 
-    bstrap_harbor_static_routes = [
+    harbor_bootstrapper_static_routes = [
       for name, vip in data.terraform_remote_state.load_balancer.outputs.infrastructure_vips : {
         to     = "${vip}/32"
         via    = module.context.primary_net_config.lb_config.vip

@@ -17,6 +17,7 @@ locals {
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
     microk8s_provision   = data.terraform_remote_state.microk8s_provision.outputs
     harbor_bootstrapper  = data.terraform_remote_state.harbor_bootstrapper.outputs
+    observability_infra  = data.terraform_remote_state.observability_infra.outputs
     redis                = data.terraform_remote_state.redis.outputs
     postgres             = data.terraform_remote_state.postgres.outputs
     minio                = data.terraform_remote_state.minio.outputs
@@ -44,8 +45,8 @@ locals {
 locals {
   pod_network_mtu = local.state.microk8s_provision.global_network_mtu
 
-  harbor_fqdn = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
-  vault_fqdn  = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
+  harbor_frontend_fqdn = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
+  vault_fqdn           = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
 
   harbor_registry     = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
@@ -69,12 +70,12 @@ locals {
 
 # 4. DNS Configuration
 locals {
-  harbor_vip        = local.state.microk8s_provision.harbor_microk8s_virtual_ip
-  vault_vip         = local.state.vault_pki.vault_service_vip
-  redis_vip         = local.state.redis.service_vip
-  postgres_vip      = local.state.postgres.service_vip
-  minio_vip         = local.state.minio.service_vip
-  observability_vip = data.terraform_remote_state.observability_provision.outputs.observability_vip
+  harbor_frontend_vip = local.state.microk8s_provision.harbor_microk8s_virtual_ip
+  vault_vip           = local.state.vault_pki.vault_service_vip
+  redis_vip           = local.state.redis.service_vip
+  postgres_vip        = local.state.postgres.service_vip
+  minio_vip           = local.state.minio.service_vip
+  observability_vip   = local.state.observability_infra.observability_microk8s_vip
 
   redis_fqdn    = local.state.vault_pki.global_pki_map["harbor-redis"].dns_san[0]
   postgres_fqdn = local.state.vault_pki.global_pki_map["harbor-postgres"].dns_san[0]
@@ -82,7 +83,7 @@ locals {
   mimir_fqdn    = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
 
   dns_hosts = {
-    "${local.harbor_vip}"                            = "${local.harbor_fqdn} notary.${local.harbor_fqdn}"
+    "${local.harbor_frontend_vip}"                   = "${local.harbor_frontend_fqdn} notary.${local.harbor_frontend_fqdn}"
     "${local.vault_vip}"                             = local.vault_fqdn
     "${local.redis_vip}"                             = local.redis_fqdn
     "${local.postgres_vip}"                          = local.postgres_fqdn

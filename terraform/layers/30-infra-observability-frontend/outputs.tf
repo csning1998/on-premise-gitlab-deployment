@@ -4,7 +4,7 @@ output "observability_microk8s_ip_list" {
   value       = local.ansible_template_vars.microk8s_cluster_ips
 }
 
-output "observability_microk8s_virtual_ip" {
+output "observability_microk8s_vip" {
   description = "MicroK8s virtual IP for Observability."
   value       = local.ansible_template_vars.microk8s_ingress_vip
 }

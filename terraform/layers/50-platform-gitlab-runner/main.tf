@@ -12,7 +12,7 @@ resource "kubernetes_secret" "gitlab_ca_bundle" {
   }
 
   data = {
-    "${local.fqdn_gitlab}.crt" = local.ca_bundle_config.content
+    "${local.gitlab_frontend_fqdn}.crt" = local.ca_bundle_config.content
   }
 }
 

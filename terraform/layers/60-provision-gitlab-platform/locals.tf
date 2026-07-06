@@ -32,7 +32,7 @@ locals {
 
 # 3. GitLab Identity & Secrets (For Provider)
 locals {
-  gitlab_fqdn          = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
+  gitlab_frontend_fqdn = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
   gitlab_root_password = ephemeral.vault_kv_secret_v2.gitlab_internal.data["root_password"]
 }
 

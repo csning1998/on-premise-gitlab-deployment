@@ -32,7 +32,7 @@ resource "kubernetes_secret" "gitlab_keycloak_oidc" {
         client_options = {
           identifier   = "gitlab-infra"
           secret       = data.vault_kv_secret_v2.keycloak_gitlab_client.data["client_secret"]
-          redirect_uri = "https://${local.fqdn_gitlab}/users/auth/openid_connect/callback"
+          redirect_uri = "https://${local.gitlab_frontend_fqdn}/users/auth/openid_connect/callback"
         }
       }
     })

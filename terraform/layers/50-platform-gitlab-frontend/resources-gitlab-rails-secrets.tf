@@ -27,7 +27,7 @@ resource "kubernetes_manifest" "gitlab_vault_secret_store" {
     spec = {
       provider = {
         vault = {
-          server   = "https://${local.fqdn_vault}:8200"
+          server   = "https://${local.vault_fqdn}:8200"
           path     = "secret"
           version  = "v2"
           caBundle = local.state.vault_pki.bootstrap_ca_b64.content_b64
