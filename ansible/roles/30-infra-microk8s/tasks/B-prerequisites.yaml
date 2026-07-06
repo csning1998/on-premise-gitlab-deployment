@@ -37,6 +37,11 @@
       changed_when: false
       notify: Restart MicroK8s Containerd
 
+  rescue:
+    - name: "Block B1: Establish Certificate Trust for Containerd & OS failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block B2: Configure Containerd Registry endpoint (MicroK8s Snap)"
   become: true
   block:
@@ -62,3 +67,8 @@
         mode: "0644"
       notify: Restart MicroK8s Containerd
       loop: "{{ _containerd_registry_configs }}"
+
+  rescue:
+    - name: "Block B2: Configure Containerd Registry endpoint (MicroK8s Snap) failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

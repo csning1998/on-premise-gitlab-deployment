@@ -6,7 +6,7 @@ module "context" {
   global_topology_network  = data.terraform_remote_state.load_balancer.outputs.global_topology_network
   global_pki_map           = data.terraform_remote_state.vault_pki.outputs.global_pki_map
   global_network_baseline  = data.terraform_remote_state.load_balancer.outputs.global_network_baseline
-  guest_vm_data            = data.vault_generic_secret.guest_vm.data
+  guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
   infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
   vault_sys_vip            = data.terraform_remote_state.vault_pki.outputs.vault_service_vip
   vault_pki_outputs        = data.terraform_remote_state.vault_pki.outputs

@@ -30,7 +30,8 @@ data "terraform_remote_state" "harbor_proxy" {
   config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-harbor-bootstrapper-frontend" })
 }
 
-data "vault_generic_secret" "guest_vm" {
+data "vault_kv_secret_v2" "guest_vm" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/guest_vm"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/guest_vm"
 }

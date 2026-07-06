@@ -16,9 +16,9 @@ locals {
     metadata = data.terraform_remote_state.metadata.outputs
   }
   secrets = {
-    credentials    = data.vault_generic_secret.credentials.data # AppRole
-    guest_vm       = data.vault_generic_secret.guest_vm.data
-    infrastructure = data.vault_generic_secret.infrastructure.data
+    credentials    = data.vault_kv_secret_v2.credentials.data # AppRole
+    guest_vm       = data.vault_kv_secret_v2.guest_vm.data
+    infrastructure = data.vault_kv_secret_v2.infrastructure.data
   }
 }
 

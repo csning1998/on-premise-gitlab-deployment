@@ -37,6 +37,11 @@
         mode: "0644"
       notify: Reload Systemd
 
+  rescue:
+    - name: "Block A1: System & Service Configuration failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block A2: Deploy Vault TLS Certificates"
   become: true
   when: vault_server_cert_b64 is defined
@@ -84,3 +89,8 @@
         owner: root
         group: root
       notify: Update CA Trust
+
+  rescue:
+    - name: "Block A2: Deploy Vault TLS Certificates failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

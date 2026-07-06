@@ -17,6 +17,11 @@
         name: "kubelet"
         enabled: true
 
+  rescue:
+    - name: "E2. Prepare secondary master node for joining failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "E3. Join this node to the control plane"
   when: not kubelet_conf_stat.stat.exists
   block:
@@ -51,6 +56,11 @@
           STDERR: {{ kubeadm_join_result.stderr | default('N/A') }}
       when: kubeadm_join_result.rc is defined and kubeadm_join_result.rc != 0
 
+  rescue:
+    - name: "E3. Join this node to the control plane failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "E4. Set up kubeconfig on this secondary master"
   block:
     - name: "E4a. Create .kube directory for the root user"
@@ -82,6 +92,11 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0644"
+
+  rescue:
+    - name: "E4. Set up kubeconfig on this secondary master failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "E5. Upgrade local kubelet configuration from cluster ConfigMap"
   ansible.builtin.command: >-

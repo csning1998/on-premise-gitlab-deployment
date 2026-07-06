@@ -74,7 +74,7 @@ locals {
   redis_vip         = local.state.redis.service_vip
   postgres_vip      = local.state.postgres.service_vip
   minio_vip         = local.state.minio.service_vip
-  observability_vip = data.terraform_remote_state.observability_infra.outputs.observability_microk8s_virtual_ip
+  observability_vip = data.terraform_remote_state.observability_provision.outputs.observability_vip
 
   redis_fqdn    = local.state.vault_pki.global_pki_map["harbor-redis"].dns_san[0]
   postgres_fqdn = local.state.vault_pki.global_pki_map["harbor-postgres"].dns_san[0]

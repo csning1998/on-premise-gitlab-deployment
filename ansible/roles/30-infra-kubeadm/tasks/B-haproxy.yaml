@@ -27,3 +27,8 @@
       ansible.builtin.shell: |
         ip addr del {{ kubeadm_ha_vip }}/32 dev enp0s4 || true
       changed_when: false
+
+  rescue:
+    - name: "Block B1: Purge Legacy HA Services failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

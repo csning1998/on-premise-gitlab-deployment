@@ -30,6 +30,11 @@
       when: vault_ca_cert_b64 is defined
       notify: Restart HAProxy
 
+  rescue:
+    - name: "Block B1: Deploy SSL Certificates failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Task B1. Build lb_keepalived_segments filtered to interfaces present in OS"
   ansible.builtin.set_fact:
     lb_keepalived_segments: >-
@@ -60,6 +65,11 @@
         cmd: haproxy -c -f /etc/haproxy/haproxy.cfg
       changed_when: false
 
+  rescue:
+    - name: "Block B2: Configure Keepalived and HAProxy failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block B3: Service Lifecycle"
   block:
     - name: "B3a. Enable and start Keepalived"
@@ -75,6 +85,11 @@
         state: started
         enabled: true
         daemon_reload: true
+
+  rescue:
+    - name: "Block B3: Service Lifecycle failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block B4: Configure Policy-Based Routing for VIPs"
   block:
@@ -105,3 +120,8 @@
         state: started
         enabled: true
         daemon_reload: true
+
+  rescue:
+    - name: "Block B4: Configure Policy-Based Routing for VIPs failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

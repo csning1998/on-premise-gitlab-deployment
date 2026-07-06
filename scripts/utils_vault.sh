@@ -138,18 +138,24 @@ vault_dev_tls_generator() {
   mkdir -p "${DEV_TLS_DIR}"
 
   # Generate CA and Certs
-  run_command "openssl genrsa -out vault/tls/ca-key.pem 2048"
-  run_command "openssl req -new -x509 -days 365 -key vault/tls/ca-key.pem -sha256 -out vault/tls/ca.pem -subj '/CN=DevVaultCA'"
+  run_command "openssl genrsa -out ${DEV_TLS_DIR}/ca-key.pem 2048"
+  run_command "openssl req -new -x509 -days 365 -key ${DEV_TLS_DIR}/ca-key.pem -sha256 -out ${DEV_TLS_DIR}/ca.pem -subj '/CN=DevVaultCA' \
+    -addext 'basicConstraints=critical,CA:TRUE' \
+    -addext 'keyUsage=critical,keyCertSign,cRLSign'"
 
-  run_command "openssl genrsa -out vault/tls/vault-key.pem 2048"
-  run_command "openssl req -subj '/CN=localhost' -sha256 -new -key vault/tls/vault-key.pem -out vault/tls/vault.csr"
+  run_command "openssl genrsa -out ${DEV_TLS_DIR}/vault-key.pem 2048"
+  run_command "openssl req -subj '/CN=localhost' -sha256 -new -key ${DEV_TLS_DIR}/vault-key.pem -out ${DEV_TLS_DIR}/vault.csr"
 
-  echo "subjectAltName = DNS:localhost,IP:127.0.0.1" > "${DEV_TLS_DIR}/extfile.cnf"
+  {
+    echo "subjectAltName = DNS:localhost,IP:127.0.0.1"
+    echo "extendedKeyUsage = serverAuth"
+    echo "keyUsage = digitalSignature,keyEncipherment"
+  } > "${DEV_TLS_DIR}/extfile.cnf"
 
-	run_command "openssl x509 -req -days 365 -sha256 -in vault/tls/vault.csr \
-    -CA vault/tls/ca.pem -CAkey vault/tls/ca-key.pem \
-    -CAcreateserial -out vault/tls/vault.pem \
-    -extfile vault/tls/extfile.cnf"
+	run_command "openssl x509 -req -days 365 -sha256 -in ${DEV_TLS_DIR}/vault.csr \
+    -CA ${DEV_TLS_DIR}/ca.pem -CAkey ${DEV_TLS_DIR}/ca-key.pem \
+    -CAcreateserial -out ${DEV_TLS_DIR}/vault.pem \
+    -extfile ${DEV_TLS_DIR}/extfile.cnf"
 
   rm -f "${DEV_TLS_DIR}/vault.csr" "${DEV_TLS_DIR}/extfile.cnf"
   chmod 600 "${DEV_TLS_DIR}/"*key.pem

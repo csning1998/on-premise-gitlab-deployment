@@ -23,3 +23,8 @@
         repo: "{{ _gitaly_praefect_repo_string }}"
         state: present
         filename: "{{ _gitaly_praefect_repo_data.filename }}"
+
+  rescue:
+    - name: "Block A: Configure GitLab CE Repository failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

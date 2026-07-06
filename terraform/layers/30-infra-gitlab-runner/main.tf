@@ -15,7 +15,7 @@ module "context" {
   primary_role    = var.primary_role
   service_config  = var.service_config
 
-  guest_vm_data = data.vault_generic_secret.guest_vm.data
+  guest_vm_data = data.vault_kv_secret_v2.guest_vm.data
 }
 
 module "infra_gitlab_runner" {

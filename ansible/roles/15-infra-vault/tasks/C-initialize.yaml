@@ -26,7 +26,8 @@
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
       register: bootstrapper_credentials
       delegate_to: localhost
       become: false
@@ -44,7 +45,8 @@
         auth_method: "approle"
         role_id: "{{ vault_approle_role_id }}"
         secret_id: "{{ vault_approle_secret_id }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
         data:
           role_id: "{{ vault_approle_role_id }}"
           secret_id: "{{ vault_approle_secret_id }}"
@@ -53,3 +55,33 @@
       delegate_to: localhost
       become: false
       when: init_result.rc == 0
+
+  rescue:
+    # vault operator init is one-time and irreversible: if it succeeded this run
+    # (init_result.rc == 0) but a later step (C1c-C1e) failed before the root
+    # token and unseal keys were persisted to the bootstrap Vault, those secrets
+    # only exist in this run's in-memory init_result and would otherwise be lost,
+    # leaving the cluster permanently initialized but unsealable. Preserve them
+    # to a local file on the control machine before failing.
+    - name: "C1-rescue1. Preserve Vault init secrets if initialization succeeded but persistence failed"
+      ansible.builtin.copy:
+        content: "{{ init_result.stdout }}"
+        dest: "{{ playbook_dir }}/../../vault-init-emergency.json"
+        mode: "0600"
+      when: init_result is defined and init_result.rc == 0
+      no_log: true
+      delegate_to: localhost
+      become: false
+
+    - name: "Block C1: Initialize Vault Cluster (Primary Only) failed"
+      vars:
+        _c1_emergency_note: >-
+          Vault was newly initialized this run but the root token and unseal keys
+          could not be persisted to the bootstrap Vault; they have been saved to
+          vault-init-emergency.json at the repository root on the Ansible control
+          machine (mode 0600). Retrieve them manually, complete the write to the
+          bootstrap Vault, then delete that file.
+      ansible.builtin.fail:
+        msg: >-
+          {{ ansible_failed_result.msg | default('see task output above') }}
+          {{ _c1_emergency_note if (init_result is defined and init_result.rc == 0) else '' }}

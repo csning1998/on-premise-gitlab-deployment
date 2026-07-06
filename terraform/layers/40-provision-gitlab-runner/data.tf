@@ -45,9 +45,12 @@ data "terraform_remote_state" "minio" {
   config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-gitlab-minio" })
 }
 
-data "terraform_remote_state" "observability_infra" {
+# Reads a sibling L40 layer instead of an L30 layer. 40-provision-observability-frontend
+# must be applied before this layer, since the Mimir FQDN/VIP produced there is consumed
+# below for the metrics-ingestion host alias.
+data "terraform_remote_state" "observability_provision" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/30-infra-observability-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/40-provision-observability-frontend" })
 }
 
 data "terraform_remote_state" "harbor_bootstrapper_oci" {

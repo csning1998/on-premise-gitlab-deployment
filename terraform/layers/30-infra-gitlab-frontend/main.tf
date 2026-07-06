@@ -9,7 +9,7 @@ module "context" {
   infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
   vault_sys_vip            = data.terraform_remote_state.vault_pki.outputs.vault_service_vip
   vault_pki_outputs        = data.terraform_remote_state.vault_pki.outputs
-  guest_vm_data            = data.vault_generic_secret.guest_vm.data
+  guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
 
   target_clusters = var.target_clusters
   primary_role    = var.primary_role

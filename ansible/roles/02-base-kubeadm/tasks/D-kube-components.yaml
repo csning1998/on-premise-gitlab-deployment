@@ -52,4 +52,9 @@
       ansible.builtin.pip:
         name: kubernetes
         state: present
-        extra_args: "--break-system-packages"
+        extra_args: "--break-system-packages --ignore-installed"
+
+  rescue:
+    - name: "Block D. Install Kubernetes components failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

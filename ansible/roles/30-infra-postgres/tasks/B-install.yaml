@@ -14,6 +14,11 @@
         virtualenv: /opt/patroni-venv
         virtualenv_command: /usr/bin/python3 -m venv
 
+  rescue:
+    - name: "Block A1: Prepare Python Environment and Install Patroni failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block A2: Stop and Disable default PostgreSQL service"
   block:
     - name: "A2a. Ensure default postgresql service is stopped"
@@ -22,3 +27,8 @@
         state: stopped
         enabled: false
       failed_when: false
+
+  rescue:
+    - name: "Block A2: Stop and Disable default PostgreSQL service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

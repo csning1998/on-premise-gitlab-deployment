@@ -3,9 +3,17 @@ module "felix_config" {
   source = "../../modules/kubernetes-addons/calico-felix-config"
 }
 
+# Each L40 layer targets its own Kubernetes cluster, so this namespace is declared
+# independently per layer rather than shared; it is not a duplicate to be consolidated.
+resource "kubernetes_namespace" "vault_auth" {
+  metadata {
+    name = "vault-auth"
+  }
+}
+
 module "platform_trust_engine" {
   source     = "../../modules/kubernetes-addons/platform-trust-engine"
-  depends_on = [module.felix_config]
+  depends_on = [module.felix_config, kubernetes_namespace.vault_auth]
   providers  = { vault = vault.production }
 
   api_server_connection = {
@@ -28,7 +36,7 @@ module "platform_trust_engine" {
 
   reviewer_service_account = {
     name      = "vault-reviewer"
-    namespace = "default"
+    namespace = kubernetes_namespace.vault_auth.metadata[0].name
   }
 
   helm_config = {

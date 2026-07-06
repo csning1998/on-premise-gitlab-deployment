@@ -17,7 +17,8 @@
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
       register: bootstrapper_credentials
       delegate_to: localhost
       become: false
@@ -42,7 +43,8 @@
         auth_method: "approle"
         role_id: "{{ vault_approle_role_id }}"
         secret_id: "{{ vault_approle_secret_id }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
       register: unseal_secrets
       delegate_to: localhost
       become: false
@@ -65,6 +67,11 @@
       register: unseal_result
       changed_when: "'Sealed: false' in unseal_result.stdout"
       when: vault_unseal_keys is defined
+
+  rescue:
+    - name: "Block D1: Unseal Primary Node failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block D2: Raft Join and Unseal Replica Nodes"
   become: true
@@ -90,7 +97,8 @@
         url: "{{ dev_vault_url }}"
         engine_mount_point: "secret"
         path: "{{ dev_vault_api_path }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
       register: bootstrapper_credentials
       delegate_to: localhost
       become: false
@@ -115,7 +123,8 @@
         auth_method: "approle"
         role_id: "{{ vault_approle_role_id }}"
         secret_id: "{{ vault_approle_secret_id }}"
-        validate_certs: false
+        validate_certs: true
+        ca_cert: "{{ playbook_dir }}/../../vault/tls/ca.pem"
       register: unseal_secrets
       delegate_to: localhost
       become: false
@@ -136,18 +145,57 @@
       changed_when: "'Sealed: false' in unseal_result.stdout"
       when: vault_unseal_keys is defined
 
+  rescue:
+    - name: "Block D2: Raft Join and Unseal Replica Nodes failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block D3: Verify Vault Cluster Availability"
   become: true
   when: inventory_hostname in groups['primary']
   block:
+    - name: "D3a0. Create temporary CA file for health check"
+      ansible.builtin.tempfile:
+        state: file
+        suffix: .crt
+      register: vault_health_ca_file
+      delegate_to: localhost
+      become: false
+
+    - name: "D3a1. Write Vault CA to temp file"
+      ansible.builtin.copy:
+        content: "{{ vault_ca_cert_b64 | b64decode }}"
+        dest: "{{ vault_health_ca_file.path }}"
+        mode: "0600"
+      delegate_to: localhost
+      become: false
+
     - name: "D3a. Wait for Vault VIP to be Active (200 OK)"
       ansible.builtin.uri:
         url: "https://{{ vault_vip }}:443/v1/sys/health"
-        validate_certs: false
+        validate_certs: true
+        ca_path: "{{ vault_health_ca_file.path }}"
         status_code: 200
       register: health_check
       until: health_check.status == 200
       retries: 60
       delay: 2
+      delegate_to: localhost
+      become: false
+
+  rescue:
+    - name: "Block D3: Verify Vault Cluster Availability failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
+  always:
+    - name: "D3b. Clean up temporary Vault CA file"
+      ansible.builtin.file:
+        path: "{{ vault_health_ca_file.path }}"
+        state: absent
+      when:
+        - inventory_hostname in groups['primary']
+        - vault_health_ca_file is defined
+        - vault_health_ca_file.path is defined
       delegate_to: localhost
       become: false

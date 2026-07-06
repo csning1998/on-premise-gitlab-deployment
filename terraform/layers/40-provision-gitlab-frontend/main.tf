@@ -13,10 +13,18 @@ module "felix_config" {
   depends_on = [module.tigera_calico]
 }
 
+# Each L40 layer targets its own Kubernetes cluster, so this namespace is declared
+# independently per layer rather than shared; it is not a duplicate to be consolidated.
+resource "kubernetes_namespace" "vault_auth" {
+  metadata {
+    name = "vault-auth"
+  }
+}
+
 # [REFACTORED] Trust Engine Integration
 module "platform_trust_engine" {
   source     = "../../modules/kubernetes-addons/platform-trust-engine"
-  depends_on = [module.tigera_calico] # Ensure CNI is ready before installing Cert-Manager
+  depends_on = [module.tigera_calico, kubernetes_namespace.vault_auth] # Ensure CNI and namespace are ready before installing Cert-Manager
   providers  = { vault = vault.production }
 
   # 1. K8s Cluster Connection (for Vault to call back)
@@ -43,7 +51,7 @@ module "platform_trust_engine" {
   # 4. Reviewer Identity (The entity that validates tokens)
   reviewer_service_account = {
     name      = "vault-reviewer"
-    namespace = "default"
+    namespace = kubernetes_namespace.vault_auth.metadata[0].name
   }
 
   # 5. Helm Chart Installation

@@ -82,7 +82,7 @@ locals {
   vip_postgres      = local.state.postgres.connection_info.host
   vip_minio         = local.state.minio.connection_info.host
   vip_harbor        = local.state.harbor_frontend.harbor_microk8s_virtual_ip
-  vip_observability = data.terraform_remote_state.observability_infra.outputs.observability_microk8s_virtual_ip
+  vip_observability = data.terraform_remote_state.observability_provision.outputs.observability_vip
 
   mimir_fqdn = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
 

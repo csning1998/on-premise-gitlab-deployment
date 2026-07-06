@@ -18,3 +18,8 @@
         group: root
         mode: "0644"
       notify: Restart Patroni
+
+  rescue:
+    - name: "Block B1: Configure Patroni Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

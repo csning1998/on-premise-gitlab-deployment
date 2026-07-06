@@ -29,3 +29,8 @@
       loop:
         - "{{ _etcd_base_temp_path }}"
         - "{{ _etcd_base_temp_extract_path }}"
+
+  rescue:
+    - name: "Block: Install etcd Binaries failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

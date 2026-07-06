@@ -41,3 +41,8 @@
         state: stopped
         enabled: false
       failed_when: false
+
+  rescue:
+    - name: "Block A: Install PostgreSQL Server via Official Apt Repository failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

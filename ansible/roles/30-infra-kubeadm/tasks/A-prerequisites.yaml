@@ -23,6 +23,11 @@
         msg: "Could not dynamically determine the advertisement IP using prefix exclusion."
       when: kubeadm_advertise_ip is not defined
 
+  rescue:
+    - name: "Block A1: Dynamically discover the Host-only network interface for Kubeadm failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block A2: Establish Certificate Trust for Containerd & OS"
   become: true
   block:
@@ -45,6 +50,11 @@
       ansible.builtin.command: update-ca-certificates
       changed_when: true
       notify: Restart containerd service
+
+  rescue:
+    - name: "Block A2: Establish Certificate Trust for Containerd & OS failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block A3: Configure Containerd Registry endpoint"
   become: true
@@ -71,3 +81,8 @@
         mode: "0644"
       notify: Restart containerd service
       loop: "{{ _containerd_registry_configs }}"
+
+  rescue:
+    - name: "Block A3: Configure Containerd Registry endpoint failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

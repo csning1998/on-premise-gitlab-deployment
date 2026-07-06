@@ -49,3 +49,8 @@
       loop:
         - /etc/haproxy/conf.d
         - /etc/keepalived/conf.d
+
+  rescue:
+    - name: "Block: Install Proxy Components failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

@@ -125,6 +125,11 @@
       when: kubelet_cert_check.rc != 0
       changed_when: true
 
+  rescue:
+    - name: "Block C1: Fix MicroK8s Network & Certificates (Host-only) failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Block C2: Stabilize MicroK8s & Built-in Calico"
   become: true
   block:
@@ -167,3 +172,8 @@
       loop: "{{ stale_nodes }}"
       when: stale_nodes is defined and stale_nodes | length > 0
       changed_when: true
+
+  rescue:
+    - name: "Block C2: Stabilize MicroK8s & Built-in Calico failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

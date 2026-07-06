@@ -19,3 +19,8 @@
         name: ssh
         state: started
         enabled: true
+
+  rescue:
+    - name: "Block A. Run OS prerequisites setup failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

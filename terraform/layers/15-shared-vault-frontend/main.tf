@@ -8,7 +8,7 @@ module "context" {
   global_network_baseline  = data.terraform_remote_state.metadata.outputs.global_network_baseline
   global_vault_pki_b64     = data.terraform_remote_state.metadata.outputs.global_vault_pki_b64
   infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
-  guest_vm_data            = data.vault_generic_secret.guest_vm.data
+  guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
 
   target_clusters = var.target_clusters
   primary_role    = var.primary_role

@@ -20,9 +20,10 @@ data "terraform_remote_state" "vault_pki" {
   config  = merge(local._state_auth, { address = "${local._state_base}/25-security-pki" })
 }
 
-data "vault_generic_secret" "guest_vm" {
+data "vault_kv_secret_v2" "guest_vm" {
   provider = vault.production
-  path     = "secret/on-premise-gitlab-deployment/guest_vm"
+  mount    = "secret"
+  name     = "on-premise-gitlab-deployment/guest_vm"
 }
 
 data "vault_kv_secret_v2" "gitaly_secrets" {

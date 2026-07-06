@@ -71,6 +71,11 @@
         - gitlab_frontend_vip is defined
         - gitlab_external_url is defined
 
+  rescue:
+    - name: "Block A1: Render Service Configuration failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
+
 - name: "Role 82: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
     name: 82-utils-vault-agent
@@ -105,6 +110,11 @@
     - name: "A2b. Force update system CA certificates (idempotent guard)"
       ansible.builtin.command: update-ca-certificates
       changed_when: false
+
+  rescue:
+    - name: "Block A2: Trust Vault CA for System and Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
 - name: "Block B: Start and Enable Service"
   block:
@@ -167,3 +177,8 @@
         (_svc_secrets_rendered.changed | default(false)) or
         (_svc_secrets_cleaned.changed | default(false)) or
         (_svc_health_status.rc | default(1) != 0)
+
+  rescue:
+    - name: "Block B: Start and Enable Service failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

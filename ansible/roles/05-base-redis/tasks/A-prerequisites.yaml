@@ -12,3 +12,8 @@
         regexp: '^([^#].*?\sswap\s+.*)$'
         replace: '# \1'
       when: ansible_facts['swaptotal_mb'] | default(0) > 0
+
+  rescue:
+    - name: "Block A: Run OS prerequisites for Redis failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
