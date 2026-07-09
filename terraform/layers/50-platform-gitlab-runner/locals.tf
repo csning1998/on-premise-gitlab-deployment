@@ -62,3 +62,9 @@ locals {
   mimir_fqdn             = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
 }
+
+# 5. Node Exporter Context
+locals {
+  node_exporter_port = local.state.provision.node_exporter_targets.port
+  node_exporter_ips  = local.state.provision.node_exporter_targets.ips
+}

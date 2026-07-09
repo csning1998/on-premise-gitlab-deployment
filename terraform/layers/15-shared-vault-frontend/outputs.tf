@@ -19,3 +19,11 @@ output "vault_api_port" {
   description = "Vault API frontend port for L40 consumption."
   value       = module.context.primary_net_config.lb_config.ports["api"].frontend_port
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets (per-node IPs and port) for the Vault frontend VM fleet."
+  value = {
+    ips  = module.context.svc_network.node_ips
+    port = module.context.node_exporter_port
+  }
+}

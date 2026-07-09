@@ -26,5 +26,7 @@ output "observability_targets" {
   description = "Observability scrape endpoint for MinIO."
   value = {
     minio_metrics_port = module.context.svc_network.ports["api"].frontend_port
+    minio_node_ips     = module.context.svc_network.node_ips
+    node_exporter_port = module.context.node_exporter_port
   }
 }

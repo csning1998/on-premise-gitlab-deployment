@@ -175,45 +175,54 @@ module "alloy" {
   vm_static_targets = concat(
     [
       {
-        address = "${local.postgres_vip}:${local.port_postgres_exporter}",
+        address = "${local.postgres_vip}:${local.postgres_exporter_port}",
         job     = "gitlab-postgres-exporter",
         labels  = { component = "postgres" }
       },
       {
-        address = "${local.redis_vip}:${local.port_redis_exporter}",
+        address = "${local.redis_vip}:${local.redis_exporter_port}",
         job     = "gitlab-redis-exporter",
         labels  = { component = "redis" }
       },
     ],
     [for ip in local.etcd_ips : {
-      address = "${ip}:${local.port_etcd_client}"
+      address = "${ip}:${local.etcd_client_port}"
       job     = "gitlab-etcd"
       labels  = { component = "etcd", instance = ip }
     }],
     [for ip in local.gitaly_ips : {
-      address = "${ip}:${local.port_gitaly_metrics}"
+      address = "${ip}:${local.gitaly_metrics_port}"
       job     = "gitlab-gitaly"
       labels  = { component = "gitaly", instance = ip }
     }],
     local.has_praefect ? [for ip in local.praefect_ips : {
-      address = "${ip}:${local.port_praefect_metrics}"
+      address = "${ip}:${local.praefect_metrics_port}"
       job     = "gitlab-praefect"
       labels  = { component = "praefect", instance = ip }
     }] : [],
     local.has_praefect ? [for ip in local.praefect_patroni_ips : {
-      address = "${ip}:${local.port_praefect_patroni_pg_exp}"
+      address = "${ip}:${local.praefect_patroni_pg_exp_port}"
       job     = "gitlab-praefect-patroni-postgres"
       labels  = { component = "praefect-patroni-postgres", instance = ip }
     }] : [],
     local.has_praefect ? [for ip in local.praefect_patroni_ips : {
-      address = "${ip}:${local.port_praefect_patroni_etcd}"
+      address = "${ip}:${local.praefect_patroni_etcd_port}"
       job     = "gitlab-praefect-patroni-etcd"
       labels  = { component = "praefect-patroni-etcd", instance = ip }
-    }] : []
+    }] : [],
+    flatten([
+      for component, ips in local.node_exporter_ip_groups : [
+        for ip in ips : {
+          address = "${ip}:${local.node_exporter_port}"
+          job     = "gitlab-node"
+          labels  = { component = component, instance = ip }
+        }
+      ]
+    ])
   )
 
   minio_scrape_targets = [{
-    address = "${local.minio_vip}:${local.port_minio_metrics}"
+    address = "${local.minio_vip}:${local.minio_metrics_port}"
     job     = "gitlab-minio"
     labels  = { component = "minio" }
   }]

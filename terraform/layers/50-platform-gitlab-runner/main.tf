@@ -55,4 +55,10 @@ module "alloy" {
     tenant_id             = "gitlab-runner"
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
+
+  vm_static_targets = [for ip in local.node_exporter_ips : {
+    address = "${ip}:${local.node_exporter_port}"
+    job     = "gitlab-runner-node"
+    labels  = { component = "microk8s", instance = ip }
+  }]
 }

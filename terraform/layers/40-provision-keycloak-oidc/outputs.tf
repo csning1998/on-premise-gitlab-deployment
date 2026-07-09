@@ -45,6 +45,11 @@ output "keycloak_groups" {
   value = var.keycloak_groups
 }
 
+output "node_exporter_targets" {
+  description = "Node Exporter scrape target for the Keycloak node."
+  value       = local.state.keycloak.node_exporter_targets
+}
+
 # Since GitLab CE does not support native OIDC inventory/sync,
 # this user data must be passed via remote states to enable shadow account provisioning in Layer 60.
 output "oidc_users" {

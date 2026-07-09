@@ -1,0 +1,20 @@
+---
+- name: "Block: Install and Enable Node Exporter"
+  become: true
+  block:
+    - name: "Step 1. Install prometheus-node-exporter package"
+      ansible.builtin.apt:
+        name: "{{ node_exporter_base.package }}"
+        state: present
+        update_cache: true
+
+    - name: "Step 2. Enable and start prometheus-node-exporter"
+      ansible.builtin.systemd:
+        name: "{{ node_exporter_base.service }}"
+        state: started
+        enabled: true
+
+  rescue:
+    - name: "Block: Install and Enable Node Exporter failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

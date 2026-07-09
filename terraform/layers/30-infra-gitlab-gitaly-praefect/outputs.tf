@@ -44,5 +44,6 @@ output "observability_targets" {
     gitaly_node_ips               = module.context.tier_network_map["gitaly"].node_ips
     praefect_node_ips             = module.context.tier_network_map["praefect"].node_ips
     praefect_patroni_node_ips     = module.context.tier_network_map["praefect-patroni"].node_ips
+    node_exporter_port            = module.context.node_exporter_port
   }
 }

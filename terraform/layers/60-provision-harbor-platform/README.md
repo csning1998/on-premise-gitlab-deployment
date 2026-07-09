@@ -35,3 +35,16 @@ For the production Harbor instance running on MicroK8s, the database is hosted e
 5. **Proxy cache projects**. Each proxy project pulls external images on demand directly from its upstream registry such as `gcr.io` or `docker.io`, and Production Harbor caches the image on first pull. The upstream endpoint and provider type are inherited from the Bootstrapper proxy cache definitions so both Harbors target the same upstreams.
 6. **Per team CI robots**. Each team has a dedicated `ci-{team}` robot that can push, pull, and tag on its own `team-{name}` project and can only pull from the shared project.
 7. **Robot credentials in Vault**. Each robot username and secret is written to Vault at `secret/on-premise-gitlab-deployment/harbor/robots/{team}` so the GitLab layer can consume them. See [60-provision-gitlab-platform/README.md](../60-provision-gitlab-platform/README.md) for how they become CI/CD variables.
+
+## Known Issue: Use `-parallelism=2` for `plan`/`apply`
+
+This layer refreshes a large number of `harbor_project`, `harbor_group`, `harbor_registry`, and `harbor_project_member_group` resources. At Terraform's default parallelism (10), the production Harbor API intermittently returns `401 Unauthorized` or `500 Internal Server Error` on some of the concurrent refresh calls, causing the plan to fail outright. This is a load/concurrency limitation on the Harbor side, not a configuration error; retrying with fewer concurrent requests resolves it reliably.
+
+Always run:
+
+```bash
+terraform plan -parallelism=2
+terraform apply -parallelism=2
+```
+
+If a run still fails with scattered `401`/`500` errors during the refresh phase (before any `Error: [ERROR] unexpected status code got: 409` conflict), just retry the same command; nothing was mutated yet at that point.

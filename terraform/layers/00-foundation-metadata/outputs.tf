@@ -84,11 +84,6 @@ output "global_dns_records" {
   value       = local.global_dns_records
 }
 
-output "mimir_tenants" {
-  description = "Ordered list of Mimir tenant IDs for external K8s cluster Alloys; consumed by the observability layer for Grafana datasource provisioning."
-  value       = var.observability_config.mimir_tenants
-}
-
 output "global_vault_pki_b64" {
   description = "Base64 encoded TLS artifacts for the Bootstrap Vault instance."
   sensitive   = true

@@ -18,3 +18,11 @@ output "k8s_api_port" {
   description = "K8s API server frontend port for L40 consumption."
   value       = module.context.svc_network.ports["api-server"].frontend_port
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Harbor MicroK8s VM fleet."
+  value = {
+    ips  = local.ansible_template_vars.microk8s_cluster_ips
+    port = module.context.node_exporter_port
+  }
+}

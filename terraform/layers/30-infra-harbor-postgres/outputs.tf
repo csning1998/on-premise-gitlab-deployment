@@ -21,7 +21,9 @@ output "observability_targets" {
   description = "Observability scrape endpoints for Harbor PostgreSQL and Etcd."
   value = {
     postgres_metrics_port = module.context.svc_network.ports["metrics"].frontend_port
+    postgres_node_ips     = module.context.svc_network.node_ips
     etcd_client_port      = module.context.tier_network_map["etcd"].ports["client"].frontend_port
     etcd_node_ips         = module.context.tier_network_map["etcd"].node_ips
+    node_exporter_port    = module.context.node_exporter_port
   }
 }

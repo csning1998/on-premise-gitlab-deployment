@@ -26,3 +26,8 @@ output "minio_api_port" {
   description = "Pass-through MinIO API port from L30 infra state for L50 consumption"
   value       = local.state.minio.minio_api_port
 }
+
+output "observability_targets" {
+  description = "Observability scrape endpoint for Observability MinIO."
+  value       = local.state.minio.observability_targets
+}

@@ -114,12 +114,24 @@ locals {
 # Observability Endpoint Context
 locals {
   mimir_tenant_id        = "harbor"
-  port_postgres_exporter = local.state.provision_databases.observability_targets.port_postgres_exporter
-  port_redis_exporter    = local.state.provision_databases.observability_targets.port_redis_exporter
-  port_etcd_client       = local.state.provision_databases.observability_targets.port_etcd_client
+  postgres_exporter_port = local.state.provision_databases.observability_targets.postgres_exporter_port
+  redis_exporter_port    = local.state.provision_databases.observability_targets.redis_exporter_port
+  etcd_client_port       = local.state.provision_databases.observability_targets.etcd_client_port
 
   postgres_vip = local.state.provision_databases.postgres_connection_info.host
   redis_vip    = local.state.provision_databases.redis_connection_info.host
   minio_vip    = local.state.provision_databases.minio_connection_info.host
   etcd_ips     = local.state.provision_databases.observability_targets.etcd_ips
+}
+
+# Node Exporter Context
+locals {
+  node_exporter_port = local.state.provision.node_exporter_targets.port
+  node_exporter_ip_groups = {
+    postgres = local.state.provision_databases.observability_targets.postgres_ips
+    redis    = local.state.provision_databases.observability_targets.redis_ips
+    minio    = local.state.provision_databases.observability_targets.minio_ips
+    etcd     = local.etcd_ips
+    microk8s = local.state.provision.node_exporter_targets.ips
+  }
 }

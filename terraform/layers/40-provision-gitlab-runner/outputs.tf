@@ -17,3 +17,8 @@ output "network_context" {
     gitlab_frontend_vip = data.terraform_remote_state.gitlab_frontend.outputs.service_vip
   }
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the GitLab Runner MicroK8s VM fleet."
+  value       = local.state.runner_cluster.node_exporter_targets
+}

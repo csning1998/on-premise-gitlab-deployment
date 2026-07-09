@@ -1,0 +1,388 @@
+{
+    "title": "Kubernetes / Cluster Overview",
+    "uid": "k8s-cluster-overview",
+    "description": "Kubernetes cluster overview using kubelet and cAdvisor metrics (no kube-state-metrics required)",
+    "schemaVersion": 38,
+    "version": 1,
+    "editable": false,
+    "graphTooltip": 1,
+    "timezone": "browser",
+    "tags": [
+        "kubernetes",
+        "kubelet",
+        "cadvisor"
+    ],
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "refresh": "30s",
+    "templating": {
+        "list": [
+            {
+                "name": "datasource",
+                "type": "datasource",
+                "pluginId": "prometheus",
+                "label": "Datasource",
+                "hide": 0,
+                "current": {}
+            },
+            {
+                "name": "cluster",
+                "type": "query",
+                "label": "Cluster",
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                },
+                "definition": "label_values(kubelet_running_pods, cluster)",
+                "query": {
+                    "query": "label_values(kubelet_running_pods, cluster)",
+                    "refId": "StandardVariableQuery"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
+                "refresh": 2,
+                "sort": 1
+            },
+            {
+                "name": "namespace",
+                "type": "query",
+                "label": "Namespace",
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                },
+                "definition": "label_values(container_memory_working_set_bytes{cluster=\"$cluster\", namespace!=\"\"}, namespace)",
+                "query": {
+                    "query": "label_values(container_memory_working_set_bytes{cluster=\"$cluster\", namespace!=\"\"}, namespace)",
+                    "refId": "StandardVariableQuery"
+                },
+                "hide": 0,
+                "includeAll": true,
+                "multi": true,
+                "allValue": ".+",
+                "refresh": 2,
+                "sort": 1
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Running Pods",
+            "type": "stat",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 20
+                            },
+                            {
+                                "color": "red",
+                                "value": 50
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum(kubelet_running_pods{cluster=\"$cluster\"})",
+                    "legendFormat": "Pods",
+                    "instant": true
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "title": "Running Containers",
+            "type": "stat",
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "colorMode": "background",
+                "graphMode": "none",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 50
+                            },
+                            {
+                                "color": "red",
+                                "value": 100
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum(kubelet_running_containers{cluster=\"$cluster\", container_state=\"running\"})",
+                    "legendFormat": "Containers",
+                    "instant": true
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "CPU Usage by Pod",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ]
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "custom": {
+                        "lineInterpolation": "smooth"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[5m]))",
+                    "legendFormat": "{{namespace}}/{{pod}}"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "Memory Working Set by Pod",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ]
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes",
+                    "custom": {
+                        "lineInterpolation": "smooth"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (pod, namespace) (container_memory_working_set_bytes{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\", container!=\"POD\"})",
+                    "legendFormat": "{{namespace}}/{{pod}}"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "Network Receive by Pod",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ]
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "Bps",
+                    "custom": {
+                        "lineInterpolation": "smooth"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (pod, namespace) (rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[5m]))",
+                    "legendFormat": "{{namespace}}/{{pod}}"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "title": "Network Transmit by Pod",
+            "type": "timeseries",
+            "gridPos": {
+                "x": 12,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ]
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "Bps",
+                    "custom": {
+                        "lineInterpolation": "smooth"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${datasource}"
+                    },
+                    "expr": "sum by (pod, namespace) (rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[5m]))",
+                    "legendFormat": "{{namespace}}/{{pod}}"
+                }
+            ]
+        }
+    ]
+}

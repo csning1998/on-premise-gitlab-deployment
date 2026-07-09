@@ -61,8 +61,20 @@ locals {
   central_lb_ips                      = local.state.provision.vm_scrape_targets.central_lb_ips
   vault_metrics_address               = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   keycloak_metrics_address            = local.state.provision.vm_scrape_targets.keycloak_metrics_address
+  keycloak_node_ip                    = local.state.provision.vm_scrape_targets.keycloak_node_ip
   harbor_bootstrapper_metrics_address = local.state.provision.vm_scrape_targets.harbor_bootstrapper_metrics_address
-  mimir_tenants_extra                 = local.state.provision.vm_scrape_targets.mimir_tenants
+}
+
+# Node Exporter Context
+locals {
+  node_exporter_port = local.state.provision.node_exporter_targets.port
+  node_exporter_ip_groups = {
+    microk8s            = local.state.provision.node_exporter_targets.ips
+    central-lb          = local.central_lb_ips
+    keycloak            = [local.keycloak_node_ip]
+    harbor-bootstrapper = local.state.harbor_bootstrapper.node_exporter_targets.ips
+    vault               = local.state.vault_pki.vault_node_exporter_targets.ips
+  }
 }
 
 # CA Bundle Configuration

@@ -17,3 +17,8 @@ output "network_context" {
     vault_api_port     = local.state.vault_frontend.vault_api_port
   }
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Harbor MicroK8s VM fleet."
+  value       = local.state.microk8s_provision.node_exporter_targets
+}

@@ -35,7 +35,15 @@ output "vm_scrape_targets" {
     haproxy_stats_port                  = local.network_central_lb.ports["stats"].frontend_port
     central_lb_ips                      = local.network_central_lb.node_ips
     keycloak_metrics_address            = "${local.network_keycloak.node_ips[0]}:${local.network_keycloak.ports["mgmt"].frontend_port}"
+    keycloak_node_ip                    = local.network_keycloak.node_ips[0]
     harbor_bootstrapper_metrics_address = "${local.network_harbor_bootstrapper.node_ips[0]}:${local.network_harbor_bootstrapper.ports["metrics"].frontend_port}"
-    mimir_tenants                       = data.terraform_remote_state.load_balancer.outputs.mimir_tenants
+  }
+}
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Observability MicroK8s VM fleet."
+  value = {
+    ips  = local.ansible_template_vars.microk8s_cluster_ips
+    port = module.context.node_exporter_port
   }
 }

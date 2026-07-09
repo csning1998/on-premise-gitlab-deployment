@@ -16,10 +16,11 @@ variable "global_pki_map" {
 }
 
 variable "global_network_baseline" {
-  description = "Global network baseline parameters (MSS, MTU) from Layer 00 metadata."
+  description = "Global network baseline parameters (MSS, MTU, Node Exporter port) from Layer 00 metadata."
   type = object({
-    global_mss = number
-    global_mtu = number
+    global_mss         = number
+    global_mtu         = number
+    node_exporter_port = number
   })
 }
 

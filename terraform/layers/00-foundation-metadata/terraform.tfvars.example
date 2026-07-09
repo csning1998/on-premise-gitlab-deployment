@@ -3,12 +3,13 @@ domain_suffix      = "iac.internal"
 vault_kv_namespace = "on-premise-gitlab-deployment"
 
 network_baseline = {
-  cidr_block    = "172.16.0.0/16"
-  vip_offset    = 250        # VIP always .250
-  node_ip_start = 200        # node ip from .200
-  mac_prefix    = "52:54:00" # KVM/Libvirt common prefix
-  global_mtu    = 1450
-  global_mss    = 1360
+  cidr_block         = "172.16.0.0/16"
+  vip_offset         = 250        # VIP always .250
+  node_ip_start      = 200        # node ip from .200
+  mac_prefix         = "52:54:00" # KVM/Libvirt common prefix
+  global_mtu         = 1450
+  global_mss         = 1360
+  node_exporter_port = 9100 # Debian/Ubuntu prometheus-node-exporter package default
 }
 
 # The Single Source of Truth for the Root CA Identity

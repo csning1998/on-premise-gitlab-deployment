@@ -55,21 +55,30 @@ module "alloy" {
   vm_static_targets = concat(
     [
       {
-        address = "${local.postgres_vip}:${local.port_postgres_exporter}",
+        address = "${local.postgres_vip}:${local.postgres_exporter_port}",
         job     = "harbor-postgres-exporter",
         labels  = { component = "postgres" }
       },
       {
-        address = "${local.redis_vip}:${local.port_redis_exporter}",
+        address = "${local.redis_vip}:${local.redis_exporter_port}",
         job     = "harbor-redis-exporter",
         labels  = { component = "redis" }
       },
     ],
     [for ip in local.etcd_ips : {
-      address = "${ip}:${local.port_etcd_client}"
+      address = "${ip}:${local.etcd_client_port}"
       job     = "harbor-etcd"
       labels  = { component = "etcd", instance = ip }
-    }]
+    }],
+    flatten([
+      for component, ips in local.node_exporter_ip_groups : [
+        for ip in ips : {
+          address = "${ip}:${local.node_exporter_port}"
+          job     = "harbor-node"
+          labels  = { component = component, instance = ip }
+        }
+      ]
+    ])
   )
 
   minio_scrape_targets = [{

@@ -34,6 +34,11 @@ output "vm_scrape_targets" {
   value       = local.state.microk8s_provision.vm_scrape_targets
 }
 
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Observability MicroK8s VM fleet."
+  value       = local.state.microk8s_provision.node_exporter_targets
+}
+
 output "vault_api_port" {
   description = "Vault API frontend port for L50 consumption."
   value       = local.state.vault_frontend.vault_api_port

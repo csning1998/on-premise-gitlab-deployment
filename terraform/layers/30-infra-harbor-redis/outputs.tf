@@ -21,5 +21,7 @@ output "observability_targets" {
   description = "Observability scrape endpoint for Harbor Redis."
   value = {
     redis_metrics_port = module.context.svc_network.ports["metrics"].frontend_port
+    redis_node_ips     = module.context.svc_network.node_ips
+    node_exporter_port = module.context.node_exporter_port
   }
 }

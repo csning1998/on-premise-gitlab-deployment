@@ -26,3 +26,14 @@
       when:
         - groups['gitaly'] | default([]) | length > 0
         - inventory_hostname == groups['gitaly'][0]
+
+- name: "Play: Operation - Install Node Exporter on Existing Fleet"
+  hosts: all
+  become: true
+  gather_facts: true
+  tags: [node-exporter-install]
+  tasks:
+    - name: "Execute Node Exporter installation only"
+      ansible.builtin.include_role:
+        name: 00-base-common
+        tasks_from: node-exporter.yaml

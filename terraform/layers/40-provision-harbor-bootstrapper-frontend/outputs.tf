@@ -18,6 +18,11 @@ output "harbor_registry_fqdn" {
   value = local.state.harbor_bootstrapper.harbor_bootstrapper_fqdn
 }
 
+output "node_exporter_targets" {
+  description = "Node Exporter scrape target for the Harbor Bootstrapper node."
+  value       = local.state.harbor_bootstrapper.node_exporter_targets
+}
+
 output "helm_pusher_robot_username" {
   value = harbor_robot_account.helm_pusher.full_name
 }

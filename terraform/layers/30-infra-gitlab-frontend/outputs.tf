@@ -44,3 +44,11 @@ output "ingress_https_node_port" {
   description = "K8s ingress HTTPS backend nodePort for L40/L50 consumption."
   value       = module.context.svc_network.ports["ingress-https"].backend_port
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Kubeadm VM fleet (master and worker share one network segment)."
+  value = {
+    ips  = module.context.svc_network.node_ips
+    port = module.context.node_exporter_port
+  }
+}

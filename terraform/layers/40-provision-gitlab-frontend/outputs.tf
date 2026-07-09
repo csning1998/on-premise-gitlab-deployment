@@ -44,3 +44,8 @@ output "gitaly_observability_targets" {
   description = "Observability endpoints for Gitaly and Praefect."
   value       = local.state.gitaly_praefect.observability_targets
 }
+
+output "kubeadm_node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Kubeadm VM fleet."
+  value       = local.state.kubeadm.node_exporter_targets
+}

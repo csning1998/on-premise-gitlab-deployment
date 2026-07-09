@@ -50,3 +50,6 @@
   loop:
     - net.ipv4.conf.all.rp_filter
     - net.ipv4.conf.default.rp_filter
+
+- name: "Observability: Install and enable Node Exporter"
+  ansible.builtin.include_tasks: node-exporter.yaml

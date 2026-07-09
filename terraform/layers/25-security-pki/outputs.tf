@@ -79,6 +79,11 @@ output "ca_cert_path" {
   value       = local.state.vault_sys.ca_cert_path
 }
 
+output "vault_node_exporter_targets" {
+  description = "Pass-through of L15 Vault frontend VM fleet Node Exporter targets; consumed by L50 observability for VM-level scraping."
+  value       = local.state.vault_sys.node_exporter_targets
+}
+
 output "global_vault_pki_b64" {
   description = "Pass-through of L00 Bootstrap Vault TLS artifacts (CA cert, server cert/key, HAProxy bundle); consumed by L30+ as the trust chain root."
   value       = local.state.metadata.global_vault_pki_b64

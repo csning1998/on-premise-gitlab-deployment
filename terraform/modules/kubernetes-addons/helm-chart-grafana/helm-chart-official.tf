@@ -49,44 +49,27 @@ resource "helm_release" "grafana" {
     datasources = {
       "datasources.yaml" = {
         apiVersion = 1
-        datasources = concat(
-          [
-            {
-              name      = "Mimir"
-              type      = "prometheus"
-              url       = var.datasources_config.mimir_url
-              access    = "proxy"
-              isDefault = true
-              jsonData = {
-                httpHeaderName1 = "X-Scope-OrgID"
-              }
-              secureJsonData = {
-                httpHeaderValue1 = var.datasources_config.mimir_tenant_id
-              }
-            },
-            {
-              name   = "Loki"
-              type   = "loki"
-              url    = var.datasources_config.loki_url
-              access = "proxy"
+        datasources = [
+          {
+            name      = "Mimir"
+            type      = "prometheus"
+            url       = var.datasources_config.mimir_url
+            access    = "proxy"
+            isDefault = true
+            jsonData = {
+              httpHeaderName1 = "X-Scope-OrgID"
             }
-          ],
-          [
-            for tenant in var.datasources_config.mimir_tenants_extra : {
-              name      = "Mimir (${tenant})"
-              type      = "prometheus"
-              url       = var.datasources_config.mimir_url
-              access    = "proxy"
-              isDefault = false
-              jsonData = {
-                httpHeaderName1 = "X-Scope-OrgID"
-              }
-              secureJsonData = {
-                httpHeaderValue1 = tenant
-              }
+            secureJsonData = {
+              httpHeaderValue1 = var.datasources_config.mimir_tenant_id
             }
-          ]
-        )
+          },
+          {
+            name   = "Loki"
+            type   = "loki"
+            url    = var.datasources_config.loki_url
+            access = "proxy"
+          }
+        ]
       }
     }
   })]

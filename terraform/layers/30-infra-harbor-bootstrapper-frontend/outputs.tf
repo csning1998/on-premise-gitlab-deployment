@@ -28,3 +28,11 @@ output "ssh_config_file_path" {
   description = "The path to the generated SSH configuration file."
   value       = module.infra_harbor_bootstrapper.ssh_config_file_path
 }
+
+output "node_exporter_targets" {
+  description = "Node Exporter scrape target for the Harbor Bootstrapper node."
+  value = {
+    ips  = module.context.svc_network.node_ips
+    port = module.context.node_exporter_port
+  }
+}

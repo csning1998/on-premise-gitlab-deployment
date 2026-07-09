@@ -43,12 +43,13 @@ variable "pki_force_rotate" {
 variable "network_baseline" {
   description = "Base network configuration including CIDR, VIP offsets, and MAC prefixes."
   type = object({
-    cidr_block    = string
-    vip_offset    = number
-    node_ip_start = number
-    mac_prefix    = string
-    global_mtu    = number
-    global_mss    = number
+    cidr_block         = string
+    vip_offset         = number
+    node_ip_start      = number
+    mac_prefix         = string
+    global_mtu         = number
+    global_mss         = number
+    node_exporter_port = number
   })
 
   # Validate CIDR Block Format
@@ -67,16 +68,6 @@ variable "network_baseline" {
   validation {
     condition     = var.network_baseline.vip_offset < 255 && var.network_baseline.node_ip_start < 255
     error_message = "IP offsets must be less than 255 to fit within a /24 subnet."
-  }
-}
-
-variable "observability_config" {
-  description = "Observability stack metadata consumed by the observability layer to provision per-tenant Grafana datasources and Alloy remote_write configuration."
-  type = object({
-    mimir_tenants = list(string)
-  })
-  default = {
-    mimir_tenants = []
   }
 }
 

@@ -193,10 +193,10 @@ locals {
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
   mimir_tenant_id        = "gitlab"
 
-  port_postgres_exporter = local.state.provision_databases.observability_targets.port_postgres_exporter
-  port_redis_exporter    = local.state.provision_databases.observability_targets.port_redis_exporter
-  port_etcd_client       = local.state.provision_databases.observability_targets.port_etcd_client
-  port_minio_metrics     = local.state.provision_databases.observability_targets.port_minio_metrics
+  postgres_exporter_port = local.state.provision_databases.observability_targets.postgres_exporter_port
+  redis_exporter_port    = local.state.provision_databases.observability_targets.redis_exporter_port
+  etcd_client_port       = local.state.provision_databases.observability_targets.etcd_client_port
+  minio_metrics_port     = local.state.provision_databases.observability_targets.minio_metrics_port
   # MinIO serves Prometheus metrics on the same API port (9000); there is no separate metrics port.
 
   postgres_vip = local.state.provision_databases.postgres_connection_info.host
@@ -204,12 +204,27 @@ locals {
   minio_vip    = local.state.provision_databases.minio_connection_info.host
   etcd_ips     = local.state.provision_databases.observability_targets.etcd_ips
 
-  port_gitaly_metrics          = local.state.provision.gitaly_observability_targets.gitaly_metrics_port
-  port_praefect_metrics        = local.state.provision.gitaly_observability_targets.praefect_metrics_port
-  port_praefect_patroni_pg_exp = local.state.provision.gitaly_observability_targets.praefect_patroni_metrics_port
-  port_praefect_patroni_etcd   = local.state.provision.gitaly_observability_targets.praefect_patroni_etcd_port
+  gitaly_metrics_port          = local.state.provision.gitaly_observability_targets.gitaly_metrics_port
+  praefect_metrics_port        = local.state.provision.gitaly_observability_targets.praefect_metrics_port
+  praefect_patroni_pg_exp_port = local.state.provision.gitaly_observability_targets.praefect_patroni_metrics_port
+  praefect_patroni_etcd_port   = local.state.provision.gitaly_observability_targets.praefect_patroni_etcd_port
 
   gitaly_ips           = local.state.provision.gitaly_observability_targets.gitaly_node_ips
   praefect_ips         = local.state.provision.gitaly_observability_targets.praefect_node_ips
   praefect_patroni_ips = local.state.provision.gitaly_observability_targets.praefect_patroni_node_ips
+}
+
+# 9. Node Exporter Context
+locals {
+  node_exporter_port = local.state.provision.kubeadm_node_exporter_targets.port
+  node_exporter_ip_groups = {
+    postgres         = local.state.provision_databases.observability_targets.postgres_ips
+    redis            = local.state.provision_databases.observability_targets.redis_ips
+    minio            = local.state.provision_databases.observability_targets.minio_ips
+    etcd             = local.etcd_ips
+    gitaly           = local.gitaly_ips
+    praefect         = local.has_praefect ? local.praefect_ips : []
+    praefect-patroni = local.has_praefect ? local.praefect_patroni_ips : []
+    kubeadm          = local.state.provision.kubeadm_node_exporter_targets.ips
+  }
 }

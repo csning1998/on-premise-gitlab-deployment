@@ -40,9 +40,13 @@ output "minio_credentials" {
 output "observability_targets" {
   description = "Aggregated observability metrics ports and IPs for L50"
   value = {
-    port_postgres_exporter = local.state.postgres.observability_targets.postgres_metrics_port
-    port_etcd_client       = local.state.postgres.observability_targets.etcd_client_port
+    postgres_exporter_port = local.state.postgres.observability_targets.postgres_metrics_port
+    postgres_ips           = local.state.postgres.observability_targets.postgres_node_ips
+    etcd_client_port       = local.state.postgres.observability_targets.etcd_client_port
     etcd_ips               = local.state.postgres.observability_targets.etcd_node_ips
-    port_redis_exporter    = local.state.redis.observability_targets.redis_metrics_port
+    redis_exporter_port    = local.state.redis.observability_targets.redis_metrics_port
+    redis_ips              = local.state.redis.observability_targets.redis_node_ips
+    minio_metrics_port     = local.state.minio.observability_targets.minio_metrics_port
+    minio_ips              = local.state.minio.observability_targets.minio_node_ips
   }
 }

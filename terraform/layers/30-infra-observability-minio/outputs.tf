@@ -13,3 +13,12 @@ output "observability_minio_cluster_name" {
   description = "Observability MinIO cluster name."
   value       = module.context.svc_identity.cluster_name
 }
+
+output "observability_targets" {
+  description = "Observability scrape endpoint for Observability MinIO."
+  value = {
+    minio_metrics_port = module.context.svc_network.ports["api"].frontend_port
+    minio_node_ips     = module.context.svc_network.node_ips
+    node_exporter_port = module.context.node_exporter_port
+  }
+}

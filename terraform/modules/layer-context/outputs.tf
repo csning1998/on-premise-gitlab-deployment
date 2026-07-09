@@ -81,6 +81,11 @@ output "global_mtu" {
   value       = var.global_network_baseline.global_mtu
 }
 
+output "node_exporter_port" {
+  description = "Global Node Exporter listen port from network baseline, for VM fleet observability scrape targets."
+  value       = var.global_network_baseline.node_exporter_port
+}
+
 output "primary_context" {
   description = "Full primary context entry from segments_map. Exposes s_name/c_name for layer-specific filter logic."
   value       = local.primary_context

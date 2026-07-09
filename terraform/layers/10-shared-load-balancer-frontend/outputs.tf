@@ -7,6 +7,14 @@ output "network_slot_topology" {
   }
 }
 
+output "node_exporter_targets" {
+  description = "Node Exporter scrape targets for the Central LB VM fleet itself (excluded from net_service_segments)."
+  value = {
+    ips  = local.state.network.global_topology_network["central-lb"]["frontend"].node_ips
+    port = local.state.network.global_network_baseline.node_exporter_port
+  }
+}
+
 output "infrastructure_map" {
   description = "Physical realization bridging Layer 00 Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys"
   value       = data.terraform_remote_state.network.outputs.infrastructure_map
@@ -41,9 +49,4 @@ output "global_network_baseline" {
 output "global_domain_suffix" {
   description = "Pass-through of L00 root domain suffix; consumed by L30+ for service FQDN construction."
   value       = local.state.network.global_domain_suffix
-}
-
-output "mimir_tenants" {
-  description = "Pass-through of L00 Mimir tenant IDs; consumed by the observability layer for Grafana datasource provisioning."
-  value       = local.state.metadata.mimir_tenants
 }

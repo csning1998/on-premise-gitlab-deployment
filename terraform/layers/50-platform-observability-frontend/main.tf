@@ -93,7 +93,16 @@ module "alloy" {
       address = local.harbor_bootstrapper_metrics_address
       job     = "harbor-bootstrapper"
       labels  = { component = "harbor" }
-    }]
+    }],
+    flatten([
+      for component, ips in local.node_exporter_ip_groups : [
+        for ip in ips : {
+          address = "${ip}:${local.node_exporter_port}"
+          job     = "observability-node"
+          labels  = { component = component, instance = ip }
+        }
+      ]
+    ])
   )
 
   vault_metrics_address    = local.vault_metrics_address
@@ -151,10 +160,9 @@ module "grafana" {
   }
 
   datasources_config = {
-    loki_url            = module.loki.service_url
-    mimir_url           = module.mimir.query_url
-    mimir_tenant_id     = var.observability_stack_config.cluster_name
-    mimir_tenants_extra = local.mimir_tenants_extra
+    loki_url        = module.loki.service_url
+    mimir_url       = module.mimir.query_url
+    mimir_tenant_id = var.observability_stack_config.cluster_name
   }
 
   ca_bundle = { secret_name = local.ca_bundle_config.secret_name }
