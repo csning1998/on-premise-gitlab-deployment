@@ -50,6 +50,124 @@ prometheus.scrape "cadvisor" {
   forward_to        = [prometheus.remote_write.mimir.receiver]
 }
 
+// Uniform pod-annotation discovery: any pod in this cluster carrying prometheus.io/scrape=true is picked up
+// automatically, regardless of which chart deployed it. Chart-default annotations (e.g. GitLab webservice,
+// sidekiq, gitlab-exporter) and platform-set annotations (e.g. Harbor, GitLab Runner) both flow through this
+// single component, so app teams don't need a dedicated Alloy change to onboard a new scrape target.
+
+discovery.kubernetes "pods" {
+  role = "pod"
+}
+
+discovery.relabel "annotated_pods" {
+  targets = discovery.kubernetes.pods.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+    action        = "keep"
+    regex         = "true"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+    action        = "replace"
+    target_label  = "__metrics_path__"
+    regex         = "(.+)"
+  }
+
+  rule {
+    source_labels = ["__address__", "__meta_kubernetes_pod_annotation_prometheus_io_port"]
+    action        = "replace"
+    regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+    replacement   = "$${1}:$${2}"
+    target_label  = "__address__"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+
+  // Charts disagree on which label names the component, so job is built as a three-tier
+  // fallback, lowest priority first, each overriding the last only when present:
+  // app.kubernetes.io/name (near-universal, but often chart-wide like "gitlab" or "harbor")
+  // -> app (per-component for GitLab, chart-wide "harbor" for Harbor, absent for Mimir/Loki)
+  // -> app.kubernetes.io/component (per-component for Harbor/Mimir/Loki, absent for GitLab).
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    target_label  = "job"
+    regex         = "(.+)"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    target_label  = "job"
+    regex         = "(.+)"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component"]
+    target_label  = "job"
+    regex         = "(.+)"
+  }
+}
+
+prometheus.scrape "pods" {
+  targets    = discovery.relabel.annotated_pods.output
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ if workhorse_targets ~}
+// gitlab-workhorse runs as a second container in the webservice pod and exposes its own metrics on port 9229,
+// but a pod carries only one prometheus.io/* annotation set, already pointed at webservice's port 8083.
+// Selecting by the app=webservice pod label instead of annotation keeps this correct as replicas scale,
+// without colliding with the annotation-driven "pods" scrape above.
+
+discovery.relabel "workhorse" {
+  targets = discovery.kubernetes.pods.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    action        = "keep"
+    regex         = "webservice"
+  }
+
+  rule {
+    source_labels = ["__address__"]
+    action        = "replace"
+    regex         = "([^:]+)(?::\\d+)?"
+    replacement   = "$${1}:9229"
+    target_label  = "__address__"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "workhorse"
+  }
+}
+
+prometheus.scrape "workhorse" {
+  targets    = discovery.relabel.workhorse.output
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
 %{ if length(vm_static_targets) > 0 ~}
 // vm_static_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
 // static alphanumeric label strings; the variable type contract enforces this at the Terraform layer.

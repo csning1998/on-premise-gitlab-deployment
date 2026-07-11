@@ -16,6 +16,7 @@ resource "helm_release" "alloy" {
           tenant_id                = var.alloy_config.tenant_id
           mtls_enabled             = var.alloy_config.mtls_cert_secret_name != null
           vm_static_targets        = var.vm_static_targets
+          workhorse_targets        = var.workhorse_targets
           vault_metrics_address    = var.vault_metrics_address
           minio_scrape_targets     = var.minio_scrape_targets
           keycloak_metrics_address = var.keycloak_metrics_address
@@ -42,6 +43,11 @@ resource "helm_release" "alloy" {
     controller = {
       type     = "deployment"
       replicas = 1
+      podAnnotations = {
+        "prometheus.io/scrape" = "true"
+        "prometheus.io/port"   = "12345"
+        "prometheus.io/path"   = "/metrics"
+      }
       volumes = {
         extra = concat(
           var.alloy_config.mtls_cert_secret_name != null ? [

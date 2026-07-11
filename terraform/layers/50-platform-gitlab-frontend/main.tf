@@ -172,6 +172,8 @@ module "alloy" {
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 
+  workhorse_targets = true
+
   vm_static_targets = concat(
     [
       {

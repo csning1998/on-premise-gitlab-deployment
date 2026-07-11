@@ -44,6 +44,12 @@ variable "vm_static_targets" {
   default = []
 }
 
+variable "workhorse_targets" {
+  description = "When true, adds a dedicated scrape path for gitlab-workhorse's metrics endpoint (port 9229), which cannot share the webservice pod's prometheus.io/* annotation (already pointed at port 8083) since a pod carries only one such annotation set. Selects pods by the app=webservice label instead of annotation, so it stays correct as pod IPs churn."
+  type        = bool
+  default     = false
+}
+
 variable "keycloak_metrics_address" {
   description = "Optional host:port for Keycloak management metrics endpoint; when set, a prometheus.scrape component is added using /metrics path over HTTPS with ca-bundle verification"
   type        = string

@@ -217,6 +217,9 @@ resource "helm_release" "gitlab" {
           } : null
           workhorse = {
             image = var.image_registry != null ? "${var.image_registry.registry}/${var.image_registry.repository}/gitlab-workhorse-${var.gitlab_config.edition}" : null
+            metrics = {
+              enabled = true
+            }
           }
           deployment = {}
         }

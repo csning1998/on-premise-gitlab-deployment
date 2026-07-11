@@ -86,6 +86,18 @@ resource "helm_release" "gitlab_runner" {
 
       certsSecretName = kubernetes_secret.gitlab_ca_bundle.metadata[0].name
 
+      metrics = {
+        enabled = true
+      }
+
+      # Chart doesn't auto-annotate pods for the metrics port (unlike GitLab's own webservice/sidekiq
+      # charts); set it explicitly so Alloy's pod-annotation discovery picks it up the same way.
+      podAnnotations = {
+        "prometheus.io/scrape" = "true"
+        "prometheus.io/port"   = "9252"
+        "prometheus.io/path"   = "/metrics"
+      }
+
       runners = {
         secret = kubernetes_secret.runner_token.metadata[0].name
 

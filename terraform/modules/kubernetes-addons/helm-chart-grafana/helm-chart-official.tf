@@ -8,6 +8,14 @@ resource "helm_release" "grafana" {
   timeout          = var.helm_config.timeout
 
   values = [yamlencode({
+    # Grafana serves /metrics on its main port by default; not annotated by default, so
+    # Alloy's pod-annotation discovery would otherwise miss it.
+    podAnnotations = {
+      "prometheus.io/scrape" = "true"
+      "prometheus.io/port"   = "3000"
+      "prometheus.io/path"   = "/metrics"
+    }
+
     admin = {
       existingSecret = var.grafana_config.admin_existing_secret_name
       userKey        = "admin-user"

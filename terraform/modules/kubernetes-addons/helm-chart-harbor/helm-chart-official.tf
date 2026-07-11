@@ -1,4 +1,13 @@
 
+# metrics.enabled only opens the /metrics port; it doesn't add scrape annotations, so each component sets them explicitly.
+locals {
+  harbor_metrics_annotations = {
+    "prometheus.io/scrape" = "true"
+    "prometheus.io/port"   = "8001"
+    "prometheus.io/path"   = "/metrics"
+  }
+}
+
 # Harbor Helm Release
 resource "helm_release" "harbor" {
   name             = "harbor"
@@ -89,6 +98,12 @@ resource "helm_release" "harbor" {
           }
         }
       }
+
+      metrics    = { enabled = true }
+      core       = { podAnnotations = local.harbor_metrics_annotations }
+      registry   = { podAnnotations = local.harbor_metrics_annotations }
+      jobservice = { podAnnotations = local.harbor_metrics_annotations }
+      exporter   = { podAnnotations = local.harbor_metrics_annotations }
     }),
 
     yamlencode(var.helm_values_override)

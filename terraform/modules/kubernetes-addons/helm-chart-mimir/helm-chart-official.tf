@@ -19,6 +19,14 @@ locals {
   }]
 
   s3_extra_args = { "config.expand-env" = "true" }
+
+  # This chart has no working global podAnnotations passthrough; each component's block
+  # needs it set individually to be picked up by Alloy's pod-annotation discovery.
+  metrics_annotations = {
+    "prometheus.io/scrape" = "true"
+    "prometheus.io/port"   = "8080"
+    "prometheus.io/path"   = "/metrics"
+  }
 }
 
 resource "helm_release" "mimir" {
@@ -36,13 +44,8 @@ resource "helm_release" "mimir" {
       repository = "${var.helm_config.image_registry}/${var.helm_config.image_repository}/grafana/mimir"
     }
 
-    kafka = {
-      enabled = false
-    }
-
-    minio = {
-      enabled = false
-    }
+    kafka = { enabled = false }
+    minio = { enabled = false }
 
     mimir = {
       structuredConfig = {
@@ -88,6 +91,21 @@ resource "helm_release" "mimir" {
             secret_access_key = "$${MIMIR_ALERTMANAGER_SECRET_KEY}"
           }
         }
+        # 100000 default: measured baseline on the observability tenant alone is ~47-52k
+        # (kubelet ~33k, node_exporter ~7.9k, cadvisor ~3.6k), so 50k left near-zero headroom
+        # and was already causing intermittent rejection before this value was raised.
+        limits = {
+          max_global_series_per_user = 100000
+        }
+      }
+    }
+
+    # Per-tenant overrides on top of the limits default above; reloaded automatically, no restart needed.
+    runtimeConfig = {
+      overrides = {
+        gitlab = {
+          max_global_series_per_user = 150000
+        }
       }
     }
 
@@ -100,6 +118,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "256Mi" }
         limits   = { memory = "1Gi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -115,6 +134,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "128Mi" }
         limits   = { memory = "512Mi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -127,6 +147,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "128Mi" }
         limits   = { memory = "512Mi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -139,6 +160,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "32Mi" }
         limits   = { memory = "128Mi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -151,6 +173,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "64Mi" }
         limits   = { memory = "256Mi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -163,6 +186,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "128Mi" }
         limits   = { memory = "512Mi" }
       }
+      podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args
       extraEnvFrom      = local.s3_env_from
       extraVolumes      = local.ca_volume
@@ -175,6 +199,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "64Mi" }
         limits   = { memory = "256Mi" }
       }
+      podAnnotations = local.metrics_annotations
     }
 
     query_frontend = {
@@ -183,6 +208,7 @@ resource "helm_release" "mimir" {
         requests = { memory = "128Mi" }
         limits   = { memory = "256Mi" }
       }
+      podAnnotations = local.metrics_annotations
     }
 
     query_scheduler = {
@@ -191,6 +217,11 @@ resource "helm_release" "mimir" {
         requests = { memory = "64Mi" }
         limits   = { memory = "128Mi" }
       }
+      podAnnotations = local.metrics_annotations
+    }
+
+    overrides_exporter = {
+      podAnnotations = local.metrics_annotations
     }
 
     gateway = {
