@@ -52,6 +52,12 @@ locals {
     for key, item in local._flat_catalog : {
       key       = key
       role_name = "${item.cluster_name}-role"
+      ttl_stage = item.stage
+
+      # True only when this component has a real Ingress route (not merely the unconditional
+      # internal mTLS SAN above), so downstream consumers can tell "externally routed" apart
+      # from "internal-only" without re-deriving it from dns_san (which is never empty).
+      has_ingress = length(coalesce(item.config.ingress, {})) > 0
 
       # DNS SAN Strategy
       # 1. DNS Resolution Validation (RFC 1034/1035):
@@ -89,7 +95,6 @@ locals {
         "Tag=${join(",", coalesce(item.config.tags, []))}"
       ]
 
-      ttl_stage = item.stage
       auth_config = {
         method       = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes" : "approle"
         path         = contains(["kubeadm", "microk8s"], item.config.runtime) ? "kubernetes/${item.service_name}/${item.comp_name}" : "workload-approle"

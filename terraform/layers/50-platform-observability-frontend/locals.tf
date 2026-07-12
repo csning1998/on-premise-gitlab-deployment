@@ -105,3 +105,16 @@ locals {
   credential_paths      = local.state.credentials.global_credential_paths
   s3_credentials_prefix = "${local.state.vault_pki.vault_kv_namespace}/observability/app/s3_credentials"
 }
+
+# Blackbox Probe Targets (derived from L00 global_pki_map; has_ingress marks components with a
+# real external route, filtering out internal-only entries whose dns_san is non-empty only
+# because of the unconditional internal mTLS SAN). Any future service that gains a real ingress
+# block is picked up automatically, no change needed at this layer.
+locals {
+  blackbox_targets = [
+    for key, entry in local.state.vault_pki.global_pki_map : {
+      name    = key
+      address = "https://${entry.dns_san[0]}"
+    } if entry.has_ingress
+  ]
+}

@@ -107,6 +107,7 @@ module "alloy" {
 
   vault_metrics_address    = local.vault_metrics_address
   keycloak_metrics_address = local.keycloak_metrics_address
+  blackbox_targets         = local.blackbox_targets
 }
 
 module "kube_state_metrics" {

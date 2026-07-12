@@ -66,3 +66,12 @@ variable "minio_scrape_targets" {
   }))
   default = []
 }
+
+variable "blackbox_targets" {
+  description = "Optional HTTPS endpoints to probe via Alloy's embedded blackbox exporter (prometheus.exporter.blackbox); each entry becomes one probe target using the http_2xx module, verified against the ca-bundle mount. probe_ssl_earliest_cert_expiry is a byproduct of every HTTPS probe."
+  type = list(object({
+    name    = string
+    address = string
+  }))
+  default = []
+}

@@ -20,6 +20,7 @@ resource "helm_release" "alloy" {
           vault_metrics_address    = var.vault_metrics_address
           minio_scrape_targets     = var.minio_scrape_targets
           keycloak_metrics_address = var.keycloak_metrics_address
+          blackbox_targets         = var.blackbox_targets
         })
       }
       image = {

@@ -230,7 +230,9 @@ prometheus.scrape "vault_metrics" {
   tls_config {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }
-  forward_to = [prometheus.remote_write.mimir.receiver]
+  # Routed through vm_cardinality rather than straight to remote_write, so any future
+  # high-cardinality gRPC metrics Vault might expose hit the same dedup pipeline as vm_static.
+  forward_to = [prometheus.relabel.vm_cardinality.receiver]
 }
 
 %{ endif ~}
@@ -244,6 +246,37 @@ prometheus.scrape "keycloak" {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }
   forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
+%{ if length(blackbox_targets) > 0 ~}
+// blackbox_targets are derived from L00's global_pki_map (has_ingress-filtered), so any service
+// gaining a real ingress route is probed automatically without an Alloy change. http_2xx probes
+// HTTPS and picks up probe_ssl_earliest_cert_expiry as a byproduct, verified against the same
+// ca-bundle mount already used by the vault_metrics/keycloak scrape blocks above.
+prometheus.exporter.blackbox "probe" {
+  config = `modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_status_codes: [200, 301, 302]
+      tls_config:
+        ca_file: /etc/alloy/ca-bundle/ca.crt
+`
+
+%{ for t in blackbox_targets ~}
+  target {
+    name    = "${t.name}"
+    address = "${t.address}"
+    module  = "http_2xx"
+  }
+%{ endfor ~}
+}
+
+prometheus.scrape "blackbox" {
+  targets    = prometheus.exporter.blackbox.probe.targets
+  forward_to = [prometheus.relabel.vm_cardinality.receiver]
 }
 
 %{ endif ~}
