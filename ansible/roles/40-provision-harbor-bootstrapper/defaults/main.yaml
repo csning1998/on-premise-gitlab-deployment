@@ -79,3 +79,8 @@ helm_charts_to_sync: # List of Helm Charts to Synchronize
     version: "1.10.0"
     repo: "https://grafana.github.io/helm-charts"
     is_oci: false
+
+  - name: "kube-state-metrics"
+    version: "7.8.1"
+    repo: "https://prometheus-community.github.io/helm-charts"
+    is_oci: false

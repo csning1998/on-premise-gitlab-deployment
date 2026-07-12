@@ -109,6 +109,20 @@ module "alloy" {
   keycloak_metrics_address = local.keycloak_metrics_address
 }
 
+module "kube_state_metrics" {
+  source     = "../../modules/kubernetes-addons/helm-chart-kube-state-metrics"
+  depends_on = [kubernetes_namespace.observability]
+
+  helm_config = {
+    version          = var.kube_state_metrics_version
+    namespace        = kubernetes_namespace.observability.metadata[0].name
+    timeout          = 300
+    image_registry   = local.harbor_registry
+    chart_project    = local.helm_chart_project
+    image_repository = local.harbor_k8s_proxy
+  }
+}
+
 module "alloy_client_cert" {
   source     = "../../modules/kubernetes-addons/platform-mtls-certificate"
   depends_on = [kubernetes_namespace.observability]

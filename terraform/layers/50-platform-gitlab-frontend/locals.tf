@@ -63,6 +63,7 @@ locals {
   harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
   harbor_gitlab_proxy = local.state.harbor_bootstrapper.proxy_caches.gitlab_com.project_name
+  harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   # GitLab CNG image registry and repository routed through Harbor Bootstrapper proxy

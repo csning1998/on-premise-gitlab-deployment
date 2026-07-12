@@ -54,3 +54,13 @@ variable "alloy_version" {
     error_message = "alloy_version must be a stable semver string."
   }
 }
+
+variable "kube_state_metrics_version" {
+  description = "kube-state-metrics Helm chart version"
+  type        = string
+  default     = "7.8.1"
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.kube_state_metrics_version))
+    error_message = "kube_state_metrics_version must be a stable semver string."
+  }
+}
