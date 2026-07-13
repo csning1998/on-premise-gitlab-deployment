@@ -205,6 +205,100 @@ resource "kubernetes_manifest" "mimir_ingress" {
   }
 }
 
+resource "kubernetes_manifest" "loki_gateway_network_policy" {
+  depends_on = [kubernetes_namespace.observability]
+
+  manifest = {
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "NetworkPolicy"
+    metadata = {
+      name      = "loki-gateway-ingress"
+      namespace = kubernetes_namespace.observability.metadata[0].name
+    }
+    spec = {
+      podSelector = {
+        matchLabels = {
+          "app.kubernetes.io/name"      = "loki"
+          "app.kubernetes.io/component" = "gateway"
+        }
+      }
+      policyTypes = ["Ingress"]
+      ingress = [{
+        from = [
+          {
+            namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = "observability" } }
+            podSelector       = { matchLabels = { "app.kubernetes.io/name" = "alloy" } }
+          },
+          {
+            namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = "observability" } }
+            podSelector       = { matchLabels = { "app.kubernetes.io/name" = "grafana" } }
+          },
+          {
+            namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = "ingress-system" } }
+            podSelector       = { matchLabels = { "app.kubernetes.io/name" = "ingress-nginx" } }
+          }
+        ]
+        ports = [{ protocol = "TCP", port = 80 }]
+      }]
+    }
+  }
+}
+
+resource "kubernetes_manifest" "loki_ingress" {
+  depends_on = [
+    module.loki,
+    kubernetes_secret.ca_bundle,
+  ]
+
+  manifest = {
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "Ingress"
+    metadata = {
+      name      = "loki-gateway"
+      namespace = kubernetes_namespace.observability.metadata[0].name
+      annotations = merge(
+        local.issuer_kind == "ClusterIssuer" ? {
+          "cert-manager.io/cluster-issuer" = local.issuer_name
+          } : {
+          "cert-manager.io/issuer" = local.issuer_name
+        },
+        {
+          "cert-manager.io/common-name"                        = local.loki_fqdn
+          "cert-manager.io/subject-alternative-names"          = local.loki_fqdn
+          "cert-manager.io/duration"                           = local.state.vault_pki.pki_configuration.lease_durations.default
+          "cert-manager.io/renew-before"                       = local.state.vault_pki.pki_configuration.lease_durations.agent
+          "nginx.ingress.kubernetes.io/auth-tls-secret"        = "${kubernetes_namespace.observability.metadata[0].name}/${local.ca_bundle_config.secret_name}"
+          "nginx.ingress.kubernetes.io/auth-tls-verify-client" = "on"
+          "nginx.ingress.kubernetes.io/auth-tls-verify-depth"  = "1"
+          "nginx.ingress.kubernetes.io/proxy-body-size"        = "16m"
+        }
+      )
+    }
+    spec = {
+      ingressClassName = var.ingress_class_name
+      tls = [{
+        secretName = "loki-ingress-cert"
+        hosts      = [local.loki_fqdn]
+      }]
+      rules = [{
+        host = local.loki_fqdn
+        http = {
+          paths = [{
+            path     = "/"
+            pathType = "Prefix"
+            backend = {
+              service = {
+                name = "loki-gateway"
+                port = { number = 80 }
+              }
+            }
+          }]
+        }
+      }]
+    }
+  }
+}
+
 resource "kubernetes_manifest" "loki_s3_external_secret" {
   depends_on = [kubernetes_manifest.observability_vault_secret_store]
 

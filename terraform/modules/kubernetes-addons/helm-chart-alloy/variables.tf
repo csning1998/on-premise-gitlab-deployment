@@ -23,6 +23,7 @@ variable "alloy_config" {
     tenant_id             = string
     mtls_cert_secret_name = optional(string, null)
     ca_bundle_secret_name = optional(string, null)
+    loki_push_url         = string
   })
 }
 

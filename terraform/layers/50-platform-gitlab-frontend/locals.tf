@@ -194,6 +194,9 @@ locals {
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
   mimir_tenant_id        = "gitlab"
 
+  loki_fqdn     = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "loki.")][0]
+  loki_push_url = "https://${local.loki_fqdn}/loki/api/v1/push"
+
   postgres_exporter_port = local.state.provision_databases.observability_targets.postgres_exporter_port
   redis_exporter_port    = local.state.provision_databases.observability_targets.redis_exporter_port
   etcd_client_port       = local.state.provision_databases.observability_targets.etcd_client_port

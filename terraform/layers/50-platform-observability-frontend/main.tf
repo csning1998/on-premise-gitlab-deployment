@@ -63,7 +63,7 @@ module "loki" {
 
 module "alloy" {
   source     = "../../modules/kubernetes-addons/helm-chart-alloy"
-  depends_on = [module.mimir, kubernetes_namespace.observability]
+  depends_on = [module.mimir, module.loki, kubernetes_namespace.observability]
 
   helm_config = {
     version          = var.observability_stack_config.alloy_version
@@ -76,6 +76,7 @@ module "alloy" {
 
   alloy_config = {
     remote_write_url      = module.mimir.remote_write_url
+    loki_push_url         = "${module.loki.service_url}/loki/api/v1/push"
     cluster_label         = var.observability_stack_config.cluster_name
     tenant_id             = var.observability_stack_config.cluster_name
     ca_bundle_secret_name = local.ca_bundle_config.secret_name
@@ -176,6 +177,7 @@ module "grafana" {
 
   datasources_config = {
     loki_url        = module.loki.service_url
+    loki_tenant_id  = var.observability_stack_config.cluster_name
     mimir_url       = module.mimir.query_url
     mimir_tenant_id = var.observability_stack_config.cluster_name
   }

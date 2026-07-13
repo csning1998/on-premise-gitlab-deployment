@@ -62,6 +62,8 @@ locals {
   }
   mimir_fqdn             = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
+  loki_fqdn              = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "loki.")][0]
+  loki_push_url          = "https://${local.loki_fqdn}/loki/api/v1/push"
 }
 
 # 5. Node Exporter Context

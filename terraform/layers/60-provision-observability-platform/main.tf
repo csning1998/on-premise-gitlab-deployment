@@ -17,6 +17,19 @@ resource "grafana_data_source" "mimir" {
   }
 }
 
+resource "grafana_data_source" "loki" {
+  for_each = var.mimir_tenants
+
+  type = "loki"
+  name = "Loki / ${each.value.display_name}"
+  uid  = "loki-${each.key}"
+  url  = local.loki_query_url
+
+  http_headers = {
+    "X-Scope-OrgID" = each.key
+  }
+}
+
 resource "grafana_dashboard" "k8s_cluster_overview" {
   depends_on  = [grafana_data_source.mimir]
   folder      = grafana_folder.kubernetes.uid

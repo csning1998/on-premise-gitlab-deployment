@@ -12,7 +12,16 @@ resource "helm_release" "loki" {
     deploymentMode   = "SingleBinary"
 
     loki = {
-      auth_enabled = false
+      # Multi-tenant: each of the 4 K8s clusters' Alloy writes under its own tenant_id
+      # (same boundary as Mimir), isolating log queries and retention per tenant.
+      auth_enabled = true
+
+      # Chart default (3) assumes a multi-replica ring; with singleBinary.replicas = 1 below,
+      # a replication factor of 3 leaves the ring permanently short of quorum ((3/2)+1 = 2
+      # needed, only 1 exists), failing every read/write with "too many unhealthy instances".
+      commonConfig = {
+        replication_factor = 1
+      }
 
       image = {
         registry   = var.helm_config.image_registry
@@ -49,6 +58,24 @@ resource "helm_release" "loki" {
             period = "24h"
           }
         }]
+      }
+
+      # GitLab's audit_json.log lines carry subcomponent="audit_json" (multiplexed onto
+      # webservice/sidekiq stdout alongside production_json/api_json; Alloy's loki.process
+      # stage extracts this field into a label), overridden to a longer period since audit
+      # trail has more compliance value than general application/pod logs.
+      limits_config = {
+        retention_period = "${24 * 14}h" # 14d
+        retention_stream = [{
+          selector = "{subcomponent=\"audit_json\"}"
+          priority = 1
+          period   = "${24 * 90}h" # 90d
+        }]
+      }
+
+      compactor = {
+        retention_enabled    = true
+        delete_request_store = "s3"
       }
     }
 

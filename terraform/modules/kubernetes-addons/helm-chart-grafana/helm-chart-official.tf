@@ -76,6 +76,12 @@ resource "helm_release" "grafana" {
             type   = "loki"
             url    = var.datasources_config.loki_url
             access = "proxy"
+            jsonData = {
+              httpHeaderName1 = "X-Scope-OrgID"
+            }
+            secureJsonData = {
+              httpHeaderValue1 = var.datasources_config.loki_tenant_id
+            }
           }
         ]
       }

@@ -167,6 +167,7 @@ module "alloy" {
 
   alloy_config = {
     remote_write_url      = local.mimir_remote_write_url
+    loki_push_url         = local.loki_push_url
     cluster_label         = local.mimir_tenant_id
     tenant_id             = local.mimir_tenant_id
     mtls_cert_secret_name = module.alloy_client_cert.secret_name

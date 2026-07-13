@@ -376,7 +376,7 @@ service_catalog = {
           "ingress-https" = { frontend_port = 443, backend_port = 443, send_proxy_v2 = true }
         }
         ingress = {
-          "frontend" = { subdomains = ["grafana", "mimir"] }
+          "frontend" = { subdomains = ["grafana", "mimir", "loki"] }
         }
         data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
       },

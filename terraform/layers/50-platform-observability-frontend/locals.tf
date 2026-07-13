@@ -101,6 +101,14 @@ locals {
   ][0]
 }
 
+# Loki External FQDN (derived from PKI map; same startswith pattern as mimir_fqdn above)
+locals {
+  loki_fqdn = [
+    for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san :
+    san if startswith(san, "loki.")
+  ][0]
+}
+
 locals {
   credential_paths      = local.state.credentials.global_credential_paths
   s3_credentials_prefix = "${local.state.vault_pki.vault_kv_namespace}/observability/app/s3_credentials"

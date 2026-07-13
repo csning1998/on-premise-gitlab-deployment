@@ -122,6 +122,72 @@ prometheus.scrape "pods" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
+// Log collection covers every pod in the cluster (not gated on prometheus.io/scrape, which is a
+// metrics-only convention), so GitLab's production_json.log/api_json.log/audit_json.log families
+// reach Loki the same way as any other container's stdout, with no chart-side change required.
+discovery.relabel "pod_logs" {
+  targets = discovery.kubernetes.pods.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+}
+
+loki.source.kubernetes "pod_logs" {
+  targets    = discovery.relabel.pod_logs.output
+  forward_to = [loki.process.pod_logs.receiver]
+}
+
+// GitLab's webservice/sidekiq stdout multiplexes production_json/api_json/audit_json/etc onto a
+// single stream, each line tagged with a "subcomponent" field. Extracting it into a label lets
+// Loki's retention_stream override audit_json to a longer period than the general default.
+// The extraction is scoped to the gitlab namespace so an unrelated pod that happens to emit a
+// JSON field named "subcomponent" (any tenant, any namespace) cannot create an unbounded number
+// of label values; every other namespace's logs pass through with no subcomponent label at all.
+loki.process "pod_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.match {
+    selector = "{namespace=\"gitlab\"}"
+
+    stage.json {
+      expressions = { subcomponent = "subcomponent" }
+    }
+
+    stage.labels {
+      values = { subcomponent = "" }
+    }
+  }
+}
+
+loki.write "default" {
+  endpoint {
+    url       = "${loki_push_url}"
+    tenant_id = "${tenant_id}"
+%{ if mtls_enabled }
+    tls_config {
+      cert_file = "/etc/alloy/mtls/tls.crt"
+      key_file  = "/etc/alloy/mtls/tls.key"
+      ca_file   = "/etc/alloy/mtls/ca.crt"
+    }
+%{ endif }
+  }
+  external_labels = {
+    cluster = "${cluster_label}",
+  }
+}
+
 %{ if workhorse_targets ~}
 // gitlab-workhorse runs as a second container in the webservice pod and exposes its own metrics on port 9229,
 // but a pod carries only one prometheus.io/* annotation set, already pointed at webservice's port 8083.

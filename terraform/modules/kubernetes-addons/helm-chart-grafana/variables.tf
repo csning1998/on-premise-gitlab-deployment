@@ -48,6 +48,7 @@ variable "datasources_config" {
     mimir_url       = string
     mimir_tenant_id = string
     loki_url        = string
+    loki_tenant_id  = string
   })
 }
 

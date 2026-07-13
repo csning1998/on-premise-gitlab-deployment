@@ -26,10 +26,11 @@ locals {
   vault_endpoint = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
 }
 
-# 3. Grafana and Mimir Endpoint Context
+# 3. Grafana, Mimir, and Loki Endpoint Context
 locals {
   grafana_fqdn    = local.state.observability_platform.observability_endpoints.grafana_fqdn
   mimir_query_url = local.state.observability_platform.observability_endpoints.mimir_query_url
+  loki_query_url  = local.state.observability_platform.observability_endpoints.loki_url
 }
 
 # 4. Credential Path Alias

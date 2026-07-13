@@ -82,13 +82,14 @@ locals {
 
 # FQDNs and Service Endpoints
 locals {
-  redis_fqdn    = local.state.vault_pki.global_pki_map["harbor-redis"].dns_san[0]
-  postgres_fqdn = local.state.vault_pki.global_pki_map["harbor-postgres"].dns_san[0]
-  minio_fqdn    = local.state.vault_pki.global_pki_map["harbor-minio"].dns_san[0]
-  minio_port    = local.state.provision_databases.minio_connection_info.port
-  mimir_fqdn    = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
-
+  redis_fqdn             = local.state.vault_pki.global_pki_map["harbor-redis"].dns_san[0]
+  postgres_fqdn          = local.state.vault_pki.global_pki_map["harbor-postgres"].dns_san[0]
+  minio_fqdn             = local.state.vault_pki.global_pki_map["harbor-minio"].dns_san[0]
+  minio_port             = local.state.provision_databases.minio_connection_info.port
+  mimir_fqdn             = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "mimir.")][0]
   mimir_remote_write_url = "https://${local.mimir_fqdn}/api/v1/push"
+  loki_fqdn              = [for san in local.state.vault_pki.global_pki_map["observability-frontend"].dns_san : san if startswith(san, "loki.")][0]
+  loki_push_url          = "https://${local.loki_fqdn}/loki/api/v1/push"
 }
 
 # Addons Configuration (Reloader annotations)
