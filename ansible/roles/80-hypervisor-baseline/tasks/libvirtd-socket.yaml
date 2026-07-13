@@ -1,0 +1,42 @@
+---
+- name: "Step 1. Ensure operator user is in the libvirt group"
+  ansible.builtin.user:
+    name: "{{ hypervisor_operator_user }}"
+    groups: libvirt
+    append: true
+  when: hypervisor_operator_user | length > 0 and hypervisor_operator_user != "root"
+
+- name: "Step 2. Delegate libvirtd socket ownership to the libvirt group"
+  ansible.builtin.lineinfile:
+    path: /etc/libvirt/libvirtd.conf
+    regexp: '^#?\s*{{ item.key }}\s*='
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: "unix_sock_group", value: '"libvirt"' }
+    - { key: "unix_sock_rw_perms", value: '"0770"' }
+  notify:
+    - Reload systemd daemon
+    - Stop legacy libvirtd units
+    - Disable libvirtd service
+    - Restart libvirtd socket
+
+- name: "Step 3. Ensure systemd socket drop-in directory exists"
+  ansible.builtin.file:
+    path: "{{ hypervisor_libvirtd_socket_dropin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Step 4. Deploy systemd socket override (takes precedence over libvirtd.conf)"
+  ansible.builtin.template:
+    src: libvirtd-socket-override.conf.j2
+    dest: "{{ hypervisor_libvirtd_socket_dropin_dir }}/override.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd daemon
+    - Stop legacy libvirtd units
+    - Disable libvirtd service
+    - Restart libvirtd socket

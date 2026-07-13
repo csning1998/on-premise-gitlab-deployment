@@ -22,14 +22,15 @@
 
 ## Architecture
 
-| Document                                                          | Description                                                         |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------- |
-| [Overview](en/architecture/overview.md)                           | Toolchain roles, layer map, ADR index                               |
-| [Deployment Workflow](en/architecture/deployment-workflow.md)     | Stage-by-stage Mermaid diagrams                                     |
-| [Network Topology](en/architecture/network-topology.md)           | Asymmetric routing, PBR, bridge isolation, MTU/MSS                  |
-| [Terraform Layers](en/architecture/terraform-layers.md)           | Layer 00 SSoT deep dive                                             |
-| [PKI and Vault](en/architecture/pki-and-vault.md)                 | Certificate rotation rules, Vault Agent sidecar                     |
-| [Node Exporter Rollout](en/architecture/node-exporter-rollout.md) | VM fleet metrics wiring, observability dashboard platform bootstrap |
+| Document                                                                   | Description                                                                 |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Overview](en/architecture/overview.md)                                    | Toolchain roles, layer map, ADR index                                       |
+| [Deployment Workflow](en/architecture/deployment-workflow.md)              | Stage-by-stage Mermaid diagrams                                             |
+| [Network Topology](en/architecture/network-topology.md)                    | Asymmetric routing, PBR, bridge isolation, MTU/MSS                          |
+| [Terraform Layers](en/architecture/terraform-layers.md)                    | Layer 00 SSoT deep dive                                                     |
+| [PKI and Vault](en/architecture/pki-and-vault.md)                          | Certificate rotation rules, Vault Agent sidecar                             |
+| [Node Exporter Rollout](en/architecture/node-exporter-rollout.md)          | VM fleet metrics wiring, observability dashboard platform bootstrap         |
+| [Physical Hypervisor Monitoring](en/architecture/hypervisor-monitoring.md) | Host baseline automation, node/libvirt exporters, DAG-derived scrape target |
 
 ## Operations
 

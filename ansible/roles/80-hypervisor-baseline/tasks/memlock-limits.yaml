@@ -1,0 +1,12 @@
+---
+- name: "Grant unlimited memlock to the operator user (rootless Podman / Vault mlock)"
+  become: true
+  community.general.pam_limits:
+    domain: "{{ hypervisor_operator_user }}"
+    limit_type: "{{ item }}"
+    limit_item: memlock
+    value: unlimited
+  loop:
+    - soft
+    - hard
+  when: hypervisor_operator_user | length > 0 and hypervisor_operator_user != "root"

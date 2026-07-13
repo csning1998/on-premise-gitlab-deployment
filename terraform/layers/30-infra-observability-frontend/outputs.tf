@@ -52,3 +52,8 @@ output "cross_route_probe_targets" {
   description = "Cross-segment VIP:port L4 probe targets (tcp_connect) for the L50 Alloy blackbox exporter, covering the segments this cluster routes to."
   value       = local.cross_route_probe_targets
 }
+
+output "hypervisor_host_ip" {
+  description = "Physical KVM hypervisor host's gateway address on this cluster's own hostonly bridge, for L50 Alloy static scrape targets (host node_exporter, libvirt_exporter)."
+  value       = local.hypervisor_host_ip
+}

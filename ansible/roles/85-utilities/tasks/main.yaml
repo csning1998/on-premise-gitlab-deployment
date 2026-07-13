@@ -1,6 +1,6 @@
 ---
 - name: "Include Zsh setup tasks"
-  ansible.builtin.include_tasks: 81-setup-zsh.yaml
+  ansible.builtin.include_tasks: setup-zsh.yaml
   when: configure_zsh | bool
 
 - name: "Include tmux setup tasks"

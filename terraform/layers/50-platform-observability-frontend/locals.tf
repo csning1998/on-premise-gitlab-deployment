@@ -78,6 +78,16 @@ locals {
   }
 }
 
+# Physical KVM Hypervisor Host. Not managed by any Terraform layer (it is the machine every
+# layer's libvirt provider connects to), but its address on this segment is still derived
+# through the DAG chain (L30 hostonly.gateway -> L40 passthrough), not hardcoded here. It is
+# on-link for this cluster's own network, reachable without PBR or an ingress hop.
+locals {
+  hypervisor_host_ip               = local.state.provision.hypervisor_host_ip
+  hypervisor_node_exporter_port    = 9100
+  hypervisor_libvirt_exporter_port = 9177
+}
+
 # CA Bundle Configuration
 locals {
   ca_bundle_config = {

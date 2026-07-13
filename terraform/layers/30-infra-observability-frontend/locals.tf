@@ -27,6 +27,12 @@ locals {
   network_harbor_bootstrapper = module.context.global_topology_network["harbor-bootstrapper"]["frontend"]
 }
 
+# The physical KVM hypervisor host is on-link on this cluster's own hostonly bridge (it owns the
+# bridge's gateway address), so this is this cluster's own topology, not another segment's.
+locals {
+  hypervisor_host_ip = module.context.primary_net_config.network.hostonly.gateway
+}
+
 # Vault Agent identity
 locals {
   sec_vault_agent_identity = merge(module.context.vault_agent_identity_base, {

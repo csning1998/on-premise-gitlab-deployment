@@ -1,0 +1,37 @@
+---
+# Ansible runs notified handlers in this declaration order (deduplicated), not notify-call order,
+# so the sequence here is the actual apply order regardless of which task notifies what.
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+# failed_when: false guards hosts where libvirt has moved fully to the modular virtqemud daemon
+# and no longer ships these compat unit files at all (unit-not-found is a hard failure for
+# this module, unlike an already-stopped/disabled unit, which succeeds as a no-op).
+- name: Stop legacy libvirtd units
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - libvirtd.service
+    - libvirtd.socket
+    - libvirtd-ro.socket
+    - libvirtd-admin.socket
+  failed_when: false
+
+- name: Disable libvirtd service
+  ansible.builtin.systemd:
+    name: libvirtd.service
+    enabled: false
+  failed_when: false
+
+- name: Restart libvirtd socket
+  ansible.builtin.systemd:
+    name: libvirtd.socket
+    state: restarted
+  failed_when: false
+
+- name: Reload firewalld
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload
+  changed_when: true

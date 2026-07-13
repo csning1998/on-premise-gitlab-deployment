@@ -44,6 +44,11 @@ output "cross_route_probe_targets" {
   value       = local.state.microk8s_provision.cross_route_probe_targets
 }
 
+output "hypervisor_host_ip" {
+  description = "Physical KVM hypervisor host's gateway address, passed through to L50 Alloy static scrape targets."
+  value       = local.state.microk8s_provision.hypervisor_host_ip
+}
+
 output "vault_api_port" {
   description = "Vault API frontend port for L50 consumption."
   value       = local.state.vault_frontend.vault_api_port

@@ -13,7 +13,7 @@ network_baseline = {
 }
 
 # The Single Source of Truth for the Root CA Identity
-pki_settings = {
+pki_config = {
   root_ca_common_name         = "On-prem Infrastructure Root CA"
   intermediate_ca_common_name = "On-prem Infrastructure Intermediate CA"
 }

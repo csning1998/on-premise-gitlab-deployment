@@ -103,7 +103,19 @@ module "alloy" {
           labels  = { component = component, instance = ip }
         }
       ]
-    ])
+    ]),
+    [
+      {
+        address = "${local.hypervisor_host_ip}:${local.hypervisor_node_exporter_port}"
+        job     = "hypervisor-node"
+        labels  = { component = "hypervisor" }
+      },
+      {
+        address = "${local.hypervisor_host_ip}:${local.hypervisor_libvirt_exporter_port}"
+        job     = "hypervisor-libvirt"
+        labels  = { component = "hypervisor" }
+      }
+    ]
   )
 
   vault_metrics_address    = local.vault_metrics_address
