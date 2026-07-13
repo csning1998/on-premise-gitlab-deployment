@@ -23,7 +23,6 @@
     - unattended-upgrades.service
 
     # Desktop/Hardware Integrations are useless in Headless VM
-    - packagekit.service
     - accounts-daemon.service
     - ModemManager.service
     - udisks2.service
@@ -38,3 +37,14 @@
     item in ansible_facts.services or
     item ~ '.service' in ansible_facts.services or
     item | regex_replace('\.service$', '') in ansible_facts.services
+
+# dbus-activates packagekit is installed by the gitlab-ce package during dpkg configuration,
+# which makes that masked unit activation fail with UnitMasked
+- name: "Minimal: Stop and disable packagekit without masking"
+  become: true
+  ansible.builtin.systemd:
+    name: packagekit.service
+    state: stopped
+    enabled: false
+    masked: false
+  when: "'packagekit.service' in ansible_facts.services"

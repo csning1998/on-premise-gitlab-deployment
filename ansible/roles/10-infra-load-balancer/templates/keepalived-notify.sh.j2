@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Invoked by keepalived as: <script> <TYPE> <NAME> <STATE>
+# TYPE is GROUP for VG_ALL (this sync group covers every VIP, so all segments
+# transition together and share the same STATE for a given invocation).
+# STATE is one of MASTER, BACKUP, FAULT, or STOP; STOP keeps exactly one series
+# at 1 rather than leaving every state at 0.
+STATE="${3:-UNKNOWN}"
+
+OUTPUT_DIR="{{ node_exporter_textfile_directory }}"
+TARGET_FILE="${OUTPUT_DIR}/keepalived_vrrp_state.prom"
+mkdir -p "${OUTPUT_DIR}"
+TMP_FILE=$(mktemp "${OUTPUT_DIR}/.keepalived_vrrp_state.XXXXXX")
+
+{
+{% for segment in lb_keepalived_segments %}
+  for state in master backup fault stop; do
+    value=0
+    [ "${STATE,,}" = "${state}" ] && value=1
+    echo "node_keepalived_vrrp_state{segment=\"{{ segment.name }}\",state=\"${state}\"} ${value}"
+  done
+{% endfor %}
+} > "${TMP_FILE}"
+
+chmod 0644 "${TMP_FILE}"
+mv "${TMP_FILE}" "${TARGET_FILE}"

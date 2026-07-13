@@ -82,3 +82,27 @@ locals {
     service_name            = "observability"
   }
 }
+
+# Cross-route L4 probe targets match the static routes defined above. The tcp_connect
+# module verifies VIP reachability to isolate routing failures from application issues.
+# These targets are forwarded to the layer 50 Alloy blackbox exporter.
+locals {
+  lb_infra_map = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
+
+  cross_route_probe_port_keys = {
+    "vault-frontend"               = "api"
+    "keycloak-frontend"            = "https"
+    "harbor-bootstrapper-frontend" = "https"
+    "observability-minio"          = "api"
+  }
+
+  # infrastructure_map is keyed by the project_code-prefixed segment name (for example
+  # core-vault-frontend), matching how other layers index this map.
+  cross_route_probe_targets = [
+    for name, port_key in local.cross_route_probe_port_keys : {
+      name    = "${name}-route"
+      address = "${local.lb_infra_map["core-${name}"].lb_config.vip}:${local.lb_infra_map["core-${name}"].lb_config.ports[port_key].frontend_port}"
+      module  = "tcp_connect"
+    }
+  ]
+}

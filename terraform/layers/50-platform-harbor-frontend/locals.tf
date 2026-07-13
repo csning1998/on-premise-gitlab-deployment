@@ -135,3 +135,16 @@ locals {
     microk8s = local.state.provision.node_exporter_targets.ips
   }
 }
+
+# External upstream blackbox probe targets, derived from the Harbor proxy-cache
+# upstreams. Probed from the harbor tenant's Alloy over the system trust store,
+# so Docker Hub rate limits or upstream outages become visible before CI feels them.
+locals {
+  blackbox_external_targets = [
+    for key, cache in local.state.harbor_bootstrapper.proxy_caches : {
+      name    = cache.registry_name
+      address = cache.endpoint_url
+      module  = "http_2xx_public"
+    }
+  ]
+}

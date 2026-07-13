@@ -1,0 +1,10 @@
+---
+alloy_agent_version: "1.17.1"
+alloy_agent_sha256: "b92bfa2815a0a2c51477b4965d1ace3bf2ffc7b841e1361bd4cda6069e8c65bd"
+alloy_agent_os: "linux"
+alloy_agent_arch: "amd64"
+alloy_agent_user: "alloy"
+alloy_agent_group: "alloy"
+alloy_agent_bin: "/usr/local/bin/alloy"
+alloy_agent_config_dir: "/etc/alloy"
+alloy_agent_data_dir: "/var/lib/alloy"

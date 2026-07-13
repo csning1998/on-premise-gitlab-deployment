@@ -230,8 +230,8 @@ prometheus.scrape "vault_metrics" {
   tls_config {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }
-  # Routed through vm_cardinality rather than straight to remote_write, so any future
-  # high-cardinality gRPC metrics Vault might expose hit the same dedup pipeline as vm_static.
+  // Routed through vm_cardinality rather than straight to remote_write, so any future
+  // high-cardinality gRPC metrics Vault might expose hit the same dedup pipeline as vm_static.
   forward_to = [prometheus.relabel.vm_cardinality.receiver]
 }
 
@@ -250,10 +250,10 @@ prometheus.scrape "keycloak" {
 
 %{ endif ~}
 %{ if length(blackbox_targets) > 0 ~}
-// blackbox_targets are derived from L00's global_pki_map (has_ingress-filtered), so any service
-// gaining a real ingress route is probed automatically without an Alloy change. http_2xx probes
-// HTTPS and picks up probe_ssl_earliest_cert_expiry as a byproduct, verified against the same
-// ca-bundle mount already used by the vault_metrics/keycloak scrape blocks above.
+// blackbox_targets carry a per-entry module. http_2xx probes internally issued HTTPS against the
+// ca-bundle mount (ingress endpoints from L00's global_pki_map). http_2xx_public probes external
+// upstreams (public CAs) against the system trust store, no ca_file. tcp_connect checks L4 reachability
+// of non-HTTPS VIPs across the static routes. HTTPS probes pick up probe_ssl_earliest_cert_expiry as a byproduct.
 prometheus.exporter.blackbox "probe" {
   config = `modules:
   http_2xx:
@@ -263,13 +263,24 @@ prometheus.exporter.blackbox "probe" {
       valid_status_codes: [200, 301, 302]
       tls_config:
         ca_file: /etc/alloy/ca-bundle/ca.crt
+  http_2xx_public:
+    prober: http
+    timeout: 5s
+    http:
+      # 401 and 403 count as reachable: the registry answered, it just rejects the anonymous request.
+      # probe_http_status_code distinguishes those from a real 200.
+      valid_status_codes: [200, 301, 302, 401, 403]
+      preferred_ip_protocol: ip4
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
 `
 
 %{ for t in blackbox_targets ~}
   target {
     name    = "${t.name}"
     address = "${t.address}"
-    module  = "http_2xx"
+    module  = "${t.module}"
   }
 %{ endfor ~}
 }

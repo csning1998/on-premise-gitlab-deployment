@@ -42,7 +42,13 @@
 
 - name: "Block B2: Configure Keepalived and HAProxy"
   block:
-    - name: "B2a. Render Keepalived configuration"
+    - name: "B2a. Deploy Keepalived VRRP notify script"
+      ansible.builtin.template:
+        src: keepalived-notify.sh.j2
+        dest: /usr/local/bin/keepalived-notify.sh
+        mode: "0755"
+
+    - name: "B2b. Render Keepalived configuration"
       ansible.builtin.template:
         src: keepalived.conf.j2
         dest: /etc/keepalived/keepalived.conf
@@ -51,7 +57,7 @@
         mode: "0644"
       notify: Restart Keepalived
 
-    - name: "B2b. Render HAProxy configuration"
+    - name: "B2c. Render HAProxy configuration"
       ansible.builtin.template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
@@ -60,7 +66,7 @@
         mode: "0640"
       notify: Restart HAProxy
 
-    - name: "B2c. Verify HAProxy configuration"
+    - name: "B2d. Verify HAProxy configuration"
       ansible.builtin.command:
         cmd: haproxy -c -f /etc/haproxy/haproxy.cfg
       changed_when: false

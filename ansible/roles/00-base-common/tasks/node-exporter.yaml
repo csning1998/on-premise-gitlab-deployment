@@ -8,11 +8,30 @@
         state: present
         update_cache: true
 
-    - name: "Step 2. Enable and start prometheus-node-exporter"
+    - name: "Step 2. Ensure textfile collector directory exists"
+      ansible.builtin.file:
+        path: "{{ node_exporter_textfile_directory }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "Step 3. Configure textfile collector flag"
+      ansible.builtin.copy:
+        content: |
+          ARGS="--collector.textfile.directory={{ node_exporter_textfile_directory }}"
+        dest: /etc/default/prometheus-node-exporter
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Node Exporter
+
+    - name: "Step 4. Enable and start prometheus-node-exporter"
       ansible.builtin.systemd:
         name: "{{ node_exporter_base.service }}"
         state: started
         enabled: true
+        daemon_reload: true
 
   rescue:
     - name: "Block: Install and Enable Node Exporter failed"

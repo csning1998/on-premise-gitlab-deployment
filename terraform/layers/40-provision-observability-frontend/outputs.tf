@@ -39,6 +39,11 @@ output "node_exporter_targets" {
   value       = local.state.microk8s_provision.node_exporter_targets
 }
 
+output "cross_route_probe_targets" {
+  description = "Cross-segment VIP:port L4 probe targets (tcp_connect) passed through to the L50 Alloy blackbox exporter."
+  value       = local.state.microk8s_provision.cross_route_probe_targets
+}
+
 output "vault_api_port" {
   description = "Vault API frontend port for L50 consumption."
   value       = local.state.vault_frontend.vault_api_port

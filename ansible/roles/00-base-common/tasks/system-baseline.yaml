@@ -1,0 +1,52 @@
+---
+- name: "System: Configure basic apt settings (No Install)"
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-disable-recommends
+    content: |
+      APT::Install-Recommends "0";
+      APT::Install-Suggests "0";
+    mode: "0644"
+
+- name: "System: Diet execution (Disable Services)"
+  ansible.builtin.include_tasks: diet-os.yaml
+
+- name: "System: Install strictly necessary admin tools"
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - wget
+      - vim
+      - htop
+      - net-tools
+      - gpg
+      - gnupg-agent
+      - bash-completion
+      - python3-pip
+      - jq
+      - ncurses-term
+    state: present
+    update_cache: true
+
+- name: "System: Install Ghostty xterm-ghostty terminfo"
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/profile.d/ghostty-term.sh
+    content: |
+      export TERM=xterm-256color
+    mode: "0644"
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version is match("24.04")
+
+- name: "Network: Enable Loose Mode Reverse Path Filtering"
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "2"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - net.ipv4.conf.all.rp_filter
+    - net.ipv4.conf.default.rp_filter

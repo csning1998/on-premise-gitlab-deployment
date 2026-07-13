@@ -18,6 +18,7 @@ vrrp_sync_group VG_ALL {
         VI_{{ segment.name | upper | replace('-', '_') }}
 {% endfor %}
     }
+    notify "/usr/local/bin/keepalived-notify.sh"
 }
 
 {# Iterate to generate VRRP Instance #}

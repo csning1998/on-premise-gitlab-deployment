@@ -111,10 +111,14 @@ locals {
 # because of the unconditional internal mTLS SAN). Any future service that gains a real ingress
 # block is picked up automatically, no change needed at this layer.
 locals {
-  blackbox_targets = [
-    for key, entry in local.state.vault_pki.global_pki_map : {
-      name    = key
-      address = "https://${entry.dns_san[0]}"
-    } if entry.has_ingress
-  ]
+  blackbox_targets = concat(
+    [
+      for key, entry in local.state.vault_pki.global_pki_map : {
+        name    = key
+        address = "https://${entry.dns_san[0]}"
+        module  = "http_2xx"
+      } if entry.has_ingress
+    ],
+    local.state.provision.cross_route_probe_targets
+  )
 }

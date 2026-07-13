@@ -1,0 +1,2 @@
+---
+node_exporter_textfile_directory: "/var/lib/prometheus/node-exporter"

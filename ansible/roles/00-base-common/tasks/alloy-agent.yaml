@@ -1,0 +1,121 @@
+---
+# Bakes the Grafana Alloy binary into the golden image so bare-metal VMs can
+# ship journald to Loki. The service stays disabled here; its config.alloy and
+# lifecycle are applied at provisioning time, mirroring the postgres-exporter
+# binary-in-image / config-in-provisioning split.
+- name: "Block: Install Grafana Alloy Agent Binary"
+  become: true
+  block:
+    - name: "Step 1. Ensure unzip is installed"
+      ansible.builtin.apt:
+        name: unzip
+        state: present
+        update_cache: true
+
+    - name: "Step 2. Check installed Alloy version"
+      ansible.builtin.command: "{{ alloy_agent_bin }} --version"
+      register: alloy_installed_version
+      changed_when: false
+      failed_when: false
+
+    - name: "Step 2b. Decide whether Alloy needs installing"
+      ansible.builtin.set_fact:
+        alloy_needs_install: >-
+          {{ alloy_installed_version.rc != 0
+              or alloy_agent_version != (alloy_installed_version.stdout | default('')
+              | regex_search('[0-9]+\.[0-9]+\.[0-9]+') | default(''))
+          }}
+
+    - name: "Step 3. Download Alloy archive with checksum verification"
+      ansible.builtin.get_url:
+        url:
+          "https://github.com/grafana/alloy/releases/download/v{{ alloy_agent_version }}/\
+          alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}.zip"
+        dest: "/tmp/alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}.zip"
+        checksum: "sha256:{{ alloy_agent_sha256 }}"
+        mode: "0644"
+      when: alloy_needs_install
+
+    - name: "Step 4. Extract Alloy archive to staging directory"
+      ansible.builtin.unarchive:
+        src: "/tmp/alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}.zip"
+        dest: /tmp
+        remote_src: true
+      when: alloy_needs_install
+
+    - name: "Step 5. Install Alloy binary"
+      ansible.builtin.copy:
+        src: "/tmp/alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}"
+        dest: "{{ alloy_agent_bin }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+      when: alloy_needs_install
+
+    - name: "Step 6. Remove staged Alloy files"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}.zip"
+        - "/tmp/alloy-{{ alloy_agent_os }}-{{ alloy_agent_arch }}"
+      when: alloy_needs_install
+
+    - name: "Step 7. Create Alloy system group"
+      ansible.builtin.group:
+        name: "{{ alloy_agent_group }}"
+        system: true
+        state: present
+
+    - name: "Step 8. Create Alloy system user with journal read access"
+      ansible.builtin.user:
+        name: "{{ alloy_agent_user }}"
+        group: "{{ alloy_agent_group }}"
+        groups: systemd-journal
+        append: true
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        home: "{{ alloy_agent_config_dir }}"
+
+    - name: "Step 9. Create Alloy config and data directories"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ alloy_agent_user }}"
+        group: "{{ alloy_agent_group }}"
+        mode: "0750"
+      loop:
+        - "{{ alloy_agent_config_dir }}"
+        - "{{ alloy_agent_data_dir }}"
+
+    - name: "Step 10. Deploy Alloy default arguments"
+      ansible.builtin.copy:
+        content: |
+          CONFIG_FILE="{{ alloy_agent_config_dir }}/config.alloy"
+          CUSTOM_ARGS="--storage.path={{ alloy_agent_data_dir }}"
+        dest: /etc/default/alloy
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "Step 11. Deploy Alloy systemd unit (disabled until configured)"
+      ansible.builtin.template:
+        src: alloy.service.j2
+        dest: /etc/systemd/system/alloy.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: "Step 12. Register unit stopped and disabled (config applied at provisioning)"
+      ansible.builtin.systemd:
+        name: alloy.service
+        enabled: false
+        state: stopped
+        daemon_reload: true
+
+  rescue:
+    - name: "Block: Install Grafana Alloy Agent Binary failed"
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

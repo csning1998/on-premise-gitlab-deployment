@@ -1,0 +1,20 @@
+[Unit]
+Description=Grafana Alloy log-shipping agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ alloy_agent_user }}
+Group={{ alloy_agent_group }}
+EnvironmentFile=/etc/default/alloy
+ExecStart={{ alloy_agent_bin }} run $CONFIG_FILE $CUSTOM_ARGS
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths={{ alloy_agent_data_dir }}
+
+[Install]
+WantedBy=multi-user.target

@@ -86,6 +86,8 @@ module "alloy" {
     job     = "harbor-minio"
     labels  = { component = "minio" }
   }]
+
+  blackbox_targets = local.blackbox_external_targets
 }
 
 module "kube_state_metrics" {
