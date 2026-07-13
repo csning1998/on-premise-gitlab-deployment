@@ -33,6 +33,7 @@
 | [Application Metrics Platform](en/architecture/application-metrics-platform.md)                                         | GitLab/Harbor/Runner application metrics, LGTM self-monitoring, Mimir series limits               |
 | [Kubernetes State and Availability Monitoring](en/architecture/kubernetes-state-and-blackbox-monitoring.md)             | kube-state-metrics rollout, ingress-aware blackbox probing, certificate expiry byproduct          |
 | [Fleet Lifecycle Collectors and Availability Probing](en/architecture/lifecycle-collectors-and-availability-probing.md) | keepalived VRRP visibility, bare-metal Alloy log agent, blackbox upstream and cross-route probing |
+| [Loki Log Pipeline](en/architecture/loki-log-pipeline.md)                                                               | Multi-tenant Loki, cross-cluster mTLS ingress, Alloy log collection, audit retention              |
 
 ## Operations
 
