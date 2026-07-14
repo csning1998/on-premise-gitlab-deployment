@@ -16,3 +16,15 @@ variable "db_init_config" {
     db_user = string # e.g., "harbor"
   })
 }
+
+variable "harbor_minio_prometheus_account" {
+  description = "Dedicated MinIO IAM user for authenticated Prometheus scraping"
+  type = map(object({
+    user_name = string
+  }))
+  default = {
+    "harbor-minio-prometheus" = {
+      user_name = "harbor-minio-prometheus"
+    }
+  }
+}

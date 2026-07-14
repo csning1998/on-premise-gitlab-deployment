@@ -13,7 +13,7 @@ telemetry {
 
 storage "raft" {
   path    = "{{ vault_dir_data }}"
-  node_id = "{{ node_id }}" 
+  node_id = "{{ node_id }}"
 
 {% if inventory_hostname not in groups['primary'] %}
   retry_join {
@@ -37,6 +37,9 @@ listener "tcp" {
   tls_client_ca_file = "{{ vault_dir_tls }}/vault-ca.crt"
 
   telemetry {
-    unauthenticated_metrics_access = true
+    # Prometheus scrapes metrics over HTTPS and presents a token scoped to the alloy-metrics-read policy
+    # (sys/metrics read only). This is necessary because unauthenticated_metrics_access is disabled on this
+    # listener, as the port also serves the full Vault API used by every Vault Agent fleet-wide.
+    unauthenticated_metrics_access = false
   }
 }

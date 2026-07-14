@@ -58,9 +58,11 @@ resource "vault_kubernetes_auth_backend_role" "kubernetes_role" {
   backend   = module.vault_pki_setup.auth_backend_paths[each.value.auth_path]
   role_name = each.value.name
 
-  # Restrict to component-specific namespace and ServiceAccounts
+  # Restrict to component-specific namespace and ServiceAccounts. "observability" is included
+  # because every tenant cluster runs its own Alloy in a namespace of that name, which is
+  # separate from the component-prefixed namespace.
   bound_service_account_names      = [each.key, "vault-issuer", "default"]
-  bound_service_account_namespaces = [split("-", each.key)[0], "cert-manager", "default"]
+  bound_service_account_namespaces = [split("-", each.key)[0], "cert-manager", "default", "observability"]
 
   token_policies = [
     "default",

@@ -34,6 +34,13 @@ variable "vault_metrics_address" {
   default     = null
 }
 
+variable "vault_metrics_token_secret_name" {
+  description = "Optional K8s Secret name holding the Vault token for authenticated sys/metrics access (replaces unauthenticated_metrics_access); mounted and referenced via bearer_token_file when vault_metrics_address is set"
+  type        = string
+  nullable    = true
+  default     = null
+}
+
 # TODO rename to static_scrape_targets for naming consistency with alloy_config (Phase 3+ naming MR)
 variable "vm_static_targets" {
   description = "Optional static scrape targets for bare-metal VM metrics endpoints; each entry is inlined directly into prometheus.scrape vm_static targets"
@@ -66,6 +73,13 @@ variable "minio_scrape_targets" {
     labels  = optional(map(string), {})
   }))
   default = []
+}
+
+variable "minio_metrics_token_secret_name" {
+  description = "Optional K8s Secret name holding the MinIO Prometheus JWT (replaces MINIO_PROMETHEUS_AUTH_TYPE=public); mounted and referenced via bearer_token_file when minio_scrape_targets is set"
+  type        = string
+  nullable    = true
+  default     = null
 }
 
 variable "blackbox_targets" {

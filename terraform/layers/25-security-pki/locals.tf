@@ -116,9 +116,11 @@ locals {
     }
     "harbor-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }
+      "secret/data/on-premise-gitlab-deployment/harbor/app/minio_prometheus"      = { capabilities = ["read"] }
     }
     "gitlab-frontend" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
+      "secret/data/on-premise-gitlab-deployment/gitlab/app/minio_prometheus"      = { capabilities = ["read"] }
     }
     "gitlab-runner" = {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
@@ -127,6 +129,8 @@ locals {
       "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
       "secret/data/on-premise-gitlab-deployment/observability/frontend"                  = { capabilities = ["read"] }
       "secret/data/on-premise-gitlab-deployment/observability/app/s3_credentials/*"      = { capabilities = ["read"] }
+      "secret/data/on-premise-gitlab-deployment/observability/app/minio_prometheus"      = { capabilities = ["read"] }
+      "secret/data/on-premise-gitlab-deployment/observability/app/vault_metrics_token"   = { capabilities = ["read"] }
     }
 
     # Human/Management Identities

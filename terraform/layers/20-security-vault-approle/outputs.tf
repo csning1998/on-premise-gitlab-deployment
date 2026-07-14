@@ -14,3 +14,13 @@ output "production_approle_path" {
   description = "The mount path of the production approle backend"
   value       = vault_auth_backend.approle.path
 }
+
+output "alloy_metrics_role_name" {
+  description = "Token role name L25 mints the Alloy metrics token from"
+  value       = vault_token_auth_backend_role.alloy_metrics.role_name
+}
+
+output "alloy_metrics_policy_name" {
+  description = "Policy name granting sys/metrics read, scoped to the token role's allowed_policies"
+  value       = vault_policy.alloy_metrics_read.name
+}

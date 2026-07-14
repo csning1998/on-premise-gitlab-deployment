@@ -57,6 +57,17 @@ module "minio_gitlab_config" {
   minio_server_url         = local.minio_url
 }
 
+module "minio_gitlab_prometheus_account" {
+  source = "../../modules/configuration/minio-prometheus-account"
+
+  providers = {
+    vault.production = vault.production
+  }
+
+  user_name         = var.gitlab_minio_prometheus_account["gitlab-minio-prometheus"].user_name
+  vault_secret_path = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/minio_prometheus"
+}
+
 # Persist generated database credentials to Vault (SSoT)
 resource "vault_kv_secret_v2" "gitlab_app_database" {
   provider = vault.production

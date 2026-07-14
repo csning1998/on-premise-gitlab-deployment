@@ -52,6 +52,7 @@ locals {
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name
+  harbor_ghcr_proxy   = local.state.harbor_bootstrapper.proxy_caches.ghcr_io.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
   api_port     = local.state.microk8s_provision.k8s_api_port

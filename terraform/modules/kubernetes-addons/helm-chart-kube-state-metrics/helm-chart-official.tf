@@ -21,3 +21,35 @@ resource "helm_release" "kube_state_metrics" {
     }
   })]
 }
+
+# Full cluster-state data (pod names, replica counts, resource requests, labels) is otherwise
+# readable by any pod in this namespace that can reach port 8080, since the annotation above
+# has no access control of its own. Restricting ingress to this cluster's own Alloy is what
+# makes the annotation-based discovery safe
+resource "kubernetes_manifest" "kube_state_metrics_network_policy" {
+  depends_on = [helm_release.kube_state_metrics]
+
+  manifest = {
+    apiVersion = "networking.k8s.io/v1"
+    kind       = "NetworkPolicy"
+    metadata = {
+      name      = "kube-state-metrics-ingress"
+      namespace = var.helm_config.namespace
+    }
+    spec = {
+      podSelector = {
+        matchLabels = {
+          "app.kubernetes.io/name" = "kube-state-metrics"
+        }
+      }
+      policyTypes = ["Ingress"]
+      ingress = [{
+        from = [{
+          namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = var.helm_config.namespace } }
+          podSelector       = { matchLabels = { "app.kubernetes.io/name" = "alloy" } }
+        }]
+        ports = [{ protocol = "TCP", port = 8080 }]
+      }]
+    }
+  }
+}

@@ -300,13 +300,23 @@ vault_prod_unseal_trigger() {
 		return 1
   fi
 
+  if [[ ! -f "${PROD_CA_CERT}" ]]; then
+		log_print "ERROR" "Production Vault CA Cert not found at: ${PROD_CA_CERT}"
+		log_print "INFO" "Please ensure Terraform Layer 15 has been applied."
+		return 1
+  fi
+
+  local prod_ca_b64
+  prod_ca_b64=$(base64 "$PROD_CA_CERT" | tr -d '\n')
+
   # No need to pass token string, just the path and URL.
   if ansible-playbook \
     -i "$inventory_file" \
     "$playbook_file" \
     --tags vault-unseal \
     --extra-vars "dev_vault_url=${DEV_VAULT_ADDR}" \
-    --extra-vars "dev_root_token_path=${DEV_ROOT_TOKEN_FILE}"; then
+    --extra-vars "dev_root_token_path=${DEV_ROOT_TOKEN_FILE}" \
+    --extra-vars "vault_ca_cert_b64=${prod_ca_b64}"; then
 
     log_print "OK" "[Prod Vault] Unseal Playbook execution completed."
   else

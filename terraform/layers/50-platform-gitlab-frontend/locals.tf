@@ -75,8 +75,8 @@ locals {
   postgres_ca = "gitlab-postgres-tls"
 
   # Vault Connection (Standardized)
-  vault_endpoint          = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_api_port          = local.state.provision.network_context.vault_api_port
+  vault_endpoint          = "https://${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
   vault_pki_path          = local.state.vault_pki.pki_configuration.path
   vault_pki_lease_default = local.state.vault_pki.pki_configuration.lease_durations.default
   vault_pki_lease_agent   = local.state.vault_pki.pki_configuration.lease_durations.agent

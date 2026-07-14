@@ -62,8 +62,14 @@ module "loki" {
 }
 
 module "alloy" {
-  source     = "../../modules/kubernetes-addons/helm-chart-alloy"
-  depends_on = [module.mimir, module.loki, kubernetes_namespace.observability]
+  source = "../../modules/kubernetes-addons/helm-chart-alloy"
+  depends_on = [
+    module.mimir,
+    module.loki,
+    kubernetes_namespace.observability,
+    kubernetes_manifest.alloy_vault_metrics_token_external_secret,
+    kubernetes_manifest.minio_metrics_token_external_secret,
+  ]
 
   helm_config = {
     version          = var.observability_stack_config.alloy_version
@@ -81,6 +87,8 @@ module "alloy" {
     tenant_id             = var.observability_stack_config.cluster_name
     ca_bundle_secret_name = local.ca_bundle_config.secret_name
   }
+
+  vault_metrics_token_secret_name = "alloy-vault-metrics-token"
 
   vm_static_targets = concat(
     [
@@ -121,6 +129,13 @@ module "alloy" {
   vault_metrics_address    = local.vault_metrics_address
   keycloak_metrics_address = local.keycloak_metrics_address
   blackbox_targets         = local.blackbox_targets
+
+  minio_scrape_targets = [{
+    address = "${local.minio_fqdn}:${local.minio_port}"
+    job     = "observability-minio"
+    labels  = { component = "minio" }
+  }]
+  minio_metrics_token_secret_name = "alloy-minio-metrics-token"
 }
 
 module "kube_state_metrics" {

@@ -153,8 +153,12 @@ module "alloy_client_cert" {
 }
 
 module "alloy" {
-  source     = "../../modules/kubernetes-addons/helm-chart-alloy"
-  depends_on = [module.alloy_client_cert, kubernetes_namespace.observability]
+  source = "../../modules/kubernetes-addons/helm-chart-alloy"
+  depends_on = [
+    module.alloy_client_cert,
+    kubernetes_namespace.observability,
+    module.minio_metrics_token
+  ]
 
   helm_config = {
     version          = var.alloy_version
@@ -229,6 +233,7 @@ module "alloy" {
     job     = "gitlab-minio"
     labels  = { component = "minio" }
   }]
+  minio_metrics_token_secret_name = "alloy-minio-metrics-token"
 }
 
 module "kube_state_metrics" {

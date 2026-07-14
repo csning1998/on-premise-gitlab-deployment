@@ -80,6 +80,68 @@ resource "kubernetes_manifest" "grafana_admin_external_secret" {
   }
 }
 
+resource "kubernetes_manifest" "alloy_vault_metrics_token_external_secret" {
+  depends_on = [kubernetes_manifest.observability_vault_secret_store]
+
+  manifest = {
+    apiVersion = "external-secrets.io/v1"
+    kind       = "ExternalSecret"
+    metadata = {
+      name      = "alloy-vault-metrics-token"
+      namespace = kubernetes_namespace.observability.metadata[0].name
+    }
+    spec = {
+      refreshInterval = "1h"
+      secretStoreRef = {
+        name = "observability-vault-store"
+        kind = "SecretStore"
+      }
+      target = {
+        name           = "alloy-vault-metrics-token"
+        creationPolicy = "Owner"
+      }
+      data = [{
+        secretKey = "token"
+        remoteRef = {
+          key      = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/observability/app/vault_metrics_token"
+          property = "token"
+        }
+      }]
+    }
+  }
+}
+
+resource "kubernetes_manifest" "minio_metrics_token_external_secret" {
+  depends_on = [kubernetes_manifest.observability_vault_secret_store]
+
+  manifest = {
+    apiVersion = "external-secrets.io/v1"
+    kind       = "ExternalSecret"
+    metadata = {
+      name      = "alloy-minio-metrics-token"
+      namespace = kubernetes_namespace.observability.metadata[0].name
+    }
+    spec = {
+      refreshInterval = "1h"
+      secretStoreRef = {
+        name = "observability-vault-store"
+        kind = "SecretStore"
+      }
+      target = {
+        name           = "alloy-minio-metrics-token"
+        creationPolicy = "Owner"
+      }
+      data = [{
+        secretKey = "token"
+        remoteRef = {
+          key      = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/observability/app/minio_prometheus"
+          property = "bearer_token"
+        }
+      }]
+    }
+  }
+}
+
 resource "kubernetes_manifest" "mimir_s3_external_secret" {
   depends_on = [kubernetes_manifest.observability_vault_secret_store]
 

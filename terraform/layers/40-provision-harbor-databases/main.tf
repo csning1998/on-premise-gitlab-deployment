@@ -20,6 +20,17 @@ module "minio_harbor_config" {
   minio_server_url         = local.minio_url
 }
 
+module "minio_harbor_prometheus_account" {
+  source = "../../modules/configuration/minio-prometheus-account"
+
+  providers = {
+    vault.production = vault.production
+  }
+
+  user_name         = var.harbor_minio_prometheus_account["harbor-minio-prometheus"].user_name
+  vault_secret_path = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor/app/minio_prometheus"
+}
+
 # Random password for Harbor database role
 resource "random_password" "harbor_db_password" {
   length  = 24

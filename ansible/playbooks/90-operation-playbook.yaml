@@ -37,3 +37,14 @@
       ansible.builtin.include_role:
         name: 00-base-common
         tasks_from: node-exporter.yaml
+
+- name: "Play: Operation - Retrofit MinIO Prometheus JWT Auth"
+  hosts: primary, replica
+  become: true
+  gather_facts: true
+  tags: [minio-metrics-auth]
+  tasks:
+    - name: "Regenerate MinIO environment file and restart"
+      ansible.builtin.include_role:
+        name: 30-infra-minio
+        tasks_from: B-configure.yaml

@@ -19,7 +19,9 @@ resource "helm_release" "alloy" {
           vm_static_targets        = var.vm_static_targets
           workhorse_targets        = var.workhorse_targets
           vault_metrics_address    = var.vault_metrics_address
+          vault_metrics_token_file = var.vault_metrics_token_secret_name != null ? "/etc/alloy/vault-token/token" : null
           minio_scrape_targets     = var.minio_scrape_targets
+          minio_metrics_token_file = var.minio_metrics_token_secret_name != null ? "/etc/alloy/minio-token/token" : null
           keycloak_metrics_address = var.keycloak_metrics_address
           blackbox_targets         = var.blackbox_targets
         })
@@ -38,6 +40,12 @@ resource "helm_release" "alloy" {
           ] : [],
           var.alloy_config.ca_bundle_secret_name != null ? [
             { name = "alloy-ca-bundle", mountPath = "/etc/alloy/ca-bundle", readOnly = true }
+          ] : [],
+          var.vault_metrics_token_secret_name != null ? [
+            { name = "alloy-vault-metrics-token", mountPath = "/etc/alloy/vault-token", readOnly = true }
+          ] : [],
+          var.minio_metrics_token_secret_name != null ? [
+            { name = "alloy-minio-metrics-token", mountPath = "/etc/alloy/minio-token", readOnly = true }
           ] : []
         )
       }
@@ -57,6 +65,12 @@ resource "helm_release" "alloy" {
           ] : [],
           var.alloy_config.ca_bundle_secret_name != null ? [
             { name = "alloy-ca-bundle", secret = { secretName = var.alloy_config.ca_bundle_secret_name } }
+          ] : [],
+          var.vault_metrics_token_secret_name != null ? [
+            { name = "alloy-vault-metrics-token", secret = { secretName = var.vault_metrics_token_secret_name } }
+          ] : [],
+          var.minio_metrics_token_secret_name != null ? [
+            { name = "alloy-minio-metrics-token", secret = { secretName = var.minio_metrics_token_secret_name } }
           ] : []
         )
       }
@@ -64,4 +78,11 @@ resource "helm_release" "alloy" {
     serviceAccount = { create = true }
     rbac           = { create = true }
   })]
+
+  lifecycle {
+    precondition {
+      condition     = length(var.minio_scrape_targets) == 0 || var.minio_metrics_token_secret_name != null
+      error_message = "minio_metrics_token_secret_name must be set whenever minio_scrape_targets is non-empty; an unauthenticated scrape against MinIO's JWT-protected endpoint returns HTTP 401 and records up=0."
+    }
+  }
 }

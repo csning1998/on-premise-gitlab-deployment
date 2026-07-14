@@ -8,3 +8,15 @@ variable "observability_minio_tenants" {
     function       = string
   }))
 }
+
+variable "observability_minio_prometheus_account" {
+  description = "Dedicated MinIO IAM user for authenticated Prometheus scraping"
+  type = map(object({
+    user_name = string
+  }))
+  default = {
+    "observability-minio-prometheus" = {
+      user_name = "observability-minio-prometheus"
+    }
+  }
+}

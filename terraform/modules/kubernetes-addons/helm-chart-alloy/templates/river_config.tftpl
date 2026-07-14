@@ -269,7 +269,7 @@ prometheus.relabel "vm_cardinality" {
 %{ endif ~}
 %{ if length(minio_scrape_targets) > 0 ~}
 // minio_scrape_targets: per-node MinIO metrics at /minio/v2/metrics/node over HTTPS.
-// MinIO server certs are issued by the same Vault PKI as the Alloy mTLS cert, so ca.crt resolves without a separate bundle.
+// MinIO server certs are issued by the same Vault PKI as the CA mount configured for this Alloy instance.
 prometheus.scrape "minio" {
   targets = [
 %{ for t in minio_scrape_targets ~}
@@ -278,21 +278,32 @@ prometheus.scrape "minio" {
   ]
   metrics_path = "/minio/v2/metrics/cluster"
   scheme       = "https"
+%{ if minio_metrics_token_file != null ~}
+  bearer_token_file = "${minio_metrics_token_file}"
+%{ endif ~}
   tls_config {
+%{ if mtls_enabled ~}
     ca_file = "/etc/alloy/mtls/ca.crt"
+%{ else ~}
+    ca_file = "/etc/alloy/ca-bundle/ca.crt"
+%{ endif ~}
   }
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
 %{ endif ~}
 %{ if vault_metrics_address != null ~}
-// vault_metrics_address is constrained to host:port derived from L00 vault service VIP and api frontend_port;
-// unauthenticated_metrics_access is enabled on the Vault listener for internal network scraping.
+// vault_metrics_address is constrained to host:port derived from L00 vault service VIP and api frontend_port.
+// The Vault listener requires a token scoped to the alloy-metrics-read policy (sys/metrics read only);
+// unauthenticated_metrics_access is disabled on the listener.
 prometheus.scrape "vault_metrics" {
   targets      = [{"__address__" = "${vault_metrics_address}", "job" = "vault"}]
   metrics_path = "/v1/sys/metrics"
   params       = { format = ["prometheus"] }
   scheme       = "https"
+%{ if vault_metrics_token_file != null ~}
+  bearer_token_file = "${vault_metrics_token_file}"
+%{ endif ~}
   tls_config {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }

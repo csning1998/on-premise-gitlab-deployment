@@ -34,7 +34,7 @@ module "alloy_client_cert" {
 
 module "alloy" {
   source     = "../../modules/kubernetes-addons/helm-chart-alloy"
-  depends_on = [module.alloy_client_cert, kubernetes_namespace.observability]
+  depends_on = [module.alloy_client_cert, kubernetes_namespace.observability, module.minio_metrics_token]
 
   helm_config = {
     version          = var.alloy_version
@@ -87,6 +87,7 @@ module "alloy" {
     job     = "harbor-minio"
     labels  = { component = "minio" }
   }]
+  minio_metrics_token_secret_name = "alloy-minio-metrics-token"
 
   blackbox_targets = local.blackbox_external_targets
 }
