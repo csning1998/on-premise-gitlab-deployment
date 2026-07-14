@@ -94,8 +94,8 @@ locals {
 
   # System Level Credentials (OS/SSH)
   sec_vm_credentials = {
-    username             = local.secrets.guest_vm["vm_username"]
-    password             = local.secrets.guest_vm["vm_password"]
+    username             = local.secrets.guest_vm["guest_username"]
+    password             = local.secrets.guest_vm["guest_password"]
     ssh_public_key_path  = local.secrets.guest_vm["ssh_public_key_path"]
     ssh_private_key_path = local.secrets.guest_vm["ssh_private_key_path"]
   }

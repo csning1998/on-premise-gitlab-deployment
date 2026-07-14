@@ -29,7 +29,7 @@ output "ingress_https_node_port" {
   value       = module.context.svc_network.ports["ingress-https"].backend_port
 }
 
-output "vm_scrape_targets" {
+output "guest_metrics_endpoints" {
   description = "VM-level observability scrape targets aggregated from L10 network topology for L40+ consumption."
   value = {
     haproxy_stats_port                  = local.network_central_lb.ports["stats"].frontend_port

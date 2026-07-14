@@ -93,7 +93,7 @@ resource "libvirt_volume" "base_image" {
 resource "libvirt_volume" "os_disk" {
   depends_on = [libvirt_volume.base_image]
 
-  for_each = var.vm_config.all_nodes_map
+  for_each = var.guest_config.all_nodes_map
   name     = "${each.key}-os.qcow2"
   pool     = values(var.libvirt_infrastructure)[0].storage_pool_name
   capacity = each.value.os_disk_capacity_gib * 1024 * 1024 * 1024
@@ -115,14 +115,14 @@ resource "libvirt_volume" "os_disk" {
 
 resource "libvirt_cloudinit_disk" "cloud_init" {
 
-  for_each = var.vm_config.all_nodes_map
+  for_each = var.guest_config.all_nodes_map
   name     = "${each.key}-cloud-init.iso"
 
   meta_data = yamlencode({})
   user_data = templatefile("${path.module}/../../../templates/user_data.tftpl", {
     hostname       = each.key
-    vm_username    = var.credentials.username
-    vm_password    = var.credentials.password
+    guest_username = var.credentials.username
+    guest_password = var.credentials.password
     ssh_public_key = trimspace(data.local_file.ssh_public_key.content)
   })
 
@@ -139,7 +139,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
 }
 
 resource "libvirt_volume" "cloud_init_iso" {
-  for_each = var.vm_config.all_nodes_map
+  for_each = var.guest_config.all_nodes_map
 
   name = "${each.key}-cloud-init.iso"
   pool = values(var.libvirt_infrastructure)[0].storage_pool_name
@@ -169,7 +169,7 @@ resource "libvirt_domain" "nodes" {
     libvirt_volume.cloud_init_iso
   ]
 
-  for_each = var.vm_config.all_nodes_map
+  for_each = var.guest_config.all_nodes_map
 
   # 1. Basic Configuration (Required)
   name        = each.key

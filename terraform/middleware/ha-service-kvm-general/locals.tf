@@ -48,7 +48,7 @@ locals {
     }
   }
 
-  vm_config = {
+  guest_config = {
     all_nodes_map = {
       for k, v in local.flat_node_map : k => {
         ip                   = v.ip
@@ -139,13 +139,13 @@ locals {
 
 # Security Credentials
 locals {
-  vm_credentials_for_hypervisor = {
+  guest_credentials_for_hypervisor = {
     username            = var.credentials_system.username
     password            = var.credentials_system.password
     ssh_public_key_path = var.credentials_system.ssh_public_key_path
   }
 
-  vm_credentials_for_ssh = {
+  guest_credentials_for_ssh = {
     username             = var.credentials_system.username
     ssh_private_key_path = var.credentials_system.ssh_private_key_path
   }

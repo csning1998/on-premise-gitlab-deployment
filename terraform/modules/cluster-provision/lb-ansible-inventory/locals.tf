@@ -36,7 +36,7 @@ locals {
 
 locals {
   lb_hosts = {
-    for name, node in var.vm_nodes : name => {
+    for name, node in var.guest_nodes : name => {
       ansible_host = split("/", node.interfaces[1].addresses[0])[0]
       advertise_ip = split("/", node.interfaces[1].addresses[0])[0]
       node_id      = name

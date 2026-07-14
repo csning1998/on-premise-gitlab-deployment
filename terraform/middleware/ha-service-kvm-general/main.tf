@@ -2,17 +2,17 @@
 module "hypervisor_kvm" {
   source = "../../modules/cluster-provision/hypervisor-kvm"
 
-  vm_config = local.vm_config
+  guest_config = local.guest_config
 
   create_networks        = false
-  credentials            = local.vm_credentials_for_hypervisor
+  credentials            = local.guest_credentials_for_hypervisor
   libvirt_infrastructure = local.hypervisor_kvm_infrastructure
   static_routes          = var.static_routes
 }
 
 module "ssh_manager" {
   source         = "../../modules/cluster-provision/ssh-manager"
-  status_trigger = module.hypervisor_kvm.vm_status_trigger
+  status_trigger = module.hypervisor_kvm.guest_status_trigger
 
   nodes = [
     for k, v in local.flat_node_map : {
@@ -26,7 +26,7 @@ module "ssh_manager" {
     ssh_config_name = var.svc_identity.ssh_config
   }
 
-  credentials_vm = local.vm_credentials_for_ssh
+  credentials_vm = local.guest_credentials_for_ssh
 }
 
 module "ansible_runner" {

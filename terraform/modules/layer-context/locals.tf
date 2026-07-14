@@ -59,8 +59,8 @@ locals {
   sys_vault_endpoint = var.vault_sys_vip != null ? "https://${var.vault_sys_vip}:443" : null
 
   sec_vm_credentials = {
-    username             = var.guest_vm_data["vm_username"]
-    password             = var.guest_vm_data["vm_password"]
+    username             = var.guest_vm_data["guest_username"]
+    password             = var.guest_vm_data["guest_password"]
     ssh_public_key_path  = var.guest_vm_data["ssh_public_key_path"]
     ssh_private_key_path = var.guest_vm_data["ssh_private_key_path"]
   }

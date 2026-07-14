@@ -58,12 +58,12 @@ locals {
 
 # Observability VM Scrape Targets
 locals {
-  port_haproxy_stats                  = local.state.provision.vm_scrape_targets.haproxy_stats_port
-  central_lb_ips                      = local.state.provision.vm_scrape_targets.central_lb_ips
   vault_metrics_address               = "${local.state.vault_pki.vault_service_vip}:${local.vault_api_port}"
-  keycloak_metrics_address            = local.state.provision.vm_scrape_targets.keycloak_metrics_address
-  keycloak_node_ip                    = local.state.provision.vm_scrape_targets.keycloak_node_ip
-  harbor_bootstrapper_metrics_address = local.state.provision.vm_scrape_targets.harbor_bootstrapper_metrics_address
+  port_haproxy_stats                  = local.state.provision.guest_metrics_endpoints.haproxy_stats_port
+  central_lb_ips                      = local.state.provision.guest_metrics_endpoints.central_lb_ips
+  keycloak_metrics_address            = local.state.provision.guest_metrics_endpoints.keycloak_metrics_address
+  keycloak_node_ip                    = local.state.provision.guest_metrics_endpoints.keycloak_node_ip
+  harbor_bootstrapper_metrics_address = local.state.provision.guest_metrics_endpoints.harbor_bootstrapper_metrics_address
 }
 
 # Node Exporter Context

@@ -38,7 +38,7 @@ variable "network_service_segments" {
   }))
 }
 
-variable "vm_nodes" {
+variable "guest_nodes" {
   description = "Computed LB VM nodes map from lb-interface-planner; interfaces[1].addresses[0] provides the HostOnly IP per node."
   type        = any
 }

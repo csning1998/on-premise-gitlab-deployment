@@ -68,7 +68,7 @@ resource "null_resource" "prepare_ssh_access" {
   triggers = {
     # The ID of the VMs change when they are (re)established. 
     # This modifies jsonencode and thus trigger this resource, Also pass the known_hosts_path via a trigger.
-    vm_provisioning_complete = jsonencode(var.status_trigger)
+    guest_provisioning_complete = jsonencode(var.status_trigger)
   }
 
   provisioner "local-exec" {

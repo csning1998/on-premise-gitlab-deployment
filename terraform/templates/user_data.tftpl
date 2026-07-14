@@ -7,8 +7,8 @@ fqdn: ${hostname}
 
 manage_etc_hosts: true
 users:
-  - name: ${vm_username}
-    passwd: "${vm_password}"
+  - name: ${guest_username}
+    passwd: "${guest_password}"
     lock_passwd: false
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh_authorized_keys:

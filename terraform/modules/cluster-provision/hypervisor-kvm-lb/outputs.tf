@@ -12,7 +12,7 @@ output "all_nodes_map" {
   ]
 }
 
-output "vm_status_trigger" {
+output "guest_status_trigger" {
   description = "A trigger to indicate completion of VM provisioning"
   value       = { for key, domain in libvirt_domain.nodes : key => domain.id }
 }

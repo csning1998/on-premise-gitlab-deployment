@@ -41,9 +41,8 @@ variable "vault_metrics_token_secret_name" {
   default     = null
 }
 
-# TODO: Rename to static_scrape_targets for consistency with alloy_config (Phase 3+ naming MR).
-variable "vm_static_targets" {
-  description = "Optional static scrape targets for bare-metal VM metrics endpoints; each entry is inlined directly into prometheus.scrape vm_static targets"
+variable "guest_scrape_targets" {
+  description = "Optional static scrape targets for bare-metal guest VM metrics endpoints; each entry is inlined directly into the prometheus.scrape guest_scrape targets"
   type = list(object({
     address = string
     job     = string
@@ -52,7 +51,7 @@ variable "vm_static_targets" {
   default = []
 }
 
-variable "workhorse_targets" {
+variable "workhorse_scrape_enabled" {
   description = "When true, adds a dedicated scrape path for gitlab-workhorse's metrics endpoint (port 9229), which cannot share the webservice pod's prometheus.io/* annotation (already pointed at port 8083) since a pod carries only one such annotation set. Selects pods by the app=webservice label instead of annotation, so it stays correct as pod IPs churn."
   type        = bool
   default     = false

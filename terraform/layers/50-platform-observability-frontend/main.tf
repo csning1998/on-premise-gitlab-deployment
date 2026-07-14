@@ -90,7 +90,7 @@ module "alloy" {
 
   vault_metrics_token_secret_name = "alloy-vault-metrics-token"
 
-  vm_static_targets = concat(
+  guest_scrape_targets = concat(
     [
       for ip in local.central_lb_ips : {
         address = "${ip}:${local.port_haproxy_stats}"

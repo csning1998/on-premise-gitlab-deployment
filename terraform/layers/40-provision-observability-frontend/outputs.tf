@@ -29,9 +29,9 @@ output "reloader_helm_metadata" {
   value       = module.reloader.helm_release_metadata
 }
 
-output "vm_scrape_targets" {
+output "guest_metrics_endpoints" {
   description = "VM-level observability scrape targets aggregated from L10 network topology for L40+ consumption."
-  value       = local.state.microk8s_provision.vm_scrape_targets
+  value       = local.state.microk8s_provision.guest_metrics_endpoints
 }
 
 output "node_exporter_targets" {

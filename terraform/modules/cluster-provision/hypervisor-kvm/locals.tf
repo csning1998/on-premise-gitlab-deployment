@@ -1,7 +1,7 @@
 
 locals {
   # Extract a map of unique base images to avoid creating duplicate base volumes (Copy-on-Write)
-  unique_base_images = toset([for k, v in var.vm_config.all_nodes_map : abspath(v.base_image_path)])
+  unique_base_images = toset([for k, v in var.guest_config.all_nodes_map : abspath(v.base_image_path)])
 
   base_image_map = {
     for path in local.unique_base_images : basename(path) => path
@@ -14,9 +14,9 @@ locals {
   }
 
   nodes_config = {
-    for node_name, node_config in var.vm_config.all_nodes_map :
+    for node_name, node_config in var.guest_config.all_nodes_map :
     node_name => {
-      node_index = index(keys(var.vm_config.all_nodes_map), node_name)
+      node_index = index(keys(var.guest_config.all_nodes_map), node_name)
 
       # Perform MD5 hash on the "complete IP" and extract the first 6 bytes (3 bytes) as MAC suffix
       # This ensures that MAC addresses do not collide when using the same bridge for different subnets (e.g. 172.16.136.x and 172.16.131.x)

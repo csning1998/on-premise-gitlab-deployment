@@ -177,9 +177,9 @@ module "alloy" {
     mtls_cert_secret_name = module.alloy_client_cert.secret_name
   }
 
-  workhorse_targets = true
+  workhorse_scrape_enabled = true
 
-  vm_static_targets = concat(
+  guest_scrape_targets = concat(
     [
       {
         address = "${local.postgres_vip}:${local.postgres_exporter_port}",

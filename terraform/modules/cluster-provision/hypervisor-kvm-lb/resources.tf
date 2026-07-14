@@ -121,8 +121,8 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
   meta_data = yamlencode({})
   user_data = templatefile("${path.module}/../../../templates/user_data.tftpl", {
     hostname       = each.key
-    vm_username    = var.credentials_vm.username
-    vm_password    = var.credentials_vm.password
+    guest_username = var.credentials_vm.username
+    guest_password = var.credentials_vm.password
     ssh_public_key = data.local_file.ssh_public_key.content
   })
 

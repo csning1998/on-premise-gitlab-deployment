@@ -16,8 +16,8 @@ resource "helm_release" "alloy" {
           cluster_label            = var.alloy_config.cluster_label
           tenant_id                = var.alloy_config.tenant_id
           mtls_enabled             = var.alloy_config.mtls_cert_secret_name != null
-          vm_static_targets        = var.vm_static_targets
-          workhorse_targets        = var.workhorse_targets
+          guest_scrape_targets     = var.guest_scrape_targets
+          workhorse_scrape_enabled = var.workhorse_scrape_enabled
           vault_metrics_address    = var.vault_metrics_address
           vault_metrics_token_file = var.vault_metrics_token_secret_name != null ? "/etc/alloy/vault-token/token" : null
           minio_scrape_targets     = var.minio_scrape_targets

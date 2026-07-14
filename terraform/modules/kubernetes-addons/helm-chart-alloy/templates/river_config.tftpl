@@ -188,7 +188,7 @@ loki.write "default" {
   }
 }
 
-%{ if workhorse_targets ~}
+%{ if workhorse_scrape_enabled ~}
 // gitlab-workhorse runs as a second container in the webservice pod and exposes its own metrics on port 9229,
 // but a pod carries only one prometheus.io/* annotation set, already pointed at webservice's port 8083.
 // Selecting by the app=webservice pod label instead of annotation keeps this correct as replicas scale,
@@ -234,22 +234,22 @@ prometheus.scrape "workhorse" {
 }
 
 %{ endif ~}
-%{ if length(vm_static_targets) > 0 ~}
-// vm_static_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
+%{ if length(guest_scrape_targets) > 0 ~}
+// guest_scrape_targets values are constrained to L00 SSoT topology outputs (IP addresses, port integers) and
 // static alphanumeric label strings; the variable type contract enforces this at the Terraform layer.
-prometheus.scrape "vm_static" {
+prometheus.scrape "guest_scrape" {
   targets = [
-%{ for t in vm_static_targets ~}
+%{ for t in guest_scrape_targets ~}
     {"__address__" = "${t.address}", "job" = "${t.job}"%{ for k, v in t.labels ~}, "${k}" = "${v}"%{ endfor ~}},
 %{ endfor ~}
   ]
-  forward_to = [prometheus.relabel.vm_cardinality.receiver]
+  forward_to = [prometheus.relabel.guest_cardinality.receiver]
 }
 
 // Reduces cardinality on high-dimensional gRPC metrics scraped from Gitaly and Praefect.
 // grpc_server_handling_seconds_bucket contributes ~5700 series via histogram bucket label combinations.
 // grpc_code on grpc_server_handled_total has ~14 status code values that multiply series count by that factor.
-prometheus.relabel "vm_cardinality" {
+prometheus.relabel "guest_cardinality" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 
   rule {
@@ -307,9 +307,9 @@ prometheus.scrape "vault_metrics" {
   tls_config {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }
-  // Routing through vm_cardinality instead of remote_write ensures that any future
-  // high-cardinality gRPC metrics exposed by Vault utilize the same deduplication pipeline as vm_static.
-  forward_to = [prometheus.relabel.vm_cardinality.receiver]
+  // Routing through guest_cardinality instead of remote_write ensures that any future
+  // high-cardinality gRPC metrics exposed by Vault utilize the same deduplication pipeline as guest_scrape.
+  forward_to = [prometheus.relabel.guest_cardinality.receiver]
 }
 
 %{ endif ~}
@@ -364,7 +364,7 @@ prometheus.exporter.blackbox "probe" {
 
 prometheus.scrape "blackbox" {
   targets    = prometheus.exporter.blackbox.probe.targets
-  forward_to = [prometheus.relabel.vm_cardinality.receiver]
+  forward_to = [prometheus.relabel.guest_cardinality.receiver]
 }
 
 %{ endif ~}

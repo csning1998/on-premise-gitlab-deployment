@@ -29,7 +29,7 @@ The following variables are required for provisioning production HashiCorp Vault
 
 - `github_pat`: The GitHub Personal Access Token obtained in previous step.
 - `ssh_username`, `ssh_password`: Credentials for SSH access.
-- `vm_username`, `vm_password`: Credentials for virtual machine.
+- `guest_username`, `guest_password`: Credentials for virtual machine.
 - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host.
 
 ```shell
@@ -42,8 +42,8 @@ vault kv put \
     ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
     ssh_password="$ssh_password" \
     ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
-    vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
-    vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
+    guest_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+    guest_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
     ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
     ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 
@@ -70,7 +70,7 @@ If `90-github-meta` is not used to manage GitHub repo settings, `github_pat` sec
 Following variables are required for provisioning Terraform layers for Patroni, Sentinel, MinIO (S3), Harbor, and GitLab clusters:
 
 - `ssh_username`, `ssh_password`: SSH login credentials.
-- `vm_username`, `vm_password`: Virtual machine login credentials.
+- `guest_username`, `guest_password`: Virtual machine login credentials.
 - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host machine.
 - `pg_superuser_password`: Password for Postgres superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
 - `pg_replication_password`: Credentials for streaming replication user. Patroni utilizes this password when provisioning standby nodes to enable WAL synchronization with primary.
@@ -97,8 +97,8 @@ vault kv put secret/on-premise-gitlab-deployment/guest_vm \
     ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
     ssh_password="$ssh_password" \
     ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
-    vm_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
-    vm_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
+    guest_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
+    guest_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
     ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
     ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
 ```

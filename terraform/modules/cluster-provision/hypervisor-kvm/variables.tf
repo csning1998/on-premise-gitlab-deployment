@@ -6,7 +6,7 @@
 
 # Module-level variable definitions
 
-variable "vm_config" {
+variable "guest_config" {
   description = "All configurations related to the virtual machines being provisioned."
   type = object({
     all_nodes_map = map(object({

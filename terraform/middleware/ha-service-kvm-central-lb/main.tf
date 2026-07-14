@@ -29,13 +29,13 @@ module "ansible_inventory" {
     domain_suffix = var.svc_identity.domain_suffix
   }
   network_service_segments = var.network_service_segments
-  vm_nodes                 = module.interface_planner.lb_cluster_vm_config.nodes
+  guest_nodes              = module.interface_planner.lb_cluster_vm_config.nodes
   template_vars_base       = var.ansible_generic_config.template_vars
 }
 
 module "ssh_manager" {
   source         = "../../modules/cluster-provision/ssh-manager"
-  status_trigger = module.hypervisor_kvm.vm_status_trigger
+  status_trigger = module.hypervisor_kvm.guest_status_trigger
 
   nodes          = module.interface_planner.nodes_list_for_ssh
   credentials_vm = local.credentials_vm_for_ssh
