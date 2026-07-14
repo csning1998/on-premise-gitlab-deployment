@@ -1,0 +1,17 @@
+module virtproxyd_libvirt_exporter 1.1;
+
+require {
+    type virtproxyd_t;
+    type unconfined_service_t;
+    class dir search;
+    class file { read open getattr };
+}
+
+# The prometheus-libvirt-exporter service runs under the unconfined_service_t domain
+# because no confined policy is shipped for the upstream binary. On each metrics scrape,
+# virtproxyd resolves the connecting peer identity by walking the client /proc entry,
+# which requires searching the process directory and reading files such as stat. The
+# base Fedora policy omits these permissions, which produces recurring AVC denials under
+# enforcing mode.
+allow virtproxyd_t unconfined_service_t:dir search;
+allow virtproxyd_t unconfined_service_t:file { read open getattr };

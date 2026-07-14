@@ -1,36 +1,42 @@
 ---
 # 1. Hypervisor Daemon Access Setup
-# Automates libvirtd socket delegation and group membership based on
-# documentation/en/getting-started/02-environment-setup.md.
+#    Automates libvirtd socket delegation and group membership based on
+#    documentation/en/getting-started/02-environment-setup.md.
 - name: "Include: libvirtd socket delegation"
   ansible.builtin.include_tasks: libvirtd-socket.yaml
 
 # 2. Kernel Parameter Tuning
-# Configures host routing, L2 bypass, and conntrack sizing under
-# documentation/en/configuration/kernel-tuning.md Sections 1-2.
+#    Configures host routing, L2 bypass, and conntrack sizing under
+#    documentation/en/configuration/kernel-tuning.md Sections 1-2.
 - name: "Include: kernel sysctl tuning"
   ansible.builtin.include_tasks: kernel-sysctl.yaml
 
 # 3. Firewall Network Optimization
-# Configures firewalld TCPMSS clamping direct rules under
-# documentation/en/configuration/kernel-tuning.md Section 3.
+#    Configures firewalld TCPMSS clamping direct rules under
+#    documentation/en/configuration/kernel-tuning.md Section 3.
 - name: "Include: TCPMSS clamp firewalld rules"
   ansible.builtin.include_tasks: mss-clamp.yaml
 
 # 4. Container Host Security Configuration
-# Sets host ulimits to allow Vault memory locking inside rootless Podman
-# per documentation/en/getting-started/02-environment-setup.md Section A.1.
-# Note: Requires a system reboot to apply to new PAM-aware login sessions.
+#    Sets host ulimits to allow Vault memory locking inside rootless Podman
+#    per documentation/en/getting-started/02-environment-setup.md Section A.1.
+#    Note: Requires a system reboot to apply to new PAM-aware login sessions.
 - name: "Include: memlock limits for rootless Podman / Vault mlock"
   ansible.builtin.include_tasks: memlock-limits.yaml
 
 # 5. Host-Level Metrics Exporter
-# Deploys node_exporter to collect hypervisor host OS performance metrics.
+#    Deploys node_exporter to collect hypervisor host OS performance metrics.
 - name: "Include: host OS node_exporter"
   ansible.builtin.include_tasks: node-exporter.yaml
 
 # 6. VM-Level Metrics Exporter
-# Deploys prometheus-libvirt-exporter to monitor guest VM resources via libvirt.
-# Note: Installed via verified upstream RPM due to lack of standard package.
+#    Deploys prometheus-libvirt-exporter to monitor guest VM resources via libvirt.
+#    Note: Installed via verified upstream RPM due to lack of standard package.
 - name: "Include: libvirt domain exporter"
   ansible.builtin.include_tasks: libvirt-exporter.yaml
+
+# 7. Hypervisor SELinux Policy Adjustment
+#    Grants virtproxyd search access to the libvirt exporter /proc entry, which
+#    resolves the recurring AVC denial produced by the exporter scrape path.
+- name: "Include: virtproxyd SELinux policy module"
+  ansible.builtin.include_tasks: selinux-virtproxyd.yaml

@@ -1,0 +1,57 @@
+---
+- name: "Ensure SELinux module build tooling is present"
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - checkpolicy
+      - policycoreutils
+    state: present
+
+- name: "Ensure local SELinux policy directory exists"
+  become: true
+  ansible.builtin.file:
+    path: "{{ hypervisor_selinux_local_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: "Deploy virtproxyd SELinux policy source"
+  become: true
+  ansible.builtin.copy:
+    src: "{{ hypervisor_virtproxyd_policy_module }}.te"
+    dest: "{{ hypervisor_selinux_local_dir }}/{{ hypervisor_virtproxyd_policy_module }}.te"
+    owner: root
+    group: root
+    mode: "0600"
+  register: hypervisor_virtproxyd_policy_source
+
+- name: "Query installed SELinux policy modules"
+  become: true
+  ansible.builtin.command:
+    cmd: semodule -l
+  changed_when: false
+  register: hypervisor_selinux_modules
+
+# Compilation runs when the source changed or the module is absent, which covers
+# both a first greenfield install and a source revision on an existing host.
+- name: "Compile and install the virtproxyd SELinux policy module"
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      set -o errexit
+      _tmpdir="$(mktemp -d)"
+      trap 'rm -rf "${_tmpdir}"' EXIT
+      checkmodule -M -m \
+        -o "${_tmpdir}/{{ hypervisor_virtproxyd_policy_module }}.mod" \
+        "{{ hypervisor_selinux_local_dir }}/{{ hypervisor_virtproxyd_policy_module }}.te"
+      semodule_package \
+        -o "${_tmpdir}/{{ hypervisor_virtproxyd_policy_module }}.pp" \
+        -m "${_tmpdir}/{{ hypervisor_virtproxyd_policy_module }}.mod"
+      semodule --install "${_tmpdir}/{{ hypervisor_virtproxyd_policy_module }}.pp"
+  when: >
+    hypervisor_virtproxyd_policy_source.changed
+    or hypervisor_selinux_modules.stdout_lines
+    | select('match', '^' + hypervisor_virtproxyd_policy_module + '(\\s|$)')
+    | list | length == 0
+  changed_when: true
