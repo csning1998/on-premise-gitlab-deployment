@@ -41,7 +41,7 @@ variable "vault_metrics_token_secret_name" {
   default     = null
 }
 
-# TODO rename to static_scrape_targets for naming consistency with alloy_config (Phase 3+ naming MR)
+# TODO: Rename to static_scrape_targets for consistency with alloy_config (Phase 3+ naming MR).
 variable "vm_static_targets" {
   description = "Optional static scrape targets for bare-metal VM metrics endpoints; each entry is inlined directly into prometheus.scrape vm_static targets"
   type = list(object({

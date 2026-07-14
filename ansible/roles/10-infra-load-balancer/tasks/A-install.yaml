@@ -28,7 +28,7 @@
         - all
         - default
 
-    - name: "A1d. Enable IP Forwarding that Required for L3 Traffic"
+    - name: "A1d. Enable IP forwarding required for L3 traffic"
       ansible.posix.sysctl:
         name: net.ipv4.ip_forward
         value: "1"

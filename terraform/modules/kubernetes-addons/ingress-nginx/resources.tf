@@ -42,7 +42,7 @@ resource "helm_release" "ingress_nginx" {
         nodeSelector = {
           "kubernetes.io/os" = "linux"
         }
-        # Ensure Pod only runs on nodes with IP (usually doesn't need special setting, but can be a safety measure)
+        # Configures pod anti-affinity to prevent multiple ingress-nginx instances from co-locating on the same node.
         affinity = {
           podAntiAffinity = {
             preferredDuringSchedulingIgnoredDuringExecution = [

@@ -137,9 +137,9 @@ locals {
   }
 }
 
-# External upstream blackbox probe targets, derived from the Harbor proxy-cache
-# upstreams. Probed from the harbor tenant's Alloy over the system trust store,
-# so Docker Hub rate limits or upstream outages become visible before CI feels them.
+# External upstream blackbox probe targets derived from the Harbor proxy-cache upstreams.
+# These are probed from the Harbor tenant Alloy instance using the system trust store,
+# rendering Docker Hub rate limits and upstream outages visible prior to affecting CI workloads.
 locals {
   blackbox_external_targets = [
     for key, cache in local.state.harbor_bootstrapper.proxy_caches : {

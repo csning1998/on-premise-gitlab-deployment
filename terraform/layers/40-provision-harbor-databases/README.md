@@ -10,7 +10,7 @@ This typically indicates that the certificate has expired or that the internal c
 
 1. **Run an isolated apply for the certificate resource.**
 
-    This forces Terraform to prioritize Vault resources while bypassing the unreachable PostgreSQL provider.
+    This forces Terraform to prioritize Vault resources while bypassing the unreachable Postgres provider.
 
     ```bash
     terraform apply -auto-approve \

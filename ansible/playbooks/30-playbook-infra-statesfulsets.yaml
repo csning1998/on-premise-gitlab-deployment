@@ -19,7 +19,7 @@
     - 30-infra-etcd
 
 # Patroni
-- name: "Play [Postgres]: Configure Patroni and PostgreSQL Cluster"
+- name: "Play [Postgres]: Configure Patroni and Postgres Cluster"
   hosts: >-
     {{ (groups['postgres'] | default([]))
         + (groups['praefect_patroni'] | default([])) }}

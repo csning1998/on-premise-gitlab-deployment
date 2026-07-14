@@ -1,11 +1,8 @@
 ---
-# Static routes toward infrastructure VIPs must egress through the host-only LB VIP
-# instead of the default NAT gateway, otherwise the stateful firewall on the gateway
-# drops the asymmetric return traffic. The egress interface is identified by next-hop
-# reachability. Among all interfaces, only the host-only interface sits on the same
-# directly connected subnet as the route next-hop. This rule does not depend on
-# interface naming, docker0, CNI interfaces, or NAT DHCP timing, so it behaves
-# identically across Praefect, Patroni, kubeadm, microk8s, and Docker based clusters.
+# Routes traffic to infrastructure VIPs through the host-only load balancer VIP to prevent
+# NAT gateway stateful firewall drops on asymmetric return traffic. The egress interface is
+# resolved dynamically based on subnet membership, ensuring robustness across interface naming,
+# CNI/Docker configurations, and different cluster runtimes (Kubeadm, MicroK8s, Baremetal).
 
 - name: "Step 1. Store the next-hop gateway address"
   ansible.builtin.set_fact:

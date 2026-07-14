@@ -9,7 +9,7 @@ locals {
   }
 }
 
-# Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
+# Provider prerequisites: Must be defined as root-level locals because provider blocks cannot reference module outputs.
 locals {
   sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path

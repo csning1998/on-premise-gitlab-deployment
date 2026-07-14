@@ -1,5 +1,5 @@
 
-# metrics.enabled only opens the /metrics port; it doesn't add scrape annotations, so each component sets them explicitly.
+# Enabling metrics only opens the /metrics port; it does not add scrape annotations. Each component must configure them explicitly.
 locals {
   harbor_metrics_annotations = {
     "prometheus.io/scrape" = "true"

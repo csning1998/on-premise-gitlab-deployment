@@ -1,6 +1,6 @@
 
 # Strategy for Auto Bootstrapping (by default); 
-# Manual Injection is recommand in Production Mode, refer to ./data.tf
+# Manual injection is recommended in production mode; refer to ./data.tf.
 resource "tls_private_key" "vault_ca" {
   count     = var.tls_mode == "generated" ? 1 : 0
   algorithm = "RSA"

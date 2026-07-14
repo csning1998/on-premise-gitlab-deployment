@@ -3,9 +3,8 @@
   ansible.builtin.command:
     argv: "{{ hypervisor_mss_clamp_check_verb + hypervisor_mss_clamp_target + [item] + hypervisor_mss_clamp_suffix }}"
   vars:
-    # --permanent here matches --add-rule below, so the check compares against the same
-    # persisted config it would modify, rather than the runtime ruleset which can drift
-    # from it (e.g. after a manual `--reload` that didn't fully reconcile).
+    # Using --permanent aligns with --add-rule below, ensuring queries evaluate the persisted configuration
+    # instead of the active runtime ruleset, which may diverge after a manual configuration reload.
     hypervisor_mss_clamp_check_verb:
       ["firewall-cmd", "--permanent", "--direct", "--query-rule"]
   loop:

@@ -1,8 +1,8 @@
 ---
-# Bakes the Grafana Alloy binary into the golden image so bare-metal VMs can
-# ship journald to Loki. The service stays disabled here; its config.alloy and
-# lifecycle are applied at provisioning time, mirroring the postgres-exporter
-# binary-in-image / config-in-provisioning split.
+# Installs the Grafana Alloy binary into the base image, enabling bare-metal virtual machines
+# to forward journald logs to Loki. The service remains disabled; its config.alloy file and
+# lifecycle management are applied during provisioning, mirroring the design pattern of the
+# postgres-exporter binary-in-image and config-in-provisioning separation.
 - name: "Block: Install Grafana Alloy Agent Binary"
   become: true
   block:

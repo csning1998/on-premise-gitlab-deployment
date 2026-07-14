@@ -111,8 +111,8 @@ locals {
     name        = "gitlab-ca-bundle"
     secret_name = "gitlab-ca-bundle"
 
-    # One key per CA so update-ca-certificates processes each file individually.
-    # All three CAs are already available from upstream remote state — no local file needed.
+    # A distinct key is defined per CA to ensure update-ca-certificates processes each file individually.
+    # All three CAs are retrieved from upstream remote state, eliminating local file requirements.
     certs = {
       "ca-bootstrap.crt"    = base64decode(local.state.vault_pki.global_vault_pki_b64.ca_cert_b64)
       "ca-root.crt"         = base64decode(local.state.vault_pki.pki_configuration.root_ca_certificate_b64)

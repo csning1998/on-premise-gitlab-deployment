@@ -29,10 +29,10 @@ set +o allexport
 
 # initialize_environment
 for lib in "${SCRIPTS_LIB_DIR}"/*.sh; do
-	if [[ "$lib" == *"/utils.sh" ]] || [[ "$lib" == *"/utils_environment.sh" ]]; then
-		continue
-	fi
-	source "$lib"
+  if [[ "$lib" == *"/utils.sh" ]] || [[ "$lib" == *"/utils_environment.sh" ]]; then
+    continue
+  fi
+  source "$lib"
 done
 
 # Set correct permissions since
@@ -88,7 +88,7 @@ select opt in "${options[@]}"; do
   readonly START_TIME=$(date +%s)
 
   case $opt in
-    # --- Dev Vault ---
+    # Dev Vault setup actions
     "[DEV] Set up TLS for Dev Vault (Local)")
       ENVIRONMENT_STRATEGY="native" vault_dev_tls_generator
       break
@@ -98,7 +98,7 @@ select opt in "${options[@]}"; do
       break
       ;;
 
-		# Development Vault for Bootstrapping Packer / Production Vault
+    # Development Vault for Bootstrapping Packer / Production Vault
     "[DEV] Unseal Dev Vault (Local)")
       ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_unseal_handler
       break

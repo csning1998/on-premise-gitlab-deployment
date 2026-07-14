@@ -13,7 +13,6 @@ postgres_base:
       components: "main"
       filename: "pgdg"
 
-  # TODO align packages structure to flat list like 05-base-redis for consistency (naming/style MR)
   packages:
     apt:
       postgres:
@@ -25,7 +24,7 @@ postgres_base:
       exporters:
         - prometheus-postgres-exporter
 
-# Apt Repo (PostgreSQL)
+# Apt Repo (Postgres)
 _postgres_base_repo_data: "{{ postgres_base.apt_repositories | selectattr('id', 'equalto', 'postgresql') | first }}"
 _postgres_base_repo_string: >
   deb [signed-by={{ _postgres_base_repo_data.gpg_signed_by_path }}]
@@ -33,6 +32,6 @@ _postgres_base_repo_string: >
   {{ _postgres_base_repo_data.distribution }}
   {{ _postgres_base_repo_data.components }}
 
-# Apt Packages (PostgreSQL)
+# Apt Packages (Postgres)
 _postgres_base_versioned_packages: >
   {{ postgres_base.packages.apt.postgres | map('regex_replace', '^(.*)$', '\1-' + postgres_base.versions.postgres) | list }}

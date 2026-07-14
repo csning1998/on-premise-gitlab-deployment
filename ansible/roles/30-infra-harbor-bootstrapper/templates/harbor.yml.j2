@@ -9,12 +9,12 @@ http:
 # https related config
 https:
   port: 443
-  # The path of cert and key on the HOST machine.
+  # The paths of the certificate and key on the host system.
   # Harbor's prepare script will map these into the nginx container.
   certificate: {{ harbor_cert_path }}
   private_key: {{ harbor_key_path }}
 
-# [CRITICAL FIX] Internal TLS should be disabled by default.
+# Internal TLS should be disabled by default.
 # Enabling this without generating internal certs caused the FileNotFoundError.
 # internal_tls:
 #   enabled: true

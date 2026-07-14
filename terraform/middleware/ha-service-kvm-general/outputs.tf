@@ -31,7 +31,7 @@ output "network_parameters" {
           gateway = config.network.hostonly.ips.address
         }
       }
-      # Access Scope belongs to logic layer and this is not passed to KVM module.
+      # Access scope belongs to the logical layer and is not passed to the KVM module.
       network_access_scope = var.network_infrastructure_map[tier].network.hostonly.cidr
     }
   }

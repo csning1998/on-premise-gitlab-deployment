@@ -14,7 +14,7 @@ defaults
     timeout client {{ haproxy_timeout_client }}
     timeout server {{ haproxy_timeout_server }}
 
-# GitLab HTTP Ingress (Port 80 -> NodePort 30080)
+# GitLab HTTP Ingress routing port 80 traffic to NodePort 30080.
 frontend gitlab_http
     bind {{ kubeadm_ha_vip }}:80
     mode tcp
@@ -28,7 +28,7 @@ backend gitlab_http_backend
     server {{ host }} {{ hostvars[host]['advertise_ip'] }}:{{ kubeadm_http_nodeport }} check
 {% endfor %}
 
-# GitLab HTTPS Ingress (Port 443 -> NodePort 30443)
+# GitLab HTTPS Ingress routing port 443 traffic to NodePort 30443.
 frontend gitlab_https
     bind {{ kubeadm_ha_vip }}:443
     mode tcp

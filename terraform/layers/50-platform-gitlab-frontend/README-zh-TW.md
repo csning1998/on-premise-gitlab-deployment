@@ -2,7 +2,7 @@
 
 ## Problem Description
 
-當 GitLab 內部的一些機敏資訊，特別是 `rails-secret` / `db_key_base` 等，在還沒有清除持久性 PostgreSQL 資料庫的狀況下進行重新產生時，應用程式會出現無法解密現有資料（例如：使用者權杖或應用程式設定）的情境，從而導致在執行資料遷移或登入時發生 `OpenSSL::Cipher::CipherError` 錯誤
+當 GitLab 內部的一些機敏資訊，特別是 `rails-secret` / `db_key_base` 等，在還沒有清除持久性 Postgres 資料庫的狀況下進行重新產生時，應用程式會出現無法解密現有資料（例如：使用者權杖或應用程式設定）的情境，從而導致在執行資料遷移或登入時發生 `OpenSSL::Cipher::CipherError` 錯誤
 
 ## Root Cause
 

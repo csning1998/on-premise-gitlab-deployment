@@ -22,7 +22,7 @@ variable "users" {
 }
 
 variable "extension_drop_cascade" {
-  description = "Whether to use DROP CASCADE when destroying PostgreSQL extensions to automatically drop dependent objects."
+  description = "Whether to use DROP CASCADE when destroying Postgres extensions to automatically drop dependent objects."
   type        = bool
   default     = false
 }

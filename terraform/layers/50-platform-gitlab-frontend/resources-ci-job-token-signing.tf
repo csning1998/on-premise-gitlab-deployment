@@ -86,8 +86,8 @@ resource "kubernetes_secret" "ci_signing_job_db_config" {
   }
 }
 
-# 4. Overwrites ApplicationSetting with the Vault-sourced key
-#    so Terraform creates a new Job resource rather than re-running the old one.
+# 4. Overwrites ApplicationSetting with the Vault-sourced key. Modifying the job name suffix
+#    forces Terraform to recreate the Job resource rather than executing the existing instance.
 resource "kubernetes_job" "gitlab_ci_job_token_signing_key" {
   count = var.enable_ci_signing_key_rotation ? 1 : 0
 

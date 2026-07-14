@@ -57,10 +57,10 @@
       when: init_result.rc == 0
 
   rescue:
-    # vault operator init is one-time and irreversible: if it succeeded this run
+    # vault operator init is a one-time, irreversible operation. If it succeeded during this execution
     # (init_result.rc == 0) but a later step (C1c-C1e) failed before the root
     # token and unseal keys were persisted to the bootstrap Vault, those secrets
-    # only exist in this run's in-memory init_result and would otherwise be lost,
+    # only exist in this execution's in-memory init_result and would otherwise be lost,
     # leaving the cluster permanently initialized but unsealable. Preserve them
     # to a local file on the control machine before failing.
     - name: "C1-rescue1. Preserve Vault init secrets if initialization succeeded but persistence failed"
@@ -76,7 +76,7 @@
     - name: "Block C1: Initialize Vault Cluster (Primary Only) failed"
       vars:
         _c1_emergency_note: >-
-          Vault was newly initialized this run but the root token and unseal keys
+          Vault was newly initialized during this execution but the root token and unseal keys
           could not be persisted to the bootstrap Vault; they have been saved to
           vault-init-emergency.json at the repository root on the Ansible control
           machine (mode 0600). Retrieve them manually, complete the write to the

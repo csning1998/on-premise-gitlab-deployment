@@ -44,7 +44,7 @@
         group: root
         mode: "0755"
 
-    # Gitaly only: communicates back to GitLab Rails via secrets file.
+    # Gitaly only: authenticates with GitLab Rails via the secrets file.
     # Praefect does not require gitlab-secrets.json.
     - name: "A1c. Render gitlab-secrets.json"
       ansible.builtin.template:

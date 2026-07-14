@@ -60,7 +60,7 @@ locals {
   }
 }
 
-# Service Segments (non-CLB) — for HAProxy/Keepalived/Identity outputs
+# Service Segments excluding the Central Load Balancer, used for HAProxy, Keepalived, and Identity outputs.
 locals {
   net_sorted_segment_keys = sort([
     for k, v in local.segments : k

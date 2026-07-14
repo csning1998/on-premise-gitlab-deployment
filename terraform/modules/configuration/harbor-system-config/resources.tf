@@ -1,5 +1,5 @@
 
-# Public Library for Base Images, which is ususally already existed in Harbor.
+# Public Library for Base Images, which typically already exists in Harbor.
 # resource "harbor_project" "library" {
 #   name   = "library"
 #   public = true

@@ -296,11 +296,11 @@ known_hosts_bootstrapper() {
       return 1
     else
       if ssh-keyscan -T 5 -H "${target_host}" > "${output_file}" 2>/dev/null; then
-					log_print "OK" "Scanned ${target_host}"
-					return 0
+          log_print "OK" "Scanned ${target_host}"
+          return 0
       else
-					log_print "WARN" "Failed to scan ${target_host}"
-					return 1
+          log_print "WARN" "Failed to scan ${target_host}"
+          return 1
       fi
     fi
   }

@@ -13,7 +13,7 @@ resource "helm_release" "kube_state_metrics" {
       repository = "${var.helm_config.image_repository}/kube-state-metrics/kube-state-metrics"
     }
 
-    # Not annotated by default, so Alloy's pod-annotation discovery would otherwise miss it.
+    # Pods are not annotated by default. Setting these annotations enables scrape discovery by Alloy.
     podAnnotations = {
       "prometheus.io/scrape" = "true"
       "prometheus.io/port"   = "8080"

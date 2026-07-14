@@ -29,7 +29,7 @@ graph LR
     praefect --> db
 ```
 
-Praefect uses a PostgreSQL database (Patroni cluster on `praefect-patroni` nodes) to track repository routing metadata. All three Gitaly nodes hold full replicas; Praefect routes reads and writes, and replicates writes to non-primary nodes.
+Praefect uses a Postgres database (Patroni cluster on `praefect-patroni` nodes) to track repository routing metadata. All three Gitaly nodes hold full replicas; Praefect routes reads and writes, and replicates writes to non-primary nodes.
 
 ### Task Structure
 
@@ -183,7 +183,7 @@ sudo /opt/gitlab/embedded/bin/praefect \
 
 **`cannot execute INSERT in a read-only transaction`**
 
-Patroni lost its leader lock and the PostgreSQL primary temporarily went into standby mode. Cause: short `ttl` value in `patroni.yml.j2` (default 20s) combined with high system load.
+Patroni lost its leader lock and the Postgres primary temporarily went into standby mode. Cause: short `ttl` value in `patroni.yml.j2` (default 20s) combined with high system load.
 
 Fix: increase `bootstrap.dcs.ttl` in `patroni.yml.j2` (recommended: 60). Verify Patroni is primary:
 

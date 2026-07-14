@@ -1,12 +1,7 @@
 ---
-# Idempotently reconciles repositories from the authoritative Gitaly node into
-# Praefect's database. Runs on the primary Praefect node on every deploy so that
-# any repository present on disk but missing from the Praefect DB is tracked and
-# replicated. This self-heals the tracking metadata after a Praefect DB rebuild
-# or a change to the Gitaly/Praefect topology, without a manual track-repositories run.
-#
-# The authoritative node is always gitaly-0 (the first host in groups['gitaly']).
-
+# Reconciles on-disk repositories from gitaly-0 (authoritative node) into the Praefect
+# database during deployment. This restores repository tracking metadata automatically
+# after database rebuilds or topology changes, eliminating manual registration.
 - name: "Migrate: Find all repositories on authoritative Gitaly node"
   ansible.builtin.find:
     paths: "{{ gitaly_repo_base_path }}"

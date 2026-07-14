@@ -16,7 +16,7 @@ locals {
     keepalived_auth_pass = var.credentials_application.keepalived_auth_pass
   }
 
-  # 2. Physics & Network Context
+  # 2. Physical Network and Infrastructure Context
   net_lb_base_mac_parts = split(":", local.svc_net.mac_address)
   net_sorted_node_keys  = sort(keys(var.topology_cluster.load_balancer_config.nodes))
 

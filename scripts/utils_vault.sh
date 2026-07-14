@@ -7,9 +7,9 @@ readonly DEV_VAULT_ADDR="${DEV_VAULT_ADDR:-https://127.0.0.1:8200}"
 
 # Determine the CA path based on environment strategy
 if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
-	DEV_CA="${DEV_VAULT_CACERT_PODMAN:-/app/vault/tls/ca.pem}"
+  DEV_CA="${DEV_VAULT_CACERT_PODMAN:-/app/vault/tls/ca.pem}"
 else
-	DEV_CA="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
+  DEV_CA="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
 fi
 readonly DEV_KEYS_DIR="${SCRIPT_DIR}/vault/keys"
 readonly DEV_TLS_DIR="${SCRIPT_DIR}/vault/tls"
@@ -27,7 +27,7 @@ vault_context_handler() {
   unset VAULT_ADDR VAULT_TOKEN VAULT_CACERT
 
   if [[ "$target" == "prod" ]]; then
-		log_print "INFO" "[Vault Context] Switching to PRODUCTION (Layer 20+)..."
+    log_print "INFO" "[Vault Context] Switching to PRODUCTION (Layer 20+)..."
 
     export VAULT_ADDR="$PROD_VAULT_ADDR"
     export VAULT_CACERT="$PROD_CA_CERT"
@@ -47,10 +47,10 @@ vault_context_handler() {
       prod_token=$(echo "$response" | jq -r '.data.data.prod_vault_root_token // empty')
 
       if [[ -n "$prod_token" ]]; then
-				export VAULT_TOKEN="$prod_token"
-				log_print "INFO" "    - Prod Token retrieved from Bootstrap Vault."
+        export VAULT_TOKEN="$prod_token"
+        log_print "INFO" "    - Prod Token retrieved from Bootstrap Vault."
       else
-				log_print "WARN" "Connected to Bootstrap Vault, but 'prod_vault_root_token' was not found."
+        log_print "WARN" "Connected to Bootstrap Vault, but 'prod_vault_root_token' was not found."
       fi
     else
       log_print "WARN" "Bootstrap Vault Token not found. Cannot retrieve Prod Credentials."
@@ -70,7 +70,7 @@ vault_context_handler() {
     fi
   fi
 
-	log_print "INFO" "    - VAULT_ADDR: $VAULT_ADDR"
+  log_print "INFO" "    - VAULT_ADDR: $VAULT_ADDR"
 }
 
 # Status Reporting
@@ -79,30 +79,30 @@ vault_status_reporter() {
   log_divider
 
   # Check Development Vault on Host
-	local host_ca="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
+  local host_ca="${DEV_VAULT_CACERT:-${SCRIPT_DIR}/vault/tls/ca.pem}"
 
-	if curl -s --connect-timeout 0.5 --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then
+  if curl -s --connect-timeout 0.5 --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health" > /dev/null 2>&1; then
 
-		local dev_status_json
-		dev_status_json=$(curl -s --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health")
+    local dev_status_json
+    dev_status_json=$(curl -s --cacert "${host_ca}" "${DEV_VAULT_ADDR}/v1/sys/health")
 
-		if [[ -n "$dev_status_json" ]]; then
+    if [[ -n "$dev_status_json" ]]; then
       local sealed
       sealed=$(echo "$dev_status_json" | jq .sealed 2>/dev/null)
       if [[ "$sealed" == "true" ]]; then
-				log_print "WARN" "Development Vault (Local): Running (Sealed)"
+        log_print "WARN" "Development Vault (Local): Running (Sealed)"
       else
-				log_print "OK" "Development Vault (Local): Running (Unsealed)"
+        log_print "OK" "Development Vault (Local): Running (Unsealed)"
       fi
     else
-			log_print "WARN" "Development Vault (Local): Running (Status Query Failed)"
+      log_print "WARN" "Development Vault (Local): Running (Status Query Failed)"
     fi
   else
     log_print "ERROR" "Development Vault (Local): Stopped or Unreachable"
   fi
 
   # Check Production Vault on Production Guest VM
-	if [[ ! -f "$PROD_CA_CERT" ]]; then
+  if [[ ! -f "$PROD_CA_CERT" ]]; then
     log_print "WARN" "Production Vault (Layer 15): Unknown (CA Cert missing at $PROD_CA_CERT)"
     log_print "INFO" "Run Layer 20 Terraform to generate the Bootstrap CA file."
   else
@@ -114,7 +114,7 @@ vault_status_reporter() {
     else
       log_print "ERROR" "Production Vault (Layer 15): Stopped or Unreachable"
     fi
-	fi
+  fi
   log_divider
 }
 
@@ -152,7 +152,7 @@ vault_dev_tls_generator() {
     echo "keyUsage = digitalSignature,keyEncipherment"
   } > "${DEV_TLS_DIR}/extfile.cnf"
 
-	run_command "openssl x509 -req -days 365 -sha256 -in ${DEV_TLS_DIR}/vault.csr \
+  run_command "openssl x509 -req -days 365 -sha256 -in ${DEV_TLS_DIR}/vault.csr \
     -CA ${DEV_TLS_DIR}/ca.pem -CAkey ${DEV_TLS_DIR}/ca-key.pem \
     -CAcreateserial -out ${DEV_TLS_DIR}/vault.pem \
     -extfile ${DEV_TLS_DIR}/extfile.cnf"
@@ -206,14 +206,14 @@ vault_dev_init_handler() {
   log_print "STEP" "[Dev Vault] Initializing Local Podman Vault..."
 
   if [[ -f "$DEV_INIT_FILE" ]]; then
-		log_print "WARN" "Init file exists. Skipping to prevent data loss."
-		return 1
+    log_print "WARN" "Init file exists. Skipping to prevent data loss."
+    return 1
   fi
 
   mkdir -p "$DEV_KEYS_DIR"
 
   log_print "TASK" "Initializing..."
-	if ! vault operator init -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json > "$DEV_INIT_FILE"; then
+  if ! vault operator init -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json > "$DEV_INIT_FILE"; then
     log_print "FATAL" "Initialization failed. Is Dev Vault running?"
     return 1
   fi
@@ -236,7 +236,7 @@ vault_dev_init_handler() {
   # Auto Unseal
   vault_dev_unseal_handler
 
-	vault login -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_VAULT_CACERT}" "${VAULT_TOKEN}"
+  vault login -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_VAULT_CACERT}" "${VAULT_TOKEN}"
 
   # Auto Configure Engine
   vault_dev_engine_enforcer
@@ -254,7 +254,7 @@ vault_dev_unseal_handler() {
   fi
 
   local status_json
-	status_json=$(vault status -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json 2>/dev/null || true)
+  status_json=$(vault status -address="${DEV_VAULT_ADDR}" -ca-cert="${DEV_CA}" -format=json 2>/dev/null || true)
   if [[ $(echo "$status_json" | jq .sealed 2>/dev/null) == "false" ]]; then
     log_print "INFO" "Development Vault is already unsealed."
     return 0
@@ -295,15 +295,15 @@ vault_prod_unseal_trigger() {
   fi
 
   if [[ ! -f "${DEV_ROOT_TOKEN_FILE}" ]]; then
-		log_print "ERROR" "Bootstrap Vault Root Token not found at: ${DEV_ROOT_TOKEN_FILE}"
-		log_print "INFO" "Please ensure Dev/Bootstrap Vault is initialized."
-		return 1
+    log_print "ERROR" "Bootstrap Vault Root Token not found at: ${DEV_ROOT_TOKEN_FILE}"
+    log_print "INFO" "Please ensure Dev/Bootstrap Vault is initialized."
+    return 1
   fi
 
   if [[ ! -f "${PROD_CA_CERT}" ]]; then
-		log_print "ERROR" "Production Vault CA Cert not found at: ${PROD_CA_CERT}"
-		log_print "INFO" "Please ensure Terraform Layer 15 has been applied."
-		return 1
+    log_print "ERROR" "Production Vault CA Cert not found at: ${PROD_CA_CERT}"
+    log_print "INFO" "Please ensure Terraform Layer 15 has been applied."
+    return 1
   fi
 
   local prod_ca_b64

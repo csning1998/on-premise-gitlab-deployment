@@ -13,15 +13,15 @@ module "felix_config" {
   depends_on = [module.tigera_calico]
 }
 
-# Each L40 layer targets its own Kubernetes cluster, so this namespace is declared
-# independently per layer rather than shared; it is not a duplicate to be consolidated.
+# Declares the namespace locally because each L40 layer targets a distinct Kubernetes cluster;
+# this is declared independently per layer rather than shared.
 resource "kubernetes_namespace" "vault_auth" {
   metadata {
     name = "vault-auth"
   }
 }
 
-# [REFACTORED] Trust Engine Integration
+# Trust Engine Integration
 module "platform_trust_engine" {
   source     = "../../modules/kubernetes-addons/platform-trust-engine"
   depends_on = [module.tigera_calico, kubernetes_namespace.vault_auth] # Ensure CNI and namespace are ready before installing Cert-Manager

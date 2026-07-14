@@ -18,7 +18,7 @@ locals {
 
 locals {
   # 1. Flatten the nested identity topology into a single map
-  # Use identity.cluster_name as the primary O(1) key — NO string concatenation here.
+  # Use identity.cluster_name as the primary O(1) key without utilizing string concatenation.
   global_identity_map = merge([
     for s_name, components in local.state.metadata.global_topology_identity : {
       for c_name, identity in components : identity.cluster_name => identity

@@ -91,9 +91,9 @@ resource "helm_release" "mimir" {
             secret_access_key = "$${MIMIR_ALERTMANAGER_SECRET_KEY}"
           }
         }
-        # 100000 default: measured baseline on the observability tenant alone is ~47-52k
-        # (kubelet ~33k, node_exporter ~7.9k, cadvisor ~3.6k), so 50k left near-zero headroom
-        # and was already causing intermittent rejection before this value was raised.
+        # 100000 default: The baseline on the observability tenant is approximately 47k to 52k series
+        # (comprising kubelet, node_exporter, and cadvisor metrics). A 50k limit provides insufficient
+        # headroom, causing series rejection prior to increasing this value.
         limits = {
           max_global_series_per_user = 100000
         }

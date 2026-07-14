@@ -1,8 +1,8 @@
 ---
-- name: "Section A. Initialize and mount vdb for PostgreSQL"
+- name: "Section A. Initialize and mount vdb for Postgres"
   ansible.builtin.include_tasks: A-data-disk.yaml
 
-# Role 81 (scalar): standalone postgres layers pass individual route vars
+# Role 81 (scalar): Standalone Postgres layers pass individual routing variables.
 - name: "Role 81: Configure Network Routing (scalar format)"
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
@@ -13,7 +13,7 @@
         metric: "{{ postgres_static_route_metric }}"
   when: postgres_static_route_to is defined
 
-# Role 81 (list): multi-component layers (e.g. gitaly layer) pass a pre-built list
+# Role 81 (list): Multi-component layers (e.g. Gitaly layer) pass a pre-built list.
 - name: "Role 81: Configure Network Routing (list format)"
   ansible.builtin.include_role:
     name: 81-utils-asymmetric-routing
@@ -74,5 +74,5 @@
 - name: "Section D. Manage Patroni Service"
   ansible.builtin.include_tasks: D-service.yaml
 
-- name: "Section E. Configure PostgreSQL Exporter"
+- name: "Section E. Configure Postgres Exporter"
   ansible.builtin.include_tasks: E-exporter.yaml

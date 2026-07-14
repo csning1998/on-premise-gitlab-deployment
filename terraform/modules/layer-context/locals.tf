@@ -80,8 +80,8 @@ locals {
   }
 }
 
-# 5. Vault Agent Identities (partial — secret_id must be injected by root module after AppRole generation)
-# vault_pki_outputs absent (Layer 15 and earlier) → all_vault_agent_identity_bases = {}, vault_agent_identity_base = null
+# 5. Vault Agent Identities. These are partial identity structures where the secret_id is injected by the root module after AppRole generation.
+#    vault_pki_outputs absent (Layer 15 and earlier) → all_vault_agent_identity_bases = {}, vault_agent_identity_base = null
 locals {
   all_vault_agent_identity_bases = var.vault_pki_outputs != null ? {
     for role, ctx in local.components_context : role => {
@@ -98,8 +98,8 @@ locals {
 }
 
 # 6. Asymmetric Static Routes
-# Keyed by network_tier so each tier uses its own LB VIP as gateway (on-link requirement).
-# '...' grouping deduplicates tiers shared across roles (e.g. kubeadm master/worker); [0] is safe.
+#    Keyed by network_tier, ensuring that each tier utilizes its own LB VIP as a gateway to meet the on-link requirement.
+#    The '...' grouping deduplicates tiers shared across roles, where selecting the first element represents a safe fallback.
 locals {
   all_cluster_net_specs = flatten([
     for s_name, components in var.global_topology_network : [

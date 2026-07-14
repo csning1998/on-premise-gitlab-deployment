@@ -6,7 +6,7 @@
         path: /usr/sbin/ufw
       register: patroni_ufw_stat
 
-    - name: "C1b. Allow PostgreSQL and Patroni ports"
+    - name: "C1b. Allow Postgres and Patroni ports"
       community.general.ufw:
         rule: allow
         port: "{{ item.0 }}"
@@ -25,14 +25,14 @@
         daemon_reload: true
 
     # Bootstrap Praefect DB user and database on the leader node.
-    # praefect_db_password is injected via ansible_extra_vars (sensitive); skip
-    # if not provided (standalone postgres layers (Harbor, GitLab) that don't host Praefect).
+    # praefect_db_password is injected via ansible_extra_vars (sensitive); is skipped
+    # if not provided (standalone Postgres layers (Harbor, GitLab) that do not host Praefect).
     #
-    # C1d: Each node waits for its own PostgreSQL on advertise_ip before proceeding.
-    # Patroni (C1c) handles bootstrap/pg_basebackup; by the time this runs, PostgreSQL
+    # C1d: Each node waits for its own Postgres on advertise_ip before proceeding.
+    # Patroni (C1c) handles bootstrap/pg_basebackup; by the time this runs, Postgres
     # is listening on advertise_ip on all nodes. Waiting per-host prevents C1d2 from
-    # probing the leader before its PostgreSQL is fully accepting connections.
-    - name: "C1d. Wait for PostgreSQL to accept connections"
+    # probing the leader before its Postgres is fully accepting connections.
+    - name: "C1d. Wait for Postgres to accept connections"
       ansible.builtin.wait_for:
         host: "{{ advertise_ip }}"
         port: "{{ postgres_port }}"
@@ -43,9 +43,8 @@
 
     # C1d2: Detect the Patroni leader on each node via the REST API.
     # Patroni returns HTTP 200 on /leader only for the leader node.
-    # C1e/C1f run without run_once and connect via 127.0.0.1 (loopback pg_hba rule:
-    # "host all all 127.0.0.1/32" — no SSL, no client cert required).
-    # This avoids the HAProxy source-IP mTLS enforcement that rejects psql from VIP.
+    # C1e/C1f run on all nodes (without run_once) but execute only on the leader.
+    # They connect via the local node's advertise_ip to bypass the HAProxy VIP mTLS requirement.
     - name: "C1d2. Detect Patroni leader via REST API"
       ansible.builtin.uri:
         url: "http://{{ advertise_ip }}:{{ patroni_restapi_port }}/leader"
@@ -57,14 +56,13 @@
         - praefect_db_password is defined
         - praefect_db_password | length > 0
 
-    # C1e/C1f connect to advertise_ip (the leader's own IP, not the VIP).
-    # Connecting via VIP routes through HAProxy; the source IP PostgreSQL sees
-    # is the HAProxy LB node (e.g. 172.16.141.10) which falls under the mTLS
-    # clientcert=verify-ca rule — psql has no client cert and is rejected.
-    # Connecting to advertise_ip from the same host appears as the node's own IP,
-    # which matches "hostssl all all <node-ip>/32" (no clientcert) in pg_hba.
-    # PostgreSQL listens on advertise_ip (not 127.0.0.1), so loopback is not usable.
-    - name: "C1e. Create praefect PostgreSQL login role"
+    # C1e/C1f connect to advertise_ip (the local leader IP, not the VIP).
+    # Connecting via the VIP routes traffic through HAProxy, which masks the source IP as the HAProxy LB node.
+    # This triggers the mTLS verification rule requiring client certificates. By connecting directly
+    # to advertise_ip from the same host, the source IP matches the local host's node IP,
+    # which utilizes password authentication in pg_hba without requiring client certificates.
+    # Loopback (127.0.0.1) cannot be used because Postgres does not listen on it.
+    - name: "C1e. Create praefect Postgres login role"
       ansible.builtin.command:
         cmd: >-
           psql

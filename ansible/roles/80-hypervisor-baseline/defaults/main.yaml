@@ -1,15 +1,14 @@
 ---
-# Resolved once via gather_facts; SUDO_USER is who invoked `become`, USER covers the
-# non-sudo case. There is no single universal source for "the operator account" on a
-# local-connection play, since ansible_user_id is root once become elevates.
+# Resolved once via gather_facts; SUDO_USER indicates the user executing become,
+# while USER represents the non-sudo fallback case. There is no single universal source
+# for "the operator account" on a local-connection play since ansible_user_id is root once become elevates.
 hypervisor_operator_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
 
 hypervisor_libvirtd_socket_dropin_dir: /etc/systemd/system/libvirtd.socket.d
 
-# See documentation/en/configuration/kernel-tuning.md Section 3 for the MTU/overlay rationale.
-# Split into target/suffix (shared by both the query-rule and add-rule commands in mss-clamp.yaml)
-# and the differing verb prefix each command supplies on its own, so the rule definition exists
-# in exactly one place.
+# Refer to documentation/en/configuration/kernel-tuning.md Section 3 for the MTU/overlay rationale.
+# Divided into target/suffix (shared by query-rule and add-rule commands in mss-clamp.yaml)
+# and the differing verb prefixes, centralizing the rule definition in a single location.
 hypervisor_mss_clamp_cidr: 172.16.0.0/16
 hypervisor_mss_clamp_value: "1360"
 
@@ -31,7 +30,7 @@ hypervisor_mss_clamp_suffix:
   - --set-mss
   - "{{ hypervisor_mss_clamp_value }}"
 
-# No RPM repo carries this exporter; sha256 verified against the release's own
+# No RPM repository provides this exporter; the SHA-256 checksum is verified against the release's own
 # checksums.txt (github.com/inovex/prometheus-libvirt-exporter/releases/tag/v2.5.0).
 hypervisor_libvirt_exporter_version: "2.5.0"
 hypervisor_libvirt_exporter_sha256: "2bf3714279ce843c898b27fac31da7a7f0706866754e623e2831a4430fcd0469"

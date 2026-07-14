@@ -4,7 +4,7 @@
 
 The `/data/harbor` partition reaching 100% capacity (e.g., 47GB/49GB) results in multiple service failures:
 
-- **`harbor-db` (PostgreSQL)**: Failure to write transaction checkpoints, leading to a constant restart loop.
+- **`harbor-db` (Postgres)**: Failure to write transaction checkpoints, leading to a constant restart loop.
 - **`redis`**: `MISCONF` errors and blocked writes due to persistence failure.
 - **`harbor-core` / `harbor-jobservice`**: Initialization failure resulting from underlying database and Redis issues.
 
@@ -31,7 +31,7 @@ To restore service health, the largest OCI blobs in `/data/harbor/registry/docke
     sudo find /data/harbor/registry/docker/registry/v2/blobs/sha256/ -type f -size +50M -delete
     ```
 
-    Manual deletion of these blobs freed approximately 1.5GB of space, enabling PostgreSQL to complete its crash recovery process.
+    Manual deletion of these blobs freed approximately 1.5GB of space, enabling Postgres to complete its crash recovery process.
 
 ### Step B. Disabling Automated Replication
 
@@ -65,7 +65,7 @@ curl -s -k -X PUT -u admin:<password> \
     https://localhost/api/v2.0/replication/policies/<ID>
 ```
 
-### Step C. Direct PostgreSQL Intervention
+### Step C. Direct Postgres Intervention
 
 During the cleanup process, it was observed that `harbor-jobservice` persistently re-created the `tigera/operator` artifacts despite API deletion attempts. To terminate this cycle, direct database operations were performed on the `harbor-db` container.
 

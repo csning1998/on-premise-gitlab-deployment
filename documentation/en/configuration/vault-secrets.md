@@ -72,7 +72,7 @@ Following variables are required for provisioning Terraform layers for Patroni, 
 - `ssh_username`, `ssh_password`: SSH login credentials.
 - `vm_username`, `vm_password`: Virtual machine login credentials.
 - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host machine.
-- `pg_superuser_password`: Password for PostgreSQL superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
+- `pg_superuser_password`: Password for Postgres superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
 - `pg_replication_password`: Credentials for streaming replication user. Patroni utilizes this password when provisioning standby nodes to enable WAL synchronization with primary.
 - `pg_vrrp_secret`: VRRP authentication key for Keepalived nodes. Ensures that only authorized nodes participate in Virtual IP (VIP) election and failover, mitigating malicious interference within local network.
 - `redis_requirepass`: Authentication password for Redis clients. All clients connecting to Redis, such as GitLab or Harbor, must authenticate via `AUTH` command using this password.
@@ -84,7 +84,7 @@ Following variables are required for provisioning Terraform layers for Patroni, 
 - `vault_haproxy_stats_pass`: Password for HAProxy Stats Dashboard (typically on port `8404`), used for monitoring backend server health and traffic statistics via Web UI.
 - `vault_keepalived_auth_pass`: VRRP authentication key for Vault cluster load balancer to secure Vault service VIP.
 - `harbor_admin_password`: Default password for Harbor Web Portal `admin` account, required for initial project creation and robot account configuration.
-- `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to PostgreSQL. This application-level credential (assigned to `harbor` DB user) is restricted with fewer privileges than `pg_superuser_password`.
+- `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to Postgres. This application-level credential (assigned to `harbor` DB user) is restricted with fewer privileges than `pg_superuser_password`.
 
 ```shell
 export VAULT_ADDR="https://172.16.136.250:443"
@@ -113,7 +113,7 @@ Clearing shell history after executing `vault kv put` commands is strongly recom
 
 ### Note 1. How to Retrieve Secrets
 
-1. Use following command to retrieve credentials from Vault. For example, to fetch PostgreSQL superuser password:
+1. Use following command to retrieve credentials from Vault. For example, to fetch Postgres superuser password:
 
     ```shell
     export VAULT_ADDR="https://172.16.136.250:443"

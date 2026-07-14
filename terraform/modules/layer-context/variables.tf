@@ -39,7 +39,7 @@ variable "infrastructure_map" {
   type        = any
 }
 
-# Vault integration inputs (optional — only required for 30-* layers with Vault Agent)
+# Vault integration inputs. These are optional and only required for 30-tier layers featuring Vault Agent integration.
 variable "vault_sys_vip" {
   description = "Vault system VIP for sys_vault_endpoint construction. Required for layers with Vault Agent integration."
   type        = string

@@ -10,7 +10,7 @@ output "topology_cluster" {
 }
 
 output "connection_info" {
-  description = "PostgreSQL load-balancer endpoint for L40 consumption."
+  description = "Postgres load-balancer endpoint for L40 consumption."
   value = {
     host = module.context.primary_net_config.lb_config.vip
     port = module.context.primary_net_config.lb_config.ports["rw-proxy"].frontend_port
@@ -18,7 +18,7 @@ output "connection_info" {
 }
 
 output "observability_targets" {
-  description = "Observability scrape endpoints for Harbor PostgreSQL and Etcd."
+  description = "Observability scrape endpoints for Harbor Postgres and Etcd."
   value = {
     postgres_metrics_port = module.context.svc_network.ports["metrics"].frontend_port
     postgres_node_ips     = module.context.svc_network.node_ips

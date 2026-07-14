@@ -7,8 +7,8 @@
   ansible.builtin.include_tasks: B-service.yaml
   when: node_role in ['gitaly', 'praefect']
 
-# Registers any on-disk Gitaly repository missing from the Praefect DB on every deploy,
-# so a topology change or DB rebuild restores tracking automatically.
+# Registers any on-disk Gitaly repository missing from the Praefect DB on every deployment;
+# this automatically restores tracking after database rebuilds or topology changes.
 # Runs once on the primary Praefect node.
 - name: "Section C. Reconcile Gitaly repositories into Praefect"
   ansible.builtin.include_tasks: C-migrate-to-praefect.yaml

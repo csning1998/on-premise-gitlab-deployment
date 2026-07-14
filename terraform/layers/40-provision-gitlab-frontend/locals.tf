@@ -140,8 +140,8 @@ locals {
       "${local.state.postgres.service_vip}" = local.postgres_fqdn
       "${local.state.minio.service_vip}"    = local.minio_fqdn
 
-      # Container Registry (Required for pod image pulls — dnsmasq at 172.16.2.1 does not
-      # resolve domain name; CoreDNS must resolve this via static hosts entry)
+      # Container Registry. This entry is required for pod image pulls because dnsmasq at 172.16.2.1 does not
+      # resolve the domain name, necessitating static hosts entry resolution by CoreDNS.
       "${local.state.harbor_bootstrapper.service_vip}" = local.harbor_bootstrapper_fqdn
     },
     # Dynamic Node Resolution (Required for Kubelet CSR Approver DNS checks)

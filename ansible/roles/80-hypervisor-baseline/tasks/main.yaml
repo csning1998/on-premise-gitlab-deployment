@@ -1,36 +1,36 @@
 ---
-# Automates steps from documentation/en/getting-started/02-environment-setup.md
-# (libvirt group membership, libvirtd.conf socket delegation, systemd socket override)
-# into idempotent Ansible state, replacing manual configuration.
+# 1. Hypervisor Daemon Access Setup
+# Automates libvirtd socket delegation and group membership based on
+# documentation/en/getting-started/02-environment-setup.md.
 - name: "Include: libvirtd socket delegation"
   ansible.builtin.include_tasks: libvirtd-socket.yaml
 
-# Automates documentation/en/configuration/kernel-tuning.md Sections 1-2 into idempotent state.
-# Applies loose rp_filter for asymmetric routing, disabled bridge-nf-call to bypass conntrack
-# for L2 traffic, and relaxed conntrack sizing/TCP state validation for HA failover.
+# 2. Kernel Parameter Tuning
+# Configures host routing, L2 bypass, and conntrack sizing under
+# documentation/en/configuration/kernel-tuning.md Sections 1-2.
 - name: "Include: kernel sysctl tuning"
   ansible.builtin.include_tasks: kernel-sysctl.yaml
 
-# Automates documentation/en/configuration/kernel-tuning.md Section 3 into idempotent state.
-# Uses `--query-rule` to check for existing firewalld direct rules before adding, ensuring idempotency.
+# 3. Firewall Network Optimization
+# Configures firewalld TCPMSS clamping direct rules under
+# documentation/en/configuration/kernel-tuning.md Section 3.
 - name: "Include: TCPMSS clamp firewalld rules"
   ansible.builtin.include_tasks: mss-clamp.yaml
 
-# Automates documentation/en/getting-started/02-environment-setup.md Section A.1 into idempotent state.
-# Raises memlock ulimit for the host user so Vault's mlock() syscalls succeed inside rootless Podman,
-# preventing secrets from paging to swap. Known limitation: this only takes effect for new PAM-aware login sessions
-# started after this task runs (matching the source doc's own note that a reboot is required). It does not affect
-# the current shell session, nor any rootless Podman container already running.
+# 4. Container Host Security Configuration
+# Sets host ulimits to allow Vault memory locking inside rootless Podman
+# per documentation/en/getting-started/02-environment-setup.md Section A.1.
+# Note: Requires a system reboot to apply to new PAM-aware login sessions.
 - name: "Include: memlock limits for rootless Podman / Vault mlock"
   ansible.builtin.include_tasks: memlock-limits.yaml
 
-# Exposes hypervisor-exclusive host OS metrics (CPU steal time, memory/swap pressure, physical I/O, NIC counters).
-# Fedora's node-exporter RPM provides both node_exporter and prometheus-node-exporter systemd aliases.
+# 5. Host-Level Metrics Exporter
+# Deploys node_exporter to collect hypervisor host OS performance metrics.
 - name: "Include: host OS node_exporter"
   ansible.builtin.include_tasks: node-exporter.yaml
 
-# Exposes domain-level visibility (per-VM CPU/memory/disk/network from the hypervisor's view via qemu:///system)
-# on port 9177, distinct from what guest VMs report.
-# Installed via upstream RPM release (checksum-verified) since no Fedora package exists.
+# 6. VM-Level Metrics Exporter
+# Deploys prometheus-libvirt-exporter to monitor guest VM resources via libvirt.
+# Note: Installed via verified upstream RPM due to lack of standard package.
 - name: "Include: libvirt domain exporter"
   ansible.builtin.include_tasks: libvirt-exporter.yaml

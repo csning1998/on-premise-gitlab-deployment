@@ -19,7 +19,7 @@
       ansible.builtin.fail:
         msg: "{{ ansible_failed_result.msg | default('see task output above') }}"
 
-- name: "Block A2: Stop and Disable default PostgreSQL service"
+- name: "Block A2: Stop and Disable default Postgres service"
   block:
     - name: "A2a. Ensure default postgresql service is stopped"
       ansible.builtin.systemd:
@@ -29,6 +29,6 @@
       failed_when: false
 
   rescue:
-    - name: "Block A2: Stop and Disable default PostgreSQL service failed"
+    - name: "Block A2: Stop and Disable default Postgres service failed"
       ansible.builtin.fail:
         msg: "{{ ansible_failed_result.msg | default('see task output above') }}"

@@ -1,13 +1,12 @@
 ---
-# Ansible runs notified handlers in this declaration order (deduplicated), not notify-call order,
-# so the sequence here is the actual apply order regardless of which task notifies what.
+# Ansible executes notified handlers in declaration order rather than notification order;
+# this sequence represents the actual execution order independent of task notification.
 - name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
 
-# failed_when: false guards hosts where libvirt has moved fully to the modular virtqemud daemon
-# and no longer ships these compat unit files at all (unit-not-found is a hard failure for
-# this module, unlike an already-stopped/disabled unit, which succeeds as a no-op).
+# Prevents hard failures on hosts where libvirt uses modular virtqemud and lacks these legacy unit files.
+# The systemd module treats missing units as an error, unlike stopping already-stopped units.
 - name: Stop legacy libvirtd units
   ansible.builtin.systemd:
     name: "{{ item }}"

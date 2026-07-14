@@ -2,7 +2,7 @@
 
 ## Problem Description
 
-When GitLab internal secrets (especially `rails-secret` / `db_key_base`) are regenerated without wiping the persistent PostgreSQL database, the application fails to decrypt existing data (e.g., user tokens or application settings), resulting in an `OpenSSL::Cipher::CipherError` during migrations or at login.
+When GitLab internal secrets (especially `rails-secret` / `db_key_base`) are regenerated without wiping the persistent Postgres database, the application fails to decrypt existing data (e.g., user tokens or application settings), resulting in an `OpenSSL::Cipher::CipherError` during migrations or at login.
 
 ## Root Cause
 

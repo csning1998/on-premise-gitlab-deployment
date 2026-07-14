@@ -57,7 +57,7 @@ cpu_virt_support_checker() {
 
 # Function: Configure Packer network settings based on strategy
 packer_net_configurator() {
-	local strategy="${1:-$ENVIRONMENT_STRATEGY}"
+  local strategy="${1:-$ENVIRONMENT_STRATEGY}"
   local bridge_val=""
   local device_val="virtio-net"
 
@@ -95,7 +95,7 @@ env_file_bootstrapper() {
   fi
 
   # 2. Process vs update
-	# 2.1. If .env does not exist, create a new one.
+  # 2.1. If .env does not exist, create a new one.
   if [[ ! -f "$env_path" ]]; then
     log_print "INFO" "Creating new .env file at ${env_path}..."
 
@@ -142,10 +142,10 @@ EOF
       log_print "WARN" "Project location changed. Updating PROJECT_ROOT..."
       # 2.2.1 If PROJECT_ROOT does not exist in the old file, append it, otherwise replace it.
       if grep -q "^PROJECT_ROOT=" "$env_path"; then
-				sed -i "s|^PROJECT_ROOT=.*|PROJECT_ROOT=\"${detected_root}\"|" "$env_path"
+        sed -i "s|^PROJECT_ROOT=.*|PROJECT_ROOT=\"${detected_root}\"|" "$env_path"
       else
-				# 2.2.2 Insert at the first line to make it look better.
-				sed -i "1i PROJECT_ROOT=\"${detected_root}\"" "$env_path"
+        # 2.2.2 Insert at the first line to make it look better.
+        sed -i "1i PROJECT_ROOT=\"${detected_root}\"" "$env_path"
       fi
     fi
 
@@ -194,7 +194,7 @@ strategy_switch_handler() {
   log_print "INFO" "Cleaning Terraform plugins/cache (keeping state)..."
   (cd "${TERRAFORM_DIR}" && rm -rf .terraform .terraform.lock.hcl)
 
-	log_divider
+  log_divider
 
   local new_strategy
   new_strategy=$([[ "$ENVIRONMENT_STRATEGY" == "container" ]] && echo "native" || echo "container")

@@ -19,7 +19,7 @@ Passwords are auto-generated. Only the human-managed usernames above are supplie
 
 ### `gitlab/postgres`
 
-Credentials for the GitLab PostgreSQL HA cluster (Patroni + Keepalived).
+Credentials for the GitLab Postgres HA cluster (Patroni + Keepalived).
 
 | Key                       | Description                                                                                                                                        |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -49,7 +49,7 @@ Credentials for the GitLab MinIO object storage node.
 
 ### `harbor/postgres`
 
-Credentials for the Harbor PostgreSQL HA cluster. Same key schema as `gitlab/postgres`.
+Credentials for the Harbor Postgres HA cluster. Same key schema as `gitlab/postgres`.
 
 | Key                       | Description                                                             |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -85,8 +85,8 @@ Credentials for the Keycloak identity provider.
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `keycloak_admin_user`     | Keycloak administrator account name. Used to access the Keycloak Admin Console and manage realms, clients, and users. Value sourced from `terraform.tfvars`. |
 | `keycloak_admin_password` | Keycloak administrator password. Auto-generated.                                                                                                             |
-| `keycloak_db_user`        | Database user name for Keycloak's PostgreSQL backend. Value sourced from `terraform.tfvars`.                                                                 |
-| `keycloak_db_password`    | Database password for Keycloak's PostgreSQL backend. Auto-generated.                                                                                         |
+| `keycloak_db_user`        | Database user name for Keycloak's Postgres backend. Value sourced from `terraform.tfvars`.                                                                   |
+| `keycloak_db_password`    | Database password for Keycloak's Postgres backend. Auto-generated.                                                                                           |
 
 ### `harbor-bootstrapper/frontend`
 
@@ -95,7 +95,7 @@ Credentials for the Harbor Bootstrapper service, which provisions the initial Ha
 | Key                                  | Description                                                                                                                        |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `harbor_bootstrapper_admin_password` | Admin password for the Harbor Bootstrapper Web UI. Used for initial project and robot account setup via the Bootstrapper instance. |
-| `harbor_bootstrapper_pg_db_password` | Password for the Harbor Bootstrapper's PostgreSQL database user.                                                                   |
+| `harbor_bootstrapper_pg_db_password` | Password for the Harbor Bootstrapper's Postgres database user.                                                                     |
 
 ### `gitlab/gitaly`
 
@@ -110,7 +110,7 @@ Tokens for GitLab Gitaly and optionally Praefect. The Praefect keys are only wri
 
 ### `gitlab/praefect-patroni`
 
-Credentials for the Praefect Patroni PostgreSQL cluster (separate from the main GitLab Postgres cluster). Only relevant when Praefect is enabled.
+Credentials for the Praefect Patroni Postgres cluster (separate from the main GitLab Postgres cluster). Only relevant when Praefect is enabled.
 
 | Key                       | Description                                                            |
 | ------------------------- | ---------------------------------------------------------------------- |

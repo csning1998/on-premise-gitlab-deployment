@@ -26,7 +26,7 @@ resource "kubernetes_cluster_role_binding" "vault_reviewer" {
   }
 }
 
-# Explicitly create Long-Lived Token (compatible with K8s 1.24+) due to Terraform dependency chain: SA -> Secret -> Vault Config
+# Explicitly creates a long-lived service account token due to the Terraform dependency chain where the ServiceAccount resource precedes the Secret, which in turn precedes the Vault configurations.
 resource "kubernetes_secret" "vault_reviewer_token" {
   metadata {
     name      = var.reviewer_service_account.name

@@ -1,5 +1,5 @@
 ---
-- name: Section A. Install PostgreSQL Server via Official apt Repository
+- name: Section A. Install Postgres Server via Official apt Repository
   ansible.builtin.include_tasks: A-postgres.yaml
 
 - name: Section B. Install Patroni Runtime Dependencies

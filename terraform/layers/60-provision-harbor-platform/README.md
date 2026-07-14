@@ -6,7 +6,7 @@ Refer to [40-provision-harbor-databases/README.md](../40-provision-harbor-databa
 
 For the production Harbor instance running on MicroK8s, the database is hosted externally on Patroni (`core-harbor-postgres-node-00`).
 
-1. Retrieve the PostgreSQL superuser password from the Patroni configuration on the Patroni node:
+1. Retrieve the Postgres superuser password from the Patroni configuration on the Patroni node:
 
     ```bash
     sudo grep -A 5 'superuser:' /etc/patroni.yml

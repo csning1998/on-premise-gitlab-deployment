@@ -1,6 +1,6 @@
 # Layer 30 — GitLab Gitaly / Praefect Infrastructure
 
-Provisions Gitaly storage nodes, Praefect HA proxy nodes, and the Praefect-Patroni PostgreSQL cluster. Runs the corresponding Ansible playbook to configure all services.
+Provisions Gitaly storage nodes, Praefect HA proxy nodes, and the Praefect-Patroni Postgres cluster. Runs the corresponding Ansible playbook to configure all services.
 
 ## Gitaly HA Migration — Registering Existing Repositories with Praefect
 

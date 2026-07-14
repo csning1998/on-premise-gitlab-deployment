@@ -54,14 +54,13 @@ locals {
       role_name = "${item.cluster_name}-role"
       ttl_stage = item.stage
 
-      # True only when this component has a real Ingress route (not merely the unconditional
-      # internal mTLS SAN above), so downstream consumers can tell "externally routed" apart
-      # from "internal-only" without re-deriving it from dns_san (which is never empty).
+      # Set to true if the component features an active external ingress route, separating external
+      # routing from internal mTLS SANs and avoiding redundant evaluation of the non-empty dns_san variable.
       has_ingress = length(coalesce(item.config.ingress, {})) > 0
 
       # DNS SAN Strategy
       # 1. DNS Resolution Validation (RFC 1034/1035):
-      #    Supports multi-to-one mapping. Resolver is unidirectional and doesn't conflict with L7 routing.
+      #    Supports many-to-one mapping. Resolver is unidirectional and does not conflict with Layer 7 routing.
       # 2. TLS/SSL Handshake Validation (RFC 5280/6066):
       #    Utilizes X.509 SAN extensions and SNI for domain-level isolation and certificate matching.
 

@@ -81,7 +81,7 @@ resource "helm_release" "loki" {
 
     singleBinary = {
       replicas = 1
-      # Not annotated by default, so Alloy's pod-annotation discovery would otherwise miss it.
+      # Pods are not annotated by default. Setting these annotations enables scrape discovery by Alloy.
       podAnnotations = {
         "prometheus.io/scrape" = "true"
         "prometheus.io/port"   = "3100"
@@ -123,9 +123,8 @@ resource "helm_release" "loki" {
 
     # chunksCache reduces S3 round-trips for repeated log chunk reads;
     # resultsCache short-circuits re-execution of identical LogQL queries.
-    # Both are external Memcached StatefulSets and are disabled here
-    # since MinIO runs on the same node (loopback latency),
-    # making the cache benefit negligible while each pod claims 1229 Mi of memory requests.
+    # Both are external Memcached StatefulSets and are disabled because MinIO operates on the same node,
+    # rendering cache benefits negligible while incurring memory requests of 1229 Mi.
     chunksCache  = { enabled = false }
     resultsCache = { enabled = false }
   })]

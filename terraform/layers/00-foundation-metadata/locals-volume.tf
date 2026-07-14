@@ -31,7 +31,7 @@ locals {
       for i in range(item.config.ip_range.end_ip - item.config.ip_range.start_ip + 1) : [
         for disk in item.config.data_disks : {
           # Use pre-calculated identities from locals-naming.tf
-          # Total string formatting here: 1 (volume_name suffixing)
+          # Suffixes the volume name for string formatting.
           base_id      = item.cluster_name
           pool_name    = item.storage_pool_name
           volume_name  = "${item.cluster_name}-node-${item.config.ip_range.start_ip + i}-${disk.name_suffix}.qcow2"

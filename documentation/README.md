@@ -116,7 +116,7 @@
 
 ### 3. Shared Database & Storage High Availability
 
-#### 3.1 PostgreSQL High Availability (Patroni/etcd)
+#### 3.1 Postgres High Availability (Patroni/etcd)
 
 - **etcd DCS Lock**: etcd manages distributed consensus state for Patroni. The primary Patroni node acquires a TTL leader lock (e.g., `/service/gitlab-postgres/leader`) in etcd.
 - **Patroni Failover**: Standby nodes replication targets dynamically follow the etcd leader lock. If the primary crashes, the lock expires, and standby nodes initiate an etcd transaction election. The promoted node executes `pg_promote()` (or triggers the promotion trigger file) and the remaining nodes run `pg_rewind` to stream replication from the new primary.
@@ -155,11 +155,11 @@
 #### 5.1 GitLab Distributed Data Flows
 
 - **Decoupled Workloads**: External client traffic passes through the CLB to the Kubernetes Ingress Controller. The Ingress forwards traffic to GitLab Rails pods (`webservice`).
-- **Service Integration**: Rails pods query Vault via External Secrets (ESO) for runtime credentials, fetch Redis Sentinel for caching paths, connect to PostgreSQL VIPs (routed via HAProxy to the Patroni leader), push persistent artifacts to MinIO, and route Git data via gRPC to Praefect/Gitaly nodes.
+- **Service Integration**: Rails pods query Vault via External Secrets (ESO) for runtime credentials, fetch Redis Sentinel for caching paths, connect to Postgres VIPs (routed via HAProxy to the Patroni leader), push persistent artifacts to MinIO, and route Git data via gRPC to Praefect/Gitaly nodes.
 
 #### 5.2 Praefect & Gitaly Cluster
 
-- **Praefect Router**: Praefect sits as a reverse-proxy router in front of Gitaly storage nodes. It records repo metadata (transaction logs, replication generation state) in a dedicated PostgreSQL database.
+- **Praefect Router**: Praefect sits as a reverse-proxy router in front of Gitaly storage nodes. It records repo metadata (transaction logs, replication generation state) in a dedicated Postgres database.
 - **Strong Consistency Voting**: Write operations (like git push) require Praefect to coordinate voting. The write transaction is broadcast to Gitaly nodes, which compute a vote hash over the mutated reference set via the reference-transaction hook. Praefect commits the transaction only if the majority of Gitaly replicas report matching votes, scheduling divergent nodes for asynchronous replication.
 - **Gitaly Storage**: Replicas host the raw `.git` directories on dedicated storage devices, validating inbound gRPC traffic using a shared token.
 

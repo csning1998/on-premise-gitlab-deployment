@@ -11,7 +11,7 @@ vrrp_instance VI_1 {
     virtual_router_id {{ keepalived_vrrp_id }}
     advert_int {{ keepalived_advert_int }}
     
-    # Priority logic: First master gets 100, others decrease
+    # Priority logic: The primary control plane node is assigned a priority of 100, while secondary nodes are assigned lower priorities.
     priority {{ 100 - groups['master'].index(inventory_hostname) }}
     
     virtual_ipaddress {

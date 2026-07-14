@@ -19,16 +19,16 @@
     - multipathd.service
     - multipathd.socket
 
-    # Auto-Updates is dangerous for Immutable Infra
+    # Automatic updates can introduce instability in immutable infrastructure.
     - unattended-upgrades.service
 
-    # Desktop/Hardware Integrations are useless in Headless VM
+    # Desktop and hardware integration services are redundant in a headless virtual machine.
     - accounts-daemon.service
     - ModemManager.service
     - udisks2.service
     - switcheroo-control.service
 
-    # Ubuntu Specific Ads/Telemetry
+    # Ubuntu-specific promotional notifications and telemetry.
     - ua-timer.timer
     - ua-timer.service
     - motd-news.timer
@@ -38,7 +38,7 @@
     item ~ '.service' in ansible_facts.services or
     item | regex_replace('\.service$', '') in ansible_facts.services
 
-# dbus-activates packagekit is installed by the gitlab-ce package during dpkg configuration,
+# dbus-activated packagekit is installed by the gitlab-ce package during dpkg configuration,
 # which makes that masked unit activation fail with UnitMasked
 - name: "Minimal: Stop and disable packagekit without masking"
   become: true

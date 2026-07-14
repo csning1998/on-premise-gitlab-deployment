@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Invoked by keepalived as: <script> <TYPE> <NAME> <STATE>
-# TYPE is GROUP for VG_ALL (this sync group covers every VIP, so all segments
-# transition together and share the same STATE for a given invocation).
-# STATE is one of MASTER, BACKUP, FAULT, or STOP; STOP keeps exactly one series
-# at 1 rather than leaving every state at 0.
+# TYPE is GROUP for VG_ALL. This synchronization group covers all VIPs, ensuring that
+# all segments transition collectively and share the same state during execution.
+# STATE is one of MASTER, BACKUP, FAULT, or STOP; STOP sets a value of 1 for exactly one series,
+# preventing all state series from defaulting to 0.
 STATE="${3:-UNKNOWN}"
 
 OUTPUT_DIR="{{ node_exporter_textfile_directory }}"

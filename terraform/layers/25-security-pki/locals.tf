@@ -80,7 +80,7 @@ locals {
       # The allowed_domains will be corrected during subsequent testing; no immediate action is required.
       "oidc-developer" = {
         name            = "oidc-developer"
-        allowed_domains = ["*"] # To work with multiple domain
+        allowed_domains = ["*"] # To support multiple domains.
         ou              = ["development"]
         auth_path       = "workload-approle"
         auth_method     = "approle"
@@ -95,7 +95,7 @@ locals {
   kubernetes_roles = { for k, v in local.all_roles : k => v if v.auth_method == "kubernetes" }
 }
 
-# 6. Specific Vault Policy for some Workload Identity:
+# 6. Specific Vault Policy for corresponding Workload Identities:
 #    Key must correspond to service_catalog of "${service_name}-${component_name}"
 locals {
   workload_identity_extra_rules = {

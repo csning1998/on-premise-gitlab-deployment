@@ -90,8 +90,8 @@ resource "helm_release" "gitlab_runner" {
         enabled = true
       }
 
-      # Chart doesn't auto-annotate pods for the metrics port (unlike GitLab's own webservice/sidekiq
-      # charts); set it explicitly so Alloy's pod-annotation discovery picks it up the same way.
+      # Defines explicit pod annotations for the metrics port to enable Prometheus scrape discovery,
+      # as the Helm chart does not automatically annotate the runner pods.
       podAnnotations = {
         "prometheus.io/scrape" = "true"
         "prometheus.io/port"   = "9252"

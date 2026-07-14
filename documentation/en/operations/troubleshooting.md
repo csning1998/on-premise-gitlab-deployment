@@ -17,7 +17,7 @@ Both cases follow the same pattern: the Vault-issued leaf certificate has expire
 | --------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------- |
 | `OpenSSL::Cipher::CipherError` in `gitlab-migrations` pod | `50-platform-gitlab-frontend` | [README](../../../terraform/layers/50-platform-gitlab-frontend/README.md) |
 
-Caused by `rails-secret` / `db_key_base` being regenerated (via `terraform destroy + apply` on L50) while the PostgreSQL database is preserved from a previous deployment. The README contains the full HCL-native reset procedure.
+Caused by `rails-secret` / `db_key_base` being regenerated (via `terraform destroy + apply` on L50) while the Postgres database is preserved from a previous deployment. The README contains the full HCL-native reset procedure.
 
 ## OIDC / Identity
 

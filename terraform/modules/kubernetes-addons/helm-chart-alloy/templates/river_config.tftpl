@@ -53,7 +53,7 @@ prometheus.scrape "cadvisor" {
 // Uniform pod-annotation discovery: any pod in this cluster carrying prometheus.io/scrape=true is picked up
 // automatically, regardless of which chart deployed it. Chart-default annotations (e.g. GitLab webservice,
 // sidekiq, gitlab-exporter) and platform-set annotations (e.g. Harbor, GitLab Runner) both flow through this
-// single component, so app teams don't need a dedicated Alloy change to onboard a new scrape target.
+// single component, eliminating the need for dedicated Alloy configuration updates during scrape target onboarding.
 
 discovery.kubernetes "pods" {
   role = "pod"
@@ -93,11 +93,11 @@ discovery.relabel "annotated_pods" {
     target_label  = "pod"
   }
 
-  // Charts disagree on which label names the component, so job is built as a three-tier
-  // fallback, lowest priority first, each overriding the last only when present:
-  // app.kubernetes.io/name (near-universal, but often chart-wide like "gitlab" or "harbor")
-  // -> app (per-component for GitLab, chart-wide "harbor" for Harbor, absent for Mimir/Loki)
-  // -> app.kubernetes.io/component (per-component for Harbor/Mimir/Loki, absent for GitLab).
+  // Charts differ in their choice of label names for components; the job name is constructed using a three-tier
+  // fallback evaluation, where lower-priority labels are overridden by higher-priority ones when present:
+  // - app.kubernetes.io/name (near-universal, but often chart-wide like "gitlab" or "harbor")
+  // - app (per-component for GitLab, chart-wide for Harbor, absent for Mimir/Loki)
+  // - app.kubernetes.io/component (per-component for Harbor/Mimir/Loki, absent for GitLab).
   rule {
     source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
     target_label  = "job"
@@ -123,8 +123,8 @@ prometheus.scrape "pods" {
 }
 
 // Log collection covers every pod in the cluster (not gated on prometheus.io/scrape, which is a
-// metrics-only convention), so GitLab's production_json.log/api_json.log/audit_json.log families
-// reach Loki the same way as any other container's stdout, with no chart-side change required.
+// metrics-only convention). The GitLab log families (production_json.log, api_json.log, and audit_json.log)
+// reach Loki identically to stdout from other containers, requiring no chart-side configuration modifications.
 discovery.relabel "pod_logs" {
   targets = discovery.kubernetes.pods.targets
 
@@ -149,12 +149,12 @@ loki.source.kubernetes "pod_logs" {
   forward_to = [loki.process.pod_logs.receiver]
 }
 
-// GitLab's webservice/sidekiq stdout multiplexes production_json/api_json/audit_json/etc onto a
-// single stream, each line tagged with a "subcomponent" field. Extracting it into a label lets
-// Loki's retention_stream override audit_json to a longer period than the general default.
-// The extraction is scoped to the gitlab namespace so an unrelated pod that happens to emit a
-// JSON field named "subcomponent" (any tenant, any namespace) cannot create an unbounded number
-// of label values; every other namespace's logs pass through with no subcomponent label at all.
+// GitLab webservice and sidekiq stdout multiplexes production_json, api_json, and audit_json logs onto a
+// single stream, with each line tagged by a subcomponent field. Extracting this field into a label permits
+// Loki retention_stream rules to apply a longer retention period to audit_json logs.
+// Scoping this extraction to the gitlab namespace prevents unrelated pods emitting JSON fields with a
+// subcomponent key from generating unbounded label values; logs from other namespaces are processed
+// without the subcomponent label.
 loki.process "pod_logs" {
   forward_to = [loki.write.default.receiver]
 
@@ -307,8 +307,8 @@ prometheus.scrape "vault_metrics" {
   tls_config {
     ca_file = "/etc/alloy/ca-bundle/ca.crt"
   }
-  // Routed through vm_cardinality rather than straight to remote_write, so any future
-  // high-cardinality gRPC metrics Vault might expose hit the same dedup pipeline as vm_static.
+  // Routing through vm_cardinality instead of remote_write ensures that any future
+  // high-cardinality gRPC metrics exposed by Vault utilize the same deduplication pipeline as vm_static.
   forward_to = [prometheus.relabel.vm_cardinality.receiver]
 }
 

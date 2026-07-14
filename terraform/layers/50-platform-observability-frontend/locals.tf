@@ -78,10 +78,11 @@ locals {
   }
 }
 
-# Physical KVM Hypervisor Host. Not managed by any Terraform layer (it is the machine every
-# layer's libvirt provider connects to), but its address on this segment is still derived
-# through the DAG chain (L30 hostonly.gateway -> L40 passthrough), not hardcoded here. It is
-# on-link for this cluster's own network, reachable without PBR or an ingress hop.
+# Physical KVM Hypervisor Host. The host operates outside the management of the Terraform layers;
+# the libvirt provider of each layer connects directly to this physical machine.
+# The host address on this segment is derived from the L30 hostonly gateway and passed through
+# the L40 layer to prevent hardcoding. It is on-link for the cluster network and accessible
+# without policy-based routing or an intermediate ingress hop.
 locals {
   hypervisor_host_ip               = local.state.provision.hypervisor_host_ip
   hypervisor_node_exporter_port    = 9100

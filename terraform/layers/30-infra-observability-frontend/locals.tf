@@ -9,7 +9,7 @@ locals {
   }
 }
 
-# Provider prerequisites — must remain root-level locals; provider blocks cannot reference module outputs.
+# Provider prerequisites: Must be defined as root-level locals because provider blocks cannot reference module outputs.
 locals {
   sys_vault_endpoint  = "https://${data.terraform_remote_state.vault_pki.outputs.vault_service_vip}:443"
   vault_pki_cert_path = data.terraform_remote_state.vault_pki.outputs.bootstrap_ca_b64.path
@@ -27,8 +27,8 @@ locals {
   network_harbor_bootstrapper = module.context.global_topology_network["harbor-bootstrapper"]["frontend"]
 }
 
-# The physical KVM hypervisor host is on-link on this cluster's own hostonly bridge (it owns the
-# bridge's gateway address), so this is this cluster's own topology, not another segment's.
+# The physical KVM hypervisor host operates on-link on the cluster's hostonly bridge by owning the gateway address.
+# Consequently, this configuration belongs to the cluster's network topology.
 locals {
   hypervisor_host_ip = module.context.primary_net_config.network.hostonly.gateway
 }
@@ -102,8 +102,8 @@ locals {
     "observability-minio"          = "api"
   }
 
-  # infrastructure_map is keyed by the project_code-prefixed segment name (for example
-  # core-vault-frontend), matching how other layers index this map.
+  # infrastructure_map is keyed by the project_code-prefixed segment name
+  # (e.g. core-vault-frontend), matching how other layers index this map.
   cross_route_probe_targets = [
     for name, port_key in local.cross_route_probe_port_keys : {
       name    = "${name}-route"

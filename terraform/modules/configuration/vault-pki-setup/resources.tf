@@ -9,7 +9,7 @@ resource "vault_mount" "pki_prod" {
   max_lease_ttl_seconds     = var.pki_engine_config.max_lease_ttl_seconds
 }
 
-# --- Hierarchical PKI Refactoring (Root -> Intermediate) ---
+# Hierarchical PKI configuration utilizing Root to Intermediate certification path.
 
 # 2a. Bootstrap Root Engine (Internal use only for signing the intermediate)
 resource "vault_mount" "pki_root_bootstrap" {
