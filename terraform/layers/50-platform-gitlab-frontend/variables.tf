@@ -45,6 +45,24 @@ variable "ci_signing_key_rotation_version" {
   default     = 1
 }
 
+variable "enable_gitlab_pat_automation" {
+  description = "Enable the Kubernetes Job that generates or renews the GitLab root PAT used by 60-provision-gitlab-platform's provider, writing it to Vault."
+  type        = bool
+  default     = false
+}
+
+variable "gitlab_pat_ttl_days" {
+  description = "Expiry, in days, for the generated PAT. GitLab enforces a mandatory expiry on all personal access tokens (365-day self-managed maximum); this only needs to be shorter than that ceiling, since the job re-validates and regenerates the token on every run where it has expired."
+  type        = number
+  default     = 90
+}
+
+variable "gitlab_pat_automation_version" {
+  description = "Increment this integer to force recreation of the PAT automation Job."
+  type        = number
+  default     = 1
+}
+
 variable "alloy_version" {
   description = "Grafana Alloy Helm chart version"
   type        = string

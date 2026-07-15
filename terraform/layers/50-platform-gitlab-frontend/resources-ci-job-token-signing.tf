@@ -51,6 +51,17 @@ resource "kubernetes_config_map" "ci_signing_job_gitlab_config" {
           https = true
           port  = 443
         }
+        gitaly = {
+          token = local.has_praefect ? data.vault_kv_secret_v2.gitaly_secrets.data["praefect_external_token"] : data.vault_kv_secret_v2.gitaly_secrets.data["gitaly_token"]
+        }
+        repositories = {
+          storages = {
+            default = {
+              path           = "/var/opt/gitlab/repo"
+              gitaly_address = "tcp://${local.gitaly_endpoint}"
+            }
+          }
+        }
         incoming_email = { enabled = false }
         extra          = {}
       }
@@ -70,17 +81,19 @@ resource "kubernetes_secret" "ci_signing_job_db_config" {
   data = {
     "database.yml" = yamlencode({
       production = {
-        adapter     = "postgresql"
-        encoding    = "unicode"
-        host        = local.postgres_fqdn
-        port        = local.gitlab_db.port
-        username    = local.gitlab_db.username
-        database    = local.gitlab_db.database
-        password    = local.gitlab_db.password
-        sslmode     = "verify-ca"
-        sslrootcert = "/tmp/ssl/ca.crt"
-        sslcert     = "/tmp/ssl/tls.crt"
-        sslkey      = "/tmp/ssl/tls.key"
+        main = {
+          adapter     = "postgresql"
+          encoding    = "unicode"
+          host        = local.postgres_fqdn
+          port        = local.gitlab_db.port
+          username    = local.gitlab_db.username
+          database    = local.gitlab_db.database
+          password    = local.gitlab_db.password
+          sslmode     = "verify-ca"
+          sslrootcert = "/tmp/ssl/ca.crt"
+          sslcert     = "/tmp/ssl/tls.crt"
+          sslkey      = "/tmp/ssl/tls.key"
+        }
       }
     })
   }

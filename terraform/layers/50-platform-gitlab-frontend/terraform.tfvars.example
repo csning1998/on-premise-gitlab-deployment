@@ -10,3 +10,6 @@ gitlab_helm_config = {
   ingress_class   = "nginx"
   tls_secret_name = "gitlab-ingress-tls"
 }
+
+# Set to true to automate PAT generation; refer to README for details.
+# enable_gitlab_pat_automation = false

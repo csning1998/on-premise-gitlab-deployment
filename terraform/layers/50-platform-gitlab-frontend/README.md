@@ -123,3 +123,17 @@ The rotation path is gated by `var.enable_ci_signing_key_rotation` and `var.ci_s
 2. **Enable rotation.** Increment `var.ci_signing_key_rotation_version` so a fresh Job resource is created rather than re-running the old one, set `var.enable_ci_signing_key_rotation = true`, then `terraform apply`.
 3. **Job applies the key.** An `ExternalSecret` pulls the Vault key into a K8s Secret; the `kubernetes_job` runs `gitlab-rails` to overwrite `ApplicationSetting.ci_job_token_signing_key`.
 4. **Disable rotation.** Reset `var.enable_ci_signing_key_rotation = false`.
+
+---
+
+## GitLab Root PAT for 60-provision-gitlab-platform
+
+The GitLab provider in `60-provision-gitlab-platform` authenticates using a Personal Access Token (PAT) stored at the Vault path `gitlab/app/pat`. The README for that layer documents the manual bootstrapping procedure typically required for this token, as GitLab does not provide an API endpoint to generate a PAT before a token is established.
+
+### Automatic Generation, Off by Default
+
+Setting `enable_gitlab_pat_automation = true` in this layer's `terraform.tfvars` automates this manual bootstrapping process. The resources responsible for this execution are defined in `resources-gitlab-pat-automation.tf`, with the generation logic contained in `templates/gitlab-pat-automation.sh.tftpl`. Because the variable defaults to `false`, a standard `terraform apply` will not create or modify these resources.
+
+When enabled, a `kubernetes_job` authenticates to Vault via the Kubernetes auth method (utilizing the `core-gitlab-frontend-role` defined in this layer, thereby avoiding the creation of static Vault credentials). The Job validates the token stored at `gitlab/app/pat` against `GET /api/v4/personal_access_tokens/self`, confirming both that GitLab still accepts the token and that its granted scopes match the scope set declared in `pat_scopes`. A replacement token is generated using `gitlab-rails runner` and written back to Vault whenever either check fails. This validation mechanism prevents the regeneration of valid tokens on a routine re-run, detects legacy Vault-stored tokens left over from prior installations (such as after a greenfield rebuild) that a simple check for the existence of the Vault path would fail to identify, and detects a token whose scopes have fallen out of date with a script change even while the token itself remains active.
+
+Re-execution requires incrementing `gitlab_pat_automation_version`, which forces Job recreation in the same manner as `ci_signing_key_rotation_version`. The parameter `gitlab_pat_ttl_days` controls the expiration of the generated token. Self-managed GitLab instances enforce a mandatory maximum expiration of 365 days for personal access tokens. The configured TTL must be set within this limit; the validation mechanism automatically regenerates the token upon expiration during the subsequent execution of the Job.

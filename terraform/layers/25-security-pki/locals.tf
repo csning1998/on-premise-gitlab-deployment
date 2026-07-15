@@ -100,60 +100,61 @@ locals {
 locals {
   workload_identity_extra_rules = {
     "gitlab-postgres" = {
-      "secret/data/on-premise-gitlab-deployment/gitlab/postgres" = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/gitlab/postgres" = { capabilities = ["read"] }
     }
     "gitlab-redis" = {
-      "secret/data/on-premise-gitlab-deployment/gitlab/redis" = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/gitlab/redis" = { capabilities = ["read"] }
     }
     "harbor-postgres" = {
-      "secret/data/on-premise-gitlab-deployment/harbor/postgres" = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/harbor/postgres" = { capabilities = ["read"] }
     }
     "harbor-redis" = {
-      "secret/data/on-premise-gitlab-deployment/harbor/redis" = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/harbor/redis" = { capabilities = ["read"] }
     }
     "harbor-bootstrapper-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/harbor-bootstrapper/*" = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/harbor-bootstrapper/*" = { capabilities = ["read"] }
     }
     "harbor-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }
-      "secret/data/on-premise-gitlab-deployment/harbor/app/minio_prometheus"      = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/harbor" = { capabilities = ["create", "update", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/harbor/app/minio_prometheus"      = { capabilities = ["read"] }
     }
     "gitlab-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
-      "secret/data/on-premise-gitlab-deployment/gitlab/app/minio_prometheus"      = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/gitlab" = { capabilities = ["create", "update", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/gitlab/app/minio_prometheus"      = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/gitlab/app/pat"                   = { capabilities = ["create", "update", "read"] }
     }
     "gitlab-runner" = {
-      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
     "observability-frontend" = {
-      "secret/data/on-premise-gitlab-deployment/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
-      "secret/data/on-premise-gitlab-deployment/observability/frontend"                  = { capabilities = ["read"] }
-      "secret/data/on-premise-gitlab-deployment/observability/app/s3_credentials/*"      = { capabilities = ["read"] }
-      "secret/data/on-premise-gitlab-deployment/observability/app/minio_prometheus"      = { capabilities = ["read"] }
-      "secret/data/on-premise-gitlab-deployment/observability/app/vault_metrics_token"   = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/observability/frontend"                  = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/observability/app/s3_credentials/*"      = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/observability/app/minio_prometheus"      = { capabilities = ["read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/observability/app/vault_metrics_token"   = { capabilities = ["read"] }
     }
 
     # Human/Management Identities
     "oidc-admin" = {
-      "secret/metadata/"                              = { capabilities = ["list"] }
-      "secret/metadata/on-premise-gitlab-deployment/" = { capabilities = ["list"] }
+      "secret/metadata/"                                            = { capabilities = ["list"] }
+      "secret/metadata/${local.state.metadata.vault_kv_namespace}/" = { capabilities = ["list"] }
 
-      "secret/data/on-premise-gitlab-deployment/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
-      "secret/metadata/on-premise-gitlab-deployment/*" = { capabilities = ["list", "read", "delete"] }
-      "auth/token/lookup-self"                         = { capabilities = ["read"] }
-      "identity/lookup/entity"                         = { capabilities = ["read", "update"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
+      "secret/metadata/${local.state.metadata.vault_kv_namespace}/*" = { capabilities = ["list", "read", "delete"] }
+      "auth/token/lookup-self"                                       = { capabilities = ["read"] }
+      "identity/lookup/entity"                                       = { capabilities = ["read", "update"] }
     }
 
     "oidc-auditor" = {
-      "secret/metadata/*"                          = { capabilities = ["list", "read"] }
-      "secret/data/on-premise-gitlab-deployment/*" = { capabilities = ["read", "list"] }
-      "sys/audit"                                  = { capabilities = ["read"] }
-      "sys/policies/acl"                           = { capabilities = ["list", "read"] }
+      "secret/metadata/*"                                        = { capabilities = ["list", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/*" = { capabilities = ["read", "list"] }
+      "sys/audit"                                                = { capabilities = ["read"] }
+      "sys/policies/acl"                                         = { capabilities = ["list", "read"] }
     }
 
     "oidc-developer" = {
-      "secret/data/on-premise-gitlab-deployment/applications/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
-      "secret/metadata/on-premise-gitlab-deployment/applications/*" = { capabilities = ["list", "read"] }
+      "secret/data/${local.state.metadata.vault_kv_namespace}/applications/*"     = { capabilities = ["create", "update", "read", "delete", "list"] }
+      "secret/metadata/${local.state.metadata.vault_kv_namespace}/applications/*" = { capabilities = ["list", "read"] }
     }
   }
 
