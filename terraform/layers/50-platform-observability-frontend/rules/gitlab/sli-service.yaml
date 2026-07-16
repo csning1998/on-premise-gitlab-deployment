@@ -1,0 +1,57 @@
+---
+# Aggregates `sli_component:*` metrics across `sli-web`, `sli-sidekiq`, `sli-gitaly`, and `sli-runner` namespaces.
+# Due to independent namespace evaluation by Mimir Ruler, dependency metrics may lag by one evaluation cycle.
+# This propagation latency is accepted as calculation windows span at least 5m against a 1m evaluation cycle.
+groups:
+  - name: gitlab-service-sli
+    rules:
+      - record: sli_service:ops:rate_5m
+        expr: sum(sli_component:ops:rate_5m)
+      - record: sli_service:ops:rate_30m
+        expr: sum(sli_component:ops:rate_30m)
+      - record: sli_service:ops:rate_1h
+        expr: sum(sli_component:ops:rate_1h)
+      - record: sli_service:ops:rate_6h
+        expr: sum(sli_component:ops:rate_6h)
+      - record: sli_service:ops:rate_3d
+        expr: sum(sli_component:ops:rate_3d)
+      - record: sli_service:apdex:ratio_5m
+        expr: >-
+          sum((sli_component:apdex:ratio_5m * on(component) sli_component:ops:rate_5m)
+          and on(component) (sli_component:ops:rate_5m > 0)) / (sum(sli_component:ops:rate_5m) > 0)
+      - record: sli_service:apdex:ratio_30m
+        expr: >-
+          sum((sli_component:apdex:ratio_30m * on(component) sli_component:ops:rate_30m)
+          and on(component) (sli_component:ops:rate_30m > 0)) / (sum(sli_component:ops:rate_30m) > 0)
+      - record: sli_service:apdex:ratio_1h
+        expr: >-
+          sum((sli_component:apdex:ratio_1h * on(component) sli_component:ops:rate_1h)
+          and on(component) (sli_component:ops:rate_1h > 0)) / (sum(sli_component:ops:rate_1h) > 0)
+      - record: sli_service:apdex:ratio_6h
+        expr: >-
+          sum((sli_component:apdex:ratio_6h * on(component) sli_component:ops:rate_6h)
+          and on(component) (sli_component:ops:rate_6h > 0)) / (sum(sli_component:ops:rate_6h) > 0)
+      - record: sli_service:apdex:ratio_3d
+        expr: >-
+          sum((sli_component:apdex:ratio_3d * on(component) sli_component:ops:rate_3d)
+          and on(component) (sli_component:ops:rate_3d > 0)) / (sum(sli_component:ops:rate_3d) > 0)
+      - record: sli_service:errors:ratio_5m
+        expr: >-
+          sum((sli_component:errors:ratio_5m * on(component) sli_component:ops:rate_5m)
+          and on(component) (sli_component:ops:rate_5m > 0)) / (sum(sli_component:ops:rate_5m) > 0)
+      - record: sli_service:errors:ratio_30m
+        expr: >-
+          sum((sli_component:errors:ratio_30m * on(component) sli_component:ops:rate_30m)
+          and on(component) (sli_component:ops:rate_30m > 0)) / (sum(sli_component:ops:rate_30m) > 0)
+      - record: sli_service:errors:ratio_1h
+        expr: >-
+          sum((sli_component:errors:ratio_1h * on(component) sli_component:ops:rate_1h)
+          and on(component) (sli_component:ops:rate_1h > 0)) / (sum(sli_component:ops:rate_1h) > 0)
+      - record: sli_service:errors:ratio_6h
+        expr: >-
+          sum((sli_component:errors:ratio_6h * on(component) sli_component:ops:rate_6h)
+          and on(component) (sli_component:ops:rate_6h > 0)) / (sum(sli_component:ops:rate_6h) > 0)
+      - record: sli_service:errors:ratio_3d
+        expr: >-
+          sum((sli_component:errors:ratio_3d * on(component) sli_component:ops:rate_3d)
+          and on(component) (sli_component:ops:rate_3d > 0)) / (sum(sli_component:ops:rate_3d) > 0)

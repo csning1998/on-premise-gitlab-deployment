@@ -52,3 +52,13 @@ variable "kube_state_metrics_version" {
     error_message = "kube_state_metrics_version must be a stable semver string."
   }
 }
+
+variable "mimirtool_version" {
+  description = "mimirtool CLI image tag used by the rules-sync Job, pinned to the deployed Mimir application version"
+  type        = string
+  default     = "3.0.4"
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.mimirtool_version))
+    error_message = "mimirtool_version must be a stable semver string."
+  }
+}

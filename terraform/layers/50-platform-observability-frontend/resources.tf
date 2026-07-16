@@ -203,6 +203,10 @@ resource "kubernetes_manifest" "mimir_gateway_network_policy" {
             podSelector       = { matchLabels = { "app.kubernetes.io/name" = "grafana" } }
           },
           {
+            namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = "observability" } }
+            podSelector       = { matchLabels = { "app.kubernetes.io/name" = "mimir-rules-sync" } }
+          },
+          {
             namespaceSelector = { matchLabels = { "kubernetes.io/metadata.name" = "ingress-system" } }
           }
         ]

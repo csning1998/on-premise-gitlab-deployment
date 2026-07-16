@@ -180,11 +180,12 @@ resource "helm_release" "mimir" {
       extraVolumeMounts = local.ca_volume_mount
     }
 
+    # Raised from 512Mi after repeated querier OOMKilled crashes; provisional pending real usage data.
     querier = {
       replicas = 1
       resources = {
-        requests = { memory = "128Mi" }
-        limits   = { memory = "512Mi" }
+        requests = { memory = "512Mi" }
+        limits   = { memory = "2Gi" }
       }
       podAnnotations    = local.metrics_annotations
       extraArgs         = local.s3_extra_args

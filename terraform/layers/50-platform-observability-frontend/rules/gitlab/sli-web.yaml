@@ -1,0 +1,84 @@
+---
+groups:
+  - name: web-request-sli
+    rules:
+      - record: sli_component:apdex:ratio_5m
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_apdex_success_total{job="webservice"}[5m]))
+          / sum(rate(gitlab_sli_rails_request_apdex_total{job="webservice"}[5m]))
+        labels:
+          component: web
+      - record: sli_component:apdex:ratio_30m
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_apdex_success_total{job="webservice"}[30m]))
+          / sum(rate(gitlab_sli_rails_request_apdex_total{job="webservice"}[30m]))
+        labels:
+          component: web
+      - record: sli_component:apdex:ratio_1h
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_apdex_success_total{job="webservice"}[1h]))
+          / sum(rate(gitlab_sli_rails_request_apdex_total{job="webservice"}[1h]))
+        labels:
+          component: web
+      - record: sli_component:apdex:ratio_6h
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_apdex_success_total{job="webservice"}[6h]))
+          / sum(rate(gitlab_sli_rails_request_apdex_total{job="webservice"}[6h]))
+        labels:
+          component: web
+      - record: sli_component:apdex:ratio_3d
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_apdex_success_total{job="webservice"}[3d]))
+          / sum(rate(gitlab_sli_rails_request_apdex_total{job="webservice"}[3d]))
+        labels:
+          component: web
+      - record: sli_component:errors:ratio_5m
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_error_total{job="webservice"}[5m]))
+          / sum(rate(gitlab_sli_rails_request_total{job="webservice"}[5m]))
+        labels:
+          component: web
+      - record: sli_component:errors:ratio_30m
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_error_total{job="webservice"}[30m]))
+          / sum(rate(gitlab_sli_rails_request_total{job="webservice"}[30m]))
+        labels:
+          component: web
+      - record: sli_component:errors:ratio_1h
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_error_total{job="webservice"}[1h]))
+          / sum(rate(gitlab_sli_rails_request_total{job="webservice"}[1h]))
+        labels:
+          component: web
+      - record: sli_component:errors:ratio_6h
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_error_total{job="webservice"}[6h]))
+          / sum(rate(gitlab_sli_rails_request_total{job="webservice"}[6h]))
+        labels:
+          component: web
+      - record: sli_component:errors:ratio_3d
+        expr: >-
+          sum(rate(gitlab_sli_rails_request_error_total{job="webservice"}[3d]))
+          / sum(rate(gitlab_sli_rails_request_total{job="webservice"}[3d]))
+        labels:
+          component: web
+      - record: sli_component:ops:rate_5m
+        expr: sum(rate(gitlab_sli_rails_request_total{job="webservice"}[5m]))
+        labels:
+          component: web
+      - record: sli_component:ops:rate_30m
+        expr: sum(rate(gitlab_sli_rails_request_total{job="webservice"}[30m]))
+        labels:
+          component: web
+      - record: sli_component:ops:rate_1h
+        expr: sum(rate(gitlab_sli_rails_request_total{job="webservice"}[1h]))
+        labels:
+          component: web
+      - record: sli_component:ops:rate_6h
+        expr: sum(rate(gitlab_sli_rails_request_total{job="webservice"}[6h]))
+        labels:
+          component: web
+      - record: sli_component:ops:rate_3d
+        expr: sum(rate(gitlab_sli_rails_request_total{job="webservice"}[3d]))
+        labels:
+          component: web

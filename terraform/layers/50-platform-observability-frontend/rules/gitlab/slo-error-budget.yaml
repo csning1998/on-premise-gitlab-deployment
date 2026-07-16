@@ -1,0 +1,13 @@
+---
+# SLO target: 99.5% (0.005 allowed badness), evaluated over the 3d window.
+groups:
+  - name: gitlab-error-budget
+    rules:
+      - record: slo_error_budget:remaining:ratio
+        expr: 1 - ((1 - sli_service:apdex:ratio_3d) / 0.005)
+        labels:
+          sli_type: apdex
+      - record: slo_error_budget:remaining:ratio
+        expr: 1 - (sli_service:errors:ratio_3d / 0.005)
+        labels:
+          sli_type: errors

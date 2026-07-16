@@ -1,0 +1,89 @@
+---
+groups:
+  - name: gitaly-grpc-sli
+    rules:
+      - record: sli_component:apdex:ratio_5m
+        expr: >-
+          (sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.1"}[5m]))
+          + sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.5"}[5m])))
+          / (2 * sum(rate(grpc_server_handling_seconds_count{job="gitlab-gitaly"}[5m])))
+        labels:
+          component: gitaly
+      - record: sli_component:apdex:ratio_30m
+        expr: >-
+          (sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.1"}[30m]))
+          + sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.5"}[30m])))
+          / (2 * sum(rate(grpc_server_handling_seconds_count{job="gitlab-gitaly"}[30m])))
+        labels:
+          component: gitaly
+      - record: sli_component:apdex:ratio_1h
+        expr: >-
+          (sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.1"}[1h]))
+          + sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.5"}[1h])))
+          / (2 * sum(rate(grpc_server_handling_seconds_count{job="gitlab-gitaly"}[1h])))
+        labels:
+          component: gitaly
+      - record: sli_component:apdex:ratio_6h
+        expr: >-
+          (sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.1"}[6h]))
+          + sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.5"}[6h])))
+          / (2 * sum(rate(grpc_server_handling_seconds_count{job="gitlab-gitaly"}[6h])))
+        labels:
+          component: gitaly
+      - record: sli_component:apdex:ratio_3d
+        expr: >-
+          (sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.1"}[3d]))
+          + sum(rate(grpc_server_handling_seconds_bucket{job="gitlab-gitaly", le="0.5"}[3d])))
+          / (2 * sum(rate(grpc_server_handling_seconds_count{job="gitlab-gitaly"}[3d])))
+        labels:
+          component: gitaly
+      - record: sli_component:errors:ratio_5m
+        expr: >-
+          sum(rate(grpc_server_handled_total{job="gitlab-gitaly", grpc_code!~"OK|Canceled"}[5m]))
+          / sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[5m]))
+        labels:
+          component: gitaly
+      - record: sli_component:errors:ratio_30m
+        expr: >-
+          sum(rate(grpc_server_handled_total{job="gitlab-gitaly", grpc_code!~"OK|Canceled"}[30m]))
+          / sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[30m]))
+        labels:
+          component: gitaly
+      - record: sli_component:errors:ratio_1h
+        expr: >-
+          sum(rate(grpc_server_handled_total{job="gitlab-gitaly", grpc_code!~"OK|Canceled"}[1h]))
+          / sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[1h]))
+        labels:
+          component: gitaly
+      - record: sli_component:errors:ratio_6h
+        expr: >-
+          sum(rate(grpc_server_handled_total{job="gitlab-gitaly", grpc_code!~"OK|Canceled"}[6h]))
+          / sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[6h]))
+        labels:
+          component: gitaly
+      - record: sli_component:errors:ratio_3d
+        expr: >-
+          sum(rate(grpc_server_handled_total{job="gitlab-gitaly", grpc_code!~"OK|Canceled"}[3d]))
+          / sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[3d]))
+        labels:
+          component: gitaly
+      - record: sli_component:ops:rate_5m
+        expr: sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[5m]))
+        labels:
+          component: gitaly
+      - record: sli_component:ops:rate_30m
+        expr: sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[30m]))
+        labels:
+          component: gitaly
+      - record: sli_component:ops:rate_1h
+        expr: sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[1h]))
+        labels:
+          component: gitaly
+      - record: sli_component:ops:rate_6h
+        expr: sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[6h]))
+        labels:
+          component: gitaly
+      - record: sli_component:ops:rate_3d
+        expr: sum(rate(grpc_server_handled_total{job="gitlab-gitaly"}[3d]))
+        labels:
+          component: gitaly

@@ -246,23 +246,47 @@ prometheus.scrape "guest_scrape" {
   forward_to = [prometheus.relabel.guest_cardinality.receiver]
 }
 
-// Reduces cardinality on high-dimensional gRPC metrics scraped from Gitaly and Praefect.
-// grpc_server_handling_seconds_bucket contributes ~5700 series via histogram bucket label combinations.
-// grpc_code on grpc_server_handled_total has ~14 status code values that multiply series count by that factor.
+// Manages cardinality for high-dimensional metrics (primarily Gitaly/Praefect gRPC) through targeted relabeling.
+//
+// 1. Histogram Cardinality Reduction (grpc_server_handling_seconds_bucket):
+//    - Retains only apdex-critical boundaries: `le="0.1"` (satisfied) and `le="0.5"` (tolerating).
+//    - Drops all other boundaries (including `le="+Inf"`), as the apdex denominator relies on the
+//      independent `grpc_server_handling_seconds_count` metric.
+//    - Result: Reduces bucket series count from 12 to 2 per method.
+//
+// 2. Error Code Preservation (grpc_server_handled_total):
+//    - Leaves `grpc_code` unmodified. Gitaly pre-registers all 17 gRPC status codes per method.
+//    - Collapsing these codes at scrape time causes label collisions and silent data drops when
+//      multiple distinct non-OK codes are returned within the same scrape interval.
+//    - Resolution: Aggregation is deferred to Mimir SLI recording rules, which filter and sum at query time.
+//
+// 3. Scope Limitation:
+//    - Rules explicitly match on `__name__` to ensure that metric series from other targets
+//      (e.g., Vault, Blackbox) containing unrelated `le` labels remain completely unaffected.
 prometheus.relabel "guest_cardinality" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 
   rule {
-    source_labels = ["__name__"]
-    regex         = "grpc_server_handling_seconds_bucket"
-    action        = "drop"
+    source_labels = ["__name__", "le"]
+    separator     = ";"
+    regex         = "grpc_server_handling_seconds_bucket;(?:0\\.1|0\\.5)"
+    target_label  = "__tmp_keep_grpc_bucket"
+    replacement   = "true"
+    action        = "replace"
   }
 
   rule {
-    source_labels = ["__name__"]
-    regex         = "grpc_server_handled_total"
-    target_label  = "grpc_code"
-    replacement   = ""
+    source_labels = ["__name__", "__tmp_keep_grpc_bucket"]
+    separator     = ";"
+    regex         = "grpc_server_handling_seconds_bucket;"
+    action        = "drop"
+  }
+
+  // Metric relabeling does not auto-strip __ prefixed labels the way target relabeling does;
+  // this rule removes the temporary marker label set above before the series reaches remote_write.
+  rule {
+    regex  = "__tmp_.*"
+    action = "labeldrop"
   }
 }
 

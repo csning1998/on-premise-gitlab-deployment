@@ -1,0 +1,116 @@
+# CI component is a feature_category filter over the sidekiq SLI counters, since GitLab Runner's
+# own metrics endpoint exposes no job success, failure, or duration data.
+---
+groups:
+  - name: ci-pipeline-sli
+    rules:
+      - record: sli_component:apdex:ratio_5m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_apdex_success_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[5m]))
+          / sum(rate(gitlab_sli_sidekiq_execution_apdex_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[5m]))
+        labels:
+          component: ci
+      - record: sli_component:apdex:ratio_30m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_apdex_success_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[30m]))
+          / sum(rate(gitlab_sli_sidekiq_execution_apdex_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[30m]))
+        labels:
+          component: ci
+      - record: sli_component:apdex:ratio_1h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_apdex_success_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[1h]))
+          / sum(rate(gitlab_sli_sidekiq_execution_apdex_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[1h]))
+        labels:
+          component: ci
+      - record: sli_component:apdex:ratio_6h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_apdex_success_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[6h]))
+          / sum(rate(gitlab_sli_sidekiq_execution_apdex_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[6h]))
+        labels:
+          component: ci
+      - record: sli_component:apdex:ratio_3d
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_apdex_success_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[3d]))
+          / sum(rate(gitlab_sli_sidekiq_execution_apdex_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[3d]))
+        labels:
+          component: ci
+      - record: sli_component:errors:ratio_5m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_error_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[5m]))
+          / sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[5m]))
+        labels:
+          component: ci
+      - record: sli_component:errors:ratio_30m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_error_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[30m]))
+          / sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[30m]))
+        labels:
+          component: ci
+      - record: sli_component:errors:ratio_1h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_error_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[1h]))
+          / sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[1h]))
+        labels:
+          component: ci
+      - record: sli_component:errors:ratio_6h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_error_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[6h]))
+          / sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[6h]))
+        labels:
+          component: ci
+      - record: sli_component:errors:ratio_3d
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_error_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[3d]))
+          / sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[3d]))
+        labels:
+          component: ci
+      - record: sli_component:ops:rate_5m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[5m]))
+        labels:
+          component: ci
+      - record: sli_component:ops:rate_30m
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[30m]))
+        labels:
+          component: ci
+      - record: sli_component:ops:rate_1h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[1h]))
+        labels:
+          component: ci
+      - record: sli_component:ops:rate_6h
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[6h]))
+        labels:
+          component: ci
+      - record: sli_component:ops:rate_3d
+        expr: >-
+          sum(rate(gitlab_sli_sidekiq_execution_total{job="sidekiq",
+          feature_category=~"continuous_integration|continuous_delivery|pipeline_composition|ci_scaling"}[3d]))
+        labels:
+          component: ci
