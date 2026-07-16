@@ -1,10 +1,12 @@
 ---
 include:
-  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/core@1.0.1
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/core@1.2.2
     inputs:
-      reviewer_image: $CI_REGISTRY/csning1998/gitlab-ci-with-code-reviewer/reviewer:1.0.1
-  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-terraform@1.0.1
+      reviewer_image: $CI_REGISTRY/csning1998/gitlab-ci-with-code-reviewer/reviewer:1.2.2
+      claude_model: claude-opus-4-8
+      gemini_model: gemini-3.5-flash
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-terraform@1.2.2
     inputs:
       checkov_skip: "CKV_GIT_1,CKV_GLB_1,CKV_GLB_3,CKV_GLB_4"
-  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-ansible@1.0.1
-  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-packer@1.0.1
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-ansible@1.2.2
+  - component: $CI_SERVER_FQDN/csning1998/gitlab-ci-with-code-reviewer/iac-packer@1.2.2
