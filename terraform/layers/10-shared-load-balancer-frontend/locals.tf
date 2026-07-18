@@ -90,7 +90,19 @@ locals {
 
 # 3. Security & Credentials Context (sec_ / pki_)
 locals {
-  pki_global_ca_b64 = local.state.network.global_vault_pki_b64
+  bootstrap_ca_chain_pem = "${data.terraform_remote_state.vault_bootstrapper.outputs.bootstrap_root_ca_certificate_pem}\n${data.terraform_remote_state.vault_bootstrapper.outputs.bootstrap_intermediate_ca_certificate_pem}"
+
+  # The CLB is excluded from net_service_segments and does not occupy its SSoT reservation.
+  # Node IPs are calculated directly from var.node_config.
+  central_lb_node_ips = [
+    for node_name, node_spec in var.node_config :
+    cidrhost(local.svc_network.cidr_block, node_spec.ip_suffix)
+  ]
+
+  pki_global_ca_b64 = {
+    ca_cert_b64        = base64encode(local.bootstrap_ca_chain_pem)
+    haproxy_bundle_b64 = base64encode("${vault_pki_secret_backend_cert.haproxy_stats.certificate}\n${vault_pki_secret_backend_cert.haproxy_stats.private_key}")
+  }
 
   # System Level Credentials (OS/SSH)
   sec_vm_credentials = {

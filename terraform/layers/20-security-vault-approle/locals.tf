@@ -30,7 +30,7 @@ locals {
     "sys/mounts"   = { capabilities = ["read", "list"] }
 
     # PKI & Secrets
-    "pki/prod/*"                          = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
+    "pki_prod/*"                          = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
     "pki-infrastructure-root-bootstrap/*" = { capabilities = ["create", "read", "update", "delete", "list", "sudo"] }
     "secret/*"                            = { capabilities = ["create", "read", "update", "delete", "list"] }
 

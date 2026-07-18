@@ -21,19 +21,24 @@ locals {
 */
 resource "local_file" "ssh_config" {
 
-  content = templatefile("${path.module}/../../../templates/ssh_config.tftpl", {
-    nodes                = var.nodes
-    ssh_user             = var.credentials_vm.username
-    ssh_private_key_path = var.credentials_vm.ssh_private_key_path
-    config_name          = local.cluster_name
-    known_hosts_path     = local.known_hosts_path
-  })
   filename        = local.ssh_config_path
   file_permission = "0600"
+  content         = <<-EOT
+    %{~for node in var.nodes~}
+    Host ${node.key} ${node.ip}
+      HostName ${node.ip}
+      User ${var.credentials_vm.username}
+      IdentityFile ${var.credentials_vm.ssh_private_key_path}
+      StrictHostKeyChecking yes
+      PasswordAuthentication no
+      UserKnownHostsFile ${local.known_hosts_path}
+
+    %{~endfor~}
+  EOT
 }
 
 /*
-* NOTE: Call functions in `utils_ssh.sh` via local-exec to manage the ~/.ssh/config file. 
+* NOTE: Call functions in `utils_ssh.sh` via local-exec to manage the ~/.ssh/config file.
 * This avoids deletion during `terraform destroy()` in `scripts/terraform.sh`.
 */
 resource "null_resource" "ssh_config_include" {
@@ -66,7 +71,7 @@ resource "null_resource" "prepare_ssh_access" {
   depends_on = [null_resource.ssh_config_include]
 
   triggers = {
-    # The ID of the VMs change when they are (re)established. 
+    # The ID of the VMs change when they are (re)established.
     # This modifies jsonencode and thus trigger this resource, Also pass the known_hosts_path via a trigger.
     guest_provisioning_complete = jsonencode(var.status_trigger)
   }

@@ -24,9 +24,8 @@ vault_agent_key_name: "server.key"
 vault_agent_ca_name: "ca.crt"
 
 # Internal Content Templates
-vault_agent_cert_content: "{{ '{{ .Data.certificate }}\n{{ .Data.issuing_ca }}' }}"
+vault_agent_cert_content: "{{ '{{ .Data.certificate }}\n{{ range .Data.ca_chain }}{{ . }}\n{{ end }}' }}"
 vault_agent_key_content: "{{ '{{ .Data.private_key }}' }}"
-vault_agent_ca_content: "{{ '{{ range .Data.ca_chain }}{{ . }}{{ \"\\n\" }}{{ end }}' }}"
 
 # The Abstracted Mapping List
 vault_agent_cert_files:
@@ -36,9 +35,6 @@ vault_agent_cert_files:
   - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_key_name }}"
     content: "{{ vault_agent_key_content }}"
     mode: "0600"
-  - dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_ca_name }}"
-    content: "{{ vault_agent_ca_content }}"
-    mode: "0644"
 
 # Operational Defaults
 vault_agent_wait_file: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_cert_name }}"

@@ -10,9 +10,14 @@ output "network_slot_topology" {
 output "node_exporter_targets" {
   description = "Node Exporter scrape targets for the Central LB VM fleet itself (excluded from net_service_segments)."
   value = {
-    ips  = local.state.network.global_topology_network["central-lb"]["frontend"].node_ips
+    ips  = local.central_lb_node_ips
     port = local.state.network.global_network_baseline.node_exporter_port
   }
+}
+
+output "central_lb_node_ips" {
+  description = "Actual per-node IPs of the Central LB VM fleet, computed from var.node_config rather than the L00 SSoT reservation range; consumed by L30 observability for HAProxy stats scrape targets."
+  value       = local.central_lb_node_ips
 }
 
 output "infrastructure_map" {

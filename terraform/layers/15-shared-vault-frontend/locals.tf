@@ -10,6 +10,8 @@ locals {
 }
 
 locals {
+  bootstrap_ca_chain_pem = "${data.terraform_remote_state.vault_bootstrapper.outputs.bootstrap_root_ca_certificate_pem}\n${data.terraform_remote_state.vault_bootstrapper.outputs.bootstrap_intermediate_ca_certificate_pem}"
+
   ansible_template_config = {
     global_mss          = module.context.global_mss
     vault_vip           = module.context.primary_net_config.lb_config.vip
@@ -17,16 +19,12 @@ locals {
     vault_static_routes = one(values(module.context.asymmetric_static_routes))
   }
 
-  ansible_extra_config = merge(
-    {
-      ansible_user       = module.context.sec_vm_credentials.username
-      dev_vault_url      = var.vault_dev_endpoint
-      dev_vault_api_path = "on-premise-gitlab-deployment/credentials"
-    },
-    module.context.global_vault_pki_b64 != null ? {
-      vault_server_cert_b64 = module.context.global_vault_pki_b64.server_cert_b64
-      vault_server_key_b64  = module.context.global_vault_pki_b64.server_key_b64
-      vault_ca_cert_b64     = module.context.global_vault_pki_b64.ca_cert_b64
-    } : {}
-  )
+  ansible_extra_config = {
+    ansible_user          = module.context.sec_vm_credentials.username
+    dev_vault_url         = var.vault_dev_endpoint
+    dev_vault_api_path    = "on-premise-gitlab-deployment/credentials"
+    vault_server_cert_b64 = base64encode(vault_pki_secret_backend_cert.vault_listener.certificate)
+    vault_server_key_b64  = base64encode(vault_pki_secret_backend_cert.vault_listener.private_key)
+    vault_ca_cert_b64     = base64encode(local.bootstrap_ca_chain_pem)
+  }
 }

@@ -1,6 +1,7 @@
 
-# 1. PKI Engine
+# 1. PKI Secrets Engine
 resource "vault_mount" "pki_prod" {
+  provider    = vault.production
   path        = var.pki_engine_config.path
   type        = "pki"
   description = "Production PKI Engine for internal services"
@@ -9,29 +10,13 @@ resource "vault_mount" "pki_prod" {
   max_lease_ttl_seconds     = var.pki_engine_config.max_lease_ttl_seconds
 }
 
-# Hierarchical PKI configuration utilizing Root to Intermediate certification path.
+# Hierarchical PKI configuration utilizing a Root to Intermediate certification path.
+# The Root CA resides in the Bootstrap Vault; this engine stores only the signed Intermediate CA.
 
-# 2a. Bootstrap Root Engine (Internal use only for signing the intermediate)
-resource "vault_mount" "pki_root_bootstrap" {
-  path        = "pki-infrastructure-root-bootstrap"
-  type        = "pki"
-  description = "Internal bootstrap engine to host the Infrastructure Root CA for signing"
-
-  default_lease_ttl_seconds = var.pki_engine_config.default_lease_ttl_seconds
-  max_lease_ttl_seconds     = var.pki_engine_config.max_lease_ttl_seconds
-}
-
-# 2b. Generate the Infrastructure Root CA internally within the bootstrap engine
-resource "vault_pki_secret_backend_root_cert" "root_ca" {
-  backend     = vault_mount.pki_root_bootstrap.path
-  type        = "internal"
-  common_name = var.pki_settings.root_ca_common_name
-  ttl         = "87600h" # 10 Years
-}
-
-# 2c. Generate Intermediate CSR from the Production Engine
+# 2a. Generate Intermediate CA CSR from the Production PKI engine.
 resource "vault_pki_secret_backend_intermediate_cert_request" "prod_int_csr" {
-  backend = vault_mount.pki_prod.path
+  provider = vault.production
+  backend  = vault_mount.pki_prod.path
 
   type        = "internal"
   common_name = var.pki_settings.intermediate_ca_common_name
@@ -39,34 +24,71 @@ resource "vault_pki_secret_backend_intermediate_cert_request" "prod_int_csr" {
   key_bits    = 4096
 }
 
-# 2d. Sign the Intermediate CSR using the Bootstrap Root (Referencing Vault Docs)
+# 2b. Sign the Intermediate CA CSR using the Bootstrap Vault's Bootstrap Issuing Intermediate CA.
 resource "vault_pki_secret_backend_root_sign_intermediate" "signed_int" {
-  depends_on = [vault_pki_secret_backend_root_cert.root_ca]
-  backend    = vault_mount.pki_root_bootstrap.path
+  provider = vault.bootstrap
+  backend  = var.bootstrap_pki_mount_path
 
   csr                  = vault_pki_secret_backend_intermediate_cert_request.prod_int_csr.csr
   common_name          = var.pki_settings.intermediate_ca_common_name
   format               = "pem"
-  ttl                  = 60 * 60 * 24 * 365 # 1 Year (Match original Root TTL)
+  ttl                  = 60 * 60 * 24 * 365 # 1 Year
   exclude_cn_from_sans = true
 }
 
-# 2e. Set the signed Intermediate certificate back to the Production Engine
+# 2c. Import the complete certificate chain (Production Vault intermediate, Bootstrap Vault intermediate,
+# and Bootstrap Vault root). The signed bundle contains only the intermediate certificates; the root
+# certificate is appended manually.
 resource "vault_pki_secret_backend_intermediate_set_signed" "prod_int_signed" {
-  backend     = vault_mount.pki_prod.path
-  certificate = "${vault_pki_secret_backend_root_sign_intermediate.signed_int.certificate}\n${vault_pki_secret_backend_root_cert.root_ca.certificate}"
+  provider = vault.production
+  backend  = vault_mount.pki_prod.path
+  certificate = join("\n", [
+    chomp(vault_pki_secret_backend_root_sign_intermediate.signed_int.certificate_bundle),
+    chomp(var.bootstrap_root_ca_certificate_pem),
+  ])
 }
 
-# CRL/OSCP URL
+# Importing multiple certificates registers multiple issuers, only one of which possesses the private key.
+# The key-holding issuer is dynamically resolved via `key_info`, avoiding reliance on array ordering.
+data "vault_pki_secret_backend_issuers" "prod_issuers" {
+  provider   = vault.production
+  backend    = vault_mount.pki_prod.path
+  depends_on = [vault_pki_secret_backend_intermediate_set_signed.prod_int_signed]
+}
+
+locals {
+  prod_key_bearing_issuer_ids = [
+    for issuer_id, key_id in data.vault_pki_secret_backend_issuers.prod_issuers.key_info :
+    issuer_id if key_id != ""
+  ]
+}
+
+resource "vault_pki_secret_backend_config_issuers" "prod_default" {
+  provider                      = vault.production
+  backend                       = vault_mount.pki_prod.path
+  default                       = local.prod_key_bearing_issuer_ids[0]
+  default_follows_latest_issuer = true
+
+  lifecycle {
+    precondition {
+      condition     = length(local.prod_key_bearing_issuer_ids) > 0
+      error_message = "The pki_prod mount does not contain any key-bearing issuers. The set-signed import operation may fail, or all certificates may be imported as keyless issuers."
+    }
+  }
+}
+
+# CRL and OCSP configuration URLs
 resource "vault_pki_secret_backend_config_urls" "config_urls" {
-  backend = vault_mount.pki_prod.path
+  provider = vault.production
+  backend  = vault_mount.pki_prod.path
 
   issuing_certificates    = ["${var.vault_endpoint}/v1/${vault_mount.pki_prod.path}/ca"]
   crl_distribution_points = ["${var.vault_endpoint}/v1/${vault_mount.pki_prod.path}/crl"]
 }
 
-# Unified PKI Role Definition
+# Unified PKI role definitions
 resource "vault_pki_secret_backend_role" "pki_roles" {
+  provider = vault.production
   for_each = var.pki_roles
 
   backend         = vault_mount.pki_prod.path
@@ -93,22 +115,25 @@ resource "vault_pki_secret_backend_role" "pki_roles" {
   enforce_hostnames = true
 }
 
-# 1. Shared AppRole Backend (Standard approach for workload identity)
+# 1. Shared AppRole authentication backend for workload identity
 resource "vault_auth_backend" "approle" {
-  path = "workload-approle"
-  type = "approle"
+  provider = vault.production
+  path     = "workload-approle"
+  type     = "approle"
 }
 
-# 2. Kubernetes Auth Backends (One per cluster for identity isolation)
+# 2. Isolated Kubernetes authentication backends for cluster identity isolation
 resource "vault_auth_backend" "kubernetes" {
+  provider = vault.production
   for_each = toset(distinct([for k, v in var.pki_roles : v.auth_path if v.auth_method == "kubernetes"]))
 
   path = each.value
   type = "kubernetes"
 }
 
-# Unified PKI Policy Definition
+# Unified PKI policies for certificate signing and issuance
 resource "vault_policy" "pki_policies" {
+  provider = vault.production
   for_each = var.pki_roles
 
   name = "${each.value.name}-pki-policy"

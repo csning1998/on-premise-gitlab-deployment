@@ -41,6 +41,16 @@
     mode: "{{ vault_agent_cert_mode }}"
   loop: "{{ vault_agent_cert_dirs }}"
 
+- name: "Step 4b. Deploy CA Certificate to Target Location"
+  become: true
+  ansible.builtin.copy:
+    src: "{{ vault_agent_config_dir }}/vault-ca.crt"
+    dest: "{{ vault_agent_cert_base_dir }}/{{ vault_agent_ca_name }}"
+    remote_src: true
+    owner: "{{ vault_agent_owner }}"
+    group: "{{ vault_agent_group }}"
+    mode: "0644"
+
 - name: "Step 5. Configure Vault Agent (vault-agent.hcl)"
   become: true
   ansible.builtin.template:

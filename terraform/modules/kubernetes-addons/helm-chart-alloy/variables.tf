@@ -81,6 +81,23 @@ variable "minio_metrics_token_secret_name" {
   default     = null
 }
 
+variable "haproxy_stats_basic_auth_secret_name" {
+  description = "Optional K8s Secret name holding the HAProxy stats listener's Basic Auth password (key: password); mounted and referenced via basic_auth.password_file when the HAProxy stats target is scraped"
+  type        = string
+  nullable    = true
+  default     = null
+}
+
+variable "haproxy_scrape_targets" {
+  description = "Optional HAProxy stats listener addresses for metrics scraping at /metrics over HTTPS with Basic Auth; uses the Alloy CA bundle for server certificate verification"
+  type = list(object({
+    address = string
+    job     = string
+    labels  = optional(map(string), {})
+  }))
+  default = []
+}
+
 variable "blackbox_targets" {
   description = "Optional endpoints to probe via Alloy's embedded blackbox exporter (prometheus.exporter.blackbox). module selects the prober: http_2xx (internal HTTPS verified against the ca-bundle mount), http_2xx_public (external HTTPS verified against the system trust store), or tcp_connect (L4 reachability for non-HTTPS VIPs). probe_ssl_earliest_cert_expiry is a byproduct of every HTTPS probe."
   type = list(object({

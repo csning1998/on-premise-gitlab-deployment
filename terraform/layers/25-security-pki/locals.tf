@@ -15,16 +15,18 @@ locals {
 locals {
   state = {
     metadata             = data.terraform_remote_state.metadata.outputs
+    vault_bootstrapper   = data.terraform_remote_state.vault_bootstrapper.outputs
     vault_sys            = data.terraform_remote_state.vault_sys.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
   }
 }
 
 locals {
-  sys_vault_endpoint  = "https://${local.state.vault_sys.service_vip}:443"
-  root_domain         = local.state.metadata.global_domain_suffix
-  root_ca_common_name = local.state.metadata.global_pki_config.root_ca_common_name
-  bootstrap_ca_path   = local.state.vault_sys.ca_cert_path
+  sys_vault_endpoint     = "https://${local.state.vault_sys.service_vip}:443"
+  root_domain            = local.state.metadata.global_domain_suffix
+  root_ca_common_name    = local.state.metadata.global_pki_config.root_ca_common_name
+  bootstrap_ca_path      = local.state.vault_sys.ca_cert_path
+  bootstrap_ca_chain_pem = "${local.state.vault_bootstrapper.bootstrap_root_ca_certificate_pem}\n${local.state.vault_bootstrapper.bootstrap_intermediate_ca_certificate_pem}"
 }
 
 # 2. TTL Policy for different environments
@@ -127,6 +129,7 @@ locals {
       "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/gitlab-runner" = { capabilities = ["create", "update", "read"] }
     }
     "observability-frontend" = {
+      "secret/data/${local.state.metadata.vault_kv_namespace}/observability/app/haproxy_stats"         = { capabilities = ["read"] }
       "secret/data/${local.state.metadata.vault_kv_namespace}/infrastructure/kubeconfig/observability" = { capabilities = ["create", "update", "read"] }
       "secret/data/${local.state.metadata.vault_kv_namespace}/observability/frontend"                  = { capabilities = ["read"] }
       "secret/data/${local.state.metadata.vault_kv_namespace}/observability/app/s3_credentials/*"      = { capabilities = ["read"] }

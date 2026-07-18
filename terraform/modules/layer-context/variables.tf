@@ -24,16 +24,6 @@ variable "global_network_baseline" {
   })
 }
 
-variable "global_vault_pki_b64" {
-  description = "Bootstrap PKI certificates in base64 from metadata layer. Null when PKI not yet initialized."
-  type = object({
-    server_cert_b64 = string
-    server_key_b64  = string
-    ca_cert_b64     = string
-  })
-  default = null
-}
-
 variable "infrastructure_map" {
   description = "Physical network infrastructure map from Layer 10 handover. type = any: remote_state output."
   type        = any

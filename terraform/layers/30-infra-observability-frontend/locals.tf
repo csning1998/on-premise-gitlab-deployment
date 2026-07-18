@@ -27,6 +27,12 @@ locals {
   network_harbor_bootstrapper = module.context.global_topology_network["harbor-bootstrapper"]["frontend"]
 }
 
+# The Central LB is excluded from the L00 SSoT node placement.
+# Retrieve its node IPs from the L10 outputs instead of network_central_lb.
+locals {
+  central_lb_node_ips = data.terraform_remote_state.load_balancer.outputs.central_lb_node_ips
+}
+
 # The physical KVM hypervisor host operates on-link on the cluster's hostonly bridge by owning the gateway address.
 # Consequently, this configuration belongs to the cluster's network topology.
 locals {

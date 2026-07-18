@@ -83,14 +83,3 @@ output "global_dns_records" {
   description = "SSoT mapping of all infrastructure hostnames to their respective VIPs."
   value       = local.global_dns_records
 }
-
-output "global_vault_pki_b64" {
-  description = "Base64 encoded TLS artifacts for the Bootstrap Vault instance."
-  sensitive   = true
-  value = {
-    ca_cert_b64        = base64encode(tls_self_signed_cert.root_ca.cert_pem)
-    server_cert_b64    = base64encode(tls_locally_signed_cert.vault_server.cert_pem)
-    server_key_b64     = base64encode(tls_private_key.vault_server.private_key_pem)
-    haproxy_bundle_b64 = base64encode("${tls_locally_signed_cert.vault_server.cert_pem}\n${tls_private_key.vault_server.private_key_pem}")
-  }
-}

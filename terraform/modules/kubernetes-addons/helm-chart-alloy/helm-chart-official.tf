@@ -11,19 +11,21 @@ resource "helm_release" "alloy" {
     alloy = {
       configMap = {
         content = templatefile("${path.module}/templates/river_config.tftpl", {
-          remote_write_url         = var.alloy_config.remote_write_url
-          loki_push_url            = var.alloy_config.loki_push_url
-          cluster_label            = var.alloy_config.cluster_label
-          tenant_id                = var.alloy_config.tenant_id
-          mtls_enabled             = var.alloy_config.mtls_cert_secret_name != null
-          guest_scrape_targets     = var.guest_scrape_targets
-          workhorse_scrape_enabled = var.workhorse_scrape_enabled
-          vault_metrics_address    = var.vault_metrics_address
-          vault_metrics_token_file = var.vault_metrics_token_secret_name != null ? "/etc/alloy/vault-token/token" : null
-          minio_scrape_targets     = var.minio_scrape_targets
-          minio_metrics_token_file = var.minio_metrics_token_secret_name != null ? "/etc/alloy/minio-token/token" : null
-          keycloak_metrics_address = var.keycloak_metrics_address
-          blackbox_targets         = var.blackbox_targets
+          remote_write_url              = var.alloy_config.remote_write_url
+          loki_push_url                 = var.alloy_config.loki_push_url
+          cluster_label                 = var.alloy_config.cluster_label
+          tenant_id                     = var.alloy_config.tenant_id
+          mtls_enabled                  = var.alloy_config.mtls_cert_secret_name != null
+          guest_scrape_targets          = var.guest_scrape_targets
+          workhorse_scrape_enabled      = var.workhorse_scrape_enabled
+          vault_metrics_address         = var.vault_metrics_address
+          vault_metrics_token_file      = var.vault_metrics_token_secret_name != null ? "/etc/alloy/vault-token/token" : null
+          minio_scrape_targets          = var.minio_scrape_targets
+          minio_metrics_token_file      = var.minio_metrics_token_secret_name != null ? "/etc/alloy/minio-token/token" : null
+          keycloak_metrics_address      = var.keycloak_metrics_address
+          blackbox_targets              = var.blackbox_targets
+          haproxy_scrape_targets        = var.haproxy_scrape_targets
+          haproxy_metrics_password_file = var.haproxy_stats_basic_auth_secret_name != null ? "/etc/alloy/haproxy-stats-auth/password" : null
         })
       }
       image = {
@@ -46,6 +48,9 @@ resource "helm_release" "alloy" {
           ] : [],
           var.minio_metrics_token_secret_name != null ? [
             { name = "alloy-minio-metrics-token", mountPath = "/etc/alloy/minio-token", readOnly = true }
+          ] : [],
+          var.haproxy_stats_basic_auth_secret_name != null ? [
+            { name = "alloy-haproxy-stats-auth", mountPath = "/etc/alloy/haproxy-stats-auth", readOnly = true }
           ] : []
         )
       }
@@ -71,6 +76,9 @@ resource "helm_release" "alloy" {
           ] : [],
           var.minio_metrics_token_secret_name != null ? [
             { name = "alloy-minio-metrics-token", secret = { secretName = var.minio_metrics_token_secret_name } }
+          ] : [],
+          var.haproxy_stats_basic_auth_secret_name != null ? [
+            { name = "alloy-haproxy-stats-auth", secret = { secretName = var.haproxy_stats_basic_auth_secret_name } }
           ] : []
         )
       }
@@ -83,6 +91,10 @@ resource "helm_release" "alloy" {
     precondition {
       condition     = length(var.minio_scrape_targets) == 0 || var.minio_metrics_token_secret_name != null
       error_message = "minio_metrics_token_secret_name must be set whenever minio_scrape_targets is non-empty; an unauthenticated scrape against MinIO's JWT-protected endpoint returns HTTP 401 and records up=0."
+    }
+    precondition {
+      condition     = length(var.haproxy_scrape_targets) == 0 || var.haproxy_stats_basic_auth_secret_name != null
+      error_message = "haproxy_stats_basic_auth_secret_name must be set whenever haproxy_scrape_targets is non-empty; an unauthenticated scrape against the Basic Auth-protected stats listener returns HTTP 401 and records up=0."
     }
   }
 }

@@ -169,7 +169,7 @@
 - **Calico MTU Clamping**: Calico's `veth` interfaces in Pods are aligned with the underlying network, clamping MTU to `1400` (`mtu = local.pod_network_mtu - 50` where `pod_network_mtu` is `1450`). This accommodates the 50-byte VXLAN tunnel header overhead, ensuring that Pod-to-Pod and Pod-to-Service traffic does not exceed the VM NIC MTU threshold of `1450`.
 - **Vault Kubernetes Auth Method & cert-manager PKI Provisioning**:
     - **Reviewer Delegation**: A `vault-reviewer` Kubernetes ServiceAccount is granted the ClusterRole `system:auth-delegator`. A long-lived SA token is mapped to a Vault backend configuration (`vault_kubernetes_auth_backend_config`). This allows the production Vault to delegate authentication requests back to the Kubernetes API server via the TokenReview API.
-    - **ClusterIssuer Binding**: A cert-manager `ClusterIssuer` is registered, referencing the Vault PKI endpoint (`pki/prod/sign/<role>`) and configured to authenticate via the `kubernetes` auth method using a dedicated `issuer` ServiceAccount token.
+    - **ClusterIssuer Binding**: A cert-manager `ClusterIssuer` is registered, referencing the Vault PKI endpoint (`pki_prod/sign/<role>`) and configured to authenticate via the `kubernetes` auth method using a dedicated `issuer` ServiceAccount token.
     - **PKI Sign Flow**: When a Pod requests a certificate:
         1. cert-manager submits the `issuer` SA JWT token to Vault.
         2. Vault validates this token against the Kubernetes API Server TokenReview API using the `vault-reviewer` credentials.

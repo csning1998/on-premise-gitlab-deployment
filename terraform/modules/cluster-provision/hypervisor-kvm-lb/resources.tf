@@ -119,12 +119,22 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
   name     = "${each.key}-cloud-init.iso"
 
   meta_data = yamlencode({})
-  user_data = templatefile("${path.module}/../../../templates/user_data.tftpl", {
-    hostname       = each.key
-    guest_username = var.credentials_vm.username
-    guest_password = var.credentials_vm.password
-    ssh_public_key = data.local_file.ssh_public_key.content
-  })
+  user_data = "#cloud-config\n${yamlencode({
+    fqdn                 = each.key
+    hostname             = each.key
+    preserve_hostname    = false
+    create_hostname_file = true
+    manage_etc_hosts     = true
+    users = [
+      {
+        name                = var.credentials_vm.username
+        passwd              = var.credentials_vm.password
+        lock_passwd         = false
+        sudo                = ["ALL=(ALL) NOPASSWD:ALL"]
+        ssh_authorized_keys = [trimspace(data.local_file.ssh_public_key.content)]
+      }
+    ]
+  })}"
 
   network_config = templatefile("${path.module}/../../../templates/network_config_lb.tftpl", {
     config = {

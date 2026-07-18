@@ -69,6 +69,7 @@ module "alloy" {
     kubernetes_namespace.observability,
     kubernetes_manifest.alloy_vault_metrics_token_external_secret,
     kubernetes_manifest.minio_metrics_token_external_secret,
+    kubernetes_manifest.haproxy_stats_password_external_secret,
   ]
 
   helm_config = {
@@ -91,13 +92,6 @@ module "alloy" {
   vault_metrics_token_secret_name = "alloy-vault-metrics-token"
 
   guest_scrape_targets = concat(
-    [
-      for ip in local.central_lb_ips : {
-        address = "${ip}:${local.port_haproxy_stats}"
-        job     = "central-lb-haproxy"
-        labels  = { component = "haproxy", instance = ip }
-      }
-    ],
     [{
       address = local.harbor_bootstrapper_metrics_address
       job     = "harbor-bootstrapper"
@@ -136,6 +130,15 @@ module "alloy" {
     labels  = { component = "minio" }
   }]
   minio_metrics_token_secret_name = "alloy-minio-metrics-token"
+
+  haproxy_scrape_targets = [
+    for ip in local.central_lb_ips : {
+      address = "${ip}:${local.port_haproxy_stats}"
+      job     = "central-lb-haproxy"
+      labels  = { component = "haproxy", instance = ip }
+    }
+  ]
+  haproxy_stats_basic_auth_secret_name = "alloy-haproxy-stats-auth"
 }
 
 module "kube_state_metrics" {

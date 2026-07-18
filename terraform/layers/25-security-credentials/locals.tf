@@ -15,6 +15,7 @@ locals {
     metadata             = data.terraform_remote_state.metadata.outputs
     vault_sys            = data.terraform_remote_state.vault_sys.outputs
     vault_prod_bootstrap = data.terraform_remote_state.vault_prod_bootstrap.outputs
+    vault_bootstrapper   = data.terraform_remote_state.vault_bootstrapper.outputs
   }
 
   sys_vault_endpoint = "https://${local.state.vault_sys.service_vip}:443"

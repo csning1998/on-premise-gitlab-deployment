@@ -34,3 +34,13 @@ variable "pki_engine_config" {
     max_lease_ttl_seconds     = number
   })
 }
+
+variable "bootstrap_pki_mount_path" {
+  description = "Mount path of the Bootstrap Vault's Bootstrap Issuing Intermediate PKI engine"
+  type        = string
+}
+
+variable "bootstrap_root_ca_certificate_pem" {
+  description = "PEM of the Bootstrap Vault's Root CA, appended when importing the Production intermediate so pki_prod's own ca_chain is complete"
+  type        = string
+}

@@ -22,6 +22,23 @@ path "secret/delete/on-premise-gitlab-deployment/*" {
 path "secret/destroy/on-premise-gitlab-deployment/*" {
   capabilities = ["update"]
 }
+
+# [5] Bootstrap Leaf Issuance: Required by downstream layers requesting certificates
+# from the Bootstrap Issuing Intermediate before the Production Vault is reachable
+path "pki_int/issue/*" {
+  capabilities = ["create", "update"]
+}
+
+# [6] Mount Metadata Read: vault_pki_secret_backend_cert reads mount config on refresh
+path "sys/mounts/pki_int" {
+  capabilities = ["read"]
+}
+
+# [7] Intermediate Signing: allows the Production Vault's intermediate CSR to be signed
+# by the Bootstrap Issuing Intermediate
+path "pki_int/root/sign-intermediate" {
+  capabilities = ["create", "update"]
+}
 EOT
 }
 

@@ -61,9 +61,3 @@ output "global_domain_suffix" {
   description = "Pass-through of L00 root domain suffix; consumed by L10 for Ansible template service_domain."
   value       = local.state.metadata.global_domain_suffix
 }
-
-output "global_vault_pki_b64" {
-  description = "Pass-through of L00 Bootstrap Vault TLS artifacts (CA cert, server cert/key, HAProxy bundle); consumed by L10 for PKI CA bundle."
-  value       = local.state.metadata.global_vault_pki_b64
-  sensitive   = true
-}

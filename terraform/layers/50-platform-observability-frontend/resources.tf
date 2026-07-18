@@ -142,6 +142,37 @@ resource "kubernetes_manifest" "minio_metrics_token_external_secret" {
   }
 }
 
+resource "kubernetes_manifest" "haproxy_stats_password_external_secret" {
+  depends_on = [kubernetes_manifest.observability_vault_secret_store]
+
+  manifest = {
+    apiVersion = "external-secrets.io/v1"
+    kind       = "ExternalSecret"
+    metadata = {
+      name      = "alloy-haproxy-stats-auth"
+      namespace = kubernetes_namespace.observability.metadata[0].name
+    }
+    spec = {
+      refreshInterval = "1h"
+      secretStoreRef = {
+        name = "observability-vault-store"
+        kind = "SecretStore"
+      }
+      target = {
+        name           = "alloy-haproxy-stats-auth"
+        creationPolicy = "Owner"
+      }
+      data = [{
+        secretKey = "password"
+        remoteRef = {
+          key      = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/observability/app/haproxy_stats"
+          property = "haproxy_stats_pass"
+        }
+      }]
+    }
+  }
+}
+
 resource "kubernetes_manifest" "mimir_s3_external_secret" {
   depends_on = [kubernetes_manifest.observability_vault_secret_store]
 

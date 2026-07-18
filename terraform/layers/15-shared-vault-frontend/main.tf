@@ -6,7 +6,6 @@ module "context" {
   global_topology_network  = data.terraform_remote_state.metadata.outputs.global_topology_network
   global_pki_map           = data.terraform_remote_state.metadata.outputs.global_pki_map
   global_network_baseline  = data.terraform_remote_state.metadata.outputs.global_network_baseline
-  global_vault_pki_b64     = data.terraform_remote_state.metadata.outputs.global_vault_pki_b64
   infrastructure_map       = data.terraform_remote_state.load_balancer.outputs.infrastructure_map
   guest_vm_data            = data.vault_kv_secret_v2.guest_vm.data
 
@@ -19,7 +18,7 @@ module "context" {
 # This ensures downstream layers (e.g. 20-vault-pki) can reference it
 # as ca_cert_file without a circular dependency during provider initialization.
 resource "local_file" "bootstrap_ca" {
-  content         = base64decode(module.context.global_vault_pki_b64.ca_cert_b64)
+  content         = local.bootstrap_ca_chain_pem
   filename        = "${path.root}/tls/bootstrap-ca.crt"
   file_permission = "0644"
 }

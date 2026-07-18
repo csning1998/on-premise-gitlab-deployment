@@ -13,3 +13,8 @@ data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
   config  = merge(local._state_auth, { address = "${local._state_base}/20-security-vault-approle" })
 }
+
+data "terraform_remote_state" "vault_bootstrapper" {
+  backend = "http"
+  config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-vault-bootstrapper" })
+}

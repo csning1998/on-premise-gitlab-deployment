@@ -316,6 +316,33 @@ prometheus.scrape "minio" {
 }
 
 %{ endif ~}
+%{ if length(haproxy_scrape_targets) > 0 ~}
+// haproxy_scrape_targets: Central LB HAProxy stats listener at /metrics over HTTPS with Basic Auth.
+// The listener's certificate is signed directly by the Bootstrap Intermediate; the CA bundle mounted
+// below already carries that intermediate as an independent trust anchor.
+prometheus.scrape "haproxy" {
+  targets = [
+%{ for t in haproxy_scrape_targets ~}
+    {"__address__" = "${t.address}", "job" = "${t.job}"%{ for k, v in t.labels ~}, "${k}" = "${v}"%{ endfor ~}},
+%{ endfor ~}
+  ]
+  metrics_path = "/metrics"
+  scheme       = "https"
+  basic_auth {
+    username      = "admin"
+    password_file = "${haproxy_metrics_password_file}"
+  }
+  tls_config {
+%{ if mtls_enabled ~}
+    ca_file = "/etc/alloy/mtls/ca.crt"
+%{ else ~}
+    ca_file = "/etc/alloy/ca-bundle/ca.crt"
+%{ endif ~}
+  }
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+%{ endif ~}
 %{ if vault_metrics_address != null ~}
 // vault_metrics_address is constrained to host:port derived from L00 vault service VIP and api frontend_port.
 // The Vault listener requires a token scoped to the alloy-metrics-read policy (sys/metrics read only);

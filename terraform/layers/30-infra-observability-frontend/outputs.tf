@@ -33,7 +33,8 @@ output "guest_metrics_endpoints" {
   description = "VM-level observability scrape targets aggregated from L10 network topology for L40+ consumption."
   value = {
     haproxy_stats_port                  = local.network_central_lb.ports["stats"].frontend_port
-    central_lb_ips                      = local.network_central_lb.node_ips
+    central_lb_ips                      = local.central_lb_node_ips
+    network_central_lb                  = local.network_central_lb
     keycloak_metrics_address            = "${local.network_keycloak.node_ips[0]}:${local.network_keycloak.ports["mgmt"].frontend_port}"
     keycloak_node_ip                    = local.network_keycloak.node_ips[0]
     harbor_bootstrapper_metrics_address = "${local.network_harbor_bootstrapper.node_ips[0]}:${local.network_harbor_bootstrapper.ports["metrics"].frontend_port}"

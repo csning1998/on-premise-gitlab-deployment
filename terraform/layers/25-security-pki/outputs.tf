@@ -9,7 +9,6 @@ output "pki_configuration" {
   value = {
     path                            = module.vault_pki_setup.vault_pki_path
     pki_roles                       = module.vault_pki_setup.pki_roles
-    root_ca_certificate_b64         = module.vault_pki_setup.pki_root_ca_certificate_b64
     intermediate_ca_certificate_b64 = module.vault_pki_setup.pki_intermediate_ca_certificate_b64
     lease_durations = {
       default = format("%dh", var.vault_pki_engine_config.default_lease_ttl_seconds / 3600)
@@ -84,8 +83,7 @@ output "vault_node_exporter_targets" {
   value       = local.state.vault_sys.node_exporter_targets
 }
 
-output "global_vault_pki_b64" {
-  description = "Pass-through of L00 Bootstrap Vault TLS artifacts (CA cert, server cert/key, HAProxy bundle); consumed by L30+ as the trust chain root."
-  value       = local.state.metadata.global_vault_pki_b64
-  sensitive   = true
+output "bootstrap_root_ca_chain_b64" {
+  description = "Base64 PEM chain of the Bootstrap Vault's Root CA and Bootstrap Issuing Intermediate; consumed by L30+ as the trust chain root."
+  value       = base64encode(local.bootstrap_ca_chain_pem)
 }

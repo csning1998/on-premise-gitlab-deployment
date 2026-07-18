@@ -40,11 +40,6 @@ output "sec_vm_credentials" {
   sensitive   = true
 }
 
-output "global_vault_pki_b64" {
-  description = "Bootstrap PKI certificates in base64. Null when PKI not yet initialized."
-  value       = var.global_vault_pki_b64
-}
-
 output "sys_vault_endpoint" {
   description = "Vault HTTPS address constructed from vault_sys_vip. Null for layers without Vault Agent integration."
   value       = local.sys_vault_endpoint

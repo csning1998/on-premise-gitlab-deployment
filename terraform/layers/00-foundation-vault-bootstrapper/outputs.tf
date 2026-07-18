@@ -24,3 +24,23 @@ output "vault_dev_endpoint" {
   description = "The address of the Vault server"
   value       = var.vault_dev_endpoint
 }
+
+output "vault_dev_ca_cert_path" {
+  description = "Path to the dev Vault server's own listener TLS CA, for downstream layers connecting to this same Vault instance"
+  value       = abspath(local_file.vault_dev_ca_copy.filename)
+}
+
+output "bootstrap_root_ca_certificate_pem" {
+  description = "Infrastructure Root CA certificate (PEM). Signs only the Bootstrap Issuing Intermediate."
+  value       = vault_pki_secret_backend_root_cert.root.certificate
+}
+
+output "bootstrap_intermediate_ca_certificate_pem" {
+  description = "Bootstrap Issuing Intermediate CA certificate (PEM), signed by the Infrastructure Root CA."
+  value       = vault_pki_secret_backend_root_sign_intermediate.bootstrap_int_signed.certificate
+}
+
+output "bootstrap_pki_mount_path" {
+  description = "Mount path of the Bootstrap Issuing Intermediate PKI engine, used by downstream layers to request bootstrap leaf certificates."
+  value       = vault_mount.pki_bootstrap_int.path
+}

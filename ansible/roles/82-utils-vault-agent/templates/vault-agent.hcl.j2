@@ -29,7 +29,7 @@ template {
   destination = "{{ vault_agent_config_dir }}/deploy-certs.sh"
   perms       = "0700"
   contents    = <<EOH
-{{ '{{- with secret "pki/prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ vault_agent_ip_sans ~ '" "ttl=' ~ vault_agent_cert_ttl ~ '" -}}' }}
+{{ '{{- with secret "pki_prod/issue/' ~ vault_role_name ~ '" "common_name=' ~ vault_agent_common_name ~ '" "ip_sans=' ~ vault_agent_ip_sans ~ '" "ttl=' ~ vault_agent_cert_ttl ~ '" -}}' }}
 #!/bin/sh
 
 {% for dir in vault_agent_cert_dirs %}

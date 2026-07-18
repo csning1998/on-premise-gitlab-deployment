@@ -34,12 +34,6 @@ variable "pki_config" {
   }
 }
 
-variable "pki_force_rotate" {
-  description = "Set to true to force regeneration of all certificates (Root CA and Server Certs)."
-  type        = bool
-  default     = false
-}
-
 variable "network_baseline" {
   description = "Base network configuration including CIDR, VIP offsets, and MAC prefixes."
   type = object({

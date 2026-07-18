@@ -1,8 +1,7 @@
 
 resource "local_file" "trust_bundle" {
   content  = <<EOT
-${chomp(base64decode(local.state.metadata.global_vault_pki_b64.ca_cert_b64))}
-${chomp(base64decode(module.vault_pki_setup.pki_root_ca_certificate_b64))}
+${chomp(local.bootstrap_ca_chain_pem)}
 ${chomp(base64decode(module.vault_pki_setup.pki_intermediate_ca_certificate_b64))}
 EOT
   filename = abspath("${path.module}/tls/trust-bundle.crt")
@@ -11,13 +10,16 @@ EOT
 module "vault_pki_setup" {
   source = "../../modules/configuration/vault-pki-setup"
   providers = {
-    vault = vault.production
+    vault.production = vault.production
+    vault.bootstrap  = vault.bootstrap
   }
 
-  vault_endpoint    = local.sys_vault_endpoint
-  pki_settings      = local.state.metadata.global_pki_config
-  pki_roles         = local.all_roles
-  pki_engine_config = var.vault_pki_engine_config
+  vault_endpoint                    = local.sys_vault_endpoint
+  pki_settings                      = local.state.metadata.global_pki_config
+  pki_roles                         = local.all_roles
+  pki_engine_config                 = var.vault_pki_engine_config
+  bootstrap_pki_mount_path          = local.state.vault_bootstrapper.bootstrap_pki_mount_path
+  bootstrap_root_ca_certificate_pem = local.state.vault_bootstrapper.bootstrap_root_ca_certificate_pem
 }
 
 # 1. Workload Identities for AppRole (Dependencies / Baremetal)

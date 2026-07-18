@@ -34,3 +34,20 @@ provider "vault" {
   }
   skip_child_token = true
 }
+
+# Bootstrap Provider (Bootstrap Vault), used to mirror bootstrap-time-only secrets
+# (e.g. haproxy_stats_pass) into Production Vault for post-L15 consumers.
+provider "vault" {
+  alias        = "bootstrap"
+  address      = local.state.vault_bootstrapper.vault_dev_endpoint
+  ca_cert_file = local.state.vault_bootstrapper.vault_dev_ca_cert_path
+
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = local.state.vault_bootstrapper.role_id
+      secret_id = local.state.vault_bootstrapper.secret_id
+    }
+  }
+  skip_child_token = true
+}
