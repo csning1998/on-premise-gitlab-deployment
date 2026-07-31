@@ -14,6 +14,16 @@ variable "ansible_config" {
   }
 }
 
+variable "playbook_paths" {
+  description = "Absolute paths to the playbooks to run, supplied by the calling module. A module-relative path.module lookup breaks once this module is fetched from the Terraform Module Registry."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.playbook_paths) > 0
+    error_message = "playbook_paths must contain at least one path."
+  }
+}
+
 variable "inventory_data" {
   description = "The structured inventory data object (from yamldecode of template)"
   type        = any

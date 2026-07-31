@@ -24,7 +24,7 @@ resource "random_password" "this" {
 
 resource "vault_kv_secret_v2" "this" {
   provider = vault.production
-  mount    = "secret"
+  mount    = var.vault_kv_mount
   name     = "${var.vault_kv_namespace}/${var.domain}/${var.component}"
 
   data_json = jsonencode(merge(

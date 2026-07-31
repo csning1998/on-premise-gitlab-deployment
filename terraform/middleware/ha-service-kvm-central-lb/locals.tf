@@ -127,9 +127,16 @@ locals {
 
   # 4. Ansible & Orchestration Context
   ansible = {
-    root_path      = abspath("${path.module}/../../../ansible")
+    root_path      = var.ansible_root_path
     inventory_file = var.svc_identity.ansible_inventory
   }
+
+  ansible_playbook_paths = [
+    "${var.ansible_root_path}/playbooks/10-playbook-shared.yaml",
+    "${var.ansible_root_path}/playbooks/30-playbook-infra-statesfulsets.yaml",
+    "${var.ansible_root_path}/playbooks/30-playbook-infra-frontend.yaml",
+    "${var.ansible_root_path}/playbooks/40-playbook-provision.yaml",
+  ]
 
   ansible_inventory_data = {
     all = {

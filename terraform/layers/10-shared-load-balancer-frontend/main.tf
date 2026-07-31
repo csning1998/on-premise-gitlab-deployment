@@ -1,7 +1,8 @@
 
 module "shared_load_balancer" {
 
-  source = "../../middleware/ha-service-kvm-central-lb"
+  source            = "../../middleware/ha-service-kvm-central-lb"
+  ansible_root_path = abspath("${path.root}/../../../ansible")
   svc_identity = merge(local.svc_identity, {
     service_name  = local.svc_cluster_name
     domain_suffix = local.svc_fqdn

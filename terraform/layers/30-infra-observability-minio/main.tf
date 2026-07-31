@@ -17,7 +17,8 @@ module "context" {
 }
 
 module "infra_observability_minio" {
-  source = "../../middleware/ha-service-kvm-general"
+  source            = "../../middleware/ha-service-kvm-general"
+  ansible_root_path = abspath("${path.root}/../../../ansible")
 
   svc_identity                  = module.context.svc_identity
   node_identities               = module.context.node_identities

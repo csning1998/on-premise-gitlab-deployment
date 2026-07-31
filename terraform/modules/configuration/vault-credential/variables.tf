@@ -4,6 +4,12 @@ variable "vault_kv_namespace" {
   type        = string
 }
 
+variable "vault_kv_mount" {
+  description = "Vault KV v2 secrets engine mount path"
+  type        = string
+  default     = "secret"
+}
+
 variable "domain" {
   description = "Vault secret domain (e.g. gitlab, harbor, keycloak, harbor-bootstrapper)"
   type        = string

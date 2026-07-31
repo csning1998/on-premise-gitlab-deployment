@@ -3,7 +3,7 @@ terraform {
   required_providers {
     ansible = {
       source  = "ansible/ansible"
-      version = "~> 1.4.0"
+      version = "~> 1.5.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -14,15 +14,6 @@ terraform {
 
 data "local_file" "base_ansible_cfg" {
   filename = "${var.ansible_config.root_path}/../ansible.cfg"
-}
-
-locals {
-  playbook_path = [
-    abspath("${path.module}/../../../../ansible/playbooks/10-playbook-shared.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-playbook-infra-statesfulsets.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/30-playbook-infra-frontend.yaml"),
-    abspath("${path.module}/../../../../ansible/playbooks/40-playbook-provision.yaml"),
-  ]
 }
 
 resource "local_file" "inventory" {
@@ -57,7 +48,7 @@ resource "local_file" "ansible_cfg" {
 
 action "ansible_playbook_run" "run_playbook" {
   config {
-    playbooks               = local.playbook_path
+    playbooks               = var.playbook_paths
     extra_vars              = var.extra_vars
     verbosity               = var.ansible_config.verbosity
     ansible_playbook_binary = "ansible-playbook"

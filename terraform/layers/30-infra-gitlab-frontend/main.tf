@@ -17,7 +17,8 @@ module "context" {
 }
 
 module "infra_gitlab_frontend" {
-  source = "../../middleware/ha-service-kvm-general"
+  source            = "../../middleware/ha-service-kvm-general"
+  ansible_root_path = abspath("${path.root}/../../../ansible")
 
   svc_identity               = module.context.svc_identity
   topology_cluster           = module.context.topology_cluster

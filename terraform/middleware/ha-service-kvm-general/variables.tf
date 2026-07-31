@@ -1,4 +1,9 @@
 
+variable "ansible_root_path" {
+  description = "Absolute path to the consuming repository's ansible/ directory, supplied by the calling layer via path.root. A module-relative path.module lookup breaks once this module is fetched from the Terraform Module Registry."
+  type        = string
+}
+
 variable "svc_identity" {
   description = "SSoT Extracted Identity containing cluster_name, storage_pool, etc. Used for shared components like Ansible & SSH."
   type = object({

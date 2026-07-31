@@ -51,6 +51,7 @@ module "ansible_runner" {
 
   inventory_data = module.ansible_inventory.ansible_inventory_data
   extra_vars     = local.ansible_extra_vars
+  playbook_paths = local.ansible_playbook_paths
 
   ansible_config = {
     ssh_config_path = module.ssh_manager.ssh_config_file_path
