@@ -21,14 +21,20 @@ variable "visibility" {
   }
 }
 
-variable "runner_description" {
-  description = "Display name of the project runner registered to this repository"
+variable "gitlab_token" {
+  description = "GitLab Personal Access Token (PAT) with api scope, used only to read csning1998-lab-meta-provision's remote state. The project token in backend-state.json is scoped to this repository alone and cannot reach a different project's state."
   type        = string
-  default     = "local-podman-runner"
+  sensitive   = true
 }
 
-variable "runner_tag_list" {
-  description = "Tag list for job matching; jobs must declare matching tags to run on this runner"
-  type        = list(string)
-  default     = ["podman", "local"]
+variable "baseline_module_source" {
+  description = "Source address of the project-baseline module in the GitLab Terraform Module Registry."
+  type        = string
+  const       = true
+}
+
+variable "baseline_module_version" {
+  description = "Version constraint applied to the project-baseline module fetched from the GitLab Terraform Module Registry."
+  type        = string
+  const       = true
 }

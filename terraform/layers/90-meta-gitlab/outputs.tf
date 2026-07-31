@@ -1,15 +1,10 @@
 
 output "repository_ssh_url" {
   description = "SSH URL of the repository"
-  value       = gitlab_project.this.ssh_url_to_repo
+  value       = module.baseline.repository_ssh_url
 }
 
 output "project_id" {
   description = "The ID of the GitLab project"
-  value       = gitlab_project.this.id
-}
-
-output "runner_id" {
-  description = "The ID of the registered project runner"
-  value       = gitlab_user_runner.this.id
+  value       = module.baseline.project_id
 }

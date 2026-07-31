@@ -1,6 +1,9 @@
 
 visibility = "public"
 
+baseline_module_source  = "<BASELINE_MODULE_SOURCE>"
+baseline_module_version = "<BASELINE_MODULE_VERSION>"
+
 runner_description = "local-podman-runner"
 runner_tag_list    = ["podman", "local"]
 

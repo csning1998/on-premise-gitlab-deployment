@@ -1,17 +1,14 @@
 
 terraform {
+  required_version = ">= 1.14.0"
   required_providers {
     gitlab = {
       source  = "gitlabhq/gitlab"
-      version = "19.0.0"
+      version = "19.2.0"
     }
     vault = {
       source  = "hashicorp/vault"
       version = "5.5.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "2.9.0"
     }
   }
   backend "http" {
@@ -25,7 +22,7 @@ terraform {
 }
 
 provider "vault" {
-  address      = data.terraform_remote_state.vault_bootstrapper.outputs.vault_endpoint
+  address      = data.terraform_remote_state.vault_bootstrapper.outputs.vault_dev_endpoint
   ca_cert_file = abspath("${path.root}/../../../vault/tls/ca.pem")
 
   auth_login {

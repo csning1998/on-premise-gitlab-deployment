@@ -131,3 +131,7 @@ Services currently provisioned:
 
 > [!NOTE]
 > **Standalone Gitaly** and **(HA) Praefect with subordinated Patroni** configurations support bidirectional migration. Refer to [README of 30-infra-gitaly-praefect](ansible/roles/30-infra-gitaly-praefect/README.md) for more detail.
+
+## Terraform Static Analysis Exemptions
+
+The `iac-terraform` component supplies a `checkov_skip` list that exempts `CKV_TF_1`. This check requires the module `source` argument to include a commit hash. The `project-baseline` module is instead consumed from the GitLab Terraform Module Registry, where the revision is pinned by a separate `version` argument. Since a published registry version is immutable, the mutable-reference risk addressed by `CKV_TF_1` does not apply to this source form.

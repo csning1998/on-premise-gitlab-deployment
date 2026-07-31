@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocks commits containing detected secrets using the official gitleaks image
+# Activation command: git config core.hooksPath .githooks
+
+set -e
+
+IMAGE="docker.io/zricethezav/gitleaks:v8.30.1"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+podman run --rm \
+    --security-opt label=disable \
+    -v "${REPO_ROOT}":/repo \
+    -w /repo \
+    "$IMAGE" \
+    protect --staged --redact -v
