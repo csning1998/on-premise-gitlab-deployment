@@ -924,7 +924,7 @@ packer/
 - **`http`** 主要存放 Unattended 安裝所需之 `user-data` 與 `meta-data`。
 - **`00-base-os`**：Stage 1 專用目錄，負責下載官方 ISO 進行系統基礎安裝與系統更新。
 - **`10-services`**：Stage 2 專用目錄，負責讀取 Stage 1 產出的映像檔，並以子服務（如 `kubeadm`、`redis`、`postgres` 等）之劇本進行軟體部署。
-- **[values.pkrvars.hcl](file:///home/csning1998/GitLab/on-premise-gitlab-deployment/packer/values.pkrvars.hcl)**：定義全域硬體規格（如 CPU 數量、記憶體與硬碟大小）。
+- **`values.pkrvars.hcl`**：定義全域硬體規格（如 CPU 數量、記憶體與硬碟大小）。
 
 ### Step. B. Secret Management via HashiCorp Vault
 
