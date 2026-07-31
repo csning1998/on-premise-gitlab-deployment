@@ -13,12 +13,12 @@
 
 2. 目前因為專案在 Ansible Provider 中使用 `action` Block 宣告資源，在目前 2026 年 5 月 1 日的狀態下，需要用 Terraform 1.14 版本以上的 Binary 執行。OpenTofu 社群目前未見相關實做。如後續有支援，會再修改回 OpenTofu。相關指令請使用者自行使用 `terraform` 取代 `tofu` 或使用 alias 進行 CLI 操作
 
-3. 這個 repository 自 [#128](https://gitlab.com/csning1998/on-premise-gitlab-deployment/-/merge_requests/128) 起，已經遷移到 GitLab 上進行託管，後續更新都會在 [https://gitlab.com/csning1998/on-premise-gitlab-deployment](https://gitlab.com/csning1998/on-premise-gitlab-deployment) 上看到。而 GitHub 則是做為 GitLab 專案的 mirror
+3. 這個 repository 自 [#128](https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment/-/merge_requests/128) 起，已經遷移到 GitLab 上進行託管，後續更新都會在 [https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment](https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment) 上看到。而 GitHub 則是做為 GitLab 專案的 mirror
 
 4. 可透過以下指令 clone 這個專案：
 
     ```shell
-    git clone --depth 1 https://gitlab.com/csning1998/on-premise-gitlab-deployment.git
+    git clone --depth 1 https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment.git
     ```
 
 > [!WARNING]

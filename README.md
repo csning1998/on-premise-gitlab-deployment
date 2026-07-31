@@ -13,12 +13,12 @@ A Proof of Concept for Infrastructure as Code which automated deployment of High
 
 2. As of May 1, 2026, this repo requires Terraform 1.14 or higher due to use of the `action` block in the Ansible Provider. No equivalent exists in OpenTofu yet. Migration back to OpenTofu is planned once support is available. In the meantime, substitute `tofu` with `terraform` or configure an alias.
 
-3. As of [#128](https://gitlab.com/csning1998/on-premise-gitlab-deployment/-/merge_requests/128), this repository has been migrated to and hosted on GitLab. All subsequent updates will be available at [https://gitlab.com/csning1998/on-premise-gitlab-deployment](https://gitlab.com/csning1998/on-premise-gitlab-deployment). The GitHub repository will now serve as a mirror of the GitLab project.
+3. As of [#128](https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment/-/merge_requests/128), this repository has been migrated to and hosted on GitLab. All subsequent updates will be available at [https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment](https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment). The GitHub repository will now serve as a mirror of the GitLab project.
 
 4. The project can be cloned using the following command:
 
     ```shell
-    git clone --depth 1 https://gitlab.com/csning1998/on-premise-gitlab-deployment.git
+    git clone --depth 1 https://gitlab.com/csning1998-lab/personal/on-premise-gitlab-deployment.git
     ```
 
 > [!WARNING]
