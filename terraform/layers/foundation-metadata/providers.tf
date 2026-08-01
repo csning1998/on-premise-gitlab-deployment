@@ -1,0 +1,19 @@
+
+terraform {
+  required_providers {
+    tls = {
+      source  = "hashicorp/tls"
+      version = "4.1.0"
+    }
+  }
+  backend "http" {
+    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/foundation-metadata"
+    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/foundation-metadata/lock"
+    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/foundation-metadata/lock"
+    lock_method    = "POST"
+    unlock_method  = "DELETE"
+    retry_wait_min = 5
+  }
+}
+
+provider "tls" {}

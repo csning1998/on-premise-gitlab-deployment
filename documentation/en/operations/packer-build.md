@@ -74,6 +74,6 @@ Selecting `2` builds service images. It specifies the base image from `1` as a s
 
 ```text
 [INPUT] Select a category: 2
-1) base-etcd       3) base-kubeadm        5) base-minio        7) base-redis        9) docker-harbor     11) Back
-2) base-haproxy    4) base-microk8s       6) base-postgres     8) base-vault        10) Build ALL in Service Images
+1) base-baremetal-etcd       3) base-baremetal-minio        5) base-baremetal-redis        7) base-docker-harbor          9) base-kubernetes-microk8s   11) Back
+2) base-baremetal-haproxy    4) base-baremetal-postgres     6) base-baremetal-vault        8) base-kubernetes-kubeadm    10) Build ALL in Service Images
 ```

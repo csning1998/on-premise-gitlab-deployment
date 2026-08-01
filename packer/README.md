@@ -751,7 +751,7 @@ Ansible 的 Packer Provisioner 本身會在建立完成的 Guest VM 上執行 An
 
     ```hcl
     provisioner "ansible" {
-        playbook_file = "../ansible/playbooks/00-provision-base-image.yaml"
+        playbook_file = "../ansible/playbooks/provision_base_image.yaml"
         ...
     }
     ```
@@ -763,10 +763,10 @@ Ansible 的 Packer Provisioner 本身會在建立完成的 Guest VM 上執行 An
     ```yaml
     ---
     - name: "Play: Provision Kubernetes (Kubeadm) Base Image"
-      hosts: "02-base-kubeadm"
+      hosts: "base_kubernetes_kubeadm"
       become: true
       roles:
-        - **02-base-kubeadm**
+        - **base_kubernetes_kubeadm**
     ```
 
     則在 Packer 這邊就會對應到 `roles` 的項目，為
@@ -776,7 +776,7 @@ Ansible 的 Packer Provisioner 本身會在建立完成的 Guest VM 上執行 An
         ...
         # Ansible group is dynamically set by a variable.
         groups = [
-            "02-base-kubeadm"
+            "base_kubernetes_kubeadm"
         ]
     }
     ```
@@ -868,12 +868,12 @@ build {
     }
 
     provisioner "ansible" {
-        playbook_file    = "../ansible/playbooks/00-provision-base-image.yaml"
+        playbook_file    = "../ansible/playbooks/provision_base_image.yaml"
         user             = local.ssh_username
 
         # Ansible group is dynamically set by a variable.
         groups = [
-            "02-base-kubeadm"
+            "base_kubernetes_kubeadm"
         ]
         ansible_env_vars = [
             "ANSIBLE_CONFIG=../ansible.cfg"
@@ -906,31 +906,31 @@ packer/
 ├── http/
 │   ├── meta-data
 │   └── user-data
-├── 00-base-os/
+├── base-os/
 │   ├── build.pkr.hcl
 │   ├── source.pkr.hcl
 │   ├── variables.pkr.hcl
 │   └── ubuntu-24-updated.pkrvars.hcl
-├── 10-services/
+├── services/
 │   ├── build.pkr.hcl
 │   ├── source.pkr.hcl
 │   ├── variables.pkr.hcl
-│   └── [service-name].pkrvars.hcl  # e.g. base-kubeadm, base-redis
+│   └── [service-name].pkrvars.hcl  # e.g. base-kubernetes-kubeadm, base-baremetal-redis
 └── values.pkrvars.hcl              # common variables.
 ```
 
 其中
 
 - **`http`** 主要存放 Unattended 安裝所需之 `user-data` 與 `meta-data`。
-- **`00-base-os`**：Stage 1 專用目錄，負責下載官方 ISO 進行系統基礎安裝與系統更新。
-- **`10-services`**：Stage 2 專用目錄，負責讀取 Stage 1 產出的映像檔，並以子服務（如 `kubeadm`、`redis`、`postgres` 等）之劇本進行軟體部署。
+- **`base-os`**：Stage 1 專用目錄，負責下載官方 ISO 進行系統基礎安裝與系統更新。
+- **`services`**：Stage 2 專用目錄，負責讀取 Stage 1 產出的映像檔，並以子服務（如 `kubeadm`、`redis`、`postgres` 等）之劇本進行軟體部署。
 - **[values.pkrvars.hcl](file:///home/csning1998/GitLab/on-premise-gitlab-deployment/packer/values.pkrvars.hcl)**：定義全域硬體規格（如 CPU 數量、記憶體與硬碟大小）。
 
 ### Step. B. Secret Management via HashiCorp Vault
 
 為了符合資安規範，設定流程中的 Guest OS 資訊（如帳號、密碼與 SSH 公鑰）會收斂到 HashiCorp Vault 進行動態存取。其中
 
-1. 在 `00-base-os/source.pkr.hcl` 中，認證資料透過 `vault()` 函數抓取：
+1. 在 `base-os/source.pkr.hcl` 中，認證資料透過 `vault()` 函數抓取：
 
     ```hcl
     locals {
@@ -950,7 +950,7 @@ packer/
 
 ### Step. C. Build Pipeline Stage Breakdown
 
-1. **Build Base OS in `00-base-os`**
+1. **Build Base OS in `base-os`**
 
     這階段會直接從官方下載原始 ISO，透過 QEMU/KVM 啟動虛擬機。藉由掛載包含自動安裝設定之 `cidata` CD-ROM（`ds=nocloud`）完成無人值守安裝。完成後一樣會透過 **Shell Provisioner** 執行全面系統更新與安裝 SFTP 服務：
 
@@ -977,9 +977,9 @@ packer/
 
     最後就會輸出一個乾淨且已更新套件的作業系統基礎映像檔（如 `ubuntu-24-updated.qcow2`），並存放在 `output/` 目錄中
 
-2. **Build Service Layer in `10-services`**
+2. **Build Service Layer in `services`**
 
-    這時候可以不用再從 ISO 引導，而是可以在`[10-services/source.pkr.hcl` 中設定 `disk_image = true`，以 Stage 1 的產出作為起點：
+    這時候可以不用再從 ISO 引導，而是可以在`[services/source.pkr.hcl` 中設定 `disk_image = true`，以 Stage 1 的產出作為起點：
 
     ```hcl
     source "qemu" "ubuntu" {
@@ -998,7 +998,7 @@ packer/
         sources = ["source.qemu.ubuntu"]
 
         provisioner "ansible" {
-            playbook_file       = "../../ansible/playbooks/00-provision-base-image.yaml"
+            playbook_file       = "../../ansible/playbooks/provision_base_image.yaml"
             inventory_directory = "../../ansible/"
             user                = local.ssh_username
             groups              = [var.build_name]
@@ -1011,10 +1011,10 @@ packer/
 
 執行 build 之前，需要先確保已經設定好 HashiCorp Vault 之環境變數，例如 `VAULT_ADDR` 與 `VAULT_TOKEN` 等。在此 repo 中可以用 `entry.sh` 選單操作、或是直接使用 Packer CLI：
 
-1. **執行 Stage 1**：切換至 `00-base-os` 目錄，帶入全域變數檔與 Stage 1 的變數檔案
+1. **執行 Stage 1**：切換至 `base-os` 目錄，帶入全域變數檔與 Stage 1 的變數檔案
 
     ```bash
-    cd 00-base-os
+    cd base-os
     packer init .
     packer build \
         -var-file=ubuntu-24-updated.pkrvars.hcl \
@@ -1023,14 +1023,14 @@ packer/
         .
     ```
 
-2. **執行 Stage 2**：切換至 `10-services` 目錄，帶入全域變數檔與特定服務的變數檔案。以 Kubernetes `kubeadm` 為例：
+2. **執行 Stage 2**：切換至 `services` 目錄，帶入全域變數檔與特定服務的變數檔案。以 Kubernetes `kubeadm` 為例：
 
     ```bash
-    cd ../10-services
+    cd ../services
     packer init .
     packer build \
-        -var-file=base-kubeadm.pkrvars.hcl \
+        -var-file=base-kubernetes-kubeadm.pkrvars.hcl \
         -var-file=../values.pkrvars.hcl \
-        -var "build_name=base-kubeadm" \
+        -var "build_name=base-kubernetes-kubeadm" \
         .
     ```

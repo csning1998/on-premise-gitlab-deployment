@@ -19,7 +19,7 @@ readonly DEV_ROOT_TOKEN_FILE="$HOME/.vault-token"
 
 # Production Vault Variables
 readonly PROD_VAULT_ADDR="https://172.16.136.250:443"
-readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+readonly PROD_CA_CERT="${TERRAFORM_DIR}/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
 
 vault_context_handler() {
   local target="$1"
@@ -282,7 +282,7 @@ vault_prod_unseal_trigger() {
   log_print "STEP" "[Production Vault] Triggering Ansible Playbook for Unseal..."
 
   local inventory_file="${ANSIBLE_DIR}/inventory-core-vault-frontend.yaml"
-  local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-playbook.yaml"
+  local playbook_file="${ANSIBLE_DIR}/playbooks/operation_playbook.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
     log_print "ERROR" "Inventory file not found at: $inventory_file"

@@ -4,7 +4,7 @@ gitaly_revert_to_standalone_trigger() {
   log_print "STEP" "[Gitaly] Triggering safety pre-check before reverting to standalone..."
 
   local inventory_file="${ANSIBLE_DIR}/inventory-core-gitlab-praefect.yaml"
-  local playbook_file="${ANSIBLE_DIR}/playbooks/90-operation-playbook.yaml"
+  local playbook_file="${ANSIBLE_DIR}/playbooks/operation_playbook.yaml"
 
   if [[ ! -f "$inventory_file" ]]; then
     log_print "ERROR" "Inventory file not found at: $inventory_file"

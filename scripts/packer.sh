@@ -53,9 +53,9 @@ packer_build_executor() {
   fi
 
   # Determine sub-directory based on file existence
-  local sub_dir="10-services"
-  if [ -f "${PACKER_DIR}/00-base-os/${base_name}.pkrvars.hcl" ]; then
-    sub_dir="00-base-os"
+  local sub_dir="services"
+  if [ -f "${PACKER_DIR}/base-os/${base_name}.pkrvars.hcl" ]; then
+    sub_dir="base-os"
   fi
 
   local target_packer_dir="${PACKER_DIR}/${sub_dir}"
@@ -128,7 +128,7 @@ packer_layer_selector() {
       return 0
     elif [[ "$img" == "Build ALL in ${menu_title}" ]]; then
       log_print "STEP" "Executing Batch Build for ALL ${menu_title}..."
-      if [[ "$sub_dir_name" == "00-base-os" ]]; then
+      if [[ "$sub_dir_name" == "base-os" ]]; then
         packer_artifact_cleaner "all"
       fi
       for b in "${layers[@]}"; do
@@ -156,11 +156,11 @@ packer_menu_handler() {
     select category in "${main_options[@]}"; do
       case $category in
         "Base OS Layers")
-          if ! packer_layer_selector "00-base-os" "Base OS Images"; then break 2; fi
+          if ! packer_layer_selector "base-os" "Base OS Images"; then break 2; fi
           break
           ;;
         "Service Layers")
-          if ! packer_layer_selector "10-services" "Service Images"; then break 2; fi
+          if ! packer_layer_selector "services" "Service Images"; then break 2; fi
           break
           ;;
         "Build ALL")
@@ -168,13 +168,13 @@ packer_menu_handler() {
           packer_artifact_cleaner "all"
 
           # 1. Build Base Layers
-          local base_layers=($(find "${PACKER_DIR}/00-base-os" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
+          local base_layers=($(find "${PACKER_DIR}/base-os" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
           for b in "${base_layers[@]}"; do
             packer_build_executor "$b"
           done
 
           # 2. Build Service Layers
-          local service_layers=($(find "${PACKER_DIR}/10-services" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
+          local service_layers=($(find "${PACKER_DIR}/services" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
           for s in "${service_layers[@]}"; do
             packer_build_executor "$s"
           done

@@ -1,0 +1,21 @@
+
+terraform {
+  required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "6.8.3"
+    }
+  }
+  backend "http" {
+    address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/meta-github"
+    lock_address   = "https://gitlab.com/api/v4/projects/82448331/terraform/state/meta-github/lock"
+    unlock_address = "https://gitlab.com/api/v4/projects/82448331/terraform/state/meta-github/lock"
+    lock_method    = "POST"
+    unlock_method  = "DELETE"
+    retry_wait_min = 5
+  }
+}
+
+provider "github" {
+  owner = var.github_owner
+}

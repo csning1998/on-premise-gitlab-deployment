@@ -6,8 +6,8 @@ The LGTM stack (Mimir, Loki, Grafana, Alloy) collects service-level exporter met
 
 ## Section 1: Node Exporter Deployment (Ansible)
 
-1. `ansible/roles/00-base-common` installs the `prometheus-node-exporter` package (Debian/Ubuntu native package, default port `9100`) and enables the service. This role runs on every VM via `hosts: all` in `00-provision-base-image.yaml`, so every golden image carries it.
-2. `ansible/playbooks/90-operation-playbook.yaml` exposes a `node-exporter-install` tag so an already-provisioned fleet can receive the same task without a full re-provision.
+1. `ansible/roles/foundation_common` installs the `prometheus-node-exporter` package (Debian/Ubuntu native package, default port `9100`) and enables the service. This role runs on every VM via `hosts: all` in `provision_base_image.yaml`, so every golden image carries it.
+2. `ansible/playbooks/operation_playbook.yaml` exposes a `node-exporter-install` tag so an already-provisioned fleet can receive the same task without a full re-provision.
 3. Unlike `postgres_exporter`/`redis_exporter`, node_exporter only reads `/proc` and `/sys` and needs no credentials, so it runs unconditionally from install time rather than waiting on a database connection.
 
 ## Section 2: Terraform SSoT & Interface Wiring

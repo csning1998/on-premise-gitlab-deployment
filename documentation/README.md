@@ -60,8 +60,8 @@
 
 #### 1.1 Packer Two-Stage Image Building
 
-- **Stage 1 (Base OS)**: Custom Packer configurations in `packer/00-base-os` automate Ubuntu 24.04 server provisioning. This stage handles OS package updates, initial security hardening (SSH disable root password, basic UFW configuration), and outputs a pristine golden image.
-- **Stage 2 (Service Layer)**: Built upon the Stage 1 golden image via `packer/10-services`. Using QEMU backing-store storage overlays (backing files), this stage allows rapid configuration without modifying the base image disk. Ansible playbooks (e.g., `playbooks/00-provision-base-image.yaml`) execute pre-installations of target binaries (Patroni, Redis Sentinel, MinIO, Vault) and pre-configure service daemon configs, reducing bootstrap time.
+- **Stage 1 (Base OS)**: Custom Packer configurations in `packer/base-os` automate Ubuntu 24.04 server provisioning. This stage handles OS package updates, initial security hardening (SSH disable root password, basic UFW configuration), and outputs a pristine golden image.
+- **Stage 2 (Service Layer)**: Built upon the Stage 1 golden image via `packer/services`. Using QEMU backing-store storage overlays (backing files), this stage allows rapid configuration without modifying the base image disk. Ansible playbooks (e.g., `playbooks/provision_base_image.yaml`) execute pre-installations of target binaries (Patroni, Redis Sentinel, MinIO, Vault) and pre-configure service daemon configs, reducing bootstrap time.
 
 #### 1.2 Single Source of Truth (SSoT) Metadata Paradigm
 

@@ -3,7 +3,7 @@
 # This script contains functions for managing OpenTofu resources.
 
 # Function: Clean up a specific OpenTofu layer's state files.
-# Parameter 1: The short name of the layer (e.g., "10-provision-kubeadm") or "all".
+# Parameter 1: The short name of the layer (e.g., "infra-gitlab-postgres") or "all".
 tofu_artifact_cleaner() {
   local target_layer="$1"
   if [ -z "$target_layer" ]; then

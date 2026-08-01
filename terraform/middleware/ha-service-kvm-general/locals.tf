@@ -72,10 +72,10 @@ locals {
   }
 
   ansible_playbook_paths = [
-    "${var.ansible_root_path}/playbooks/10-playbook-shared.yaml",
-    "${var.ansible_root_path}/playbooks/30-playbook-infra-statesfulsets.yaml",
-    "${var.ansible_root_path}/playbooks/30-playbook-infra-frontend.yaml",
-    "${var.ansible_root_path}/playbooks/40-playbook-provision.yaml",
+    "${var.ansible_root_path}/playbooks/playbook_shared.yaml",
+    "${var.ansible_root_path}/playbooks/playbook_infra_statesfulsets.yaml",
+    "${var.ansible_root_path}/playbooks/playbook_infra_frontend.yaml",
+    "${var.ansible_root_path}/playbooks/playbook_provision.yaml",
   ]
 
   ansible_inventory_data = {

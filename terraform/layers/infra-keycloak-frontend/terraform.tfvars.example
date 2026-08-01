@@ -1,0 +1,14 @@
+
+target_clusters = { "keycloak" = "core-keycloak-frontend" }
+primary_role    = "keycloak"
+
+service_config = {
+  "keycloak" = {
+    role            = "keycloak"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/base-docker-keycloak/ubuntu-24-base-docker-keycloak.qcow2"
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 2, ram_size = 1536 }
+    }
+  }
+}

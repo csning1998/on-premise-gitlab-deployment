@@ -1,0 +1,38 @@
+
+# Non-Catalog & Physical Alignment
+primary_role = "master"
+
+target_clusters = {
+  "master" = "core-gitlab-frontend"
+  "worker" = "core-gitlab-frontend"
+}
+
+service_config = {
+  "master" = {
+    role            = "master"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/base-kubernetes-kubeadm/ubuntu-24-base-kubernetes-kubeadm.qcow2"
+
+    nodes = {
+      "00" = { ip_suffix = 200, vcpu = 4, ram_size = 3072, os_disk_capacity_gib = 40 }
+      # "01" = { ip_suffix = 201, vcpu = 4, ram_size = 3072, os_disk_capacity_gib = 40 }
+      # "02" = { ip_suffix = 202, vcpu = 4, ram_size = 3072, os_disk_capacity_gib = 40 }
+    }
+  }
+
+  "worker" = {
+    role            = "worker"
+    network_tier    = "default"
+    base_image_path = "../../../packer/output/base-kubernetes-kubeadm/ubuntu-24-base-kubernetes-kubeadm.qcow2"
+
+    nodes = {
+      "10" = { ip_suffix = 210, vcpu = 4, ram_size = 6144, os_disk_capacity_gib = 40 }
+      "11" = { ip_suffix = 211, vcpu = 4, ram_size = 6144, os_disk_capacity_gib = 40 }
+      # "12" = { ip_suffix = 212, vcpu = 4, ram_size = 6144, os_disk_capacity_gib = 40 }
+    }
+  }
+}
+
+kubernetes_cluster_configuration = {
+  pod_subnet = "10.244.0.0/16" # default
+}

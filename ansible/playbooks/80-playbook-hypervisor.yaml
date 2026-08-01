@@ -1,7 +1,0 @@
----
-- name: "Play: Provision Physical Hypervisor Host Baseline and Monitoring"
-  hosts: localhost
-  connection: local
-  become: true
-  roles:
-    - 80-hypervisor-baseline
