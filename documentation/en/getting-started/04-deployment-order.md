@@ -16,17 +16,17 @@ Three left-to-right diagrams, each building on the previous stage.
 
 ---
 
-### Stage 1 — Foundation
+### Stage 1: Foundation
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant Boot as Bootstrapper Vault (L00)
-    participant Meta as Resource Metadata (L00)
-    participant LV as Libvirt Volume & Network (L05)
-    participant LB as Centralized Load Balancer (L10)
-    participant Prod as Production Vault (L15-25)
+    participant Boot as Bootstrapper Vault (foundation)
+    participant Meta as Resource Metadata (foundation)
+    participant LV as Libvirt Volume & Network (foundation)
+    participant LB as Centralized Load Balancer (shared)
+    participant Prod as Production Vault (shared/security)
 
     Note over User, Meta: [Stage 1: Foundation Bootstrapping]
     User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
@@ -35,30 +35,30 @@ sequenceDiagram
     Meta->>Boot: 4. Auth via AppRole & Read Creds
 
     Note over User, LB: [Stage 1 cont.: Network & Load Balancer]
-    User->>LV: 5. Provision Libvirt Volume & Network (L05)
+    User->>LV: 5. Provision Libvirt Volume & Network (foundation)
     LV->>Boot: 6. Auth via AppRole & Read Metadata
-    User->>LB: 7. Provision Centralized Load Balancer (L10)
+    User->>LB: 7. Provision Centralized Load Balancer (shared)
     LB->>Boot: 8. Auth via AppRole & Read Network Config
 
     Note over User, Prod: [Stage 2: Production Vault Setup]
-    User->>Prod: 9. Provision Vault Nodes (L15)
+    User->>Prod: 9. Provision Vault Nodes (shared)
     Prod->>Prod: 10. Configure HA Raft Backend & Enable Engines
     User->>Prod: 11. Init & Unseal Production Vault Cluster
-    User->>Prod: 12. Configure AppRole Auth & PKI Root CA (L20/25)
+    User->>Prod: 12. Configure AppRole Auth & PKI Root CA (security)
     User->>Prod: 13. Manually Inject Application Secrets
 ```
 
 ---
 
-### Stage 2 — Harbor Bootstrapper Assembly
+### Stage 2: Harbor Bootstrapper Assembly
 
-> All L30 VM layers follow the same pattern: authenticate to Production Vault via AppRole, then receive a TLS leaf certificate (auto-rotated by Vault Agent sidecar).
+> All `infra-*` VM layers follow the same pattern: authenticate to Production Vault via AppRole, then receive a TLS leaf certificate (auto-rotated by Vault Agent sidecar).
 
 ```mermaid
 flowchart LR
-    L25(["← L25 pki"])
+    L25(["from security-pki"])
 
-    subgraph P2["Phase 2 — L30 First Wave (parallel)"]
+    subgraph P2["Phase 2: infra-* First Wave (parallel)"]
         direction TB
         subgraph gl_db["GitLab Stateful Services"]
             gp["gitlab-postgres"]
@@ -75,13 +75,13 @@ flowchart LR
         hbs30["harbor-bootstrapper-frontend"]
     end
 
-    subgraph P3["Phase 3 — L40 First Wave"]
+    subgraph P3["Phase 3: provision-* First Wave"]
         kc40["keycloak-oidc<br/>Configure Realm + RBAC<br/>Register OIDC clients<br/>Write client secrets to Vault"]
-        hbs40["harbor-bootstrapper-frontend<br/>Configure Harbor<br/>helm pull → helm push to OCI"]
-        voidc["vault-oidc (L45)<br/>Bind Vault OIDC → Keycloak"]
+        hbs40["harbor-bootstrapper-frontend<br/>Configure Harbor<br/>helm pull, then helm push to OCI"]
+        voidc["provision-vault-oidc<br/>Bind Vault OIDC to Keycloak"]
     end
 
-    seed(["Seed Registry ready →<br/>All Helm Charts available via OCI"])
+    seed(["Seed Registry ready,<br/>All Helm Charts available via OCI"])
 
     L25 --> P2
     kc30 --> kc40
@@ -91,28 +91,28 @@ flowchart LR
 
 ---
 
-### Stage 3 — Harbor + GitLab Deployment
+### Stage 3: Harbor + GitLab Deployment
 
 ```mermaid
 flowchart LR
-    hbs(["← L40 harbor-bootstrapper\nseed registry"])
-    p2(["← Phase 2 DB VMs\ngitlab/harbor postgres, redis, minio"])
+    hbs(["From provision-* harbor-bootstrapper\nseed registry"])
+    p2(["From Phase 2 DB VMs\ngitlab/harbor postgres, redis, minio"])
 
-    subgraph P4["Phase 4 — L40 Database Provisioning (parallel)"]
+    subgraph P4["Phase 4: provision-* Database Provisioning (parallel)"]
         gldb["gitlab-databases\nPatroni + Sentinel + MinIO"]
         hbrdb["harbor-databases\nPatroni + Sentinel + MinIO"]
     end
 
-    subgraph P5["Phase 5 — L30 K8s Clusters (parallel)"]
+    subgraph P5["Phase 5: infra-* K8s Clusters (parallel)"]
         glf30["gitlab-frontend\nKubeadm"]
         hbr30["harbor-frontend\nMicroK8s"]
     end
 
-    run30["L30 gitlab-runner\nMicroK8s"]
+    run30["infra-* gitlab-runner\nMicroK8s"]
 
-    glf40["L40 gitlab-frontend\nProvision K8s cluster\nCNI / storage class / ingress"]
+    glf40["provision-* gitlab-frontend\nProvision K8s cluster\nCNI / storage class / ingress"]
 
-    subgraph P6["Phase 6 — L50 Platform Helm Deploy"]
+    subgraph P6["Phase 6: platform-*-frontend Helm Deploy"]
         glf50["gitlab-frontend"]
         hbr50["harbor-frontend"]
         run50["gitlab-runner"]
@@ -120,7 +120,7 @@ flowchart LR
 
     manual(["Manual\nBootstrap GitLab Admin PAT"])
 
-    subgraph P7["Phase 7 — L60 Application Provisioning"]
+    subgraph P7["Phase 7: platform-*-governance Application Provisioning"]
         gl60["provision-gitlab\nGroups / Users / OIDC\nKeycloak UUID anchors"]
         hbr60["provision-harbor\nProjects / Robot accounts\nOIDC linkage"]
     end
@@ -141,10 +141,10 @@ flowchart LR
 
 ## Notes
 
-1. **Phase 8 — L90: Repository Meta (Optional)**
+1. **Phase 8, meta-*: Repository Meta (Optional)**
 
-    `90-meta-github` and `90-meta-gitlab` can be applied at any point after Bootstrapper Vault is initialized. Both require a first-time `terraform import` before applying. See [GitHub Meta](../operations/github-meta.md) and [Initialization → GitLab.com Credentials](03-initialization.md#gitlabcom-credentials-for-mirror-management).
+    `meta-github` and `meta-gitlab` can be applied at any point after Bootstrapper Vault is initialized. Both require a first-time `terraform import` before applying. See [GitHub Meta](../operations/github-meta.md) and [Initialization: GitLab.com Credentials](03-initialization.md#gitlabcom-credentials-for-mirror-management).
 
-2. **L50 GitLab: `OpenSSL::Cipher::CipherError`**
+2. **platform-gitlab-frontend: `OpenSSL::Cipher::CipherError`**
 
     If this error occurs in the `gitlab-migrations` pod, see the [troubleshooting guide](../operations/troubleshooting.md#gitlab-application). Caused by `rails-secret` regeneration against a preserved database from a prior deployment.

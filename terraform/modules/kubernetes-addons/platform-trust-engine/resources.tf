@@ -103,7 +103,7 @@ resource "kubernetes_secret" "issuer_token" {
   type = "kubernetes.io/service-account-token"
 }
 
-# Create ClusterIssuer Resource (K8s Resource) that Layer 60 will reference as "issuerRef"
+# Create ClusterIssuer Resource (K8s Resource) that the platform-*-governance tier will reference as "issuerRef"
 resource "kubectl_manifest" "cluster_issuer" {
 
   depends_on = [helm_release.cert_manager]

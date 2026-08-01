@@ -1,8 +1,8 @@
 
 # Generates a long-lived orphan token for Alloy's authenticated Vault metrics scraping. The token is
-# minted from the "alloy-metrics" role in L20 with `orphan = true` to allow non-root issuance without sudo,
+# minted from the "alloy-metrics" role in security-vault-approle with `orphan = true` to allow non-root issuance without sudo,
 # and is restricted to the metrics-read policy.
-# The token is stored in a dedicated KV path and delivered to Alloy via ExternalSecret in L50.
+# The token is stored in a dedicated KV path and delivered to Alloy via ExternalSecret in platform-*-frontend.
 resource "vault_token" "alloy_metrics" {
   provider  = vault.production
   role_name = data.terraform_remote_state.vault_prod_bootstrap.outputs.alloy_metrics_role_name

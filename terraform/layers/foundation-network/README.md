@@ -2,7 +2,7 @@
 
 ## DNS Host Update Failure on Existing Networks
 
-When a new service is added to `00-foundation-metadata`, `terraform apply` in this layer will fail on one or more existing networks with the following error:
+When a new service is added to `foundation-metadata`, `terraform apply` in this layer will fail on one or more existing networks with the following error:
 
 > Provider produced inconsistent result after apply
 > .dns.host: element N has vanished.
@@ -84,7 +84,7 @@ Newly created networks are not affected. Creation uses `DefineXML` followed by `
 
 ## DNS Host Insertion-Order Mismatch
 
-When two or more services are added to `00-foundation-metadata` in the same commit and applied together, `terraform apply` in this layer may fail with:
+When two or more services are added to `foundation-metadata` in the same commit and applied together, `terraform apply` in this layer may fail with:
 
 > Provider produced inconsistent result after apply
 > .dns.host[N].ip: was cty.StringVal("A"), but now cty.StringVal("B").
@@ -95,7 +95,7 @@ The error reports two adjacent host entries with swapped IPs, and a hostname cou
 
 ### Cause
 
-The `global_dns_hosts` local in L05 sorts host entries by IP using Terraform's `sort()` function. However, when Terraform first creates or updates the networks, the `for_each` on `net_infrastructure` processes map keys in a non-deterministic order (Go map iteration is randomised at runtime). The resulting insertion order in the libvirt active configuration may differ from the sorted order Terraform expects.
+The `global_dns_hosts` local in this layer sorts host entries by IP using Terraform's `sort()` function. However, when Terraform first creates or updates the networks, the `for_each` on `net_infrastructure` processes map keys in a non-deterministic order (Go map iteration is randomised at runtime). The resulting insertion order in the libvirt active configuration may differ from the sorted order Terraform expects.
 
 Since `GetXMLDesc(flags=0)` returns the active configuration (in insertion order), and Terraform plans against the sorted order, every subsequent apply detects a diff, calls `DefineXML`, and reads back the same insertion-order active config. This creates a permanent mismatch loop: `DefineXML` updates the persistent config to sorted order, but `GetXMLDesc` always returns the active config in its original insertion order.
 
@@ -158,7 +158,7 @@ The plan should show no changes.
 
 `libvirt_volume.cloud_init_iso` does not support in-place updates. The following events trigger a cloud-init configuration change that requires replacement:
 
-- **Adding a new service to `00-foundation-metadata`**: the Central Load Balancer receives a new NIC for the new service segment, which regenerates the cloud-init network configuration.
+- **Adding a new service to `foundation-metadata`**: the Central Load Balancer receives a new NIC for the new service segment, which regenerates the cloud-init network configuration.
 - **KVM host reboot**: libvirt loses the in-memory cloud-init disk state, causing Terraform to detect a diff and attempt an unsupported update.
 
 Without replacement, `terraform apply` will fail with:
@@ -168,7 +168,7 @@ Without replacement, `terraform apply` will fail with:
 
 ### Affected Layers
 
-This applies to L10, L15, and all L30 layers. The script below discovers `cloud_init_iso` resources from each layer's Terraform state and replaces them.
+This applies to `shared-load-balancer-frontend`, `shared-vault-frontend`, and all `infra-*` layers. The script below discovers `cloud_init_iso` resources from each layer's Terraform state and replaces them.
 
 1. **Navigate to the Layer base**:
 
@@ -180,9 +180,9 @@ This applies to L10, L15, and all L30 layers. The script below discovers `cloud_
 
     ```bash
     for layer_dir in \
-        10-shared-load-balancer-frontend \
-        15-shared-vault-frontend \
-        30-infra-*/; do
+        shared-load-balancer-frontend \
+        shared-vault-frontend \
+        infra-*/; do
         layer=$(basename "$layer_dir")
         echo "=== $layer ==="
 
@@ -209,7 +209,7 @@ When `libvirt_domain` is replaced via `terraform apply -replace` without also re
 
 Two conditions can trigger this:
 
-- A new service segment is added to the SSoT and L10 is re-applied to update the `libvirt_domain` NIC definitions.
+- A new service segment is added to the SSoT and `shared-load-balancer-frontend` is re-applied to update the `libvirt_domain` NIC definitions.
 - The `libvirt_domain` is force-replaced to work around a provider diff-detection bug.
 
 **Recovery**: After Ansible provisioning finishes on the affected nodes, clear the instance cache to force a full cloud-init run on the next reboot:

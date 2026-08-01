@@ -25,7 +25,7 @@ resource "harbor_config_auth" "main" {
   oidc_admin_group = "admin"
 }
 
-# 2. External OIDC Groups (Dynamic Mapping from L25 Management Roles)
+# 2. External OIDC Groups (Dynamic Mapping from security-pki Management Roles)
 # This creates the group identities in Harbor that can be assigned to projects.
 resource "harbor_group" "oidc_groups" {
   for_each = local.state.vault_pki.management_policies

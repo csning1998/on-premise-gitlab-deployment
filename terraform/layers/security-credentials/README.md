@@ -1,8 +1,8 @@
-# Layer 25: Security Credentials for All Services
+# security-credentials: Security Credentials for All Services
 
-Generates all service passwords via Terraform and writes them to HashiCorp Vault KV v2. Password lifecycle is decoupled from the VM layers (`30-infra-*`), so infrastructure nodes can be destroyed and rebuilt without rotating live secrets.
+Generates all service passwords via Terraform and writes them to HashiCorp Vault KV v2. Password lifecycle is decoupled from the VM layers (`infra-*`), so infrastructure nodes can be destroyed and rebuilt without rotating live secrets.
 
-Paths are written under `secret/<vault_kv_namespace>/`, where `vault_kv_namespace` is derived from L00 metadata.
+Paths are written under `secret/<vault_kv_namespace>/`, where `vault_kv_namespace` is derived from `foundation-metadata`.
 
 ## Configuration
 

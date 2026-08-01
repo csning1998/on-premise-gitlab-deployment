@@ -28,7 +28,7 @@ terraform {
   }
 }
 
-# Production Provider (Layer 10 Vault)
+# Production Provider (security-vault-approle)
 provider "vault" {
   alias        = "production"
   address      = local.vault_endpoint

@@ -16,12 +16,12 @@ output "node_exporter_targets" {
 }
 
 output "central_lb_node_ips" {
-  description = "Actual per-node IPs of the Central LB VM fleet, computed from var.node_config rather than the L00 SSoT reservation range; consumed by L30 observability for HAProxy stats scrape targets."
+  description = "Actual per-node IPs of the Central LB VM fleet, computed from var.node_config rather than the foundation-metadata SSoT reservation range; consumed by infra-observability-frontend for HAProxy stats scrape targets."
   value       = local.central_lb_node_ips
 }
 
 output "infrastructure_map" {
-  description = "Physical realization bridging Layer 00 Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys"
+  description = "Physical realization bridging foundation-metadata Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys"
   value       = data.terraform_remote_state.network.outputs.infrastructure_map
 }
 
@@ -37,21 +37,21 @@ output "infrastructure_vips" {
 }
 
 output "global_topology_identity" {
-  description = "Pass-through of L00 topology identity map; consumed by L30+ context module for VM naming and storage pool resolution."
+  description = "Pass-through of foundation-metadata topology identity map; consumed by infra-*/provision-* context module for VM naming and storage pool resolution."
   value       = local.state.network.global_topology_identity
 }
 
 output "global_topology_network" {
-  description = "Pass-through of L00 topology network map; consumed by L30+ context module for IP, port, and CIDR resolution."
+  description = "Pass-through of foundation-metadata topology network map; consumed by infra-*/provision-* context module for IP, port, and CIDR resolution."
   value       = local.state.network.global_topology_network
 }
 
 output "global_network_baseline" {
-  description = "Pass-through of L00 global network baseline (global_mtu, global_mss); consumed by L30+ context module."
+  description = "Pass-through of foundation-metadata global network baseline (global_mtu, global_mss); consumed by infra-*/provision-* context module."
   value       = local.state.network.global_network_baseline
 }
 
 output "global_domain_suffix" {
-  description = "Pass-through of L00 root domain suffix; consumed by L30+ for service FQDN construction."
+  description = "Pass-through of foundation-metadata root domain suffix; consumed by infra-*/provision-* for service FQDN construction."
   value       = local.state.network.global_domain_suffix
 }

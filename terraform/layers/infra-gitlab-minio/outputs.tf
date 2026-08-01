@@ -15,7 +15,7 @@ output "gitlab_minio_cluster_name" {
 }
 
 output "connection_info" {
-  description = "MinIO load-balancer endpoint for L40 consumption."
+  description = "MinIO load-balancer endpoint for provision-* consumption."
   value = {
     host = module.context.primary_net_config.lb_config.vip
     port = module.context.primary_net_config.lb_config.ports["api"].frontend_port

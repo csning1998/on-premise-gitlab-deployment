@@ -15,22 +15,22 @@ output "global_network_mtu" {
 }
 
 output "k8s_api_port" {
-  description = "K8s API server frontend port for L40 consumption."
+  description = "K8s API server frontend port for provision-* consumption."
   value       = module.context.svc_network.ports["api-server"].frontend_port
 }
 
 output "ingress_http_node_port" {
-  description = "K8s ingress HTTP backend nodePort for L40/L50 consumption."
+  description = "K8s ingress HTTP backend nodePort for provision-*/platform-*-frontend consumption."
   value       = module.context.svc_network.ports["ingress-http"].backend_port
 }
 
 output "ingress_https_node_port" {
-  description = "K8s ingress HTTPS backend nodePort for L40/L50 consumption."
+  description = "K8s ingress HTTPS backend nodePort for provision-*/platform-*-frontend consumption."
   value       = module.context.svc_network.ports["ingress-https"].backend_port
 }
 
 output "guest_metrics_endpoints" {
-  description = "VM-level observability scrape targets aggregated from L10 network topology for L40+ consumption."
+  description = "VM-level observability scrape targets aggregated from shared-load-balancer-frontend network topology for provision-*/platform-* consumption."
   value = {
     haproxy_stats_port                  = local.network_central_lb.ports["stats"].frontend_port
     central_lb_ips                      = local.central_lb_node_ips
@@ -50,11 +50,11 @@ output "node_exporter_targets" {
 }
 
 output "cross_route_probe_targets" {
-  description = "Cross-segment VIP:port L4 probe targets (tcp_connect) for the L50 Alloy blackbox exporter, covering the segments this cluster routes to."
+  description = "Cross-segment VIP:port L4 probe targets (tcp_connect) for the platform-*-frontend Alloy blackbox exporter, covering the segments this cluster routes to."
   value       = local.cross_route_probe_targets
 }
 
 output "hypervisor_host_ip" {
-  description = "Physical KVM hypervisor host's gateway address on this cluster's own hostonly bridge, for L50 Alloy static scrape targets (host node_exporter, libvirt_exporter)."
+  description = "Physical KVM hypervisor host's gateway address on this cluster's own hostonly bridge, for platform-*-frontend Alloy static scrape targets (host node_exporter, libvirt_exporter)."
   value       = local.hypervisor_host_ip
 }

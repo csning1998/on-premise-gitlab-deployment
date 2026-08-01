@@ -38,7 +38,7 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
 
 ### Install IaC Tools on Native
 
-1.  **Install IaC Toolkit - OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
+1.  **Install IaC Toolkit: OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
     Refer to the following resources for toolkit installation:
     - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)

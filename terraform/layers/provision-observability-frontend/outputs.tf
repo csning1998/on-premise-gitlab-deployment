@@ -30,7 +30,7 @@ output "reloader_helm_metadata" {
 }
 
 output "guest_metrics_endpoints" {
-  description = "VM-level observability scrape targets aggregated from L10 network topology for L40+ consumption."
+  description = "VM-level observability scrape targets aggregated from shared-load-balancer-frontend network topology for provision-*/platform-* consumption."
   value       = local.state.microk8s_provision.guest_metrics_endpoints
 }
 
@@ -40,16 +40,16 @@ output "node_exporter_targets" {
 }
 
 output "cross_route_probe_targets" {
-  description = "Cross-segment VIP:port L4 probe targets (tcp_connect) passed through to the L50 Alloy blackbox exporter."
+  description = "Cross-segment VIP:port L4 probe targets (tcp_connect) passed through to the platform-*-frontend Alloy blackbox exporter."
   value       = local.state.microk8s_provision.cross_route_probe_targets
 }
 
 output "hypervisor_host_ip" {
-  description = "Physical KVM hypervisor host's gateway address, passed through to L50 Alloy static scrape targets."
+  description = "Physical KVM hypervisor host's gateway address, passed through to platform-*-frontend Alloy static scrape targets."
   value       = local.state.microk8s_provision.hypervisor_host_ip
 }
 
 output "vault_api_port" {
-  description = "Vault API frontend port for L50 consumption."
+  description = "Vault API frontend port for platform-*-frontend consumption."
   value       = local.state.vault_frontend.vault_api_port
 }

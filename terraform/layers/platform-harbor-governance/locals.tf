@@ -45,14 +45,14 @@ locals {
 
 # 5. Team & Role Group Derivation (from Keycloak SSoT)
 locals {
-  # Teams that own artifacts (type=team) → get team-{name} project + shared access
+  # Teams that own artifacts (type=team) get a team-{name} project plus shared access
   team_groups = {
     for k, v in local.state.keycloak_oidc.keycloak_groups :
     k => v
     if lookup(v.attributes, "type", "") == "team"
   }
 
-  # Cross-team roles (type=role) → elevated access across all team projects
+  # Cross-team roles (type=role) receive elevated access across all team projects
   role_groups = {
     for k, v in local.state.keycloak_oidc.keycloak_groups :
     k => v

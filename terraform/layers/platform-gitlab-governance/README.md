@@ -1,4 +1,4 @@
-# Layer 60: GitLab Platform Provisioning
+# platform-gitlab-governance: GitLab Platform Provisioning
 
 This layer is responsible for provisioning the internal organizational structure (Groups), pre-provisioning of users, and OIDC identity linkage within the GitLab platform.
 
@@ -10,7 +10,7 @@ This token can be provisioned using one of the following methods:
 
 ### Option A: Automatic Generation (Recommended)
 
-The PAT bootstrapping process can be automated by setting `enable_gitlab_pat_automation = true` in Layer 50 (`50-platform-gitlab-frontend`). This executes a Kubernetes Job that generates the token and stores it in Vault. For detailed configuration parameters and the underlying execution mechanism, refer to the [Layer 50 README](../50-platform-gitlab-frontend/README.md#gitlab-root-pat-for-60-provision-gitlab-platform).
+The PAT bootstrapping process can be automated by setting `enable_gitlab_pat_automation = true` in `platform-gitlab-frontend`. This executes a Kubernetes Job that generates the token and stores it in Vault. For detailed configuration parameters and the underlying execution mechanism, refer to the [platform-gitlab-frontend README](../platform-gitlab-frontend/README.md#gitlab-root-pat-for-platform-gitlab-governance).
 
 ### Option B: Manual Bootstrapping
 
@@ -21,7 +21,7 @@ If automatic generation is disabled, the token must be generated and stored in V
 
         ```shell
         export VAULT_ADDR="https://172.16.136.250:443"
-        export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+        export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
         export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
         ```
 
@@ -33,12 +33,12 @@ If automatic generation is disabled, the token must be generated and stored in V
 
 2. Generating the First PAT
     1. Log in to the GitLab web interface using the `root` account.
-    2. Navigate to **User Settings** → **Personal Access Tokens**.
+    2. Navigate to **User Settings**, then **Personal Access Tokens**.
     3. Create a token named `terraform-gitlab-pat`.
     4. **Required Scopes**:
-        - `api` – Core resource management
-        - `admin_mode` – Administrator-level operations
-        - `read_user` – Read user information
+        - `api`: Core resource management
+        - `admin_mode`: Administrator-level operations
+        - `read_user`: Read user information
     5. Copy the generated token string.
     6. Store the PAT in Vault:
 
@@ -51,11 +51,11 @@ If automatic generation is disabled, the token must be generated and stored in V
 
 ### Establishing Users
 
-Refer to `terraform/layers/40-provision-keycloak-oidc/terraform.tfvars.example` to configure and create initial users.
+Refer to `terraform/layers/provision-keycloak-oidc/terraform.tfvars.example` to configure and create initial users.
 
 ## Harbor CI Registry Credentials
 
-Each team subgroup receives the credentials of its dedicated Harbor `ci-{team}` robot as group level CI/CD variables. A pipeline running under a team subgroup authenticates to Production Harbor as that robot and pushes images into the matching `team-{name}` project. The robot accounts and their Vault entries are created by `60-provision-harbor-platform`, so that layer must be applied before this one.
+Each team subgroup receives the credentials of its dedicated Harbor `ci-{team}` robot as group level CI/CD variables. A pipeline running under a team subgroup authenticates to Production Harbor as that robot and pushes images into the matching `team-{name}` project. The robot accounts and their Vault entries are created by `platform-harbor-governance`, so that layer must be applied before this one.
 
 Teams are the subgroups under the target org whose Keycloak `type` attribute is `team`. Role groups such as `dev-leads` have no Harbor robot and are excluded. The variables are provisioned by `resources-harbor-ci-vars.tf`, which reads each robot from Vault and sets two group variables.
 
@@ -83,7 +83,7 @@ To import an existing project (e.g., `test-repo`) to the on-premise GitLab insta
     Since the GitLab instance uses a private certificate chain signed by the Vault PKI, the PKI trust-bundle must be trusted locally:
 
     ```bash
-    sudo cp /path-to-repo/terraform/layers/25-security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
+    sudo cp /path-to-repo/terraform/layers/security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
     sudo update-ca-trust
     ```
 
@@ -109,7 +109,7 @@ To import an existing project (e.g., `test-repo`) to the on-premise GitLab insta
         git push -u origin main
         ```
 
-    The structure of Groups and Teams can be configured by referring to the RBAC guidelines documented in [`OIDC README.md`](../40-provision-keycloak-oidc/README.md). If following the configurations in [`OIDC terraform.tfvars.example`](../40-provision-keycloak-oidc/terraform.tfvars.example), when an account belongs to the `infra` group under the `engineering` team, the corresponding repository path is: `https://gitlab.production.iac.internal/engineering/infra/test-repo.git`
+    The structure of Groups and Teams can be configured by referring to the RBAC guidelines documented in [`OIDC README.md`](../provision-keycloak-oidc/README.md). If following the configurations in [`OIDC terraform.tfvars.example`](../provision-keycloak-oidc/terraform.tfvars.example), when an account belongs to the `infra` group under the `engineering` team, the corresponding repository path is: `https://gitlab.production.iac.internal/engineering/infra/test-repo.git`
 
 ### [Recommand] SSH Key Authentication Setup
 
@@ -130,7 +130,7 @@ To bypass connection issues and achieve seamless, password-free Git operations v
         IdentitiesOnly yes
     ```
 
-3. **Add SSH Key to GitLab**: Copy the content of your public key (`~/.ssh/id_ed25519_test_on_prem_gitlab_repo.pub`) and paste it into **User Settings -> SSH Keys** in the GitLab Web UI.
+3. **Add SSH Key to GitLab**: Copy the content of your public key (`~/.ssh/id_ed25519_test_on_prem_gitlab_repo.pub`) and paste it into **User Settings**, then **SSH Keys**, in the GitLab Web UI.
 
 4. **Configure Git Remote URL**: Set or switch the local Git remote to use SSH format (thanks to the SSH config, you don't need to specify the port in the git URL):
 

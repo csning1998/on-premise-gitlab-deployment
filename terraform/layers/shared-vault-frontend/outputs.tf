@@ -10,7 +10,7 @@ output "ca_cert_path" {
 }
 
 output "vault_api_port" {
-  description = "Vault API frontend port for L40 consumption."
+  description = "Vault API frontend port for provision-* tier consumption."
   value       = module.context.primary_net_config.lb_config.ports["api"].frontend_port
 }
 

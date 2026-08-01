@@ -25,7 +25,7 @@
 
 **Clearing shell history after executing `vault kv put` commands is strongly recommended to mitigate data exposure. Refer to Note 0 for details.**
 
-The following variables are required for provisioning production HashiCorp Vault across Packer and Terraform Layer `10`:
+The following variables are required for provisioning production HashiCorp Vault across Packer and Terraform `shared-load-balancer-frontend`:
 
 - `github_pat`: The GitHub Personal Access Token obtained in previous step.
 - `ssh_username`, `ssh_password`: Credentials for SSH access.
@@ -61,7 +61,7 @@ vault kv put \
     keepalived_auth_pass="keepalived_auth_pass_dev_password"
 ```
 
-If `90-github-meta` is not used to manage GitHub repo settings, `github_pat` secret can be deleted.
+If `meta-github` is not used to manage GitHub repo settings, `github_pat` secret can be deleted.
 
 ---
 
@@ -88,7 +88,7 @@ Following variables are required for provisioning Terraform layers for Patroni, 
 
 ```shell
 export VAULT_ADDR="https://172.16.136.250:443"
-export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
 export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
 
 printf "Enter ssh Password: "
@@ -117,7 +117,7 @@ Clearing shell history after executing `vault kv put` commands is strongly recom
 
     ```shell
     export VAULT_ADDR="https://172.16.136.250:443"
-    export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+    export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
     export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) \
         vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
     vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases
@@ -132,12 +132,12 @@ Clearing shell history after executing `vault kv put` commands is strongly recom
 3. For a more streamlined execution using a single-line command:
 
     ```shell
-    export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
+    export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
     ```
 
     `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
-    This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [L50 README](../../layers/50-platform-gitlab/README.md) for detailed explanation.
+    This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [platform-gitlab-frontend README](../../../terraform/layers/platform-gitlab-frontend/README.md) for detailed explanation.
 
 ### Note 2. SSH vs VM Identity Variables
 

@@ -9,5 +9,5 @@ warn_list:
 exclude_paths:
   - .git/
   - .terraform/
-  - roles/80-utilities/tasks/main.yaml
+  - roles/utilities/tasks/main.yaml
   - inventory-*.yaml

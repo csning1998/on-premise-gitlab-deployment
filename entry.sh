@@ -59,12 +59,12 @@ echo
 PS3=$'\n\033[1;34m[INPUT] Please select an action: \033[0m'
 options=()
 
-# [Dev Vault - Bootstrap Unit]
+# [Dev Vault: Bootstrap Unit]
 options+=("[DEV] Set up TLS for Dev Vault (Local)")
 options+=("[DEV] Initialize Dev Vault (Local)")
 options+=("[DEV] Unseal Dev Vault (Local)")
 
-# [Production Vault - PKI Service Provider]
+# [Production Vault: PKI Service Provider]
 options+=("[PROD] Unseal Production Vault (via Ansible)")
 
 # [Infrastructure]
@@ -76,7 +76,7 @@ options+=("Build Packer Base Image")
 options+=("Verify Guest VM Connectivity via SSH")
 options+=("Switch Environment Strategy")
 
-# [Operations - GitLab]
+# [Operations: GitLab]
 options+=("[PROD] Revert Gitaly to Standalone for Safety Pre-check")
 
 # [Reset]
@@ -136,7 +136,7 @@ select opt in "${options[@]}"; do
       strategy_switch_handler
       ;;
 
-    # Operations - GitLab
+    # Operations: GitLab
     "[PROD] Revert Gitaly to Standalone for Safety Pre-check")
       gitaly_revert_to_standalone_trigger
       break

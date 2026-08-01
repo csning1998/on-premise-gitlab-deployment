@@ -3,7 +3,7 @@ module "felix_config" {
   source = "../../modules/kubernetes-addons/calico-felix-config"
 }
 
-# Declares the namespace locally because each L40 layer targets a distinct Kubernetes cluster;
+# Declares the namespace locally because each provision-* layer targets a distinct Kubernetes cluster;
 # this is declared independently per layer rather than shared.
 resource "kubernetes_namespace" "vault_auth" {
   metadata {

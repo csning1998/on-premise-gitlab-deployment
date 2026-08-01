@@ -7,7 +7,7 @@
 # Module-level variable definitions
 
 variable "create_networks" {
-  description = "Whether to create network resources inside the module. Set to false if networks are pre-provisioned by Layer 05 root."
+  description = "Whether to create network resources inside the module. Set to false if networks are pre-provisioned by foundation-network."
   type        = bool
   default     = true
 }

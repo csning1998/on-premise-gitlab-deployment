@@ -10,7 +10,7 @@ output "topology_cluster" {
 }
 
 output "connection_info" {
-  description = "Redis load-balancer endpoint for L40 consumption."
+  description = "Redis load-balancer endpoint for provision-* consumption."
   value = {
     host = module.context.primary_net_config.lb_config.vip
     port = module.context.primary_net_config.lb_config.ports["main"].frontend_port

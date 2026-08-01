@@ -10,7 +10,7 @@ output "topology_cluster" {
 }
 
 output "connection_info" {
-  description = "Postgres load-balancer endpoint for L40 consumption."
+  description = "Postgres load-balancer endpoint for provision-* consumption."
   value = {
     host = module.context.primary_net_config.lb_config.vip
     port = module.context.primary_net_config.lb_config.ports["rw-proxy"].frontend_port

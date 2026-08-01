@@ -59,31 +59,31 @@ output "management_policies" {
 }
 
 output "vault_kv_namespace" {
-  description = "Pass-through of L00 Vault KV namespace prefix; consumed by L30+ for credential path construction without reading L00 directly."
+  description = "Pass-through of foundation-metadata Vault KV namespace prefix; consumed by infra-*/provision-* for credential path construction without reading foundation-metadata directly."
   value       = local.state.metadata.vault_kv_namespace
 }
 
 output "global_pki_map" {
-  description = "Pass-through of L00 PKI role map (DNS SANs, role names, auth config); consumed by L30+ for TLS certificate configuration."
+  description = "Pass-through of foundation-metadata PKI role map (DNS SANs, role names, auth config); consumed by infra-*/provision-* for TLS certificate configuration."
   value       = local.state.metadata.global_pki_map
 }
 
 output "global_credential_paths" {
-  description = "Pass-through of L00 credential path map; consumed by L30+ for Vault KV path construction."
+  description = "Pass-through of foundation-metadata credential path map; consumed by infra-*/provision-* for Vault KV path construction."
   value       = local.state.metadata.global_credential_paths
 }
 
 output "ca_cert_path" {
-  description = "Pass-through of L15 Bootstrap CA certificate file path; consumed by L30+ for Vault provider TLS verification."
+  description = "Pass-through of shared-vault-frontend Bootstrap CA certificate file path; consumed by infra-*/provision-* for Vault provider TLS verification."
   value       = local.state.vault_sys.ca_cert_path
 }
 
 output "vault_node_exporter_targets" {
-  description = "Pass-through of L15 Vault frontend VM fleet Node Exporter targets; consumed by L50 observability for VM-level scraping."
+  description = "Pass-through of shared-vault-frontend Vault frontend VM fleet Node Exporter targets; consumed by platform-*-frontend observability for VM-level scraping."
   value       = local.state.vault_sys.node_exporter_targets
 }
 
 output "bootstrap_root_ca_chain_b64" {
-  description = "Base64 PEM chain of the Bootstrap Vault's Root CA and Bootstrap Issuing Intermediate; consumed by L30+ as the trust chain root."
+  description = "Base64 PEM chain of the Bootstrap Vault's Root CA and Bootstrap Issuing Intermediate; consumed by infra-*/provision-* as the trust chain root."
   value       = base64encode(local.bootstrap_ca_chain_pem)
 }

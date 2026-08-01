@@ -130,7 +130,7 @@ Services currently provisioned:
 15. **[WIP]** Documentation
 
 > [!NOTE]
-> **Standalone Gitaly** and **(HA) Praefect with subordinated Patroni** configurations support bidirectional migration. Refer to [README of 30-infra-gitaly-praefect](ansible/roles/30-infra-gitaly-praefect/README.md) for more detail.
+> **Standalone Gitaly** and **(HA) Praefect with subordinated Patroni** configurations support bidirectional migration. Refer to [README of infra_gitaly_praefect](ansible/roles/infra_gitaly_praefect/README.md) for more detail.
 
 ## Terraform Static Analysis Exemptions
 

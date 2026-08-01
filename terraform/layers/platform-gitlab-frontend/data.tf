@@ -101,7 +101,7 @@ data "vault_kv_secret_v2" "keycloak_gitlab_client" {
   name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/keycloak/oidc/clients/gitlab_frontend"
 }
 
-# GitLab Internal Secrets (Persistent via Layer 30)
+# GitLab Internal Secrets (Persistent via infra-*)
 data "vault_kv_secret_v2" "gitlab_internal_secrets" {
   provider = vault.production
   mount    = "secret"

@@ -16,7 +16,7 @@ output "production_approle_path" {
 }
 
 output "alloy_metrics_role_name" {
-  description = "Token role name L25 mints the Alloy metrics token from"
+  description = "Token role name security-credentials mints the Alloy metrics token from"
   value       = vault_token_auth_backend_role.alloy_metrics.role_name
 }
 

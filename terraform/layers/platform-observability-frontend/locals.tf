@@ -80,8 +80,8 @@ locals {
 
 # Physical KVM Hypervisor Host. The host operates outside the management of the Terraform layers;
 # the libvirt provider of each layer connects directly to this physical machine.
-# The host address on this segment is derived from the L30 hostonly gateway and passed through
-# the L40 layer to prevent hardcoding. It is on-link for the cluster network and accessible
+# The host address on this segment is derived from the infra-* hostonly gateway and passed through
+# the provision-* layer to prevent hardcoding. It is on-link for the cluster network and accessible
 # without policy-based routing or an intermediate ingress hop.
 locals {
   hypervisor_host_ip               = local.state.provision.hypervisor_host_ip
@@ -125,7 +125,7 @@ locals {
   s3_credentials_prefix = "${local.state.vault_pki.vault_kv_namespace}/observability/app/s3_credentials"
 }
 
-# Blackbox Probe Targets (derived from L00 global_pki_map; has_ingress marks components with a
+# Blackbox Probe Targets (derived from foundation-metadata global_pki_map; has_ingress marks components with a
 # real external route, filtering out internal-only entries whose dns_san is non-empty only
 # because of the unconditional internal mTLS SAN). Any future service that gains a real ingress
 # block is picked up automatically, no change needed at this layer.

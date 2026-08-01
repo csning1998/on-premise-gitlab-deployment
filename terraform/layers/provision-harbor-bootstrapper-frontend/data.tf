@@ -1,7 +1,7 @@
 
 /**
  * Implicit sub-ordering within tier 40:
- * this layer reads keycloak_oidc (40-provision-keycloak-oidc),
+ * this layer reads keycloak_oidc (provision-keycloak-oidc),
  * which must apply first so that Keycloak OIDC client credentials exist before Harbor SSO is configured.
  * Downstream layers that read this layer's outputs (gitlab-frontend, gitlab-runner, harbor-frontend,
  * observability-frontend) therefore have an implicit three-level sequence within tier 40:

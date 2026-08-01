@@ -99,7 +99,7 @@ This path is automatic. On every `terraform apply`, `C-migrate-to-praefect.yaml`
 4. **Apply the GitLab frontend Terraform layer** to propagate the updated Gitaly/Praefect topology to platform-level configuration:
 
     ```bash
-    cd terraform/layers/50-platform-gitlab-frontend && terraform apply -auto-approve
+    cd terraform/layers/platform-gitlab-frontend && terraform apply -auto-approve
     ```
 
 ### Diagnose empty Praefect DB (repository not found errors)
@@ -159,7 +159,7 @@ This path is a **manual maintenance operation** triggered from `entry.sh`. It mu
 3. **Apply the GitLab frontend Terraform layer** to propagate the reverted standalone topology to platform-level configuration:
 
     ```bash
-    cd terraform/layers/50-platform-gitlab-frontend && terraform apply -auto-approve
+    cd terraform/layers/platform-gitlab-frontend && terraform apply -auto-approve
     ```
 
 ## Section 4. Common Failure Modes

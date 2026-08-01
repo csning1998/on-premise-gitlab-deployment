@@ -34,7 +34,7 @@ locals {
     client_key         = base64decode(local.user_info["client-key-data"])
   }
 
-  # Trust Engine Contract (Sourced from Provisioning Layer 40)
+  # Trust Engine Contract (Sourced from provision-gitlab-frontend)
   issuer_name = local.state.provision.issuer_name
   issuer_kind = local.state.provision.issuer_kind
 
@@ -84,7 +84,7 @@ locals {
 
 # 4. External Service Address & Ports
 locals {
-  # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
+  # Dynamic Ports/VIPs from shared-load-balancer-frontend
   redis_port = local.state.provision_databases.redis_connection_info.port
   minio_port = local.state.provision_databases.minio_connection_info.port
   shell_port = local.state.provision.network_context.gitlab_ssh_port

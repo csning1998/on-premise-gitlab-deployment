@@ -13,7 +13,7 @@ The `entry.sh` script located in the root directory handles all service initiali
 [INFO] Environment: NATIVE
 --------------------------------------------------
 [OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (Layer 15): Running (Unsealed)
+[OK] Production Vault (shared-vault-frontend): Running (Unsealed)
 ------------------------------------------------------------
 
 1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image

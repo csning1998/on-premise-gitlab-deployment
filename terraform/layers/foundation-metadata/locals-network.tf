@@ -5,7 +5,7 @@
 ################################################################
 
 /**
- * Layer 00: Foundation Metadata - Network Topology
+ * foundation-metadata: Network Topology
  *
  * This file computes the exact IPv4 addresses, subnets, and MAC addresses
  * for all components defined in the service_catalog.

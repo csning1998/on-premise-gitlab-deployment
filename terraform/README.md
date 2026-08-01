@@ -65,50 +65,50 @@ Two gitignored files must be created once by the operator. Neither enters versio
     ```hcl
     data "terraform_remote_state" "metadata" {
       backend = "http"
-      config  = merge(local._state_auth, { address = "${local._state_base}/00-foundation-metadata" })
+      config  = merge(local._state_auth, { address = "${local._state_base}/foundation-metadata" })
     }
     ```
 
 3. **Initialization**: When migrating all layers, initialize in the deployment order listed below. This is also the `terraform apply` execution order; upstream state must be available before any downstream layer that reads from it is applied. The following table lists all layers in the required deployment sequence:
 
-    | #   | Layer                                       |
-    | --- | ------------------------------------------- |
-    | 1   | `00-foundation-metadata`                    |
-    | 2   | `00-foundation-vault-bootstrapper`          |
-    | 3   | `05-foundation-network`                     |
-    | 4   | `05-foundation-volume`                      |
-    | 5   | `10-shared-load-balancer-frontend`          |
-    | 6   | `15-shared-vault-frontend`                  |
-    | 7   | `20-security-vault-approle`                 |
-    | 8   | `25-security-credentials`                   |
-    | 9   | `25-security-pki`                           |
-    | 10  | `30-infra-keycloak-frontend`                |
-    | 11  | `40-provision-keycloak-oidc`                |
-    | 12  | `45-security-vault-oidc`                    |
-    | 13  | `30-infra-harbor-bootstrapper-frontend`     |
-    | 14  | `40-provision-harbor-bootstrapper-frontend` |
-    | 15  | `30-infra-harbor-postgres`                  |
-    | 16  | `30-infra-harbor-redis`                     |
-    | 17  | `30-infra-harbor-minio`                     |
-    | 18  | `30-infra-harbor-frontend`                  |
-    | 19  | `30-infra-gitlab-postgres`                  |
-    | 20  | `30-infra-gitlab-redis`                     |
-    | 21  | `30-infra-gitlab-minio`                     |
-    | 22  | `30-infra-gitlab-frontend`                  |
-    | 23  | `30-infra-gitlab-gitaly-praefect`           |
-    | 24  | `30-infra-gitlab-runner`                    |
-    | 25  | `40-provision-gitlab-databases`             |
-    | 26  | `40-provision-gitlab-frontend`              |
-    | 27  | `40-provision-harbor-databases`             |
-    | 28  | `50-platform-harbor-frontend`               |
-    | 29  | `50-platform-gitlab-frontend`               |
-    | 30  | `60-provision-gitlab-platform`              |
-    | 31  | `60-provision-harbor-platform`              |
-    | 32  | `50-platform-gitlab-runner`                 |
-    | 33  | `90-meta-github`                            |
-    | 34  | `90-meta-gitlab`                            |
+    | #   | Layer                                    |
+    | --- | ----------------------------------------- |
+    | 1   | `foundation-metadata`                    |
+    | 2   | `foundation-vault-bootstrapper`          |
+    | 3   | `foundation-network`                     |
+    | 4   | `foundation-volume`                      |
+    | 5   | `shared-load-balancer-frontend`          |
+    | 6   | `shared-vault-frontend`                  |
+    | 7   | `security-vault-approle`                 |
+    | 8   | `security-credentials`                   |
+    | 9   | `security-pki`                           |
+    | 10  | `infra-keycloak-frontend`                |
+    | 11  | `provision-keycloak-oidc`                |
+    | 12  | `provision-vault-oidc`                   |
+    | 13  | `infra-harbor-bootstrapper-frontend`     |
+    | 14  | `provision-harbor-bootstrapper-frontend` |
+    | 15  | `infra-harbor-postgres`                  |
+    | 16  | `infra-harbor-redis`                     |
+    | 17  | `infra-harbor-minio`                     |
+    | 18  | `infra-harbor-frontend`                  |
+    | 19  | `infra-gitlab-postgres`                  |
+    | 20  | `infra-gitlab-redis`                     |
+    | 21  | `infra-gitlab-minio`                     |
+    | 22  | `infra-gitlab-frontend`                  |
+    | 23  | `infra-gitlab-gitaly-praefect`           |
+    | 24  | `infra-gitlab-runner`                    |
+    | 25  | `provision-gitlab-databases`             |
+    | 26  | `provision-gitlab-frontend`              |
+    | 27  | `provision-harbor-databases`             |
+    | 28  | `platform-harbor-frontend`               |
+    | 29  | `platform-gitlab-frontend`               |
+    | 30  | `platform-gitlab-governance`             |
+    | 31  | `platform-harbor-governance`             |
+    | 32  | `platform-gitlab-runner`                 |
+    | 33  | `meta-github`                            |
+    | 34  | `meta-gitlab`                            |
 
-    The following bulk-init script is a convenience shortcut. It iterates alphabetically, which coincides with the dependency order above because layer names are numerically prefixed. This script assumes all upstream remote states already exist; running it against a clean GitLab project where earlier layers have never been applied will cause remote-state read failures in downstream layers.
+    The following bulk-init script is a convenience shortcut. It iterates in filesystem order, which does not necessarily match the dependency order above. This script assumes all upstream remote states already exist; running it against a clean GitLab project where earlier layers have never been applied will cause remote-state read failures in downstream layers.
 
     ```bash
     for dir in ./*; do

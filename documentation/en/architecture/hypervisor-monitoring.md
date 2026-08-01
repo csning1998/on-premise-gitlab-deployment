@@ -20,12 +20,12 @@ Every layer's libvirt provider connects to a single physical KVM host, and every
 ## Section 3: Scrape Target Wiring
 
 1. The host's own address on the observability cluster's hostonly bridge is not itself a Terraform-managed resource, so it cannot be read from any layer's remote state the way every other scrape target in this project is. It is, however, already computed correctly by the existing network topology math: the physical host owns the gateway address of every hostonly bridge this project creates, and that gateway address was already available two layers upstream through `module.context.primary_net_config.network.hostonly.gateway`, unused until now.
-2. Layer 30 exposes this address as a new output, threaded through Layer 40's existing passthrough pattern to Layer 50, exactly like the cross-route probe targets added earlier. No value is hardcoded; if this segment's `cidr_index` ever changes, the address recomputes correctly with no edit required here.
+2. The `infra-*` layer exposes this address as a new output, threaded through the `provision-*` layer's existing passthrough pattern to the `platform-*-frontend` layer, exactly like the cross-route probe targets added earlier. No value is hardcoded; if this segment's `cidr_index` ever changes, the address recomputes correctly with no edit required here.
 3. Two entries join the observability cluster's `vm_static_targets`, both labeled with a `hypervisor` component and pointed at the host's gateway address on ports 9100 and 9177. Because that address is on-link for the observability cluster's own network, no static route, no policy-based routing rule, and no ingress hop is needed to reach it, unlike the cross-cluster paths documented in [Loki Log Pipeline](loki-log-pipeline.md).
 
 ## Section 4: Verification
 
-1. `terraform output hypervisor_host_ip` at Layer 40 returns the host's actual gateway address on the observability segment, matching what `ip addr` shows on the host itself.
+1. `terraform output hypervisor_host_ip` at the `provision-*` layer returns the host's actual gateway address on the observability segment, matching what `ip addr` shows on the host itself.
 2. `systemctl is-active node_exporter prometheus-libvirt-exporter` on the host reports both active, and each exporter's `/metrics` endpoint returns data locally.
 3. Querying Mimir's observability tenant for `up{job=~"hypervisor.*"}` returns two series, `hypervisor-node` and `hypervisor-libvirt`, both with a value of 1 and an `instance` label matching the host's gateway address on each exporter's port.
 

@@ -1,6 +1,6 @@
 
 output "infrastructure_map" {
-  description = "Physical realization bridging Layer 00 Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys. Consumed by all 30-* and 40-* layers."
+  description = "Physical realization bridging foundation-metadata Math and HAProxy VIPs, mapped perfectly to O(1) SSoT Identity keys. Consumed by all infra-* and provision-* layers."
 
   value = {
     for seg in local.net_service_segments : seg.name => {
@@ -43,21 +43,21 @@ output "dns_mapping" {
 }
 
 output "global_topology_identity" {
-  description = "Pass-through of L00 topology identity map; consumed by L10 to build segments_map without reading L00 directly."
+  description = "Pass-through of foundation-metadata topology identity map; consumed by shared-load-balancer-frontend to build segments_map without reading foundation-metadata directly."
   value       = local.state.metadata.global_topology_identity
 }
 
 output "global_topology_network" {
-  description = "Pass-through of L00 topology network map; consumed by L10 to build segments_map without reading L00 directly."
+  description = "Pass-through of foundation-metadata topology network map; consumed by shared-load-balancer-frontend to build segments_map without reading foundation-metadata directly."
   value       = local.state.metadata.global_topology_network
 }
 
 output "global_network_baseline" {
-  description = "Pass-through of L00 global network baseline (global_mtu, global_mss); consumed by L10 for Ansible extra vars."
+  description = "Pass-through of foundation-metadata global network baseline (global_mtu, global_mss); consumed by shared-load-balancer-frontend for Ansible extra vars."
   value       = local.state.metadata.global_network_baseline
 }
 
 output "global_domain_suffix" {
-  description = "Pass-through of L00 root domain suffix; consumed by L10 for Ansible template service_domain."
+  description = "Pass-through of foundation-metadata root domain suffix; consumed by shared-load-balancer-frontend for Ansible template service_domain."
   value       = local.state.metadata.global_domain_suffix
 }

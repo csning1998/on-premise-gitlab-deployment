@@ -28,7 +28,7 @@ variable "guest_config" {
 }
 
 variable "create_networks" {
-  description = "Whether to create libvirt_network resources. Set to false if attaching to existing networks (e.g. created by Layer 05)."
+  description = "Whether to create libvirt_network resources. Set to false if attaching to existing networks (e.g. created by foundation-network)."
   type        = bool
   default     = true
 }

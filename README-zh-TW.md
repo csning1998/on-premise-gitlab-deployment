@@ -130,4 +130,4 @@
 15. **[WIP]** Documentation
 
 > [!NOTE]
-> **Standalone Gitaly** 與 **(HA) Praefect 即從屬 Patroni** 組態可以雙向同步。可參考 [30-infra-gitaly-praefect 的 README](ansible/roles/30-infra-gitaly-praefect/README.md)
+> **Standalone Gitaly** 與 **(HA) Praefect 即從屬 Patroni** 組態可以雙向同步。可參考 [infra_gitaly_praefect 的 README](ansible/roles/infra_gitaly_praefect/README.md)

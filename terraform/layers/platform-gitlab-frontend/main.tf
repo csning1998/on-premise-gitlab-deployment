@@ -111,7 +111,7 @@ module "gitlab_core" {
   }
 
   # Internal Secrets of Rails, Gitaly, etc.
-  # Sourced persistently from Layer 30 via Vault to support data-safe Greenfield rebuilds
+  # Sourced persistently from infra-* via Vault to support data-safe Greenfield rebuilds
   gitlab_secrets = {
     "rails-secret" = {
       key   = "secret"

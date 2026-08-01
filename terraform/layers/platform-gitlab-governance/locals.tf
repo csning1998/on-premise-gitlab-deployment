@@ -38,7 +38,7 @@ locals {
 
 # 4. Organizational Structure Mapping (Derived from Keycloak SSoT)
 locals {
-  # Get groups and users from Layer 40
+  # Get groups and users from provision-keycloak-oidc
   kc_groups = local.state.keycloak_oidc.groups_metadata
   kc_users  = local.state.keycloak_oidc.oidc_users
 

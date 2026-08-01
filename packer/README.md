@@ -232,7 +232,7 @@ packer init . && packer build .
 
 ```hcl
 source "qemu" "ubuntu" {
-    # Section 3.B.1: Virtual Hardware Layer - Basic Resources
+    # Section 3.B.1: Virtual Hardware Layer, Basic Resources
     vm_name   = "ubuntu-server-24"
     cpus      = 2     # in vCPU
     memory    = 2048  # in MiB
@@ -599,8 +599,8 @@ source "qemu" "ubuntu" {
 
 ```hcl
 source "qemu" "ubuntu" {
-    # Section 3: Sources I - Minimum Setting (Virtual Hardware)
-    # 3.B.1: Virtual Hardware Layer - Basic Resources
+    # Section 3: Sources I, Minimum Setting (Virtual Hardware)
+    # 3.B.1: Virtual Hardware Layer, Basic Resources
     vm_name   = "ubuntu-server-24"
     cpus      = 2     # in vCPU
     memory    = 2048  # in MiB
@@ -625,7 +625,7 @@ source "qemu" "ubuntu" {
     vnc_port_min = 5900
     vnc_port_max = 6000
 
-    # Section 4: Sources II - Unattended Installation (ds=nocloud)
+    # Section 4: Sources II, Unattended Installation (ds=nocloud)
     # 4.B: SSH Communicator Configuration
     ssh_username = "your-username"
     ssh_password = "password123"

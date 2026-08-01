@@ -56,7 +56,7 @@ locals {
   svc_node_prefix = local.svc_identity.node_name_prefix
 }
 
-# 2. Network Context (delegated to `05-foundation-network`)
+# 2. Network Context (delegated to `foundation-network`)
 locals {
   # Deterministic Ordering for node naming
   net_sorted_node_keys = sort(keys(var.node_config))
@@ -66,7 +66,7 @@ locals {
     key => "${local.svc_node_prefix}-${format("%02d", idx)}"
   }
 
-  # Handover from `05-foundation-network`
+  # Handover from `foundation-network`
   net_infrastructure = local.state.network.infrastructure_map
   net_lb_config      = local.state.network.central_lb_info
 
@@ -75,7 +75,7 @@ locals {
 }
 
 locals {
-  # Service Segments: augment from Layer 05 with local node_ips (depends on `var.node_config`)
+  # Service Segments: augment from foundation-network with local node_ips (depends on `var.node_config`)
   net_service_segments = [
     for name, seg in local.state.network.service_segments : merge(seg, {
       node_ips = {

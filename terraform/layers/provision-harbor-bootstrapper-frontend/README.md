@@ -35,7 +35,7 @@ To restore service health, the largest OCI blobs in `/data/harbor/registry/docke
 
 ### Step B. Disabling Automated Replication
 
-The L40 configuration was modified to disable the aggressive replication schedule defined in `replication.tf`:
+The `provision-harbor-bootstrapper-frontend` configuration was modified to disable the aggressive replication schedule defined in `replication.tf`:
 
 - The `schedule` attribute was removed from `harbor_replication` resources.
 - The `sync-tigera` policy was set to `Disabled` via the API.

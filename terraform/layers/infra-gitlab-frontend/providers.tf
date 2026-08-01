@@ -28,7 +28,7 @@ provider "libvirt" {
   uri = "qemu:///system"
 }
 
-# Production Provider (Layer 10 Vault)
+# Production Provider (security-vault-approle)
 provider "vault" {
   alias        = "production"
   address      = local.sys_vault_endpoint

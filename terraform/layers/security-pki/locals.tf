@@ -10,8 +10,8 @@ locals {
 }
 
 # 1. Global Topology and Bootstrap CA.
-# Note: The bootstrap-ca.crt file is written by Layer 15 (15-shared-vault-frontend).
-# Layer 20 references it via the path below for the Vault provider's ca_cert_file.
+# Note: The bootstrap-ca.crt file is written by shared-vault-frontend.
+# security-vault-approle references it via the path below for the Vault provider's ca_cert_file.
 locals {
   state = {
     metadata             = data.terraform_remote_state.metadata.outputs

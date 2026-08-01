@@ -5,7 +5,7 @@
 ################################################################
 
 /**
- * Layer 00: Foundation Metadata - Volume Topology
+ * foundation-metadata: Volume Topology
  *
  * This file calculates the deterministic storage volume names and pool
  * mappings for all components that require persistent data disks.
@@ -42,7 +42,7 @@ locals {
     if length(coalesce(item.config.data_disks, [])) > 0
   ])
 
-  # Final searchable map used by Layer 10 (Virtual Machines)
+  # Final searchable map used by downstream VM-owning layers
   volume_topology = {
     for vol in local._volume_topology_raw : vol.volume_name => vol
   }

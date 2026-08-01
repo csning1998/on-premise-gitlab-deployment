@@ -36,7 +36,7 @@ provider "vault" {
 }
 
 # Bootstrap Provider (Bootstrap Vault), used to mirror bootstrap-time-only secrets
-# (e.g. haproxy_stats_pass) into Production Vault for post-L15 consumers.
+# (e.g. haproxy_stats_pass) into Production Vault for post-shared-vault-frontend consumers.
 provider "vault" {
   alias        = "bootstrap"
   address      = local.state.vault_bootstrapper.vault_dev_endpoint

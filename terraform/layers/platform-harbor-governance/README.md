@@ -1,8 +1,8 @@
-# Layer 60: Production Harbor Frontend
+# platform-harbor-governance: Production Harbor Frontend
 
 ## Problem Diagnosis: Duplicate User Conflict (OIDC Identity Drift)
 
-Refer to [40-provision-harbor-databases/README.md](../40-provision-harbor-databases/README.md) with the same title for more information.
+Refer to [provision-harbor-databases/README.md](../provision-harbor-databases/README.md) with the same title for more information.
 
 For the production Harbor instance running on MicroK8s, the database is hosted externally on Patroni (`core-harbor-postgres-node-00`).
 
@@ -34,7 +34,7 @@ For the production Harbor instance running on MicroK8s, the database is hosted e
 4. **Project member mappings**. On the shared project each team gets Developer and dev-leads gets Maintainer. On each team project the owning team gets Developer and dev-leads gets Maintainer across all team projects. The numeric group id is extracted from the `/usergroups/{n}` string returned by the group resource.
 5. **Proxy cache projects**. Each proxy project pulls external images on demand directly from its upstream registry such as `gcr.io` or `docker.io`, and Production Harbor caches the image on first pull. The upstream endpoint and provider type are inherited from the Bootstrapper proxy cache definitions so both Harbors target the same upstreams.
 6. **Per team CI robots**. Each team has a dedicated `ci-{team}` robot that can push, pull, and tag on its own `team-{name}` project and can only pull from the shared project.
-7. **Robot credentials in Vault**. Each robot username and secret is written to Vault at `secret/on-premise-gitlab-deployment/harbor/robots/{team}` so the GitLab layer can consume them. See [60-provision-gitlab-platform/README.md](../60-provision-gitlab-platform/README.md) for how they become CI/CD variables.
+7. **Robot credentials in Vault**. Each robot username and secret is written to Vault at `secret/on-premise-gitlab-deployment/harbor/robots/{team}` so the GitLab layer can consume them. See [platform-gitlab-governance/README.md](../platform-gitlab-governance/README.md) for how they become CI/CD variables.
 
 ## Known Issue: Use `-parallelism=2` for `plan`/`apply`
 

@@ -4,17 +4,17 @@ This repo leverages Packer, Terraform, and Ansible to implement an automated pip
 
 The automated deployment process is divided into the following stages. Deployment sequence and dependencies strictly follow internal system logic:
 
-## Stage 1: Foundation — Libvirt, Networking, and Secret Management
+## Stage 1: Foundation, Libvirt, Networking, and Secret Management
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant Boot as Bootstrapper Vault (L00)
-    participant Meta as Resource Metadata (L00)
-    participant LV as Libvirt Volume & Network (L05)
-    participant LB as Centralized Load Balancer (L10)
-    participant Prod as Production Vault (L15-25)
+    participant Boot as Bootstrapper Vault (foundation)
+    participant Meta as Resource Metadata (foundation)
+    participant LV as Libvirt Volume & Network (foundation)
+    participant LB as Centralized Load Balancer (shared)
+    participant Prod as Production Vault (shared/security)
 
     Note over User, Meta: [Stage 1: Foundation Bootstrapping]
     User->>Boot: 1. Init & Unseal Bootstrapper Vault (AppRole)
@@ -23,16 +23,16 @@ sequenceDiagram
     Meta->>Boot: 4. Auth via AppRole & Read Creds
 
     Note over User, LB: [Stage 1 cont.: Network & Load Balancer]
-    User->>LV: 5. Provision Libvirt Volume & Network (L05)
+    User->>LV: 5. Provision Libvirt Volume & Network (foundation)
     LV->>Boot: 6. Auth via AppRole & Read Metadata
-    User->>LB: 7. Provision Centralized Load Balancer (L10)
+    User->>LB: 7. Provision Centralized Load Balancer (shared)
     LB->>Boot: 8. Auth via AppRole & Read Network Config
 
     Note over User, Prod: [Stage 2: Production Vault Setup]
-    User->>Prod: 9. Provision Vault Nodes (L15)
+    User->>Prod: 9. Provision Vault Nodes (shared)
     Prod->>Prod: 10. Configure HA Raft Backend & Enable Engines
     User->>Prod: 11. Init & Unseal Production Vault Cluster
-    User->>Prod: 12. Configure AppRole Auth & PKI Root CA (L20/25)
+    User->>Prod: 12. Configure AppRole Auth & PKI Root CA (security)
     User->>Prod: 13. Manually Inject Application Secrets
 ```
 
@@ -42,13 +42,13 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor User
-    participant Prod as Production Vault (L15-25)
+    participant Prod as Production Vault (shared/security)
     participant SS as StatefulSets (Postgres/Redis/MinIO)
     participant Harbor as Bootstrapper Harbor
     participant K8sGit as Kubeadm Cluster (Dist GitLab)
     participant K8sHbr as Microk8s Cluster (Dist Harbor)
 
-    Note over User, Harbor: [Stage 3 / L30 Infra: StatefulSets & Bootstrapper Harbor]
+    Note over User, Harbor: [Stage 3 / infra-* tier: StatefulSets & Bootstrapper Harbor]
     par
         User->>SS: 1. Provision DB Infrastructure (VMs & LBs)
         SS->>Prod: Request TLS Certificate (PKI Issue)
@@ -59,7 +59,7 @@ sequenceDiagram
         Harbor->>Harbor: Initialize Seed Container Registry
     end
 
-    Note over User, K8sHbr: [L30 Infra: K8s Clusters - Depends on Above]
+    Note over User, K8sHbr: [infra-* tier: K8s Clusters, Depends on Above]
     par Depends on StatefulSets + Bootstrapper Harbor
         User->>K8sGit: 3. Provision Kubeadm Cluster (Dist GitLab)
         K8sGit->>Harbor: Pull Bootstrap Images from Seed Registry
@@ -68,14 +68,14 @@ sequenceDiagram
         K8sHbr->>Harbor: Pull Bootstrap Images from Seed Registry
     end
 
-    Note over User, K8sHbr: [L40: Application-Level Provisioning]
+    Note over User, K8sHbr: [provision-* tier: Application-Level Provisioning]
     User->>SS: 5. Provision Database Services (Ansible + Vault Agent TLS)
     User->>Harbor: 6. Provision Bootstrapper Harbor (Ansible)
 
-    Note over User, K8sHbr: [L50: Platform Deployment]
+    Note over User, K8sHbr: [platform-*-frontend tier: Platform Deployment]
     User->>K8sHbr: 7. Deploy Harbor Platform on Microk8s
 
-    Note over User, K8sGit: [L60: Application Provision]
+    Note over User, K8sGit: [platform-*-governance tier: Application Provision]
     User->>K8sGit: 8. Deploy GitLab on Kubeadm
     User->>K8sHbr: 9. Deploy Harbor on Microk8s
 ```

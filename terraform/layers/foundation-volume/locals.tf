@@ -25,7 +25,7 @@ locals {
     }
   ]...)
 
-  # 2. Inherit Layer 00's Pure MECE Volume Map
+  # 2. Inherit foundation-metadata's Pure MECE Volume Map
   global_volume_map = local.state.metadata.global_volume_map
 
   # 3. Extract unique pool names required for physical storage realization.

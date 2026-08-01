@@ -5,7 +5,7 @@
 ################################################################
 
 /**
- * Layer 00: Foundation Metadata - Outputs
+ * foundation-metadata: Outputs
  *
  * This file exposes the Single Source of Truth (SSoT) to the rest of the
  * infrastructure via the Terraform state.

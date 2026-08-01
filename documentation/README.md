@@ -27,10 +27,14 @@
 | [Overview](en/architecture/overview.md)                                    | Toolchain roles, layer map, ADR index                                       |
 | [Deployment Workflow](en/architecture/deployment-workflow.md)              | Stage-by-stage Mermaid diagrams                                             |
 | [Network Topology](en/architecture/network-topology.md)                    | Asymmetric routing, PBR, bridge isolation, MTU/MSS                          |
-| [Terraform Layers](en/architecture/terraform-layers.md)                    | Layer 00 SSoT deep dive                                                     |
+| [Terraform Layers](en/architecture/terraform-layers.md)                    | `foundation-metadata` SSoT deep dive                                        |
 | [PKI and Vault](en/architecture/pki-and-vault.md)                          | Certificate rotation rules, Vault Agent sidecar                             |
 | [Node Exporter Rollout](en/architecture/node-exporter-rollout.md)          | VM fleet metrics wiring, observability dashboard platform bootstrap         |
 | [Physical Hypervisor Monitoring](en/architecture/hypervisor-monitoring.md) | Host baseline automation, node/libvirt exporters, DAG-derived scrape target |
+| [Application Metrics Platform](en/architecture/application-metrics-platform.md) | GitLab/Harbor/Runner application metrics, LGTM self-monitoring, Mimir series limits |
+| [Kubernetes State and Availability Monitoring](en/architecture/kubernetes-state-and-blackbox-monitoring.md) | kube-state-metrics rollout, ingress-aware blackbox probing, certificate expiry byproduct |
+| [Fleet Lifecycle Collectors and Availability Probing](en/architecture/lifecycle-collectors-and-availability-probing.md) | keepalived VRRP visibility, bare-metal Alloy log agent, blackbox upstream and cross-route probing |
+| [Loki Log Pipeline](en/architecture/loki-log-pipeline.md)                  | Multi-tenant Loki, cross-cluster mTLS ingress, Alloy log collection, audit retention |
 
 ## Operations
 
@@ -47,7 +51,7 @@
 | ---------------------------------------------------------- | ------------------------------------ |
 | [ADR 001](en/adr/001-two-stage-vault.md)                   | Two-Stage Vault Architecture         |
 | [ADR 002](en/adr/002-centralized-load-balancer.md)         | Centralized Load Balancer with PBR   |
-| [ADR 003](en/adr/003-layer-00-ssot.md)                     | Layer 00 as Single Source of Truth   |
+| [ADR 003](en/adr/003-metadata.md)                          | Metadata as Single Source of Truth   |
 | [ADR 004](en/adr/004-podman-over-docker.md)                | Podman Over Docker                   |
 | [ADR 005](en/adr/005-harbor-bootstrapper-seed-registry.md) | Harbor Bootstrapper as Seed Registry |
 | [ADR 006](en/adr/006-packer-two-stage-image.md)            | Two-Stage Packer Image Build         |
@@ -65,18 +69,18 @@
 
 #### 1.2 Single Source of Truth (SSoT) Metadata Paradigm
 
-- **Metadata SSoT**: The `00-foundation-metadata` layer acts as the centralized source of truth. It defines the global HCL configuration schema (`service_catalog`) which lists all infrastructure services.
+- **Metadata SSoT**: The `foundation-metadata` layer acts as the centralized source of truth. It defines the global HCL configuration schema (`service_catalog`) which lists all infrastructure services.
 - **HCL Computations**: Through Terraform local values, it dynamically calculates IP network allocations, non-overlapping subnet CIDRs, virtual MAC addresses (to prevent Libvirt duplication), DNS SANs (Subject Alternative Names), and VIPs. This configuration drives all subsequent layers, ensuring no state drift or configuration overlap.
 
 #### 1.3 Double-Stage Vault Bootstrapping
 
-- **Bootstrap Phase**: A containerized Vault instance is spun up locally (Layer `00-foundation-vault-bootstrapper`) using self-signed root certificates. This instance stores early-stage IaC credentials, SSH keys, and VM passwords securely.
-- **Production Phase**: Layer `15-shared-vault-frontend` boots a bare-metal, high-availability Vault cluster. The production credentials are dynamically migrated from the bootstrap Vault. During migration, Terraform outputs `RoleID` and `SecretID` AppRoles which target VM services use to authenticate securely.
+- **Bootstrap Phase**: A containerized Vault instance is spun up locally (Layer `foundation-vault-bootstrapper`) using self-signed root certificates. This instance stores early-stage IaC credentials, SSH keys, and VM passwords securely.
+- **Production Phase**: Layer `shared-vault-frontend` boots a bare-metal, high-availability Vault cluster. The production credentials are dynamically migrated from the bootstrap Vault. During migration, Terraform outputs `RoleID` and `SecretID` AppRoles which target VM services use to authenticate securely.
 
 #### 1.4 Production Secrets & PKI Automation
 
-- **Credential Isolation**: Layer `25-security-credentials` auto-generates separate database passwords, S3 credentials, and internal gRPC tokens, writing them directly into the production Vault KV-v2 engine.
-- **Hierarchical PKI**: Layer `25-security-pki` establishes an Intermediate CA within Vault. Vault mounts and configures PKI roles that define Allowed Domains and IP SANs.
+- **Credential Isolation**: Layer `security-credentials` auto-generates separate database passwords, S3 credentials, and internal gRPC tokens, writing them directly into the production Vault KV-v2 engine.
+- **Hierarchical PKI**: Layer `security-pki` establishes an Intermediate CA within Vault. Vault mounts and configures PKI roles that define Allowed Domains and IP SANs.
 - **Vault Agent & Consul-Template**: Bare-metal database nodes utilize the `vault-agent` daemon. It handles AppRole dynamic authentication (Auto-Auth) and maps templates in `vault-agent.hcl` using Consul-Template syntax to listen to PKI certificate paths. When a certificate's TTL is near expiration, the agent fetches new credentials, writes them to `/etc/ssl/`, and executes a post-run reload script (`deploy-certs.sh`) to reload daemons (HAProxy, Postgres) with zero downtime.
 
 ### 2. Virtualization & Network Topology
@@ -84,7 +88,7 @@
 #### 2.1 Libvirt Workload Lifecycle
 
 - **Dual NIC Topologies**: VM instances are configured with two network interfaces: a private `HostOnly` network (for secure inter-service communications, isolated from the public network) and a `NAT` bridge network (providing outbound access to external registries and proxy mirrors).
-- **Direct Storage Pools**: Dynamic block volumes are created at Layer `05-foundation-volume` and attached as raw `/dev/vdb` devices on database and storage nodes. This decouples the OS partition (`/dev/vda`) from persistent application data.
+- **Direct Storage Pools**: Dynamic block volumes are created at Layer `foundation-volume` and attached as raw `/dev/vdb` devices on database and storage nodes. This decouples the OS partition (`/dev/vda`) from persistent application data.
 
 #### 2.2 Asymmetric Routing & Kernel Tuning
 
@@ -148,7 +152,7 @@
 
 - **Standalone Harbor Bootstrapper**: To resolve the "chicken-and-egg" issue of pulling control plane images (Calico CNI, Ingress Nginx) during cluster bootstrapping, a standalone Harbor instance is deployed via Docker Compose on a single VM. Local `vault-agent` provides dynamic TLS certificate rotation for Harbor's Nginx frontend.
 - **Pull-Through Proxy Cache**: Harbor Bootstrapper configures Proxy Cache projects that mirror external registries (Quay, Docker Hub, GHCR). Workloads pull from these proxy paths, reducing external bandwidth and bypassing rate-limiting issues.
-- **Production Sync Replication**: The production Harbor cluster deployed inside the Kubernetes environment (L50) uses Harbor Replication rules to automatically pull images from the bootstrapper registry, securing a completely air-gapped image distribution pipeline.
+- **Production Sync Replication**: The production Harbor cluster deployed inside the Kubernetes environment (`platform-*-frontend` tier) uses Harbor Replication rules to automatically pull images from the bootstrapper registry, securing a completely air-gapped image distribution pipeline.
 
 ### 5. Distributed GitLab HA Architecture
 
@@ -165,7 +169,7 @@
 
 #### 5.3 Kubernetes (Kubeadm) Infrastructure Add-ons
 
-- **Deployment Sequence**: Control plane VMs boot -> Patroni, Sentinel, and MinIO clusters initialize -> `kubeadm init` bootstraps the control plane -> workers join -> Calico CNI configures pod routing -> local-path-provisioner allocates storage -> ESO, Ingress-Nginx, and Reloader deploy -> GitLab and Harbor Helm charts are applied.
+- **Deployment Sequence**: Control plane VMs boot, then Patroni, Sentinel, and MinIO clusters initialize, then `kubeadm init` bootstraps the control plane, then workers join, then Calico CNI configures pod routing, then local-path-provisioner allocates storage, then ESO, Ingress-Nginx, and Reloader deploy, and finally GitLab and Harbor Helm charts are applied.
 - **Calico MTU Clamping**: Calico's `veth` interfaces in Pods are aligned with the underlying network, clamping MTU to `1400` (`mtu = local.pod_network_mtu - 50` where `pod_network_mtu` is `1450`). This accommodates the 50-byte VXLAN tunnel header overhead, ensuring that Pod-to-Pod and Pod-to-Service traffic does not exceed the VM NIC MTU threshold of `1450`.
 - **Vault Kubernetes Auth Method & cert-manager PKI Provisioning**:
     - **Reviewer Delegation**: A `vault-reviewer` Kubernetes ServiceAccount is granted the ClusterRole `system:auth-delegator`. A long-lived SA token is mapped to a Vault backend configuration (`vault_kubernetes_auth_backend_config`). This allows the production Vault to delegate authentication requests back to the Kubernetes API server via the TokenReview API.
@@ -188,5 +192,5 @@
 
 #### 6.1 GitHub & GitLab.com Provider Automation
 
-- **State Control**: Layer `90-meta-github` and `90-meta-gitlab` utilize Terraform Providers to manage remote repositories, branch protection, webhook configurations, and secret synchronization.
+- **State Control**: Layer `meta-github` and `meta-gitlab` utilize Terraform Providers to manage remote repositories, branch protection, webhook configurations, and secret synchronization.
 - **Terraform Import**: Existing public projects are imported into the state using `terraform import` commands to prevent drift and establish centralized governance.

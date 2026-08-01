@@ -5,7 +5,7 @@
 ################################################################
 
 /**
- * Layer 00: Foundation Metadata - Naming & Identity Topology
+ * foundation-metadata: Naming and Identity Topology
  *
  * This file generates the semantic identities for all infrastructure
  * components. It handles:
@@ -84,7 +84,7 @@ locals {
         ["${item.cluster_name}.${item.stage}.${var.domain_suffix}"]
       ))
 
-      # Organizational Unit (OU) - Encodes metadata into the certificate subject
+      # Organizational Unit (OU) encodes metadata into the certificate subject
       ou = [
         "Provider=${item.config.provider}",
         "Env=${item.stage}",
@@ -110,7 +110,7 @@ locals {
    *    Generates deterministic names for OS-level and Hypervisor-level objects.
    */
 
-  # Final Identity Map - The SSoT for naming everything in the datacenter
+  # Final Identity Map, the SSoT for naming everything in the datacenter
   identity_map = {
     for key, item in local._flat_catalog : key => {
       cluster_name      = item.cluster_name

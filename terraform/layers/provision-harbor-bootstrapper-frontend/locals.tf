@@ -39,7 +39,7 @@ locals {
     inventory_file  = "inventory-provision-harbor-bootstrapper-frontend.yaml"
   }
 
-  # Transforms Layer 30 inventory structure into a dedicated group for Layer 40 business logic
+  # Transforms the infra-* inventory structure into a dedicated group for this layer's business logic
   inventory_data = {
     all = {
       children = {

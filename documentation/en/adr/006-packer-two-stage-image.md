@@ -4,22 +4,22 @@
 
 **Context:**
 
-Building all VM images from scratch (raw Ubuntu ISO → fully configured service image) in a single Packer pass is slow and brittle. Every time a service configuration changes, the entire OS base (APT updates, locale, kernel tuning) must be re-built. On a single host with limited bandwidth, this is expensive in both time and reliability.
+Building all VM images from scratch, starting from a raw Ubuntu ISO and ending at a fully configured service image, in a single Packer pass is slow and brittle. Every time a service configuration changes, the entire OS base (APT updates, locale, kernel tuning) must be re-built. On a single host with limited bandwidth, this is expensive in both time and reliability.
 
 **Decision:**
 
 Implement a two-stage Packer build pipeline:
 
-1. **Stage 1 — Base OS Layer** (`packer/base-os/`): Starts from a raw Ubuntu 24.04 ISO. Performs OS-level setup: APT updates, locale, cloud-init configuration, SSH hardening, and base system packages. Produces a `ubuntu-24-updated` golden image stored in the Libvirt storage pool.
+1. **Stage 1: Base OS Layer** (`packer/base-os/`): Starts from a raw Ubuntu 24.04 ISO. Performs OS-level setup: APT updates, locale, cloud-init configuration, SSH hardening, and base system packages. Produces a `ubuntu-24-updated` golden image stored in the Libvirt storage pool.
 
-2. **Stage 2 — Service Layer** (`packer/services/`): Uses the Stage 1 image as a source (`source.qemu.base`). Installs service-specific binaries: `base-baremetal-postgres`, `base-baremetal-redis`, `base-baremetal-vault`, `base-baremetal-etcd`, `base-baremetal-haproxy`, `base-baremetal-minio`, `base-kubernetes-kubeadm`, `base-kubernetes-microk8s`, `base-docker-harbor`. Each service image is a separate Packer build.
+2. **Stage 2: Service Layer** (`packer/services/`): Uses the Stage 1 image as a source (`source.qemu.base`). Installs service-specific binaries: `base-baremetal-postgres`, `base-baremetal-redis`, `base-baremetal-vault`, `base-baremetal-etcd`, `base-baremetal-haproxy`, `base-baremetal-minio`, `base-kubernetes-kubeadm`, `base-kubernetes-microk8s`, `base-docker-harbor`. Each service image is a separate Packer build.
 
 Stage 1 is rebuilt infrequently (OS security patches, Ubuntu point releases). Stage 2 is rebuilt when service versions change.
 
 **Consequences:**
 
 - Significant reduction in build time for service image updates (skip OS setup entirely).
-- Stage 1 must be built before Stage 2 — enforced by `entry.sh` menu structure and Packer `source` references.
+- Stage 1 must be built before Stage 2, which is enforced by `entry.sh` menu structure and Packer `source` references.
 - Adding a new service requires only a new Stage 2 template; Stage 1 is unchanged.
 - Packer state is managed separately per stage; `entry.sh` option `10` clears Stage 2 artifacts without affecting the Stage 1 base image.
 

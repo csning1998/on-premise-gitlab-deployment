@@ -6,7 +6,7 @@ When GitLab internal secrets (especially `rails-secret` / `db_key_base`) are reg
 
 ## Root Cause
 
-- **State Regeneration**: While preserving the `40-provision-gitlab-databases` layer (Postgres persistent data), performing `terraform destroy && terraform apply` on `50-platform-gitlab`, causing `random_password` resources to be destroyed and recreated
+- **State Regeneration**: While preserving the `provision-gitlab-databases` layer (Postgres persistent data), performing `terraform destroy && terraform apply` on `platform-gitlab-frontend`, causing `random_password` resources to be destroyed and recreated
 - **Encryption Mismatch**: `terraform apply` will recreate the `random_password.gitlab_internal["rails-secret"]` resource, resulting in a new `rails_secret_key` in Vault KV; however, encrypted columns in tables such as `users` and `application_settings` in Postgres are still ciphertext encrypted with the old password, causing Rails to fail during decryption at the application layer. This issue is not related to database connection verification
 
 ## Resolution Steps
@@ -61,7 +61,7 @@ To resolve the `CipherError` with minimal intervention without dropping the data
 
 ## Prevention
 
-- **State Persistence**: Unless there is an intention to completely wipe the environment, avoid deleting `terraform.tfstate` for Layer 50
+- **State Persistence**: Unless there is an intention to completely wipe the environment, avoid deleting `terraform.tfstate` for this layer
 - **Vault Versioning**: If state loss occurs, before re-applying, the old `rails-secret` should be recovered from Vault KV-V2 history; otherwise, the database must be wiped
 
 ---
@@ -78,7 +78,7 @@ Terraform never reads or stores any secret value; it only declares **how** secre
 terraform_data.seed_rails_secrets   runs templates/seed-rails-secrets.sh.tftpl via local-exec
     └─ Vault KV secret/on-premise-gitlab-deployment/gitlab/app/rails-secrets, field secrets_yml
         └─ SecretStore "gitlab-vault-store" via Vault K8s auth, mount kubernetes/gitlab/frontend, role core-gitlab-frontend-role
-            └─ ExternalSecret "gitlab-rails-secret" → K8s Secret
+            └─ ExternalSecret "gitlab-rails-secret" becomes K8s Secret
                 └─ Helm chart global.railsSecrets.secret = "gitlab-rails-secret"
 ```
 
@@ -86,7 +86,7 @@ terraform_data.seed_rails_secrets   runs templates/seed-rails-secrets.sh.tftpl v
 
 `terraform_data.seed_rails_secrets` replaces the former manual `init-secrets.sh` pre-flight step. During `terraform apply` it:
 
-1. Authenticates to Vault via AppRole. The `role_id` and `secret_id` come from the same remote state the Vault provider already uses, namely `20-security-vault-approle`.
+1. Authenticates to Vault via AppRole. The `role_id` and `secret_id` come from the same remote state the Vault provider already uses, namely `security-vault-approle`.
 2. Generates all key material with `openssl` in process memory.
 3. Writes the assembled `secrets.yml` to Vault KV as the `secrets_yml` field.
 
@@ -126,9 +126,9 @@ The rotation path is gated by `var.enable_ci_signing_key_rotation` and `var.ci_s
 
 ---
 
-## GitLab Root PAT for 60-provision-gitlab-platform
+## GitLab Root PAT for platform-gitlab-governance
 
-The GitLab provider in `60-provision-gitlab-platform` authenticates using a Personal Access Token (PAT) stored at the Vault path `gitlab/app/pat`. The README for that layer documents the manual bootstrapping procedure typically required for this token, as GitLab does not provide an API endpoint to generate a PAT before a token is established.
+The GitLab provider in `platform-gitlab-governance` authenticates using a Personal Access Token (PAT) stored at the Vault path `gitlab/app/pat`. The README for that layer documents the manual bootstrapping procedure typically required for this token, as GitLab does not provide an API endpoint to generate a PAT before a token is established.
 
 ### Automatic Generation, Off by Default
 

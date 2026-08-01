@@ -50,7 +50,7 @@ variable "topology_cluster" {
 }
 
 variable "svc_network_map" {
-  description = "Pure MECE mapping of calculated network attributes (from 00-foundation-metadata)."
+  description = "Pure MECE mapping of calculated network attributes (from foundation-metadata)."
   type        = any
 }
 
@@ -89,7 +89,7 @@ variable "network_service_segments" {
 }
 
 variable "security_pki_bundle_b64" {
-  description = "PKI certificates passed from Layer 00 via Layer 05"
+  description = "PKI certificates passed from foundation-metadata via foundation-network"
   type        = any
   default     = null
 }

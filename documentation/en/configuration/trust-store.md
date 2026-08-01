@@ -24,21 +24,21 @@ Handle DNS resolution in `/etc/hosts` by adding the following content (default f
 
 ## 2. Import Trust Bundle
 
-Since this repo has already aggregated the Infrastructure CA and Service CA into a single `trust-bundle.crt` in L25, the Host can trust these two independent certificate roots simultaneously. Refer to the content of _Step B.5_. The aggregated certificate file can now be confirmed in the `terraform/layers/25-security-pki/tls/` path.
+Since this repo has already aggregated the Infrastructure CA and Service CA into a single `trust-bundle.crt` in `security-pki`, the Host can trust these two independent certificate roots simultaneously. Refer to the content of _Step B.5_. The aggregated certificate file can now be confirmed in the `terraform/layers/security-pki/tls/` path.
 
 Execute the following command to import both CAs into the operating system:
 
 - **RHEL / CentOS / Fedora:**
 
     ```bash
-    sudo cp terraform/layers/25-security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
+    sudo cp terraform/layers/security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
     sudo update-ca-trust
     ```
 
 - **Ubuntu / Debian:**
 
     ```shell
-    sudo cp terraform/layers/25-security-pki/tls/trust-bundle.crt /usr/local/share/ca-certificates/on-premise-gitlab-pki-bundle.crt
+    sudo cp terraform/layers/security-pki/tls/trust-bundle.crt /usr/local/share/ca-certificates/on-premise-gitlab-pki-bundle.crt
     sudo update-ca-certificates
     ```
 
@@ -58,6 +58,6 @@ Access Harbor from the host to verify the Trust Store:
 curl -vI https://harbor.production.iac.internal
 ```
 
-If it displays `SSL certificate verify ok` and `HTTP/2 200`, it means the full PKI Chain—spanning Vault certificate issuance, cert-manager signing, Ingress deployment, and host-level trust—is successfully established.
+If it displays `SSL certificate verify ok` and `HTTP/2 200`, the full PKI Chain is successfully established, spanning Vault certificate issuance, cert-manager signing, Ingress deployment, and host-level trust.
 
 Another verification method is directly through the GUI to access the corresponding locations.

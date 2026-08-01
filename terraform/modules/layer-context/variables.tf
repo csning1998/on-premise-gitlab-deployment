@@ -1,22 +1,22 @@
 
 # SSoT metadata inputs (type = any: terraform_remote_state outputs carry no static schema)
 variable "global_topology_identity" {
-  description = "SSoT topology identity map from Layer 00 metadata."
+  description = "SSoT topology identity map from foundation-metadata."
   type        = any
 }
 
 variable "global_topology_network" {
-  description = "SSoT topology network map from Layer 00 metadata."
+  description = "SSoT topology network map from foundation-metadata."
   type        = any
 }
 
 variable "global_pki_map" {
-  description = "PKI role map from Layer 00 metadata."
+  description = "PKI role map from foundation-metadata."
   type        = any
 }
 
 variable "global_network_baseline" {
-  description = "Global network baseline parameters (MSS, MTU, Node Exporter port) from Layer 00 metadata."
+  description = "Global network baseline parameters (MSS, MTU, Node Exporter port) from foundation-metadata."
   type = object({
     global_mss         = number
     global_mtu         = number
@@ -25,7 +25,7 @@ variable "global_network_baseline" {
 }
 
 variable "infrastructure_map" {
-  description = "Physical network infrastructure map from Layer 10 handover. type = any: remote_state output."
+  description = "Physical network infrastructure map from shared-load-balancer-frontend handover. type = any: remote_state output."
   type        = any
 }
 

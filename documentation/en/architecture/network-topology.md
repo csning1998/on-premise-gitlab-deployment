@@ -98,16 +98,16 @@ subgraph Central_LB["Central LB"]
 
     subgraph PBR_Standard["Standard Segments<br>(L3 Symmetric)"]
         direction LR
-        RT_GE["rt_gitlab_etcd<br>128.0/24 → gw .128.1"]
-        RT_GM["rt_gitlab_minio<br>130.0/24 → gw .130.1"]
-        RT_GP["rt_gitlab_postgres<br>127.0/24 → gw .127.1"]
-        RT_GR["rt_gitlab_redis<br>129.0/24 → gw .129.1"]
-        RT_HB["rt_harbor_bootstrapper<br>137.0/24 → gw .137.1"]
-        RT_HE["rt_harbor_etcd<br>133.0/24 → gw .133.1"]
-        RT_HF["rt_harbor_frontend<br>131.0/24 → gw .131.1"]
-        RT_HM["rt_harbor_minio<br>135.0/24 → gw .135.1"]
-        RT_HP["rt_harbor_postgres<br>132.0/24 → gw .132.1"]
-        RT_HR["rt_harbor_redis<br>134.0/24 → gw .134.1"]
+        RT_GE["rt_gitlab_etcd<br>128.0/24 via gw .128.1"]
+        RT_GM["rt_gitlab_minio<br>130.0/24 via gw .130.1"]
+        RT_GP["rt_gitlab_postgres<br>127.0/24 via gw .127.1"]
+        RT_GR["rt_gitlab_redis<br>129.0/24 via gw .129.1"]
+        RT_HB["rt_harbor_bootstrapper<br>137.0/24 via gw .137.1"]
+        RT_HE["rt_harbor_etcd<br>133.0/24 via gw .133.1"]
+        RT_HF["rt_harbor_frontend<br>131.0/24 via gw .131.1"]
+        RT_HM["rt_harbor_minio<br>135.0/24 via gw .135.1"]
+        RT_HP["rt_harbor_postgres<br>132.0/24 via gw .132.1"]
+        RT_HR["rt_harbor_redis<br>134.0/24 via gw .134.1"]
     end
 
     subgraph PBR_Vault["Vault Segment<br>(L2 Exception)"]
@@ -133,8 +133,8 @@ RT_HR & RT_HP & RT_HF -->|"cross-subnet reply"| GW_STD
 GW_STD --> SEG_HF & SEG_HR & SEG_HP
 
 RT_VF -->|"L2 direct (bypass router)"| SEG_VF
-RT_VF -->|"scope link all → L2 return"| SEG_HF
+RT_VF -->|"scope link all, L2 return"| SEG_HF
 
-SEG_HF -->|"SYN → 172.16.134.250"| RT_HR
-SEG_VF -->|"SYN → 172.16.136.250"| RT_VF
+SEG_HF -->|"SYN to 172.16.134.250"| RT_HR
+SEG_VF -->|"SYN to 172.16.136.250"| RT_VF
 ```

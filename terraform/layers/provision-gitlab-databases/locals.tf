@@ -35,7 +35,7 @@ locals {
   minio_url = "https://${local.state.minio.connection_info.host}:${local.state.minio.connection_info.port}"
 }
 
-# Credential path map alias passed through from L25 security-pki
+# Credential path map alias passed through from security-pki
 locals {
   credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

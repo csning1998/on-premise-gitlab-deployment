@@ -38,7 +38,7 @@
 ## GitLab.com Credentials for Mirror Management
 
 > [!NOTE]
-> This repo includes a `terraform/layers/90-meta-gitlab` layer that manages the GitLab.com mirror repository configuration (project settings, branch protection) via the `gitlabhq/gitlab` provider. This layer targets the **GitLab.com mirror**, not the on-premise GitLab instance deployed by this project. If the mirror is not managed via this integration, this layer may be skipped or deleted without affecting subsequent operations.
+> This repo includes a `terraform/layers/meta-gitlab` layer that manages the GitLab.com mirror repository configuration (project settings, branch protection) via the `gitlabhq/gitlab` provider. This layer targets the **GitLab.com mirror**, not the on-premise GitLab instance deployed by this project. If the mirror is not managed via this integration, this layer may be skipped or deleted without affecting subsequent operations.
 
 1. Navigate to [GitLab Access Tokens](https://gitlab.com/-/user_settings/personal_access_tokens) to generate a Personal Access Token.
 2. Click `Add new token` and specify the token name and expiration date.
@@ -46,7 +46,7 @@
 
     | Scope | Description                                                           |
     | ----- | --------------------------------------------------------------------- |
-    | `api` | Full API access — required for project settings and branch protection |
+    | `api` | Full API access, required for project settings and branch protection  |
 
 4. Click `Create personal access token` and save the value.
 5. Store the token in Bootstrapper Vault:

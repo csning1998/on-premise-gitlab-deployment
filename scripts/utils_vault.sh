@@ -27,7 +27,7 @@ vault_context_handler() {
   unset VAULT_ADDR VAULT_TOKEN VAULT_CACERT
 
   if [[ "$target" == "prod" ]]; then
-    log_print "INFO" "[Vault Context] Switching to PRODUCTION (Layer 20+)..."
+    log_print "INFO" "[Vault Context] Switching to PRODUCTION (security-vault-approle and later)..."
 
     export VAULT_ADDR="$PROD_VAULT_ADDR"
     export VAULT_CACERT="$PROD_CA_CERT"
@@ -103,16 +103,16 @@ vault_status_reporter() {
 
   # Check Production Vault on Production Guest VM
   if [[ ! -f "$PROD_CA_CERT" ]]; then
-    log_print "WARN" "Production Vault (Layer 15): Unknown (CA Cert missing at $PROD_CA_CERT)"
-    log_print "INFO" "Run Layer 20 Terraform to generate the Bootstrap CA file."
+    log_print "WARN" "Production Vault (shared-vault-frontend): Unknown (CA Cert missing at $PROD_CA_CERT)"
+    log_print "INFO" "Run security-vault-approle Terraform to generate the Bootstrap CA file."
   else
     # Exit code 0 for Unsealed; 2 for Sealed; 1 for Error
     if timeout 2 vault status -address="${PROD_VAULT_ADDR}" -ca-cert="${PROD_CA_CERT}" -format=json >/dev/null 2>&1; then
-      log_print "OK" "Production Vault (Layer 15): Running (Unsealed)"
+      log_print "OK" "Production Vault (shared-vault-frontend): Running (Unsealed)"
     elif [[ $? -eq 2 ]]; then
-      log_print "WARN" "Production Vault (Layer 15): Running (Sealed)"
+      log_print "WARN" "Production Vault (shared-vault-frontend): Running (Sealed)"
     else
-      log_print "ERROR" "Production Vault (Layer 15): Stopped or Unreachable"
+      log_print "ERROR" "Production Vault (shared-vault-frontend): Stopped or Unreachable"
     fi
   fi
   log_divider
@@ -302,7 +302,7 @@ vault_prod_unseal_trigger() {
 
   if [[ ! -f "${PROD_CA_CERT}" ]]; then
     log_print "ERROR" "Production Vault CA Cert not found at: ${PROD_CA_CERT}"
-    log_print "INFO" "Please ensure Terraform Layer 15 has been applied."
+    log_print "INFO" "Please ensure Terraform shared-vault-frontend has been applied."
     return 1
   fi
 

@@ -1,11 +1,11 @@
 
 output "postgres_connection_info" {
-  description = "Postgres primary proxy connection info for L50 consumption"
+  description = "Postgres primary proxy connection info for platform-*-frontend consumption"
   value       = local.state.postgres.connection_info
 }
 
 output "redis_connection_info" {
-  description = "Redis connection info for Layer 50 credentials"
+  description = "Redis connection info for platform-*-frontend credentials"
   value       = local.state.redis.connection_info
 }
 
@@ -33,12 +33,12 @@ output "minio_credentials" {
 }
 
 output "minio_connection_info" {
-  description = "MinIO connection info for L50 consumption"
+  description = "MinIO connection info for platform-*-frontend consumption"
   value       = local.state.minio.connection_info
 }
 
 output "observability_targets" {
-  description = "Aggregated observability metrics ports and IPs for L50"
+  description = "Aggregated observability metrics ports and IPs for platform-*-frontend"
   value = {
     postgres_exporter_port = local.state.postgres.observability_targets.postgres_metrics_port
     postgres_ips           = local.state.postgres.observability_targets.postgres_node_ips

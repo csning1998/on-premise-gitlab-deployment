@@ -86,7 +86,7 @@ variable "ca_bundle" {
   description = "CA Bundle configuration"
   type = object({
     name        = string
-    certs       = map(string) # key → single PEM cert; one entry per CA in the chain
+    certs       = map(string) # key maps to a single PEM cert, one entry per CA in the chain
     secret_name = string
   })
 }

@@ -1,6 +1,6 @@
 
 /**
- * Layer 00: Foundation Metadata - Variables
+ * foundation-metadata: Variables
  *
  * This file defines the Input Schema for the entire infrastructure's
  * Single Source of Truth (SSoT). All downstream layers consume the

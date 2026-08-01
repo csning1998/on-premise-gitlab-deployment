@@ -1,6 +1,6 @@
 
 # PKI Client Certificate for Postgres Provisioning & Application Access
-# This resource remains in Layer 40 because the postgresql provider
+# This resource remains in this layer because the postgresql provider
 # requires it to establish a secure TLS connection during provisioning.
 resource "vault_pki_secret_backend_cert" "gitlab_db_client" {
   provider    = vault.production

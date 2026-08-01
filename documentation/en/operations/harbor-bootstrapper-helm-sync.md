@@ -1,9 +1,9 @@
 # Harbor Bootstrapper: Helm Chart OCI Sync
 
 > [!NOTE]
-> The following has been integrated into `40-provision-harbor-bootstrapper-frontend` via the Ansible Provider. Executing `terraform apply` automates the requirements described below.
+> The following has been integrated into `provision-harbor-bootstrapper-frontend` via the Ansible Provider. Executing `terraform apply` automates the requirements described below.
 
-Since Helm Charts related to Layer 50 consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `30-infra-harbor-bootstrapper-frontend` and `40-provision-harbor-bootstrapper-frontend` have been executed successfully.
+Since Helm Charts related to the `platform-*-frontend` tier consistently utilize OCI to connect with Bootstrapper Harbor, it is necessary to first `helm pull` the relevant artifacts from remote repositories and push them to Bootstrapper Harbor. Ensure that `infra-harbor-bootstrapper-frontend` and `provision-harbor-bootstrapper-frontend` have been executed successfully.
 
 ## Steps
 
@@ -48,7 +48,7 @@ Since Helm Charts related to Layer 50 consistently utilize OCI to connect with B
     helm push harbor-1.18.0.tgz oci://"$HARBOR_REGISTRY"/helm-charts
     ```
 
-4. Subsequently, Layer 50 Helm Charts can be executed.
+4. Subsequently, `platform-*-frontend` Helm Charts can be executed.
 
 > [!NOTE]
 > To use remote sources, typically the `repository` and `chart` information for each Helm Chart Module in the `terraform/modules/kubernetes-addons` path must be configured. Refer to the [code record](https://github.com/csning1998/on-premise-gitlab-deployment/tree/018233b3032e517b43e52fc4e17bcd3dde7cf52f/terraform/modules/kubernetes-addons) from #96.

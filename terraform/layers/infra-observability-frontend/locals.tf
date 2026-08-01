@@ -27,8 +27,8 @@ locals {
   network_harbor_bootstrapper = module.context.global_topology_network["harbor-bootstrapper"]["frontend"]
 }
 
-# The Central LB is excluded from the L00 SSoT node placement.
-# Retrieve its node IPs from the L10 outputs instead of network_central_lb.
+# The Central LB is excluded from the foundation-metadata SSoT node placement.
+# Retrieve its node IPs from the shared-load-balancer-frontend outputs instead of network_central_lb.
 locals {
   central_lb_node_ips = data.terraform_remote_state.load_balancer.outputs.central_lb_node_ips
 }

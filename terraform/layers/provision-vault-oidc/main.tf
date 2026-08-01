@@ -33,7 +33,7 @@ resource "vault_jwt_auth_backend_role" "keycloak_user" {
   allowed_redirect_uris = local.state.keycloak_oidc.vault_redirect_uris
 }
 
-# 3. Identity Groups (External) - Dynamic Mapping for all Management Roles
+# 3. Identity Groups (External), Dynamic Mapping for all Management Roles
 resource "vault_identity_group" "management_groups" {
   provider = vault.production
   for_each = local.state.vault_pki.management_policies
@@ -47,7 +47,7 @@ resource "vault_identity_group" "management_groups" {
   }
 }
 
-# 4. Group Aliases - Linking Keycloak groups to Vault groups
+# 4. Group Aliases, Linking Keycloak groups to Vault groups
 resource "vault_identity_group_alias" "management_group_aliases" {
   provider = vault.production
   for_each = local.state.vault_pki.management_policies

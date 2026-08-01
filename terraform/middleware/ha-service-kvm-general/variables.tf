@@ -53,7 +53,7 @@ variable "topology_cluster" {
 }
 
 variable "network_infrastructure_map" {
-  description = "Raw network infrastructure map passed directly from Layer 05 outputs."
+  description = "Raw network infrastructure map passed directly from foundation-network outputs."
   type = map(object({
     network = object({
       nat = object({
@@ -133,7 +133,7 @@ variable "security_pki_bundle_b64" {
 }
 
 variable "storage_infrastructure_map" {
-  description = "Pure MECE mapping of calculated storage volume attributes, passed from Layer 05 outputs."
+  description = "Pure MECE mapping of calculated storage volume attributes, passed from foundation-volume outputs."
   type        = any
   default     = {}
 }

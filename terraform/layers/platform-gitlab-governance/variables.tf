@@ -1,5 +1,5 @@
 
-# Infrastructure variables moved to Layer 50.
+# Infrastructure variables moved to platform-gitlab-frontend.
 # GitLab Provisioning variables will be added here as needed.
 
 variable "gitlab_token" {

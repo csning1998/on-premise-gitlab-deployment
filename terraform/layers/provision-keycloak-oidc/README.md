@@ -1,4 +1,4 @@
-# Layer 40: Keycloak OIDC Identity Foundation
+# provision-keycloak-oidc: Keycloak OIDC Identity Foundation
 
 This layer serves as the identity core of the entire infrastructure. It is responsible for configuring the Keycloak Realm, OIDC Clients, hierarchical groups (RBAC), and user accounts.
 
@@ -31,7 +31,7 @@ To avoid Terraform circular dependencies, groups are divided into two levels:
 
 ## Collaboration with Downstream Layers (Single Source of Truth)
 
-### Support for GitLab (Layer 60)
+### Support for GitLab (platform-gitlab-governance)
 
 1. **Password Synchronization**: The `initial_password` set in this layer is passed to GitLab via remote state to create “shadow accounts”.
 2. **Automated Permission Assignment**: GitLab reads the group mapping table from this layer to automatically assign development team memberships.

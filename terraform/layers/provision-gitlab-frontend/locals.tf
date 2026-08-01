@@ -38,7 +38,7 @@ locals {
     client_key         = base64decode(local.user_info["client-key-data"])
   }
 
-  # Trust Engine Contract (Internal to Layer 50)
+  # Trust Engine Contract (Internal to platform-gitlab-frontend)
   issuer_name = module.platform_trust_engine.issuer_name
   issuer_kind = module.platform_trust_engine.issuer_kind
 }
@@ -97,7 +97,7 @@ locals {
 
 # 4. External Service Address & Ports
 locals {
-  # Dynamic Ports/VIPs from Layer 10 (Shared Load Balancer)
+  # Dynamic Ports/VIPs from shared-load-balancer-frontend
   postgres_rw_port = local.state.postgres.connection_info.port
   redis_port       = local.state.redis.connection_info.port
   minio_port       = local.state.minio.connection_info.port
@@ -194,7 +194,7 @@ locals {
   }
 }
 
-# Credential path map alias passed through from L25 security-pki
+# Credential path map alias passed through from security-pki
 locals {
   credential_paths = data.terraform_remote_state.vault_pki.outputs.global_credential_paths
 }

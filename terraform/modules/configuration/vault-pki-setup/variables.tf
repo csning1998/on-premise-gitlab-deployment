@@ -5,7 +5,7 @@ variable "vault_endpoint" {
 }
 
 variable "pki_settings" {
-  description = "Global PKI Identity Settings (Root -> Intermediate)"
+  description = "Global PKI Identity Settings (Root to Intermediate)"
   type = object({
     root_ca_common_name         = string
     intermediate_ca_common_name = string

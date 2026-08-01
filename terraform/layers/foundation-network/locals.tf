@@ -84,7 +84,7 @@ locals {
       mtu            = local.state.metadata.global_network_baseline.global_mtu
       mss            = local.state.metadata.global_network_baseline.global_mss
 
-      # Use node_ips derived from Layer 00 directly to avoid re-calculation
+      # Use node_ips derived from foundation-metadata directly to avoid re-calculation
       backend_servers = [
         for idx, ip in local.segments[key].network.node_ips : {
           name = "${local.segments[key].identity.node_name_prefix}-${local.segments[key].network.ip_range.start_ip + idx}"

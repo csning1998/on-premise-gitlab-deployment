@@ -2,7 +2,7 @@
 
 # This script contains functions for controlling KVM/libvirt services and VMs.
 
-# Project code filter that matches project_code in L00 terraform.tfvars
+# Project code filter that matches project_code in foundation-metadata terraform.tfvars
 readonly PROJECT_CODE="core"
 
 # Function: Ensure libvirt service is running before executing a command.

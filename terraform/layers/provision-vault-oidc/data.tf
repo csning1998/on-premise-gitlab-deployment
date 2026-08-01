@@ -19,7 +19,7 @@ data "terraform_remote_state" "keycloak_provisioning" {
   config  = merge(local._state_auth, { address = "${local._state_base}/provision-keycloak-oidc" })
 }
 
-# Read OIDC Client credentials from Vault (Created in L40)
+# Read OIDC Client credentials from Vault (Created in provision-*)
 data "vault_kv_secret_v2" "keycloak_vault_client" {
   provider = vault.production
   mount    = "secret"

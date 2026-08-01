@@ -84,7 +84,7 @@ resource "vault_pki_secret_backend_config_issuers" "bootstrap_int_default" {
 #
 # Each role permits certificate issuance for a single service identity, scoped to its DNS SAN.
 # IP SANs are allowed but not statically defined, as real Central LB node IPs are determined
-# at Layer 10 and supplied dynamically during issuance.
+# at shared-load-balancer-frontend and supplied dynamically during issuance.
 resource "vault_pki_secret_backend_role" "bootstrap_leaf" {
   for_each = local.bootstrap_leaf_roles
 

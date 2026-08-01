@@ -1,16 +1,16 @@
 
 output "issuer_name" {
-  description = "The name of the Cert-Manager issuer provisioned in Layer 40"
+  description = "The name of the Cert-Manager issuer provisioned in this layer"
   value       = module.platform_trust_engine.issuer_name
 }
 
 output "issuer_kind" {
-  description = "The kind of the Cert-Manager issuer provisioned in Layer 40"
+  description = "The kind of the Cert-Manager issuer provisioned in this layer"
   value       = module.platform_trust_engine.issuer_kind
 }
 
 output "kubernetes_context" {
-  description = "Kubeadm cluster connectivity data for L50 consumption"
+  description = "Kubeadm cluster connectivity data for platform-*-frontend consumption"
   value = {
     service_vip      = local.state.kubeadm.service_vip
     cluster_name     = local.state.kubeadm.cluster_name
@@ -19,7 +19,7 @@ output "kubernetes_context" {
 }
 
 output "has_praefect" {
-  description = "True if Praefect cluster nodes are provisioned; consumed by L50 for Gitaly token and node selection."
+  description = "True if Praefect cluster nodes are provisioned; consumed by platform-*-frontend for Gitaly token and node selection."
   value       = local._has_praefect
 }
 
@@ -29,7 +29,7 @@ output "gitaly_endpoint" {
 }
 
 output "network_context" {
-  description = "Aggregated network and port configurations for L50 consumption"
+  description = "Aggregated network and port configurations for platform-*-frontend consumption"
   value = {
     global_network_mtu      = local.state.kubeadm.global_network_mtu
     k8s_api_port            = local.state.kubeadm.k8s_api_port

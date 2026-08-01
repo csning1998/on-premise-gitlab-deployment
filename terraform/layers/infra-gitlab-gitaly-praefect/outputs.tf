@@ -19,7 +19,7 @@ output "topology_cluster" {
 }
 
 output "praefect_connection_info" {
-  description = "Praefect proxy endpoint for L40 consumption."
+  description = "Praefect proxy endpoint for provision-* consumption."
   value = {
     host = module.context.network_infrastructure_map["praefect"].lb_config.vip
     port = module.context.network_infrastructure_map["praefect"].lb_config.ports["proxy"].frontend_port
@@ -27,7 +27,7 @@ output "praefect_connection_info" {
 }
 
 output "gitaly_connection_info" {
-  description = "Gitaly gRPC endpoint for L40 consumption."
+  description = "Gitaly gRPC endpoint for provision-* consumption."
   value = {
     host = module.context.network_infrastructure_map["gitaly"].lb_config.vip
     port = module.context.network_infrastructure_map["gitaly"].lb_config.ports["grpc"].frontend_port

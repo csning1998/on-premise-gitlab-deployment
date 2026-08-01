@@ -1,6 +1,6 @@
 
 output "global_credential_paths" {
-  description = "Pass-through of the L00 credential path map for downstream layer consumption."
+  description = "Pass-through of the foundation-metadata credential path map for downstream layer consumption."
   value       = local.state.metadata.global_credential_paths
 }
 

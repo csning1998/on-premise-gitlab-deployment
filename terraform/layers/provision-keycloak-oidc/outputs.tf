@@ -51,7 +51,7 @@ output "node_exporter_targets" {
 }
 
 # Since GitLab CE does not support native OIDC inventory/sync,
-# this user data must be passed via remote states to enable shadow account provisioning in Layer 60.
+# this user data must be passed via remote states to enable shadow account provisioning in platform-gitlab-governance.
 output "oidc_users" {
   description = "User inventory for downstream layers. Marked as sensitive because it contains initial passwords."
   value = {

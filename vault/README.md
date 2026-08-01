@@ -1,7 +1,7 @@
 # Tutorial: Configure HashiCorp Vault
 
 > **TL;DR**
-> 此 Podman Vault 的定位為 **Bootstrapper (Seed Vault)**，專門運行於控制節點本機。在底層 KVM/Libvirt 基礎設施尚未建立前，主機必須透過此本機 Vault 提供一個安全的 Remote State Backend 以存放狀態，並保存啟動基礎設施所需的初始機密（如 VM 預設登入憑證、Root PKI CA）。後續執行 `terraform/layers/15-shared-vault-frontend` 時，Terraform 將會登入此本機 Podman Vault 提取 KVM 叢集必備之網路拓樸與憑證，藉此建立正式的共用基礎設施。這是此本機 Vault 必須存在且作為過渡核心的根本原因。
+> 此 Podman Vault 的定位為 **Bootstrapper (Seed Vault)**，專門運行於控制節點本機。在底層 KVM/Libvirt 基礎設施尚未建立前，主機必須透過此本機 Vault 提供一個安全的 Remote State Backend 以存放狀態，並保存啟動基礎設施所需的初始機密（如 VM 預設登入憑證、Root PKI CA）。後續執行 `terraform/layers/shared-vault-frontend` 時，Terraform 將會登入此本機 Podman Vault 提取 KVM 叢集必備之網路拓樸與憑證，藉此建立正式的共用基礎設施。這是此本機 Vault 必須存在且作為過渡核心的根本原因。
 
 ## Section 1. Start Vault Dev Server for PoC
 

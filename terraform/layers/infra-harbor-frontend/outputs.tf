@@ -15,7 +15,7 @@ output "global_network_mtu" {
 }
 
 output "k8s_api_port" {
-  description = "K8s API server frontend port for L40 consumption."
+  description = "K8s API server frontend port for provision-* consumption."
   value       = module.context.svc_network.ports["api-server"].frontend_port
 }
 

@@ -3,7 +3,7 @@
 ## Architecture Overview
 
 Production Harbor serves as the primary OCI artifact registry for development teams.
-It is **air-gapped from the internet** — all external base images arrive via replication
+It is **air-gapped from the internet**. All external base images arrive via replication
 from Bootstrapper Harbor.
 
 ```mermaid
@@ -31,9 +31,9 @@ sequenceDiagram
 | `gitlab-registry`   | GitLab CI robot       | GitLab CI robot      |
 | `library`           | Admin                 | Public (no auth)     |
 
-### OIDC Group → Harbor Role Mapping
+### OIDC Group to Harbor Role Mapping
 
-Groups are derived from Keycloak (type=team → team project, type=role → cross-team):
+Groups are derived from Keycloak. `type=team` maps to a team project, and `type=role` maps to cross-team access.
 
 | Keycloak Group                              | Harbor Role          | Scope                      |
 | ------------------------------------------- | -------------------- | -------------------------- |
@@ -55,7 +55,7 @@ Redirects to Keycloak; use your SSO credentials.
 OIDC tokens cannot be used directly with `podman login`. You need a **CLI Secret**:
 
 1. Log in to Harbor UI via OIDC
-2. Click your avatar (top-right) → **User Profile** → **CLI Secret** → copy
+2. Click your avatar (top-right), then **User Profile**, then **CLI Secret**, then copy the value
 3. Use it as the password:
 
 ```sh
@@ -64,14 +64,14 @@ podman login harbor.production.iac.local \
     -p <cli-secret>
 ```
 
-### Admin Account (local auth — bypasses OIDC)
+### Admin Account (local auth, bypasses OIDC)
 
 Admin uses basic auth directly against the API even when OIDC is `primary_auth_mode`.
 Credentials are in Vault:
 
 ```sh
 export VAULT_ADDR="https://172.16.136.250:443"
-export VAULT_CACERT="${PWD}/terraform/layers/15-shared-vault-frontend/tls/bootstrap-ca.crt"
+export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
 export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
 
 vault kv get -mount=secret -field=harbor_admin_password \
@@ -138,8 +138,8 @@ automatically.
 
 ### Manual Trigger
 
-Harbor GUI → **Administration** → **Replications** → select
-`mirror-from-bootstrapper-{project}` → click **Replicate**.
+In the Harbor GUI, navigate to **Administration**, then **Replications**, select
+`mirror-from-bootstrapper-{project}`, then click **Replicate**.
 
 Or via API:
 
@@ -170,7 +170,7 @@ ssh core-harbor-frontend-node-00 \
     "kubectl -n harbor logs -l app=harbor,component=registry --tail=50"
 ```
 
-### MinIO S3 endpoint — connection refused on port 443
+### MinIO S3 endpoint: connection refused on port 443
 
 **Symptom**: blob upload returns HTTP 500; registry logs show
 `dial tcp 172.16.135.250:443: connect: connection refused`.
@@ -178,7 +178,7 @@ ssh core-harbor-frontend-node-00 \
 **Root cause**: Harbor's S3 endpoint was configured without an explicit port, defaulting
 to 443. MinIO's API port is **9000**.
 
-**Fix** (already applied in `50-platform-harbor-frontend/main.tf`):
+**Fix** (already applied in `platform-harbor-frontend/main.tf`):
 
 ```hcl
 s3 = {
@@ -186,11 +186,11 @@ s3 = {
 }
 ```
 
-Re-apply `50-platform-harbor-frontend` to update the Helm release.
+Re-apply `platform-harbor-frontend` to update the Helm release.
 
 ### OIDC Duplicate User Conflict
 
-See [`60-provision-harbor-platform/README.md`](../../../terraform/layers/60-provision-harbor-platform/README.md)
+See [`platform-harbor-governance/README.md`](../../../terraform/layers/platform-harbor-governance/README.md)
 for the database cleanup procedure.
 
 ### Harbor admin 401 during Terraform apply (refresh phase)
@@ -205,5 +205,5 @@ changes. Existing state is trusted as-is.
 terraform apply -refresh=false
 ```
 
-The Harbor provider in `60-provision-harbor-platform` uses `admin` basic auth (which works even
+The Harbor provider in `platform-harbor-governance` uses `admin` basic auth (which works even
 with OIDC `primary_auth_mode = true` via the `/api/v2.0` endpoint).

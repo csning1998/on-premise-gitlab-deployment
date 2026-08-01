@@ -11,7 +11,7 @@ resource "vault_policy" "production_admin" {
 }
 
 # Read-only sys/metrics access for Alloy's authenticated Vault scrape, replacing unauthenticated_metrics_access.
-# The actual token is minted in L25 credentials from the token role below.
+# The actual token is minted in security-credentials from the token role below.
 resource "vault_policy" "alloy_metrics_read" {
   provider = vault.production
   name     = "alloy-metrics-read"

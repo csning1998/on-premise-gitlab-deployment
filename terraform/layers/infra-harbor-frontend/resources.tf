@@ -5,6 +5,6 @@ resource "vault_approle_auth_backend_role_secret_id" "microk8s_agent" {
   role_name = data.terraform_remote_state.vault_pki.outputs.workload_identities_approle[module.context.svc_pki_role.key].role_name
 
   metadata = jsonencode({
-    "source" = "terraform-layer-30-infra-harbor-frontend"
+    "source" = "terraform-layer-infra-harbor-frontend"
   })
 }

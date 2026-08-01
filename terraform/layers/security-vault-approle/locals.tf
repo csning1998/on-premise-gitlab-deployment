@@ -13,7 +13,7 @@ locals {
 locals {
   state = {
     vault_sys          = data.terraform_remote_state.vault_sys.outputs
-    vault_bootstrapper = data.terraform_remote_state.vault_bootstrapper.outputs # Seed Vault is in Layer 00
+    vault_bootstrapper = data.terraform_remote_state.vault_bootstrapper.outputs # Seed Vault is in foundation-vault-bootstrapper
   }
 
   sys_vault_endpoint = "https://${local.state.vault_sys.service_vip}:443"
