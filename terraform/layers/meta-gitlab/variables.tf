@@ -22,7 +22,7 @@ variable "visibility" {
 }
 
 variable "gitlab_token" {
-  description = "GitLab Personal Access Token (PAT) with api scope, used only to read csning1998-lab-meta-provision's remote state. The project token in backend-state.json is scoped to this repository alone and cannot reach a different project's state."
+  description = "GitLab Personal Access Token (PAT) with api scope, used only to read meta-platform's remote state. The project token in backend-state.json is scoped to this repository alone and cannot reach a different project's state."
   type        = string
   sensitive   = true
 }
