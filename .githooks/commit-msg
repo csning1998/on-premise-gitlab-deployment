@@ -9,12 +9,11 @@ IMAGE="registry.gitlab.com/csning1998/gitlab-ci-with-code-reviewer/reviewer:edge
 MSG_FILE="$1"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-# commitlint resolves Git repository metadata from its container working directory (/repo).
-# Mounts the full repository root and projects the target commit message file into .git/
-# to satisfy commitlint's relative path resolution requirements during --edit execution.
+# commitlint resolves Git repository metadata from its container working directory (/repo),
+# which requires only .git/ rather than the full working tree. MSG_FILE already resolves to a
+# path beneath .git/ (COMMIT_EDITMSG). No source outside .git/ needs to be mounted.
 podman run --rm \
-    --security-opt label=disable \
-    -v "${REPO_ROOT}":/repo \
+    -v "${REPO_ROOT}/.git":/repo/.git \
     -v "$(realpath "${MSG_FILE}")":/repo/.git/COMMIT_EDITMSG_HOOK \
     -w /repo \
     "$IMAGE" \
