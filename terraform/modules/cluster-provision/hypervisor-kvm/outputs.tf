@@ -21,5 +21,5 @@ output "infrastructure_config" {
 
 output "guest_status_trigger" {
   description = "A trigger to indicate completion of VM provisioning"
-  value       = { for key, domain in libvirt_domain.nodes : key => domain.id }
+  value       = { for key, disk in libvirt_cloudinit_disk.cloud_init : key => disk.id }
 }
