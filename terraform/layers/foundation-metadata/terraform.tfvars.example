@@ -1,22 +1,11 @@
 
-domain_suffix      = "iac.internal"
 vault_kv_namespace = "on-premise-gitlab-deployment"
 
-network_baseline = {
-  cidr_block         = "172.16.0.0/16"
-  vip_offset         = 250        # VIP always .250
-  node_ip_start      = 200        # node ip from .200
-  mac_prefix         = "52:54:00" # KVM/Libvirt common prefix
-  global_mtu         = 1450
-  global_mss         = 1360
-  node_exporter_port = 9100 # Debian/Ubuntu prometheus-node-exporter package default
-}
+gitlab_token    = "<GITLAB_PAT_WITH_API_SCOPE>"
+gitlab_username = "<GITLAB_ACCOUNT_NAME>"
 
-# The Single Source of Truth for the Root CA Identity
-pki_config = {
-  root_ca_common_name         = "On-prem Infrastructure Root CA"
-  intermediate_ca_common_name = "On-prem Infrastructure Intermediate CA"
-}
+service_catalog_module_source  = "gitlab.com/csning1998-lab/service-catalog/gitlab"
+service_catalog_module_version = "0.1.2"
 
 /** Service Catalog Definition rules:
  * 0. name: define UNIQUE name of the service.

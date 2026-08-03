@@ -13,7 +13,7 @@ data "terraform_remote_state" "gemini_api_keys" {
   backend = "http"
   config = {
     address  = "https://gitlab.com/api/v4/projects/84608830/terraform/state/40-gemini-api-keys"
-    username = "csning1998"
+    username = var.gitlab_username
     password = var.gitlab_token
   }
 }
@@ -22,7 +22,7 @@ data "terraform_remote_state" "group_topology" {
   backend = "http"
   config = {
     address  = "https://gitlab.com/api/v4/projects/84608830/terraform/state/10-group-topology"
-    username = "csning1998"
+    username = var.gitlab_username
     password = var.gitlab_token
   }
 }

@@ -15,7 +15,7 @@ The LGTM stack (Mimir, Loki, Grafana, Alloy) collects service-level exporter met
 The port and per-VM IP lists are threaded through the layer chain using the same conventions already used for ``postgres_exporter` / `redis_exporter` / etcd / gitaly targets.
 
 1. `foundation-metadata` defines `network_baseline.node_exporter_port` (9100) as a global constant, alongside `global_mtu`/`global_mss`. Node exporter's port is uniform across every VM regardless of service, so it lives in the global baseline rather than duplicated into all 16 `service_catalog` port maps.
-2. `modules/layer-context` passes `node_exporter_port` through to every layer that instantiates the context module, alongside the existing `global_mtu`/`global_mss` outputs.
+2. [ARCHITECTURAL OUTDATED] `modules/layer-context` passes `node_exporter_port` through to every layer that instantiates the context module, alongside the existing `global_mtu`/`global_mss` outputs.
 3. 16 VM-owning layers (`shared-load-balancer-frontend`, `shared-vault-frontend`, and 14 `infra-*` layers) each expose their own node IPs and the port, either inside an existing `observability_targets` output or as a dedicated `node_exporter_targets` output, following each layer's own established naming style.
 4. 9 `provision-*` layers aggregate or pass through the `infra-*` tier's node exporter data toward the `platform-*-frontend` tier.
 5. 4 `platform-*-frontend` layers (`gitlab-frontend`, `harbor-frontend`, `gitlab-runner`, `observability-frontend`) build `vm_static_targets` for each tenant's Alloy `module` from a `flatten` loop over every service group's node IPs, paired with the global port.

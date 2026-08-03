@@ -24,7 +24,8 @@ module "vault_pki_setup" {
 
 # 1. Workload Identities for AppRole (Dependencies / Baremetal)
 module "vault_workload_identity_approle" {
-  source = "../../modules/configuration/vault-workload-identity"
+  source  = "gitlab.com/csning1998-lab/vault-workload-identity/gitlab"
+  version = "0.1.4"
   providers = {
     vault = vault.production
   }

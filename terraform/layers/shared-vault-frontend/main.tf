@@ -1,6 +1,7 @@
 
 module "context" {
-  source = "../../modules/layer-context"
+  source  = "gitlab.com/csning1998-lab/kvm-provisioning/gitlab//layer-context"
+  version = "0.1.4"
 
   global_topology_identity = data.terraform_remote_state.metadata.outputs.global_topology_identity
   global_topology_network  = data.terraform_remote_state.metadata.outputs.global_topology_network
@@ -24,8 +25,10 @@ resource "local_file" "bootstrap_ca" {
 }
 
 module "shared_vault" {
-  source            = "../../middleware/ha-service-kvm-general"
+  source            = "gitlab.com/csning1998-lab/kvm-provisioning/gitlab//ha-service-kvm-general"
+  version           = "0.1.4"
   ansible_root_path = abspath("${path.root}/../../../ansible")
+  scripts_root_path = abspath("${path.root}/../../../scripts")
 
   svc_identity               = module.context.svc_identity
   node_identities            = module.context.node_identities

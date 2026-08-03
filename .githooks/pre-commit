@@ -8,8 +8,7 @@ IMAGE="docker.io/zricethezav/gitleaks:v8.30.1"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 podman run --rm \
-    --security-opt label=disable \
-    -v "${REPO_ROOT}":/repo \
+    -v "${REPO_ROOT}/.git":/repo/.git \
     -w /repo \
     "$IMAGE" \
     protect --staged --redact -v

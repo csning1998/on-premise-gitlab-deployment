@@ -2,7 +2,8 @@
 # GitLab core component credentials
 
 module "gitlab_postgres" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "postgres"
@@ -22,7 +23,8 @@ module "gitlab_postgres" {
 }
 
 module "gitlab_redis" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "redis"
@@ -41,7 +43,8 @@ module "gitlab_redis" {
 }
 
 module "gitlab_minio" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "minio"
@@ -65,7 +68,8 @@ module "gitlab_minio" {
 # Harbor core component credentials
 
 module "harbor_postgres" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "harbor"
   component = "postgres"
@@ -85,7 +89,8 @@ module "harbor_postgres" {
 }
 
 module "harbor_redis" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "harbor"
   component = "redis"
@@ -104,7 +109,8 @@ module "harbor_redis" {
 }
 
 module "harbor_minio" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "harbor"
   component = "minio"
@@ -128,7 +134,8 @@ module "harbor_minio" {
 # Keycloak credentials
 
 module "keycloak_server" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "keycloak"
   component = "frontend"
@@ -153,7 +160,8 @@ module "keycloak_server" {
 # Harbor bootstrapper credentials
 
 module "harbor_bootstrapper" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "harbor-bootstrapper"
   component = "frontend"
@@ -173,7 +181,8 @@ module "harbor_bootstrapper" {
 # GitLab Gitaly/Praefect application credentials
 
 module "gitlab_app_gitaly" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "gitaly"
@@ -197,7 +206,8 @@ module "gitlab_app_gitaly" {
 }
 
 module "gitlab_app_postgres" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "praefect-patroni"
@@ -216,7 +226,8 @@ module "gitlab_app_postgres" {
 }
 
 module "gitlab_app_internal" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "gitlab"
   component = "frontend"
@@ -234,7 +245,8 @@ module "gitlab_app_internal" {
 }
 
 module "harbor_app_internal" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "harbor"
   component = "frontend"
@@ -253,7 +265,8 @@ module "harbor_app_internal" {
 # Observability stack credentials
 
 module "observability_minio" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "observability"
   component = "minio"
@@ -275,7 +288,8 @@ module "observability_minio" {
 }
 
 module "observability_frontend" {
-  source = "../../modules/configuration/vault-credential"
+  source  = "gitlab.com/csning1998-lab/vault-credential/gitlab"
+  version = "0.1.4"
 
   domain    = "observability"
   component = "frontend"
