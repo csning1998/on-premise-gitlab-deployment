@@ -1,0 +1,74 @@
+---
+defaults:
+  max_tokens: 16384
+  timeout: 5m
+  # temperature: 0.2
+  # top_p: 0.95
+
+models:
+  # Anthropic Claude configuration (Claude 4.x / 5.x)
+  claude-sonnet-5:
+    provider: claude
+    model: claude-sonnet-5
+    thinking_type: adaptive
+    max_tokens: 32768
+    reasoning_level: high
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+    # Optional tuning parameters:
+    # timeout: 10m
+    # (Legacy models only: thinking_budget: 4096)
+
+  # Google Gemini configuration (Gemini 2.x / 3.x)
+  gemini-3.7-flash:
+    provider: gemini
+    model: gemini-3.7-flash
+    temperature: 0.0
+    max_tokens: 32768
+    reasoning_level: high
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+    # Optional tuning parameters:
+    # top_p: 0.95
+    # top_k: 40
+    # response_mime_type: application/json
+    # (Gemini 2.x generation only: thinking_budget: 2048, include_thoughts: false)
+
+  # OpenAI configuration example (GPT-6 series / o-series reasoning models)
+  # openai-gpt-6-sol:
+  #   provider: openai
+  #   model: gpt-6-sol
+  #   reasoning_level: high
+  #   prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+  #   # Optional tuning parameters:
+  #   # max_tokens: 16384
+  #   # temperature: 0.2
+  #   # top_p: 1.0
+  #   # frequency_penalty: 0.0
+  #   # presence_penalty: 0.0
+  #   # seed: 42
+
+  # Azure OpenAI configuration
+  azure-gpt-5.4-mini:
+    provider: azure-openai
+    model: gpt-5.4-mini
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+    # Optional tuning parameters:
+    max_tokens: 32768
+    # (Requires REVIEW_BASE_URL and REVIEW_API_VERSION provided via CI/CD inputs or environment variables)
+
+  # xAI Grok configuration example (Grok 4.x flagship series)
+  # grok-4-7:
+  #   provider: grok
+  #   model: grok-4.7
+  #   reasoning_level: high
+  #   temperature: 0.0
+  #   prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+  #   # Optional tuning parameters:
+  #   # max_tokens: 16384
+  #   # top_p: 0.95
+
+slots:
+  primary: claude-sonnet-5
+  fast: gemini-3.7-flash
+  # balanced: openai-gpt-6-sol
+  # enterprise: azure-gpt-6-sol
+  # grok: grok-4-7

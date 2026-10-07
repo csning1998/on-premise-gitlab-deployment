@@ -1,0 +1,6 @@
+---
+# Schema consumed by gitlab-ci-with-code-reviewer's auto-tag component (tools/ci/internal/versiontag).
+# Single whole-repository module, matching this project's tagging behavior prior to auto-tag 1.5.1.
+modules:
+  - name: ''
+    dir: '.'

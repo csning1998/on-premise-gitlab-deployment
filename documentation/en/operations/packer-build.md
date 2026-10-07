@@ -10,18 +10,10 @@ The `entry.sh` script located in the root directory handles all service initiali
 
 ======= IaC-Driven Virtualization Management =======
 
-[INFO] Environment: NATIVE
---------------------------------------------------
-[OK] Bootstrapper Vault (Local): Running (Unsealed)
-[OK] Production Vault (shared-vault-frontend): Running (Unsealed)
-------------------------------------------------------------
-
-1) [DEV] Set up TLS for Dev Vault (Local)                      7) Build Packer Base Image
-2) [DEV] Initialize Dev Vault (Local)                          8) Verify Guest VM Connectivity via SSH
-3) [DEV] Unseal Dev Vault (Local)                              9) Switch Environment Strategy
-4) [PROD] Unseal Production Vault (via Ansible)               10) Purge All Packer Artifacts
-5) Generate SSH Key                                           11) Purge All Infrastructure Resources (Libvirt + Terraform)
-6) Verify IaC Environment                                     12) Quit
+1) Generate SSH Key                                            5) [PROD] Revert Gitaly to Standalone for Safety Pre-check
+2) Verify IaC Environment                                      6) Purge All Packer Artifacts
+3) Build Packer Base Image                                     7) Purge All Infrastructure Resources (Libvirt + Terraform)
+4) Verify Guest VM Connectivity via SSH                        8) Quit
 
 [INPUT] Please select an action:
 ```
@@ -30,50 +22,39 @@ Where the functions are listed below:
 
 | Option | Description                                              |
 | ------ | -------------------------------------------------------- |
-| `1`    | Set up TLS for Bootstrapper Vault (Dev/Local)            |
-| `2`    | Initialize Bootstrapper Vault                            |
-| `3`    | Unseal Bootstrapper Vault                                |
-| `4`    | Unseal Production Vault (via Ansible playbook)           |
-| `5`    | Generate SSH Key                                         |
-| `6`    | Verify IaC Environment (KVM/QEMU installation)           |
-| `8`    | Verify Guest VM Connectivity via SSH                     |
-| `9`    | Switch Environment Strategy (Container ↔ Native)         |
-| `10`   | Purge All Packer Artifacts                               |
-| `11`   | Purge All Infrastructure Resources (Libvirt + Terraform) |
+| `1`    | Generate SSH Key                                         |
+| `2`    | Verify IaC Environment (KVM/QEMU installation)           |
+| `3`    | Build Packer Base Image                                  |
+| `4`    | Verify Guest VM Connectivity via SSH                     |
+| `5`    | Revert Gitaly to Standalone before a Praefect migration  |
+| `6`    | Purge All Packer Artifacts                               |
+| `7`    | Purge All Infrastructure Resources (Libvirt + Terraform) |
 
-## Option 7: Build Packer Base Image
+## Option 3: Build Packer Base Image
 
-Option `7` dynamically populates submenus by scanning the `packer/output` directory. The submenus for a complete configuration are shown below:
+Option `3` dynamically populates submenus by scanning the `*.pkrvars.hcl` files under `packer/services`. The submenus are shown below:
 
 ```text
-[INPUT] Please select an action: 7
+[INPUT] Please select an action: 3
 [INFO] Checking status of libvirt service...
 [OK] libvirt service is already running.
 
 [INFO] Select Packer category to build:
 ------------------------------------------------------------
-1) Base OS Layers    2) Service Layers    3) Build ALL    4) Back to Main Menu
+1) Service Layers    2) Build ALL    3) Back to Main Menu
 
 [INPUT] Select a category:
 ```
 
-### Base OS Layers (`1`)
+### Service Layers (`1`)
 
-Selecting `1` is primarily used to build base OS images, including APT updates, etc.
+Selecting `1` builds service images. Each service image uses the `ubuntu-24-updated` distro image in the `packer/output` directory of `platform-foundation` as the source in Packer HCL and installs the service binaries and related packages.
 
 ```text
 [INPUT] Select a category: 1
-1) ubuntu-24-updated
-2) Build ALL in Base OS Images
+1) base-baremetal-gitaly-praefect
+2) Build ALL in Service Images
 3) Back
 ```
 
-### Service Layers (`2`)
-
-Selecting `2` builds service images. It specifies the base image from `1` as a source in Packer HCL and installs the service binaries and related packages.
-
-```text
-[INPUT] Select a category: 2
-1) base-baremetal-etcd       3) base-baremetal-minio        5) base-baremetal-redis        7) base-docker-harbor          9) base-kubernetes-microk8s   11) Back
-2) base-baremetal-haproxy    4) base-baremetal-postgres     6) base-baremetal-vault        8) base-kubernetes-kubeadm    10) Build ALL in Service Images
-```
+The distro image and the shared service images for Postgres, Redis, etcd, MinIO, Kubeadm, and MicroK8s are built in `platform-foundation`.

@@ -4,12 +4,12 @@
 
 Production Harbor serves as the primary OCI artifact registry for development teams.
 It is **air-gapped from the internet**. All external base images arrive via replication
-from Bootstrapper Harbor.
+from Harbor Origin of `platform-foundation`.
 
 ```mermaid
 sequenceDiagram
     participant Internet as Internet
-    participant BST as Bootstrapper Harbor
+    participant BST as Harbor Origin (platform-foundation)
     participant PROD as Production Harbor
     participant Client as Developer / GitLab Runner
 
@@ -67,13 +67,9 @@ podman login harbor.production.iac.local \
 ### Admin Account (local auth, bypasses OIDC)
 
 Admin uses basic auth directly against the API even when OIDC is `primary_auth_mode`.
-Credentials are in Vault:
+Credentials are in the Downstream Vault. After logging in as the operator of this repository:
 
 ```sh
-export VAULT_ADDR="https://172.16.136.250:443"
-export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
-export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
-
 vault kv get -mount=secret -field=harbor_admin_password \
   on-premise-gitlab-deployment/harbor/app
 ```
@@ -130,10 +126,10 @@ helm pull \
 
 ---
 
-## Bootstrapper Mirror Replication
+## Harbor Origin Mirror Replication
 
 Proxy cache projects (`docker-proxy`, `k8s-proxy`, `ghcr-proxy`, `quay-proxy`,
-`gitlab-proxy`, `gcr-proxy`) are synchronized from Bootstrapper Harbor every **6 hours**
+`gitlab-proxy`, `gcr-proxy`) are synchronized from Harbor Origin every **6 hours**
 automatically.
 
 ### Manual Trigger

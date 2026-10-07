@@ -4,57 +4,52 @@
 
 ## Getting Started
 
-| Document                                                        | Description                                       |
-| --------------------------------------------------------------- | ------------------------------------------------- |
-| [Prerequisites](en/getting-started/01-prerequisites.md)         | Hardware, software, and system requirements       |
-| [Environment Setup](en/getting-started/02-environment-setup.md) | Podman, Libvirt permissions, container vs. native |
-| [Initialization](en/getting-started/03-initialization.md)       | First-run order, GitHub PAT setup                 |
-| [Deployment Order](en/getting-started/04-deployment-order.md)   | Phase-by-phase Terraform layer apply sequence     |
+| Document                                                      | Description                                                 |
+| ------------------------------------------------------------- | ----------------------------------------------------------- |
+| [Prerequisites](en/getting-started/01-prerequisites.md)       | Hardware, software, and system requirements                 |
+| [Initialization](en/getting-started/02-initialization.md)     | First-run order, GitLab.com project governance credentials  |
+| [Deployment Order](en/getting-started/03-deployment-order.md) | Upstream prerequisites and phase-by-phase layer apply order |
 
 ## Configuration
 
-| Document                                                       | Description                                                 |
-| -------------------------------------------------------------- | ----------------------------------------------------------- |
-| [Vault Secrets](en/configuration/vault-secrets.md)             | Bootstrapper Vault and Production Vault secret injection    |
-| [Terraform Variables](en/configuration/terraform-variables.md) | `.tfvars` init, HA node count rules, Guest OS, cleanup      |
-| [Kernel Tuning](en/configuration/kernel-tuning.md)             | `rp_filter`, `ip_forward`, `bridge-nf-call`, conntrack, MSS |
-| [Trust Store](en/configuration/trust-store.md)                 | `/etc/hosts` entries, CA bundle import, verification        |
+| Document                                                       | Description                                                        |
+| -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Vault Secrets](en/configuration/vault-secrets.md)             | Bastion Vault and Downstream Vault secrets read by this repository |
+| [Terraform Variables](en/configuration/terraform-variables.md) | `.tfvars` init, HA node count rules, Guest OS, cleanup             |
+| [Trust Store](en/configuration/trust-store.md)                 | `/etc/hosts` entries, platform trust bundle import, verification   |
 
 ## Architecture
 
-| Document                                                                   | Description                                                                 |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [Overview](en/architecture/overview.md)                                    | Toolchain roles, layer map, ADR index                                       |
-| [Deployment Workflow](en/architecture/deployment-workflow.md)              | Stage-by-stage Mermaid diagrams                                             |
-| [Network Topology](en/architecture/network-topology.md)                    | Asymmetric routing, PBR, bridge isolation, MTU/MSS                          |
-| [Terraform Layers](en/architecture/terraform-layers.md)                    | `foundation-metadata` SSoT deep dive                                        |
-| [PKI and Vault](en/architecture/pki-and-vault.md)                          | Certificate rotation rules, Vault Agent sidecar                             |
-| [Node Exporter Rollout](en/architecture/node-exporter-rollout.md)          | VM fleet metrics wiring, observability dashboard platform bootstrap         |
-| [Physical Hypervisor Monitoring](en/architecture/hypervisor-monitoring.md) | Host baseline automation, node/libvirt exporters, DAG-derived scrape target |
-| [Application Metrics Platform](en/architecture/application-metrics-platform.md) | GitLab/Harbor/Runner application metrics, LGTM self-monitoring, Mimir series limits |
-| [Kubernetes State and Availability Monitoring](en/architecture/kubernetes-state-and-blackbox-monitoring.md) | kube-state-metrics rollout, ingress-aware blackbox probing, certificate expiry byproduct |
-| [Fleet Lifecycle Collectors and Availability Probing](en/architecture/lifecycle-collectors-and-availability-probing.md) | keepalived VRRP visibility, bare-metal Alloy log agent, blackbox upstream and cross-route probing |
-| [Loki Log Pipeline](en/architecture/loki-log-pipeline.md)                  | Multi-tenant Loki, cross-cluster mTLS ingress, Alloy log collection, audit retention |
+| Document                                                      | Description                                   |
+| ------------------------------------------------------------- | --------------------------------------------- |
+| [Overview](en/architecture/overview.md)                       | Toolchain roles, layer map, ADR index         |
+| [Deployment Workflow](en/architecture/deployment-workflow.md) | Stage-by-stage Mermaid diagrams               |
+| [Terraform Layers](en/architecture/terraform-layers.md)       | `foundation-libvirt-resources` SSoT deep dive |
 
 ## Operations
 
-| Document                                                                         | Description                                                   |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [Packer Build](en/operations/packer-build.md)                                    | `entry.sh` menu, two-stage image build                        |
-| [GitHub Meta](en/operations/github-meta.md)                                      | Terraform GitHub provider, Shell Bridge Pattern               |
-| [Harbor Bootstrapper: Helm Sync](en/operations/harbor-bootstrapper-helm-sync.md) | `helm pull` + `helm push` to Bootstrapper Harbor OCI registry |
-| [Troubleshooting](en/operations/troubleshooting.md)                              | Symptom index linking to all layer-specific READMEs           |
+| Document                                                | Description                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Packer Build](en/operations/packer-build.md)           | `entry.sh` menu, Gitaly and Praefect image build                     |
+| [Production Harbor](en/operations/harbor-production.md) | Project access, OIDC login, admin account, Harbor Origin replication |
+| [Troubleshooting](en/operations/troubleshooting.md)     | Symptom index linking to all layer-specific READMEs                  |
 
 ## Architecture Decision Records (ADRs)
 
-| ADR                                                        | Title                                |
-| ---------------------------------------------------------- | ------------------------------------ |
-| [ADR 001](en/adr/001-two-stage-vault.md)                   | Two-Stage Vault Architecture         |
-| [ADR 002](en/adr/002-centralized-load-balancer.md)         | Centralized Load Balancer with PBR   |
-| [ADR 003](en/adr/003-metadata.md)                          | Metadata as Single Source of Truth   |
-| [ADR 004](en/adr/004-podman-over-docker.md)                | Podman Over Docker                   |
-| [ADR 005](en/adr/005-harbor-bootstrapper-seed-registry.md) | Harbor Bootstrapper as Seed Registry |
-| [ADR 006](en/adr/006-packer-two-stage-image.md)            | Two-Stage Packer Image Build         |
+| ADR                                                   | Title                                                    |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| [ADR 003](en/adr/003-foundation-libvirt-resources.md) | `foundation-libvirt-resources` as Single Source of Truth |
+| [ADR 006](en/adr/006-packer-two-stage-image.md)       | Two-Stage Packer Image Build                             |
+
+## Upstream Documentation
+
+Shared services and their design records are documented in the upstream projects.
+
+| Project                                                                                                       | Topics                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`parent-group-governance`](https://gitlab.com/csning1998-lab/parent-group-governance)                        | Bastion Vault, GitLab group topology, AI provider federation                                                                                      |
+| [`platform-foundation`](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-foundation)       | Downstream Vault and PKI, Harbor Origin, Keycloak and OIDC, HAProxy tier, hypervisor baseline and kernel tuning, distro and shared service images |
+| [`platform-observability`](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-observability) | LGTM stack, node and hypervisor metrics, application metrics, Loki log pipeline, availability probing                                             |
 
 ---
 
@@ -64,59 +59,30 @@
 
 #### 1.1 Packer Two-Stage Image Building
 
-- **Stage 1 (Base OS)**: Custom Packer configurations in `packer/base-os` automate Ubuntu 24.04 server provisioning. This stage handles OS package updates, initial security hardening (SSH disable root password, basic UFW configuration), and outputs a pristine golden image.
-- **Stage 2 (Service Layer)**: Built upon the Stage 1 golden image via `packer/services`. Using QEMU backing-store storage overlays (backing files), this stage allows rapid configuration without modifying the base image disk. Ansible playbooks (e.g., `playbooks/provision_base_image.yaml`) execute pre-installations of target binaries (Patroni, Redis Sentinel, MinIO, Vault) and pre-configure service daemon configs, reducing bootstrap time.
+- **Stage 1 (Distro)**: `platform-foundation` builds the `ubuntu-24-updated` distro image in its `packer/distro`. This stage handles OS package updates, initial security hardening (SSH disable root password, basic UFW configuration), and outputs a pristine golden image.
+- **Stage 2 (Service Layer)**: Built upon the Stage 1 golden image. Using QEMU backing-store storage overlays (backing files), this stage allows rapid configuration without modifying the base image disk. `platform-foundation` builds the shared service images for Patroni, Redis Sentinel, MinIO, Kubeadm, and MicroK8s. This repository builds only the Gitaly and Praefect image via `packer/services` and `playbooks/provision_base_image.yaml`.
 
 #### 1.2 Single Source of Truth (SSoT) Metadata Paradigm
 
-- **Metadata SSoT**: The `foundation-metadata` layer acts as the centralized source of truth. It defines the global HCL configuration schema (`service_catalog`) which lists all infrastructure services.
-- **HCL Computations**: Through Terraform local values, it dynamically calculates IP network allocations, non-overlapping subnet CIDRs, virtual MAC addresses (to prevent Libvirt duplication), DNS SANs (Subject Alternative Names), and VIPs. This configuration drives all subsequent layers, ensuring no state drift or configuration overlap.
+- **Metadata SSoT**: The `foundation-libvirt-resources` layer acts as the centralized source of truth. The layer defines the global HCL configuration schema (`service_catalog`) which lists all infrastructure services, and reads the network baseline and the domain suffix from `platform-foundation`.
+- **HCL Computations**: Through the `foundation-resources` module of `platform-foundation`, the layer dynamically calculates IP network allocations, non-overlapping subnet CIDRs, virtual MAC addresses (to prevent Libvirt duplication), DNS SANs (Subject Alternative Names), and VIPs. This configuration drives all subsequent layers, ensuring no state drift or configuration overlap.
 
-#### 1.3 Double-Stage Vault Bootstrapping
+#### 1.3 Secrets & PKI from Upstream
 
-- **Bootstrap Phase**: A containerized Vault instance is spun up locally (Layer `foundation-vault-bootstrapper`) using self-signed root certificates. This instance stores early-stage IaC credentials, SSH keys, and VM passwords securely.
-- **Production Phase**: Layer `shared-vault-frontend` boots a bare-metal, high-availability Vault cluster. The production credentials are dynamically migrated from the bootstrap Vault. During migration, Terraform outputs `RoleID` and `SecretID` AppRoles which target VM services use to authenticate securely.
-
-#### 1.4 Production Secrets & PKI Automation
-
-- **Credential Isolation**: Layer `security-credentials` auto-generates separate database passwords, S3 credentials, and internal gRPC tokens, writing them directly into the production Vault KV-v2 engine.
-- **Hierarchical PKI**: Layer `security-pki` establishes an Intermediate CA within Vault. Vault mounts and configures PKI roles that define Allowed Domains and IP SANs.
-- **Vault Agent & Consul-Template**: Bare-metal database nodes utilize the `vault-agent` daemon. It handles AppRole dynamic authentication (Auto-Auth) and maps templates in `vault-agent.hcl` using Consul-Template syntax to listen to PKI certificate paths. When a certificate's TTL is near expiration, the agent fetches new credentials, writes them to `/etc/ssl/`, and executes a post-run reload script (`deploy-certs.sh`) to reload daemons (HAProxy, Postgres) with zero downtime.
+- **Bastion Vault**: The Bastion Vault of `parent-group-governance` stores the bootstrap credentials, such as the guest VM credentials which Packer reads.
+- **Downstream Vault**: The Downstream Vault of `platform-foundation` stores the database passwords, S3 credentials, and internal gRPC tokens of this repository under its tenant prefix, and issues the leaf certificates of every service.
+- **Vault Agent & Consul-Template**: Bare-metal database nodes utilize the `vault-agent` daemon. It handles dynamic authentication (Auto-Auth) and maps templates in `vault-agent.hcl` using Consul-Template syntax to listen to PKI certificate paths. When a certificate's TTL is near expiration, the agent fetches new credentials, writes them to `/etc/ssl/`, and executes a post-run reload script (`deploy-certs.sh`) to reload daemons (HAProxy, Postgres) with zero downtime.
 
 ### 2. Virtualization & Network Topology
 
 #### 2.1 Libvirt Workload Lifecycle
 
 - **Dual NIC Topologies**: VM instances are configured with two network interfaces: a private `HostOnly` network (for secure inter-service communications, isolated from the public network) and a `NAT` bridge network (providing outbound access to external registries and proxy mirrors).
-- **Direct Storage Pools**: Dynamic block volumes are created at Layer `foundation-volume` and attached as raw `/dev/vdb` devices on database and storage nodes. This decouples the OS partition (`/dev/vda`) from persistent application data.
+- **Direct Storage Pools**: Dynamic block volumes are created by the `foundation-libvirt-resources` layer and attached as raw `/dev/vdb` devices on database and storage nodes. This decouples the OS partition (`/dev/vda`) from persistent application data.
 
-#### 2.2 Asymmetric Routing & Kernel Tuning
+#### 2.2 Host Kernel Tuning
 
-- **Asymmetric Drops**: Multi-homed VMs often experience packet drops due to asymmetric routing. When packets enter via interface B but exit through the default route on interface A, the host bridge's stateful firewall drops the traffic because it fails TCP conntrack checks.
-- **Kernel Tuning**: The kernel parameters `net.ipv4.conf.all.rp_filter=2` (Loose Reverse Path Filtering) and `net.bridge.bridge-nf-call-iptables=0` are applied to allow asymmetric paths and prevent raw host bridge iptables rules from intercepting virtual machine container interfaces (vital for Kubernetes mTLS traffic).
-- **MTU/MSS Clamping**: The physical virtual NIC interfaces (`vbr*` and VM interfaces) clamp MTU to `1450` due to encapsulation protocols (like VXLAN or Geneve overlay) inside the Libvirt bridge network. To prevent packet fragmentation and TCP timeouts during SSL/TLS handshakes (especially during large payload transfers like the TLS Client Hello), the routing engine clamps the TCP Maximum Segment Size (MSS) to `1360` (`advmss 1360`), forcing clients to negotiate compliant packet sizes.
-
-#### 2.3 Central LB Policy-Based Routing (PBR)
-
-- **PBR Routing Tables**: The Central Load Balancer (CLB) runs Keepalived and HAProxy. Since the CLB is bridged to all subnets to route client traffic, it implements Policy-Based Routing to handle multi-subnet return paths. Custom routing tables (e.g., `rt_core_vault_frontend`) are registered in `/etc/iproute2/rt_tables`.
-- **Rule Injection**: Dynamic scripts inject routing rules (replace `<VIP_ADDRESS>`, `<SUBNET_CIDR>`, and `<INTERFACE_NAME>` with environment-specific values):
-
-    ```bash
-    ip rule add from <VIP_ADDRESS> table rt_core_vault_frontend
-    ```
-
-    Within this table, `scope link` routes direct packets back through their entering interface:
-
-    ```bash
-    ip route replace <SUBNET_CIDR> dev <INTERFACE_NAME> scope link table rt_core_vault_frontend
-    ```
-
-    This forces all return packets originating from the VIP to bypass the default gateway and egress directly out of the L2 bridge interface on which the request arrived.
-
-- **Keepalived Failover**: Keepalived manages L2 high availability using VRRP (Virtual Router Redundancy Protocol). Master and Backup nodes coordinate on a shared Virtual Router ID (VRID). If the active node crashes, the Backup assumes the VIP and broadcasts Gratuitous ARPs (GARP) to update L2 switch tables instantly.
-- **HAProxy Traffic Routing**: HAProxy operates on L4 (mode tcp) for Vault (`8200`) and K8s Ingress (`443`/`80`). It uses the PROXY protocol v2 (`send-proxy-v2`) to inject real client source IPs into downstream Kubernetes controllers. L7 HTTP/REST checking is utilized to route requests:
-    - _Vault_: GET `/v1/sys/health` probes active (`200 OK`) and standby (`429 Too Many Requests`) nodes.
-    - _Postgres_: GET `/primary` and `/replica` checks on port `8008` determine read-write and read-only nodes.
+- **Hypervisor Baseline**: Role `hypervisor_baseline` of `platform-foundation` applies loose reverse path filtering, bridge netfilter bypass, connection tracking limits, and TCP MSS clamping on the KVM host. See [Hypervisor Kernel Tuning](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-foundation/-/blob/main/documentation/architecture/hypervisor-kernel-tuning.md).
 
 ### 3. Shared Database & Storage High Availability
 
@@ -136,29 +102,22 @@
 - **Erasure Coding**: MinIO protects data against hardware failure by stripping objects using the Reed-Solomon algorithm. In our $4+4$ configuration, MinIO splits objects into 4 data blocks and 4 parity blocks distributed across 8 separate drives.
 - **Drive Layout**: Local NVMe/SSD block devices are mapped to the VMs, formatted with XFS, and directly mounted as `/data1` and `/data2`. GitLab pods access these buckets securely using Vault-managed S3 credentials.
 
-### 4. Identity & OCI Engineering
+### 4. Identity & OCI Supply
 
-#### 4.1 Keycloak Realm & OIDC Mapping
+#### 4.1 Identity from Upstream
 
-- **OIDC Authentication**: Keycloak acts as the SSoT Identity Provider. When users authenticate, Keycloak manages the OIDC Authorization Code Flow. The client application redirects users to Keycloak's `/auth` endpoint, and after authentication, exchanges the returned authorization code via a secure backchannel request to Keycloak's `/token` endpoint for ID and Access tokens.
-- **Token Claim Mapping**: Keycloak client scopes map internal groups (e.g., `/admin`, `/developer`) into the OIDC ID Token `groups` claim.
+- **OIDC Authentication**: The Keycloak instance of `platform-foundation` acts as the SSoT Identity Provider and declares the OIDC clients of GitLab and Harbor. GitLab and Harbor read the client secrets from the Downstream Vault.
 
-#### 4.2 Vault OIDC Group Aliases
+#### 4.2 Harbor Registry Supply
 
-- **RBAC Mapping**: Vault mounts the OIDC auth backend pointing to the Keycloak realm. It configures OIDC roles with designated audiences.
-- **Group Aliases**: Keycloak groups are bound to Vault internal groups using group aliases. When a user authenticates, Vault parses the ID Token's `groups` claim and dynamically attaches the correct Vault ACL policies to the user's session.
-
-#### 4.3 Harbor Two-Stage Registry Architecture
-
-- **Standalone Harbor Bootstrapper**: To resolve the "chicken-and-egg" issue of pulling control plane images (Calico CNI, Ingress Nginx) during cluster bootstrapping, a standalone Harbor instance is deployed via Docker Compose on a single VM. Local `vault-agent` provides dynamic TLS certificate rotation for Harbor's Nginx frontend.
-- **Pull-Through Proxy Cache**: Harbor Bootstrapper configures Proxy Cache projects that mirror external registries (Quay, Docker Hub, GHCR). Workloads pull from these proxy paths, reducing external bandwidth and bypassing rate-limiting issues.
-- **Production Sync Replication**: The production Harbor cluster deployed inside the Kubernetes environment (`platform-*-frontend` tier) uses Harbor Replication rules to automatically pull images from the bootstrapper registry, securing a completely air-gapped image distribution pipeline.
+- **Harbor Origin**: The Harbor Origin of `platform-foundation` provides the proxy cache projects which mirror external registries (Quay, Docker Hub, GHCR), resolving the "chicken-and-egg" issue of pulling control plane images (Calico CNI, Ingress Nginx) during cluster bootstrapping.
+- **Production Sync Replication**: The production Harbor cluster deployed inside the Kubernetes environment (`platform-*-frontend` tier) uses Harbor Replication rules to automatically pull images from Harbor Origin, securing a completely air-gapped image distribution pipeline.
 
 ### 5. Distributed GitLab HA Architecture
 
 #### 5.1 GitLab Distributed Data Flows
 
-- **Decoupled Workloads**: External client traffic passes through the CLB to the Kubernetes Ingress Controller. The Ingress forwards traffic to GitLab Rails pods (`webservice`).
+- **Decoupled Workloads**: External client traffic passes through the HAProxy tier to the Kubernetes Ingress Controller. The Ingress forwards traffic to GitLab Rails pods (`webservice`).
 - **Service Integration**: Rails pods query Vault via External Secrets (ESO) for runtime credentials, fetch Redis Sentinel for caching paths, connect to Postgres VIPs (routed via HAProxy to the Patroni leader), push persistent artifacts to MinIO, and route Git data via gRPC to Praefect/Gitaly nodes.
 
 #### 5.2 Praefect & Gitaly Cluster
@@ -172,7 +131,7 @@
 - **Deployment Sequence**: Control plane VMs boot, then Patroni, Sentinel, and MinIO clusters initialize, then `kubeadm init` bootstraps the control plane, then workers join, then Calico CNI configures pod routing, then local-path-provisioner allocates storage, then ESO, Ingress-Nginx, and Reloader deploy, and finally GitLab and Harbor Helm charts are applied.
 - **Calico MTU Clamping**: Calico's `veth` interfaces in Pods are aligned with the underlying network, clamping MTU to `1400` (`mtu = local.pod_network_mtu - 50` where `pod_network_mtu` is `1450`). This accommodates the 50-byte VXLAN tunnel header overhead, ensuring that Pod-to-Pod and Pod-to-Service traffic does not exceed the VM NIC MTU threshold of `1450`.
 - **Vault Kubernetes Auth Method & cert-manager PKI Provisioning**:
-    - **Reviewer Delegation**: A `vault-reviewer` Kubernetes ServiceAccount is granted the ClusterRole `system:auth-delegator`. A long-lived SA token is mapped to a Vault backend configuration (`vault_kubernetes_auth_backend_config`). This allows the production Vault to delegate authentication requests back to the Kubernetes API server via the TokenReview API.
+    - **Reviewer Delegation**: A `vault-reviewer` Kubernetes ServiceAccount is granted the ClusterRole `system:auth-delegator`. A long-lived SA token is mapped to a Vault backend configuration (`vault_kubernetes_auth_backend_config`). This allows the Downstream Vault to delegate authentication requests back to the Kubernetes API server via the TokenReview API.
     - **ClusterIssuer Binding**: A cert-manager `ClusterIssuer` is registered, referencing the Vault PKI endpoint (`pki_prod/sign/<role>`) and configured to authenticate via the `kubernetes` auth method using a dedicated `issuer` ServiceAccount token.
     - **PKI Sign Flow**: When a Pod requests a certificate:
         1. cert-manager submits the `issuer` SA JWT token to Vault.
@@ -188,9 +147,9 @@
 - **Runner Registration**: Runners register using a persistent `runner_authentication_token` generated by the GitLab Provider and stored in Vault, replacing deprecated registration tokens.
 - **Kubernetes Executor**: The Runner Manager watches GitLab jobs via long polling and schedules a temporary build Pod on the MicroK8s cluster for each job. Image pull policies force the executor pod to pull images from the Harbor Proxy Cache VIP, securing completely offline build capabilities.
 
-### 6. Governance & Meta Operations
+### 6. Governance
 
-#### 6.1 GitHub & GitLab.com Provider Automation
+#### 6.1 GitLab.com Provider Automation
 
-- **State Control**: Layer `meta-github` and `meta-gitlab` utilize Terraform Providers to manage remote repositories, branch protection, webhook configurations, and secret synchronization.
-- **Terraform Import**: Existing public projects are imported into the state using `terraform import` commands to prevent drift and establish centralized governance.
+- **State Control**: The `governance-gitlab-project` layer utilizes the provisioner modules of `parent-group-governance` to manage the GitLab.com project, branch protection, code reviewer variables, and workload identity federation bindings.
+- **Terraform Import**: The existing project and its branch protection are imported into the state using `terraform import` commands to prevent drift and establish centralized governance.

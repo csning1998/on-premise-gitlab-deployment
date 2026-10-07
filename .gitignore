@@ -23,7 +23,7 @@ terraform/backend-auth.hcl
 terraform/backend-state.json
 
 ### GitLab Runner configuration
-runner-config/
+fmt-commit-pusher
 
 ### Ignore Terraform state files
 .terraform/
@@ -76,6 +76,7 @@ merge-request.md
 terraform/layers/**/*.output.json
 .gitignore
 note.md
+stdout.txt
 
 # Temp
 terraform/modules/kubernetes-addons/platform-trust-engine/charts/cert-manager-v1.14.0.tgz

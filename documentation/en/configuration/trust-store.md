@@ -2,7 +2,6 @@
 
 Exporting service certificates allows users to browse the following services directly from the Host side without certificate errors:
 
-- Prod Vault: `https://vault.production.iac.internal`
 - Harbor: `https://harbor.production.iac.internal`
 - Harbor MinIO Console: `https://minio.harbor.production.iac.internal`
 - GitLab: `https://gitlab.production.iac.internal`
@@ -17,28 +16,27 @@ Handle DNS resolution in `/etc/hosts` by adding the following content (default f
 ```text
 172.16.126.250  gitlab.production.iac.internal
 172.16.131.250  harbor.production.iac.internal notary.harbor.production.iac.internal
-172.16.136.250  vault.production.iac.internal
 172.16.135.250  minio.harbor.production.iac.internal core-harbor-minio.production.iac.internal
 172.16.130.250  minio.gitlab.production.iac.internal core-gitlab-minio.production.iac.internal
 ```
 
 ## 2. Import Trust Bundle
 
-Since this repo has already aggregated the Infrastructure CA and Service CA into a single `trust-bundle.crt` in `security-pki`, the Host can trust these two independent certificate roots simultaneously. Refer to the content of _Step B.5_. The aggregated certificate file can now be confirmed in the `terraform/layers/security-pki/tls/` path.
+The `security-vault-downstream-pki` layer of `platform-foundation` aggregates the Bastion listener CA, the Bastion PKI chain, and the Downstream issuer into a single `trust-bundle.crt`, so the Host can trust every certificate root of the platform simultaneously. The aggregated certificate file is in the `terraform/layers/security-vault-downstream-pki/tls/` path of `platform-foundation`.
 
 Execute the following command to import both CAs into the operating system:
 
 - **RHEL / CentOS / Fedora:**
 
     ```bash
-    sudo cp terraform/layers/security-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
+    sudo cp <META_PLATFORM_ROOT>/terraform/layers/security-vault-downstream-pki/tls/trust-bundle.crt /etc/pki/ca-trust/source/anchors/on-premise-gitlab-pki-bundle.crt
     sudo update-ca-trust
     ```
 
 - **Ubuntu / Debian:**
 
     ```shell
-    sudo cp terraform/layers/security-pki/tls/trust-bundle.crt /usr/local/share/ca-certificates/on-premise-gitlab-pki-bundle.crt
+    sudo cp <META_PLATFORM_ROOT>/terraform/layers/security-vault-downstream-pki/tls/trust-bundle.crt /usr/local/share/ca-certificates/on-premise-gitlab-pki-bundle.crt
     sudo update-ca-certificates
     ```
 
@@ -58,6 +56,6 @@ Access Harbor from the host to verify the Trust Store:
 curl -vI https://harbor.production.iac.internal
 ```
 
-If it displays `SSL certificate verify ok` and `HTTP/2 200`, the full PKI Chain is successfully established, spanning Vault certificate issuance, cert-manager signing, Ingress deployment, and host-level trust.
+If it displays `SSL certificate verify ok` and `HTTP/2 200`, the full PKI Chain is successfully established, spanning Downstream Vault certificate issuance, cert-manager signing, Ingress deployment, and host-level trust.
 
 Another verification method is directly through the GUI to access the corresponding locations.

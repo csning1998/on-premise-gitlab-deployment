@@ -4,8 +4,8 @@ Layer-specific READMEs live next to their code. This page is a symptom-based ind
 
 ## TLS / PKI
 
-| Symptom                                                                          | Layer                           | Reference                                                                   |
-| -------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
+| Symptom                                                                          | Layer                        | Reference                                                                |
+| -------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------ |
 | `tls: failed to find any PEM data in certificate input` during `terraform apply` | `provision-gitlab-databases` | [README](../../../terraform/layers/provision-gitlab-databases/README.md) |
 | Same error on Harbor database layer                                              | `provision-harbor-databases` | [README](../../../terraform/layers/provision-harbor-databases/README.md) |
 
@@ -13,8 +13,8 @@ Both cases follow the same pattern: the Vault-issued leaf certificate has expire
 
 ## GitLab Application
 
-| Symptom                                                   | Layer                         | Reference                                                                 |
-| --------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------- |
+| Symptom                                                   | Layer                      | Reference                                                              |
+| --------------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
 | `OpenSSL::Cipher::CipherError` in `gitlab-migrations` pod | `platform-gitlab-frontend` | [README](../../../terraform/layers/platform-gitlab-frontend/README.md) |
 
 Caused by `rails-secret` / `db_key_base` being regenerated (via `terraform destroy + apply` on `platform-gitlab-frontend`) while the Postgres database is preserved from a previous deployment. The README contains the full HCL-native reset procedure.
@@ -25,11 +25,11 @@ Caused by `rails-secret` / `db_key_base` being regenerated (via `terraform destr
 | ------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------ |
 | Duplicate user conflict after OIDC re-login (Identity Drift) | `platform-harbor-governance` | [README](../../../terraform/layers/platform-harbor-governance/README.md) |
 
-## Harbor Bootstrapper
+## Harbor Origin
 
-| Symptom                                           | Layer                                    | Reference                                                                            |
-| ------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `/data/harbor` at 100%, multiple service failures | `provision-harbor-bootstrapper-frontend` | [README](../../../terraform/layers/provision-harbor-bootstrapper-frontend/README.md) |
+| Symptom                                           | Layer                                                    | Reference                                                                                                                                                        |
+| ------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/data/harbor` at 100%, multiple service failures | `platform-foundation` `provision-harbor-origin-frontend` | [README](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-foundation/-/blob/main/terraform/layers/provision-harbor-origin-frontend/README.md) |
 
 Full disk exhaustion recovery runbook: stops services, expands partition or prunes images/blobs, restores Harbor.
 
@@ -50,22 +50,20 @@ Covers:
 - SSH NodePort workaround (GitLab Shell exposed on port `32022` because VIP:22 is occupied by the host daemon)
 - Clearing stale SSH host key after GitLab redeployment
 
-### GitLab.com Mirror Meta (meta-gitlab)
-
-[`meta-gitlab/README.md`](../../../terraform/layers/meta-gitlab/README.md)
+### GitLab.com Project Governance (governance-gitlab-project)
 
 Covers:
 
-- First-time `terraform import` for the mirror project
-- Applies project settings and branch protection rules to the GitLab.com mirror
+- First-time `terraform import` of the project and the `main` branch protection
+- Project settings, code reviewer variables, and workload identity federation bindings of the GitLab.com project
 
 > [!NOTE]
-> PAT generation and Vault storage steps are in [Initialization: GitLab.com Credentials](../getting-started/03-initialization.md#gitlabcom-credentials-for-mirror-management).
+> Credential sources are in [Initialization: GitLab.com Project Governance](../getting-started/02-initialization.md#gitlabcom-project-governance).
 
 ---
 
 ## Architecture Reference
 
-| Layer                        | Topic                                                                                                        | Reference                                                                |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `provision-keycloak-oidc` | OIDC client management, RBAC group hierarchy, UUID-based identity anchors, downstream SSoT for GitLab/Harbor | [README](../../../terraform/layers/provision-keycloak-oidc/README.md) |
+| Layer                                           | Topic                                                                                                        | Reference                                                                                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platform-foundation` `provision-keycloak-oidc` | OIDC client management, RBAC group hierarchy, UUID-based identity anchors, downstream SSoT for GitLab/Harbor | [README](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-foundation/-/blob/main/terraform/layers/provision-keycloak-oidc/README.md) |

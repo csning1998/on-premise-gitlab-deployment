@@ -1,33 +1,18 @@
 # Vault Secrets Configuration
 
 > [!IMPORTANT]
-> **Confidential data is centralized within HashiCorp Vault and categorized into Development and Production modes. This repo default setup uses HTTPS secured by a self-signed CA. Follow these steps for correct configuration.**
+> **This repository runs no Vault instance. Bootstrap credentials reside in the Bastion Vault of `parent-group-governance`, and application secrets reside in the Downstream Vault of `platform-foundation`. Both instances use HTTPS secured by their own CA.**
 
-**Bootstrapper Vault is a prerequisite for establishing Production Vault. Bootstrapper Vault serves exclusively to provision Prod Vault and Packer Images; thereafter, all sensitive project data is managed by Prod Vault.**
-
-## Setup Steps
-
-1. Execute `entry.sh` and select option `1` to generate the required TLS handshake files. Fields may be left blank when creating the self-signed CA. If TLS file regeneration is required, execute option `1` again.
-2. Navigate to the project root and execute the following command to start Bootstrapper Vault server. This repo defaults to running Vault in sidecar mode within the container:
-
-    ```shell
-    podman compose up -d iac-vault-server
-    ```
-
-    Upon initialization, Bootstrapper Vault generates `vault.db` and Raft-related files in `vault/data/`. To recreate Bootstrapper Vault, all files within `vault/data/` and `vault/keys/` must be manually deleted. Open a new terminal window or tab for subsequent operations to prevent environment variable conflicts in the current shell session.
-
-3. After completing previous steps, execute `entry.sh` and select option `2` to initialize Bootstrapper Vault. This process also automatically performs unseal operation.
-4. Manually update the following variables. All default passwords must be replaced with unique values to ensure security.
+The setup, initialization, and unseal procedures of both instances are documented in the upstream projects. This document lists only the secrets which this repository reads.
 
 ---
 
-## Bootstrapper Vault Secrets
+## Bastion Vault Secrets
 
 **Clearing shell history after executing `vault kv put` commands is strongly recommended to mitigate data exposure. Refer to Note 0 for details.**
 
-The following variables are required for provisioning production HashiCorp Vault across Packer and Terraform `shared-load-balancer-frontend`:
+Packer reads the following variables from `secret/on-premise-gitlab-deployment/guest_vm` while building the Gitaly and Praefect image:
 
-- `github_pat`: The GitHub Personal Access Token obtained in previous step.
 - `ssh_username`, `ssh_password`: Credentials for SSH access.
 - `guest_username`, `guest_password`: Credentials for virtual machine.
 - `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host.
@@ -36,8 +21,8 @@ The following variables are required for provisioning production HashiCorp Vault
 printf "Enter ssh Password: "
 read -s ssh_password
 vault kv put \
-    -address="https://127.0.0.1:8200" \
-    -ca-cert="${PWD}/vault/tls/ca.pem" \
+    -address="https://172.16.0.1:8200" \
+    -ca-cert="<PARENT_GROUP_GOVERNANCE_ROOT>/vault/tls/ca.pem" \
     secret/on-premise-gitlab-deployment/guest_vm \
     ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
     ssh_password="$ssh_password" \
@@ -46,32 +31,14 @@ vault kv put \
     guest_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
     ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
     ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
-
-vault kv put \
-    -address="https://127.0.0.1:8200" \
-    -ca-cert="${PWD}/vault/tls/ca.pem" \
-    secret/on-premise-gitlab-deployment/project_meta \
-    github_pat="<YOUR_GITHUB_PERSONAL_ACCESS_TOKEN>"
-
-vault kv put \
-    -address="https://127.0.0.1:8200" \
-    -ca-cert="${PWD}/vault/tls/ca.pem" \
-    secret/on-premise-gitlab-deployment/infrastructure \
-    haproxy_stats_pass="haproxy_stats_pass_dev_password" \
-    keepalived_auth_pass="keepalived_auth_pass_dev_password"
 ```
-
-If `meta-github` is not used to manage GitHub repo settings, `github_pat` secret can be deleted.
 
 ---
 
-## Production Vault Secrets
+## Downstream Vault Secrets
 
-Following variables are required for provisioning Terraform layers for Patroni, Sentinel, MinIO (S3), Harbor, and GitLab clusters:
+The Terraform layers for the Patroni, Sentinel, MinIO (S3), Harbor, and GitLab clusters read the following variables under the tenant prefix `on-premise-gitlab-deployment` of the Downstream Vault:
 
-- `ssh_username`, `ssh_password`: SSH login credentials.
-- `guest_username`, `guest_password`: Virtual machine login credentials.
-- `ssh_public_key_path`, `ssh_private_key_path`: Paths to SSH public and private keys on host machine.
 - `pg_superuser_password`: Password for Postgres superuser (`postgres`). Required for database initialization (`initdb`), Patroni management operations, and manual maintenance tasks.
 - `pg_replication_password`: Credentials for streaming replication user. Patroni utilizes this password when provisioning standby nodes to enable WAL synchronization with primary.
 - `pg_vrrp_secret`: VRRP authentication key for Keepalived nodes. Ensures that only authorized nodes participate in Virtual IP (VIP) election and failover, mitigating malicious interference within local network.
@@ -81,27 +48,10 @@ Following variables are required for provisioning Terraform layers for Patroni, 
 - `minio_root_user`: MinIO root administrator account (formerly Access Key), used for MinIO Console access and managing buckets or policies via MinIO Client (`mc`).
 - `minio_root_password`: MinIO root administrator password (formerly Secret Key).
 - `minio_vrrp_secret`: VRRP authentication key for MinIO load balancing layer (HAProxy/Keepalived). Follows same operational principle as `pg_vrrp_secret`.
-- `vault_haproxy_stats_pass`: Password for HAProxy Stats Dashboard (typically on port `8404`), used for monitoring backend server health and traffic statistics via Web UI.
-- `vault_keepalived_auth_pass`: VRRP authentication key for Vault cluster load balancer to secure Vault service VIP.
 - `harbor_admin_password`: Default password for Harbor Web Portal `admin` account, required for initial project creation and robot account configuration.
 - `harbor_pg_db_password`: Dedicated password for Harbor services (Core, Notary, Clair) to connect to Postgres. This application-level credential (assigned to `harbor` DB user) is restricted with fewer privileges than `pg_superuser_password`.
 
-```shell
-export VAULT_ADDR="https://172.16.136.250:443"
-export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
-export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
-
-printf "Enter ssh Password: "
-read -s ssh_password
-vault kv put secret/on-premise-gitlab-deployment/guest_vm \
-    ssh_username="<YOUR_PRODUCTION_SSH_USERNAME>" \
-    ssh_password="$ssh_password" \
-    ssh_password_hash="$(printf '%s' "$ssh_password" | openssl passwd -6 -stdin)" \
-    guest_username="<YOUR_PRODUCTION_VM_USERNAME_OR_SAME_AS_ssh_username>" \
-    guest_password="<YOUR_PRODUCTION_VM_PASSWORD_OR_SAME_AS_ssh_password>" \
-    ssh_public_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment.pub" \
-    ssh_private_key_path="~/.ssh/id_ed25519_on-premise-gitlab-deployment"
-```
+The tenant registration and the operator login of the Downstream Vault follow `platform-foundation`.
 
 ---
 
@@ -113,13 +63,9 @@ Clearing shell history after executing `vault kv put` commands is strongly recom
 
 ### Note 1. How to Retrieve Secrets
 
-1. Use following command to retrieve credentials from Vault. For example, to fetch Postgres superuser password:
+1. After logging in to the Downstream Vault as the operator of this repository, retrieve a credential such as the Postgres superuser password with the following command:
 
     ```shell
-    export VAULT_ADDR="https://172.16.136.250:443"
-    export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
-    export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) \
-        vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
     vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases
     ```
 
@@ -128,14 +74,6 @@ Clearing shell history after executing `vault kv put` commands is strongly recom
     ```shell
     export PG_SUPERUSER_PASSWORD=$(vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
     ```
-
-3. For a more streamlined execution using a single-line command:
-
-    ```shell
-    export PG_SUPERUSER_PASSWORD=$(VAULT_ADDR="https://172.16.136.250:443" VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt" VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials) vault kv get -field=pg_superuser_password secret/on-premise-gitlab-deployment/gitlab/databases)
-    ```
-
-    `echo` command can be used for verification. Same procedure applies to Bootstrapper Vault and other secrets.
 
     This command is used when `OpenSSL::Cipher::CipherError` occurs during GitLab deployment. Please refer to [platform-gitlab-frontend README](../../../terraform/layers/platform-gitlab-frontend/README.md) for detailed explanation.
 
@@ -152,13 +90,4 @@ printf '%s' "HelloWorld@k8s" | openssl passwd -6 -stdin
 
 ### Note 3. SSH vs VM Credential Separation
 
-SSH identity variables (`ssh_`) are primarily utilized in Packer for one-time provisioning, whereas VM identity variables (`vm_`) are used by Terraform during VM cloning. Both may be set to identical values. While it is possible to configure unique credentials for different VMs by modifying `ansible_runner.vm_credentials` variable and implementing `for_each` loops in HCL, this approach introduces unnecessary complexity. Unless specific requirements dictate otherwise, maintaining identical values for SSH and VM identity variables is recommended.
-
----
-
-## Vault Unseal
-
-Vault must be unsealed after every startup in this repo. Following options are available:
-
-- Option `3` in `entry.sh` unseals Bootstrapper Vault, using `vault_dev_unseal_handler()` shell function.
-- Option `4` in `entry.sh` unseals Production Vault via `operation_playbook.yaml` Ansible playbook.
+SSH identity variables (`ssh_`) are primarily utilized in Packer for one-time provisioning, whereas VM identity variables (`vm_`) are used by Terraform during VM cloning. Both may be set to identical values. Unique credentials for different VMs are possible by modifying `ansible_runner.vm_credentials` variable and implementing `for_each` loops in HCL, but this approach introduces unnecessary complexity. Identical values for SSH and VM identity variables are recommended unless specific requirements call for separation.

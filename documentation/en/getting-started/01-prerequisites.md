@@ -26,7 +26,6 @@ Before proceeding, ensure the host system meets the following requirements:
 - Linux host (Fedora 43, RHEL 10, or Ubuntu 24 recommended).
 - CPU virtualization support (VT-x or AMD-V).
 - `sudo` privileges for Libvirt management.
-- `podman` and `podman compose` installed for containerized operations.
 - `openssl` package (provides the `openssl passwd` command).
 - `jq` package (for JSON parsing).
 
@@ -34,11 +33,11 @@ Before proceeding, ensure the host system meets the following requirements:
 
 ### Required. KVM / QEMU
 
-Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment. This process is currently tested only on Ubuntu 24 and RHEL 10. For other platforms, refer to official documentation to manually configure the KVM and QEMU environment.
+The `Verify IaC Environment` option in `entry.sh` automates the installation of the QEMU/KVM environment. This process is currently tested only on Ubuntu 24 and RHEL 10. For other platforms, refer to official documentation to manually configure the KVM and QEMU environment.
 
-### Install IaC Tools on Native
+### Install IaC Tools
 
-1.  **Install IaC Toolkit: OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
+1. **Install IaC Toolkit: OpenTofu / Terraform, HashiCorp Vault, Packer and Ansible**
 
     Refer to the following resources for toolkit installation:
     - [OpenTofu Installation](https://opentofu.org/docs/intro/install/)
@@ -46,10 +45,6 @@ Option `6` in `entry.sh` automates the installation of the QEMU/KVM environment.
     - [HashiCorp Vault Installation](https://developer.hashicorp.com/vault/docs/install)
     - [Packer Installation](https://developer.hashicorp.com/packer/install)
     - [Ansible Installation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
-
-2.  Ensure Podman / Docker is correctly installed. Select the appropriate installation method from the links below based on your development machine's operating system:
-    - [Podman Installation](https://podman.io/getting-started/installation) _Recommended for RHEL / Fedora_
-    - [Docker Installation](https://docs.docker.com/get-docker/)
 
 > [!WARNING]
 > As of May 1, 2026, this repo requires Terraform 1.14 or higher because it utilizes the `action` block in the Ansible Provider to declare resources. Currently, there is no equivalent implementation in the OpenTofu community. This repo will be migrated back to OpenTofu once such support becomes available. Users are advised to manually substitute `tofu` with `terraform` commands or use an alias for all CLI operations.

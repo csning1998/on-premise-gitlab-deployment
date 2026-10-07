@@ -1,20 +1,24 @@
 #!/bin/sh
-# Validates local commit messages against the conventional commit specification using the
-# shared reviewer container image, eliminating local Node.js dependency requirements.
-# Activation command: git config core.hooksPath .githooks
+# Validates commit messages against Conventional Commits using the reviewer container image.
+# Activation: git config core.hooksPath .githooks
 
 set -e
 
-IMAGE="registry.gitlab.com/csning1998/gitlab-ci-with-code-reviewer/reviewer:edge"
+IMAGE="registry.gitlab.com/csning1998-lab/gitlab-ci-with-code-reviewer/reviewer:1.6.3"
 MSG_FILE="$1"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-# commitlint resolves Git repository metadata from its container working directory (/repo),
-# which requires only .git/ rather than the full working tree. MSG_FILE already resolves to a
-# path beneath .git/ (COMMIT_EDITMSG). No source outside .git/ needs to be mounted.
+# Relabel .git for container access when SELinux is enforcing.
+if command -v selinuxenabled >/dev/null 2>&1 && selinuxenabled; then
+    chcon -t container_file_t -R "${REPO_ROOT}/.git" || true
+fi
+
+# It is intentional to mount .git only since staged scanning
+# and message linting do not require a working tree.
 podman run --rm \
-    -v "${REPO_ROOT}/.git":/repo/.git \
-    -v "$(realpath "${MSG_FILE}")":/repo/.git/COMMIT_EDITMSG_HOOK \
+    -v "${REPO_ROOT}/.git:/repo/.git:ro" \
+    -v "$(realpath "${MSG_FILE}"):/repo/COMMIT_EDITMSG:ro" \
     -w /repo \
     "$IMAGE" \
-    commitlint --config /etc/commitlint/commitlint.config.cjs --edit .git/COMMIT_EDITMSG_HOOK
+    commitlint --config /etc/commitlint/commitlint.config.cjs \
+    --cwd /repo --edit /repo/COMMIT_EDITMSG

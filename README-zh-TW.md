@@ -18,28 +18,36 @@
 4. 可透過以下指令 clone 這個專案：
 
     ```shell
-    git clone --depth 1 https://gitlab.com/csning1998/on-premise-gitlab-deployment.git
+    git clone --depth 1 https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment.git
     ```
 
 > [!WARNING]
 > 此 repo 目前僅支援具有 CPU virtualization 功能的 Linux 裝置。如果使用的裝置 CPU 不支援 virtualization（例如無 VT-x/AMD-V），請切換至 `legacy-workstation-on-ubuntu` branch，可以支援最基本的 HA Kubeadm Cluster 架設
 
+## Upstream Projects
+
+此 repository 只佈署 GitLab 與 Harbor 服務。共用服務與建置產物由以下上游專案提供
+
+| Project                                                                                                       | Provides                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`parent-group-governance`](https://gitlab.com/csning1998-lab/parent-group-governance)                        | Bastion Vault, GitLab group topology, AI provider federation, and Terraform state backend credentials                           |
+| [`platform-foundation`](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-foundation)       | Downstream Vault, Harbor Origin, Keycloak, hypervisor baseline, global network baseline, `kvm-provisioning` modules, and images |
+| [`platform-observability`](https://gitlab.com/csning1998-lab/platform-engineering-lab/platform-observability) | LGTM stack (Loki, Grafana, Tempo, and Mimir) which collects the metrics and logs of this repository                             |
+
 ## Documentation
 
 有關完整設定、組態、以及架構文件都存放在 [`documentation/`](documentation/README.md) 中。目前持續更新中
 
-| Section                                                                       | Description                                              |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [Prerequisites](documentation/en/getting-started/01-prerequisites.md)         | Hardware, software, and system requirements              |
-| [Environment Setup](documentation/en/getting-started/02-environment-setup.md) | Podman, Libvirt permissions, container vs. native        |
-| [Initialization](documentation/en/getting-started/03-initialization.md)       | SSH keys, GitHub / GitLab PAT, Vault bootstrap           |
-| [Deployment Order](documentation/en/getting-started/04-deployment-order.md)   | Phase-by-phase Terraform layer apply sequence            |
-| [Vault Secrets](documentation/en/configuration/vault-secrets.md)              | Bootstrapper Vault and Production Vault secret injection |
-| [Terraform Variables](documentation/en/configuration/terraform-variables.md)  | `.tfvars` init, HA node count rules, Guest OS            |
-| [Kernel Tuning](documentation/en/configuration/kernel-tuning.md)              | `rp_filter`, `ip_forward`, bridge netfilter, MSS         |
-| [Trust Store](documentation/en/configuration/trust-store.md)                  | `/etc/hosts`, CA bundle import, verification             |
-| [Architecture Overview](documentation/en/architecture/overview.md)            | Toolchain roles, layer map, ADR index                    |
-| [Troubleshooting](documentation/en/operations/troubleshooting.md)             | Symptom index linking to all layer-specific READMEs      |
+| Section                                                                      | Description                                         |
+| ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| [Prerequisites](documentation/en/getting-started/01-prerequisites.md)        | Hardware, software, and system requirements         |
+| [Initialization](documentation/en/getting-started/02-initialization.md)      | SSH keys, GitLab.com project governance credentials |
+| [Deployment Order](documentation/en/getting-started/03-deployment-order.md)  | Phase-by-phase Terraform layer apply sequence       |
+| [Vault Secrets](documentation/en/configuration/vault-secrets.md)             | Bastion Vault and Downstream Vault secrets          |
+| [Terraform Variables](documentation/en/configuration/terraform-variables.md) | `.tfvars` init, HA node count rules, Guest OS       |
+| [Trust Store](documentation/en/configuration/trust-store.md)                 | `/etc/hosts`, CA bundle import, verification        |
+| [Architecture Overview](documentation/en/architecture/overview.md)           | Toolchain roles, layer map, ADR index               |
+| [Troubleshooting](documentation/en/operations/troubleshooting.md)            | Symptom index linking to all layer-specific READMEs |
 
 ## Hardware Reference
 
@@ -52,59 +60,47 @@
 
 ### Network Segment & VIP Allocation
 
-| Usage (Service)      | Component (Role) | Network Segment (CIDR) | Service Tier  | HA-able? | VIP (HAProxy/Ingress) |
-| -------------------- | ---------------- | ---------------------- | ------------- | -------- | --------------------- |
-| Central LB           | HAProxy          | 172.16.125.0/24        | Shared        | True     | 172.16.125.250        |
-| Kubeadm Cluster      | Kubeadm Master   | 172.16.126.0/24        | App (GitLab)  | True     | 172.16.126.250        |
-|                      | Kubeadm Worker   |                        |               |          |                       |
-| Postgres             | Postgres         | 172.16.127.0/24        | Data (GitLab) | True     | 172.16.127.250        |
-| Etcd                 | Etcd             | 172.16.128.0/24        | Data (GitLab) | True     | 172.16.128.250        |
-| Redis                | Redis            | 172.16.129.0/24        | Data (GitLab) | True     | 172.16.129.250        |
-| MinIO                | MinIO            | 172.16.130.0/24        | Data (GitLab) | True     | 172.16.130.250        |
-| MicroK8s Cluster     | MicroK8s         | 172.16.131.0/24        | App (Harbor)  | True     | 172.16.131.250        |
-| Postgres             | Postgres         | 172.16.132.0/24        | Data (Harbor) | True     | 172.16.132.250        |
-| Etcd                 | Etcd             | 172.16.133.0/24        | Data (Harbor) | True     | 172.16.133.250        |
-| Redis                | Redis            | 172.16.134.0/24        | Data (Harbor) | True     | 172.16.134.250        |
-| MinIO                | MinIO            | 172.16.135.0/24        | Data (Harbor) | True     | 172.16.135.250        |
-| Vault                | Vault (Raft)     | 172.16.136.0/24        | Shared        | True     | 172.16.136.250        |
-| Harbor Bootstrapper  | Docker Engine    | 172.16.137.0/24        | App (Harbor)  | False    | 172.16.137.250        |
-| Gitaly               | Gitaly           | 172.16.138.0/24        | Data (GitLab) | True     | 172.16.138.250        |
-| GitLab Runner        | MicroK8s         | 172.16.139.0/24        | App (GitLab)  | True     | 172.16.139.250        |
-| Praefect             | Praefect         | 172.16.140.0/24        | Data (GitLab) | True     | 172.16.138.250        |
-| Patroni (Praefect)   | Postgres         | 172.16.141.0/24        | Data (GitLab) | True     | 172.16.138.250        |
-| Keycloak SSO         | Docker Engine    | 172.16.142.0/24        | Shared        | False    | 172.16.142.250        |
-| Observability (LGTM) | MicroK8s         | 172.16.143.0/24        | Shared        | True     | 172.16.143.250        |
-| MinIO for LGTM       | MinIO            | 172.16.144.0/24        | Shared        | True     | 172.16.144.250        |
+| Usage (Service)    | Component (Role) | Network Segment (CIDR) | Service Tier  | HA-able? | CoW-able? | VIP (HAProxy/Ingress) |
+| ------------------ | ---------------- | ---------------------- | ------------- | -------- | --------- | --------------------- |
+| Kubeadm Cluster    | Kubeadm Master   | 172.16.126.0/24        | App (GitLab)  | True     | Consider  | 172.16.126.250        |
+|                    | Kubeadm Worker   |                        |               |          | Yes       |                       |
+| Postgres           | Postgres         | 172.16.127.0/24        | Data (GitLab) | True     | Yes       | 172.16.127.250        |
+| Etcd               | Etcd             | 172.16.128.0/24        | Data (GitLab) | True     | No        | 172.16.128.250        |
+| Redis              | Redis            | 172.16.129.0/24        | Data (GitLab) | True     | Yes       | 172.16.129.250        |
+| MinIO              | MinIO            | 172.16.130.0/24        | Data (GitLab) | True     | Yes       | 172.16.130.250        |
+| MicroK8s Cluster   | MicroK8s         | 172.16.131.0/24        | App (Harbor)  | True     | Consider  | 172.16.131.250        |
+| Postgres           | Postgres         | 172.16.132.0/24        | Data (Harbor) | True     | Yes       | 172.16.132.250        |
+| Etcd               | Etcd             | 172.16.133.0/24        | Data (Harbor) | True     | No        | 172.16.133.250        |
+| Redis              | Redis            | 172.16.134.0/24        | Data (Harbor) | True     | Yes       | 172.16.134.250        |
+| MinIO              | MinIO            | 172.16.135.0/24        | Data (Harbor) | True     | Yes       | 172.16.135.250        |
+| Gitaly             | Gitaly           | 172.16.138.0/24        | Data (GitLab) | True     | Yes       | 172.16.138.250        |
+| GitLab Runner      | MicroK8s         | 172.16.139.0/24        | App (GitLab)  | True     | Consider  | 172.16.139.250        |
+| Praefect           | Praefect         | 172.16.140.0/24        | Data (GitLab) | True     | Yes       | 172.16.138.250        |
+| Patroni (Praefect) | Postgres         | 172.16.141.0/24        | Data (GitLab) | True     | Yes       | 172.16.138.250        |
 
 > [!NOTE]
-> 其中 Observability 包含 Loki、Grafana、Tempo、與 Mimir，合稱為 LGTM
+> CoW-able 欄位指的是該角色的儲存引擎是否跑 Raft 家族的共識程序（etcd、Vault Raft），且對 fsync 與 quorum timeout 有嚴格預算，CoW 主機檔案系統的間歇性 I/O 停頓會直接變成共識失敗。雖然 Kubeadm Master 跟 MicroK8s 分別內嵌 etcd 跟 dqlite，但周邊的 liveness probe 容忍度足夠寬鬆，同樣的 host 抖動很少會浮現成硬錯誤，所以這兩個角色的 CoW 就不設定為強制禁用
 
 ### Compute Resource & RAM Allocation
 
-| Usage                | Unit RAM | Basic Qty | Subtotal RAM Basic | HA Min Qty | Subtotal RAM HA |
-| -------------------- | -------- | --------- | ------------------ | ---------- | --------------- |
-| Central LB           | 0.5      | 2         | 1.0                | 2          | 1.0             |
-| Kubeadm Cluster      | 3.0      | 1         | 3.0                | 3          | 9.0             |
-| Kubeadm Cluster      | 6.0      | 2         | 12.0               | 2          | 12.0            |
-| Postgres             | 1.0      | 1         | 1.0                | 3          | 3.0             |
-| Etcd                 | 1.0      | 1         | 1.0                | 3          | 3.0             |
-| Redis                | 0.5      | 1         | 0.5                | 3          | 1.5             |
-| MinIO                | 1.0      | 1         | 1.0                | 4          | 4.0             |
-| MicroK8s Cluster     | 4.0      | 1         | 4.0                | 3          | 12.0            |
-| Postgres             | 1.0      | 1         | 1.0                | 3          | 3.0             |
-| Etcd                 | 1.0      | 1         | 1.0                | 3          | 3.0             |
-| Redis                | 0.5      | 1         | 0.5                | 3          | 1.5             |
-| MinIO                | 1.0      | 1         | 1.0                | 4          | 4.0             |
-| Vault                | 0.5      | 1         | 0.5                | 3          | 1.5             |
-| Harbor Bootstrapper  | 1.5      | 1         | 1.5                | 1          | 1.5             |
-| Gitaly               | 2.0      | 1         | 2.0                | 3          | 6.0             |
-| GitLab Runner        | 4.0      | 1         | 4.0                | 3          | 12.0            |
-| Praefect             | 4.0      | 0         | 0.0                | 3          | 12.0            |
-| Patroni (Praefect)   | 2.0      | 0         | 0.0                | 3          | 6.0             |
-| Keycloak SSO         | 1.5      | 1         | 1.5                | 1          | 1.5             |
-| Observability (LGTM) | 4.0      | 1         | 4.0                | 3          | 12.0            |
-| MinIO                | 1.0      | 1         | 1.0                | 4          | 4.0             |
-| **Total**            |          | 21        | **41.5**           | 60         | **113.5**       |
+| Usage              | Unit RAM | Basic Qty | Subtotal RAM Basic | HA Min Qty | Subtotal RAM HA |
+| ------------------ | -------- | --------- | ------------------ | ---------- | --------------- |
+| Kubeadm Cluster    | 3.0      | 1         | 3.0                | 3          | 9.0             |
+| Kubeadm Cluster    | 6.0      | 2         | 12.0               | 2          | 12.0            |
+| Postgres           | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Etcd               | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Redis              | 0.5      | 1         | 0.5                | 3          | 1.5             |
+| MinIO              | 1.0      | 1         | 1.0                | 4          | 4.0             |
+| MicroK8s Cluster   | 4.0      | 1         | 4.0                | 3          | 12.0            |
+| Postgres           | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Etcd               | 1.0      | 1         | 1.0                | 3          | 3.0             |
+| Redis              | 0.5      | 1         | 0.5                | 3          | 1.5             |
+| MinIO              | 1.0      | 1         | 1.0                | 4          | 4.0             |
+| Gitaly             | 2.0      | 1         | 2.0                | 3          | 6.0             |
+| GitLab Runner      | 4.0      | 1         | 4.0                | 3          | 12.0            |
+| Praefect           | 4.0      | 0         | 0.0                | 3          | 12.0            |
+| Patroni (Praefect) | 2.0      | 0         | 0.0                | 3          | 6.0             |
+| **Total**          |          | 14        | **32.0**           | 46         | **92.0**        |
 
 > [!NOTE]
 > 表格中 RAM 的單位是 GiB
@@ -113,21 +109,17 @@
 
 目前有處理的服務包含：
 
-1. HashiCorp Vault HA Raft cluster for PKI with Sidecar, ACL, AppRole, RBAC
-2. Postgres / Patroni (with etcd)
-3. Redis / Sentinel
-4. Distributed MinIO for object storage
-5. Harbor for Production container registry for GitLab Runner
-6. GitLab with full Helm chart deployment on Kubeadm
-7. Harbor Bootstrapper as OCI seed registry for Helm charts and images
-8. Keycloak OIDC for SSO integration for GitLab, Harbor (both), and Vault
-9. Standalone Gitaly
-10. HA Gitaly with (HA) Praefect + subordinated Patroni
-11. GitLab Runner on MicroK8s
-12. Remote Terraform States
-13. Centralized CI/CD Pipeline
-14. **[WIP]** Prometheus + LGTM Stack (Observability)
-15. **[WIP]** Documentation
+1. Postgres / Patroni (with etcd)
+2. Redis / Sentinel
+3. Distributed MinIO for object storage
+4. Harbor for Production container registry for GitLab Runner
+5. GitLab with full Helm chart deployment on Kubeadm
+6. Standalone Gitaly
+7. HA Gitaly with (HA) Praefect + subordinated Patroni
+8. GitLab Runner on MicroK8s
+9. Remote Terraform States
+10. Centralized CI/CD Pipeline
+11. **[WIP]** Documentation
 
 > [!NOTE]
 > **Standalone Gitaly** 與 **(HA) Praefect 即從屬 Patroni** 組態可以雙向同步。可參考 [infra_gitaly_praefect 的 README](ansible/roles/infra_gitaly_praefect/README.md)
