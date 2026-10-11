@@ -1,9 +1,0 @@
----
-- name: "System: Apply OS baseline (apt, admin tools, terminfo, sysctl)"
-  ansible.builtin.include_tasks: system-baseline.yaml
-
-- name: "Observability: Install and enable Node Exporter"
-  ansible.builtin.include_tasks: node-exporter.yaml
-
-- name: "Observability: Install Grafana Alloy log-shipping agent"
-  ansible.builtin.include_tasks: alloy-agent.yaml

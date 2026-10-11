@@ -23,7 +23,7 @@ resource "helm_release" "kube_state_metrics" {
 }
 
 # Full cluster-state data (pod names, replica counts, resource requests, labels) is otherwise
-# readable by any pod in this namespace that can reach port 8080, since the annotation above
+# readable by any pod in this namespace that can reach port 8080since the annotation above
 # has no access control of its own. Restricting ingress to this cluster's own Alloy is what
 # makes the annotation-based discovery safe
 resource "kubernetes_manifest" "kube_state_metrics_network_policy" {

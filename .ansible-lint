@@ -5,9 +5,11 @@ warn_list:
   - role-name
   - ignore-errors
   - latest
+  - var-naming
 
 exclude_paths:
   - .git/
+  - .gitlab/
   - .terraform/
   - roles/utilities/tasks/main.yaml
   - inventory-*.yaml

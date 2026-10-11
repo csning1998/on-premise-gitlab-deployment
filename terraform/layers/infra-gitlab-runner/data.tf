@@ -28,10 +28,10 @@ data "vault_kv_secret_v2" "guest_vm" {
 
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/infra-harbor-origin-frontend" })
 }
 
 data "terraform_remote_state" "harbor_proxy" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
 }

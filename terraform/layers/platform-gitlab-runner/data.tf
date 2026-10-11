@@ -12,7 +12,7 @@ data "terraform_remote_state" "vault_pki" {
 
 data "terraform_remote_state" "harbor_bootstrapper_oci" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
 }
 
 data "terraform_remote_state" "provision" {
@@ -26,11 +26,11 @@ ephemeral "vault_kv_secret_v2" "kubeconfig" {
   name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/infrastructure/kubeconfig/gitlab-runner"
 }
 
-# Harbor Bootstrapper Robot Account (RBAC)
+# Harbor Origin Robot Account (RBAC)
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-origin/robot"
 }
 
 data "vault_kv_secret_v2" "gitlab_runner" {

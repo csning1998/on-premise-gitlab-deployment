@@ -5,4 +5,4 @@ os_spec = {
 }
 
 vnc_port     = 5999
-source_image = "../output/ubuntu-24-updated/ubuntu-24-updated.qcow2"
+source_image = "../../../platform-foundation/packer/output/ubuntu-24-updated/ubuntu-24-updated.qcow2"

@@ -35,10 +35,7 @@ for lib in "${SCRIPTS_LIB_DIR}"/*.sh; do
   source "$lib"
 done
 
-# Set correct permissions since
-if [[ "${ENVIRONMENT_STRATEGY}" == "native" ]]; then
-  check_and_fix_permissions || { log_print "FATAL" "Permission fix failed."; exit 1; }
-fi
+check_and_fix_permissions || { log_print "FATAL" "Permission fix failed."; exit 1; }
 
 # Set Terraform directory based on the selected provider
 read -r -a ALL_PACKER_BASES <<< "$ALL_PACKER_BASES"
@@ -49,23 +46,8 @@ echo
 echo "======= IaC-Driven Virtualization Management ======="
 echo
 
-log_print "INFO" "Environment: ${ENVIRONMENT_STRATEGY^^}"
-if [[ "${ENVIRONMENT_STRATEGY}" == "container" ]]; then
-  log_print "INFO" "Engine: PODMAN"
-fi
-vault_status_reporter
-echo
-
 PS3=$'\n\033[1;34m[INPUT] Please select an action: \033[0m'
 options=()
-
-# [Dev Vault: Bootstrap Unit]
-options+=("[DEV] Set up TLS for Dev Vault (Local)")
-options+=("[DEV] Initialize Dev Vault (Local)")
-options+=("[DEV] Unseal Dev Vault (Local)")
-
-# [Production Vault: PKI Service Provider]
-options+=("[PROD] Unseal Production Vault (via Ansible)")
 
 # [Infrastructure]
 options+=("Generate SSH Key")
@@ -74,7 +56,6 @@ options+=("Verify IaC Environment")
 # [Operations]
 options+=("Build Packer Base Image")
 options+=("Verify Guest VM Connectivity via SSH")
-options+=("Switch Environment Strategy")
 
 # [Operations: GitLab]
 options+=("[PROD] Revert Gitaly to Standalone for Safety Pre-check")
@@ -88,28 +69,6 @@ select opt in "${options[@]}"; do
   readonly START_TIME=$(date +%s)
 
   case $opt in
-    # Dev Vault setup actions
-    "[DEV] Set up TLS for Dev Vault (Local)")
-      ENVIRONMENT_STRATEGY="native" vault_dev_tls_generator
-      break
-      ;;
-    "[DEV] Initialize Dev Vault (Local)")
-      ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_init_handler
-      break
-      ;;
-
-    # Development Vault for Bootstrapping Packer / Production Vault
-    "[DEV] Unseal Dev Vault (Local)")
-      ENVIRONMENT_STRATEGY="native" DEV_CA="${DEV_VAULT_CACERT}" vault_dev_unseal_handler
-      break
-      ;;
-
-    # Production Vault with PKI Functionality
-    "[PROD] Unseal Production Vault (via Ansible)")
-      ENVIRONMENT_STRATEGY="native" vault_prod_unseal_trigger
-      break
-      ;;
-
     # Infrastructure
     "Generate SSH Key")
       log_print "STEP" "Generate SSH Key for this project..."
@@ -131,9 +90,6 @@ select opt in "${options[@]}"; do
     "Verify Guest VM Connectivity via SSH")
       if ssh_key_verifier; then ssh_verification_handler; fi
       break
-      ;;
-    "Switch Environment Strategy")
-      strategy_switch_handler
       ;;
 
     # Operations: GitLab

@@ -7,41 +7,42 @@
     - name: "Create dynamic groups from node_role variable"
       ansible.builtin.group_by:
         key: "{{ node_role | replace('-', '_') }}"
+      changed_when: false
 
-# (HA) ETCD
-- name: "Play [ETCD]: Configure etcd Cluster"
-  hosts: >-
-    {{ (groups['etcd'] | default([]))
-        + (groups['praefect_patroni'] | default([])) }}
-  become: true
-  roles:
-    - base_baremetal_etcd
-    - infra_etcd
+# # (HA) ETCD
+# - name: "Play [ETCD]: Configure etcd Cluster"
+#   hosts: >-
+#     {{ (groups['etcd'] | default([]))
+#         + (groups['praefect_patroni'] | default([])) }}
+#   become: true
+#   roles:
+#     - base_baremetal_etcd
+#     - platform_etcd
 
-# Patroni
-- name: "Play [Postgres]: Configure Patroni and Postgres Cluster"
-  hosts: >-
-    {{ (groups['postgres'] | default([]))
-        + (groups['praefect_patroni'] | default([])) }}
-  become: true
-  roles:
-    - infra_postgres
+# # Patroni
+# - name: "Play [Postgres]: Configure Patroni and Postgres Cluster"
+#   hosts: >-
+#     {{ (groups['postgres'] | default([]))
+#         + (groups['praefect_patroni'] | default([])) }}
+#   become: true
+#   roles:
+#     - platform_postgres
 
-# Redis Sentinel
-- name: "Play [Redis]: Configure Redis High Availability Cluster"
-  hosts: "{{ 'redis' if 'redis' in groups else [] }}"
-  become: true
-  roles:
-    - infra_redis
+# # Redis Sentinel
+# - name: "Play [Redis]: Configure Redis High Availability Cluster"
+#   hosts: "{{ 'redis' if 'redis' in groups else [] }}"
+#   become: true
+#   roles:
+#     - platform_redis
 
-# MinIO Distributed
-- name: "Play [MinIO]: Configure MinIO High Availability Cluster"
-  hosts: "{{ 'minio' if 'minio' in groups else [] }}"
-  become: true
-  roles:
-    - infra_minio
+# # MinIO Distributed
+# - name: "Play [MinIO]: Configure MinIO High Availability Cluster"
+#   hosts: "{{ 'minio' if 'minio' in groups else [] }}"
+#   become: true
+#   roles:
+#     - platform_minio
 
-# Gitaly and Praefect
+# 2. Gitaly and Praefect
 - name: "Play [Gitaly/Praefect]: Configure Gitaly / Praefect High Availability Cluster"
   hosts: "{{ (groups['gitaly'] | default([])) + (groups['praefect'] | default([])) }}"
   become: true

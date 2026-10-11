@@ -34,8 +34,8 @@ packer_artifact_cleaner() {
   # Generic Packer Cache Cleanup
   if [ -d ~/.cache/packer ]; then
     log_print "TASK" "Cleaning Packer cache on host (preserving ISOs)..."
-    # Use 'sudo' to ensure we can remove any stale lock files created by
-    # previous runs, regardless of ownership or permissions.
+    # Use 'sudo' to remove any stale lock files created by previous runs,
+    # regardless of ownership or permissions.
     find ~/.cache/packer -mindepth 1 ! -name '*.iso' -print0 | sudo xargs -0 rm -rf
   fi
 
@@ -52,12 +52,7 @@ packer_build_executor() {
     return 1
   fi
 
-  # Determine sub-directory based on file existence
   local sub_dir="services"
-  if [ -f "${PACKER_DIR}/base-os/${base_name}.pkrvars.hcl" ]; then
-    sub_dir="base-os"
-  fi
-
   local target_packer_dir="${PACKER_DIR}/${sub_dir}"
   # Construct the path to the specific var file.
   local build_var_file="${target_packer_dir}/${base_name}.pkrvars.hcl"
@@ -68,9 +63,6 @@ packer_build_executor() {
   fi
 
   log_print "STEP" "Starting new Packer build for [${base_name}] in [${sub_dir}]..."
-
-  # Ensure we are using the Development Vault context for Packer builds
-  vault_context_handler "dev"
 
   local override_args=""
 
@@ -128,9 +120,6 @@ packer_layer_selector() {
       return 0
     elif [[ "$img" == "Build ALL in ${menu_title}" ]]; then
       log_print "STEP" "Executing Batch Build for ALL ${menu_title}..."
-      if [[ "$sub_dir_name" == "base-os" ]]; then
-        packer_artifact_cleaner "all"
-      fi
       for b in "${layers[@]}"; do
         packer_artifact_cleaner "$b"
         packer_build_executor "$b"
@@ -150,30 +139,19 @@ packer_menu_handler() {
     echo
     log_print "INFO" "Select Packer category to build:"
     log_divider
-    local main_options=("Base OS Layers" "Service Layers" "Build ALL" "Back to Main Menu")
+    local main_options=("Service Layers" "Build ALL" "Back to Main Menu")
     PS3=$'\n\033[1;34m[INPUT] Select a category: \033[0m'
 
     select category in "${main_options[@]}"; do
       case $category in
-        "Base OS Layers")
-          if ! packer_layer_selector "base-os" "Base OS Images"; then break 2; fi
-          break
-          ;;
         "Service Layers")
           if ! packer_layer_selector "services" "Service Images"; then break 2; fi
           break
           ;;
         "Build ALL")
-          log_print "STEP" "Executing FULL Batch Build (Base -> Services)..."
+          log_print "STEP" "Executing FULL Batch Build (Services)..."
           packer_artifact_cleaner "all"
 
-          # 1. Build Base Layers
-          local base_layers=($(find "${PACKER_DIR}/base-os" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
-          for b in "${base_layers[@]}"; do
-            packer_build_executor "$b"
-          done
-
-          # 2. Build Service Layers
           local service_layers=($(find "${PACKER_DIR}/services" -name "*.pkrvars.hcl" -printf '%f\n' | sed 's/\.pkrvars\.hcl//g' | sort))
           for s in "${service_layers[@]}"; do
             packer_build_executor "$s"

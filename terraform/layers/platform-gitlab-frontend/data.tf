@@ -27,17 +27,17 @@ data "terraform_remote_state" "provision" {
   config  = merge(local._state_auth, { address = "${local._state_base}/provision-gitlab-frontend" })
 }
 
-# Harbor Bootstrapper State
+# Harbor Origin State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
 }
 
-# Harbor Bootstrapper Admin Credentials (for Helm OCI Registry)
+# Harbor Origin Admin Credentials (for Helm OCI Registry)
 data "vault_kv_secret_v2" "harbor_bootstrapper" {
   provider = vault.production
   mount    = "secret"
-  name     = local.credential_paths["harbor-bootstrapper"]["frontend"]
+  name     = local.credential_paths["harbor-origin"]["frontend"]
 }
 
 # 1. Database Provisioning State
@@ -69,11 +69,11 @@ data "vault_kv_secret_v2" "gitlab_s3" {
   name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/gitlab/app/s3_credentials/${each.value}"
 }
 
-# Harbor Bootstrapper Robot Account (RBAC)
+# Harbor Origin Robot Account (RBAC)
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-origin/robot"
 }
 
 # Database Credentials (Redis)

@@ -42,7 +42,7 @@ data "terraform_remote_state" "observability_infra" {
 
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
 }
 
 ephemeral "vault_kv_secret_v2" "kubeconfig" {
@@ -61,5 +61,5 @@ data "kubernetes_config_map" "kube_root_ca" {
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-origin/robot"
 }

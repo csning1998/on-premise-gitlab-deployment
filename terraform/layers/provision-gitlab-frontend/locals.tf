@@ -51,12 +51,12 @@ locals {
   # FQDNs
   gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
   vault_fqdn               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
-  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-origin-frontend"].dns_san[0]
   minio_fqdn               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
   postgres_fqdn            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
   redis_fqdn               = local.state.vault_pki.global_pki_map["gitlab-redis"].dns_san[0]
 
-  # Harbor Bootstrapper (Registry Redirection)
+  # Harbor Origin (Registry Redirection)
   harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
@@ -66,7 +66,7 @@ locals {
   harbor_gcr_proxy    = local.state.harbor_bootstrapper.proxy_caches.gcr_io.project_name
   helm_chart_project  = local.state.harbor_bootstrapper.proxy_oci.helm_charts.name
 
-  # GitLab CNG image registry and repository routed through Harbor Bootstrapper proxy
+  # GitLab CNG image registry and repository routed through Harbor Origin proxy
   gitlab_image_registry   = local.harbor_registry
   gitlab_image_repository = "${local.harbor_gitlab_proxy}/gitlab-org/build/cng"
 

@@ -41,7 +41,7 @@ locals {
   pod_network_mtu = local.state.provision.network_context.global_network_mtu
 
   gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
-  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-origin-frontend"].dns_san[0]
 
   harbor_registry     = local.harbor_bootstrapper_fqdn
   harbor_docker_proxy = local.state.harbor_bootstrapper_oci.proxy_caches["docker_hub"].project_name

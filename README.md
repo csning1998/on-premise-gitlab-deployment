@@ -1,5 +1,10 @@
 # MVP: On-Premise GitLab HA on KVM/QEMU, Provisioned via Multi-Layer Terraform, Packer, and Ansible
 
+> [!CAUTION]
+> This repository is currently undergoing major refactoring and the `main` branch is temporarily unusable. It is recommended to refer to the latest stable commit [`676dedc`](https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment/-/commit/676dedc3b93dc6ac142207c645c792aab728f753).
+
+---
+
 > [!NOTE]
 > Refer to [README-zh-TW.md](README-zh-TW.md) for Traditional Chinese (Taiwan) version.
 >
@@ -15,10 +20,10 @@ A Proof of Concept for Infrastructure as Code which automated deployment of High
 
 3. As of [#128](https://gitlab.com/csning1998/on-premise-gitlab-deployment/-/merge_requests/128), this repository has been migrated to and hosted on GitLab. All subsequent updates will be available at [https://gitlab.com/csning1998/on-premise-gitlab-deployment](https://gitlab.com/csning1998/on-premise-gitlab-deployment). The GitHub repository will now serve as a mirror of the GitLab project.
 
-4. The project can be cloned using the following command:
+4. The project can be cloned using the following command with Git 2.47.0+:
 
     ```shell
-    git clone --depth 1 https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment.git
+    git clone --depth 1 --revision=676dedc3b93dc6ac142207c645c792aab728f753 https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment.git
     ```
 
 > [!WARNING]

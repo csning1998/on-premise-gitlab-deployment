@@ -1,0 +1,229 @@
+
+project_code = "opgitlab"
+
+service_catalog = {
+  "gitlab" = {
+    owner        = "devops"
+    stage        = "production"
+    components = {
+      "frontend" = {
+        provider       = "kvm"
+        runtime        = "kubeadm"
+        os_disk_format = "qcow2"
+        cidr_index     = 140
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 220 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "api-server"    = { frontend_port = 6443, backend_port = 6443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 30080, send_proxy_v2 = true }
+          "ingress-https" = { frontend_port = 443, backend_port = 30443, send_proxy_v2 = true }
+          "gitlab-ssh"    = { frontend_port = 32022, backend_port = 32022 }
+        }
+        ingress = {
+          "frontend" = { subdomains = ["gitlab", "kas"], node_groups = ["master", "worker"] }
+          "minio"    = { subdomains = ["minio"] }
+        }
+      }
+      "postgres" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 141
+        tags           = ["with-142-etcd"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
+          "api"      = { frontend_port = 8008, backend_port = 8008 }
+          "stats"    = { frontend_port = 7000, backend_port = 7000 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      }
+      "etcd" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 142
+        tags           = ["with-141-postgres"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "client" = { frontend_port = 2379, backend_port = 2379 }
+        }
+      }
+      "redis" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 143
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "main"    = { frontend_port = 6379, backend_port = 6379 }
+          "metrics" = { frontend_port = 9121, backend_port = 9121 }
+        }
+      }
+      "minio" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 144
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 203 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "api"     = { frontend_port = 9000, backend_port = 9000 }
+          "console" = { frontend_port = 9001, backend_port = 9001 }
+        }
+        data_disks = [
+          { name_suffix = "drive1", capacity_gib = 10 },
+          { name_suffix = "drive2", capacity_gib = 10 }
+        ]
+      }
+      "gitaly" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 145
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "grpc"    = { frontend_port = 8075, backend_port = 8075 }
+          "metrics" = { frontend_port = 9236, backend_port = 9236 }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      }
+      "praefect" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 146
+        tags           = ["with-147-praefect-patroni"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "proxy"   = { frontend_port = 2305, backend_port = 2305 }
+          "metrics" = { frontend_port = 9652, backend_port = 9652 }
+        }
+      }
+      "praefect-patroni" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 147
+        tags           = ["with-146-praefect"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "rw-proxy" = { frontend_port = 5432, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
+          "api"      = { frontend_port = 8008, backend_port = 8008 }
+          "etcd"     = { frontend_port = 2379, backend_port = 2379 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
+      }
+      "runner" = {
+        provider       = "kvm"
+        runtime        = "microk8s"
+        os_disk_format = "qcow2"
+        cidr_index     = 148
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "api-server" = { frontend_port = 16443, backend_port = 16443 }
+          "metrics"    = { frontend_port = 9252, backend_port = 9252 }
+          "session"    = { frontend_port = 8093, backend_port = 8093 }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 50 }]
+      }
+    }
+  },
+  "harbor" = {
+    owner        = "devops"
+    stage        = "production"
+    components = {
+      "frontend" = {
+        provider       = "kvm"
+        runtime        = "microk8s"
+        os_disk_format = "qcow2"
+        cidr_index     = 149
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "api-server"    = { frontend_port = 16443, backend_port = 16443 }
+          "ingress-http"  = { frontend_port = 80, backend_port = 80, send_proxy_v2 = true }
+          "ingress-https" = { frontend_port = 443, backend_port = 443, send_proxy_v2 = true }
+        }
+        ingress = {
+          "frontend" = { subdomains = ["harbor", "notary"] }
+        }
+      }
+      "postgres" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 150
+        tags           = ["with-151-etcd"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "rw-proxy" = { frontend_port = 5000, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/primary" }
+          "ro-proxy" = { frontend_port = 5001, backend_port = 5432, health_check_type = "http", health_check_port = 8008, health_check_http_path = "/replica" }
+          "api"      = { frontend_port = 8008, backend_port = 8008 }
+          "stats"    = { frontend_port = 7000, backend_port = 7000 }
+          "metrics"  = { frontend_port = 9187, backend_port = 9187 }
+        }
+        data_disks = [{ name_suffix = "data", capacity_gib = 100 }]
+      }
+      "etcd" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 151
+        tags           = ["with-150-postgres"]
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "client" = { frontend_port = 2379, backend_port = 2379 }
+        }
+      }
+      "redis" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 152
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 202 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "main"    = { frontend_port = 6379, backend_port = 6379 }
+          "metrics" = { frontend_port = 9121, backend_port = 9121 }
+        }
+      }
+      "minio" = {
+        provider       = "kvm"
+        runtime        = "baremetal"
+        os_disk_format = "qcow2"
+        cidr_index     = 153
+        tags           = []
+        ip_range       = { start_ip = 200, end_ip = 203 }
+        ssh            = { enabled = true, username = "operator" }
+        ports = {
+          "api"     = { frontend_port = 9000, backend_port = 9000 }
+          "console" = { frontend_port = 9001, backend_port = 9001 }
+        }
+        data_disks = [
+          { name_suffix = "drive1", capacity_gib = 10 },
+          { name_suffix = "drive2", capacity_gib = 10 }
+        ]
+      }
+    }
+  },
+}

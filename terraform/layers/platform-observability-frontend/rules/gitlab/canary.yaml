@@ -1,6 +1,0 @@
----
-groups:
-  - name: ruler-canary
-    rules:
-      - record: sli_canary:up:count
-        expr: count(up)

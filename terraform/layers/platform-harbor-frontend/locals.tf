@@ -42,7 +42,7 @@ locals {
 locals {
   harbor_frontend_fqdn = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
 
-  harbor_registry     = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  harbor_registry     = local.state.vault_pki.global_pki_map["harbor-origin-frontend"].dns_san[0]
   harbor_quay_proxy   = local.state.harbor_bootstrapper.proxy_caches.quay_io.project_name
   harbor_k8s_proxy    = local.state.harbor_bootstrapper.proxy_caches.k8s_io.project_name
   harbor_docker_proxy = local.state.harbor_bootstrapper.proxy_caches.docker_hub.project_name

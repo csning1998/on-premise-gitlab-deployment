@@ -20,6 +20,6 @@
 The layer requires no personal access token of its own:
 
 1. The GitLab provider token is read from `secret/parent-group-governance/terraform/state-backend` in the Bastion Vault.
-2. The Bastion Vault login uses the local operator credential resolved by the `contexts-local-credential` module.
-3. The HTTP backend credentials come from `TF_HTTP_USERNAME` and `TF_HTTP_PASSWORD` exported by the operator.
+2. The Bastion Vault login runs through the governance Vault Proxy of `parent-group-governance`, which the `.envrc` of the layer loads with `eval "$(vault-proxy-env governance)"` after one `direnv allow`.
+3. The HTTP backend credentials come from `TF_HTTP_USERNAME` and `TF_HTTP_PASSWORD`, which the same `.envrc` exports.
 4. The workload identity federation bindings require an Anthropic `org:admin` OAuth token in `ANTHROPIC_AUTH_TOKEN`, which is not stored in Vault.

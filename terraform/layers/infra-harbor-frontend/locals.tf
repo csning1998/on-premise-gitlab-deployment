@@ -46,7 +46,7 @@ locals {
       }
       if contains([
         "vault-frontend", "keycloak-frontend",
-        "harbor-bootstrapper-frontend",
+        "harbor-origin-frontend",
         "harbor-postgres", "harbor-redis", "harbor-minio",
         "observability-frontend"
       ], name)
@@ -58,7 +58,7 @@ locals {
     ]
 
     registry_host       = data.terraform_remote_state.vault_pki.outputs.global_pki_map[local.registry_pki_key].dns_san[0]
-    registry_vip        = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-bootstrapper-frontend"]
+    registry_vip        = data.terraform_remote_state.load_balancer.outputs.infrastructure_vips["harbor-origin-frontend"]
     harbor_docker_proxy = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["docker_hub"].project_name
     harbor_quay_proxy   = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["quay_io"].project_name
     harbor_k8s_proxy    = data.terraform_remote_state.harbor_proxy.outputs.proxy_caches["k8s_io"].project_name

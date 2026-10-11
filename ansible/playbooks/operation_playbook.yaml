@@ -1,15 +1,4 @@
 ---
-- name: "Play: Operation - Unseal All Vault Nodes"
-  hosts: primary, replica
-  become: true
-  gather_facts: true
-  tags: [vault-unseal]
-  tasks:
-    - name: "Execute Vault Unseal only"
-      ansible.builtin.include_role:
-        name: shared_vault
-        tasks_from: D-unseal.yaml
-
 - name: "Play: Operation - Revert Gitaly to Standalone (Safety Pre-check)"
   hosts: all
   become: true
@@ -27,24 +16,24 @@
         - groups['gitaly'] | default([]) | length > 0
         - inventory_hostname == groups['gitaly'][0]
 
-- name: "Play: Operation - Install Node Exporter on Existing Fleet"
-  hosts: all
-  become: true
-  gather_facts: true
-  tags: [node-exporter-install]
-  tasks:
-    - name: "Execute Node Exporter installation only"
-      ansible.builtin.include_role:
-        name: foundation_common
-        tasks_from: node-exporter.yaml
+# - name: "Play: Operation - Install Node Exporter on Existing Fleet"
+#   hosts: all
+#   become: true
+#   gather_facts: true
+#   tags: [node-exporter-install]
+#   tasks:
+#     - name: "Execute Node Exporter installation only"
+#       ansible.builtin.include_role:
+#         name: foundation_common
+#         tasks_from: node-exporter.yaml
 
-- name: "Play: Operation - Retrofit MinIO Prometheus JWT Auth"
-  hosts: primary, replica
-  become: true
-  gather_facts: true
-  tags: [minio-metrics-auth]
-  tasks:
-    - name: "Regenerate MinIO environment file and restart"
-      ansible.builtin.include_role:
-        name: infra_minio
-        tasks_from: B-configure.yaml
+# - name: "Play: Operation - Retrofit MinIO Prometheus JWT Auth"
+#   hosts: primary, replica
+#   become: true
+#   gather_facts: true
+#   tags: [minio-metrics-auth]
+#   tasks:
+#     - name: "Regenerate MinIO environment file and restart"
+#       ansible.builtin.include_role:
+#         name: infra_minio
+#         tasks_from: B-configure.yaml

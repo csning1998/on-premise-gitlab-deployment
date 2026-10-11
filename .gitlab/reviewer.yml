@@ -1,17 +1,34 @@
 ---
 defaults:
   max_tokens: 16384
-  timeout: 5m
+  timeout: 30m
   # temperature: 0.2
   # top_p: 0.95
 
 models:
   # Anthropic Claude configuration (Claude 4.x / 5.x)
+  claude-sonnet-5.5:
+    provider: claude
+    model: claude-sonnet-5.5
+    web_search: true
+    thinking_type: adaptive
+    max_tokens: 128000
+    reasoning_level: high
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+  claude-opus-5.5:
+    provider: claude
+    model: claude-opus-5.5
+    web_search: true
+    thinking_type: adaptive
+    max_tokens: 128000
+    reasoning_level: high
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
   claude-sonnet-5:
     provider: claude
     model: claude-sonnet-5
+    web_search: true
     thinking_type: adaptive
-    max_tokens: 32768
+    max_tokens: 64000
     reasoning_level: high
     prompt_file: .gitlab/code_review_guidelines/generic_rules.md
     # Optional tuning parameters:
@@ -19,11 +36,12 @@ models:
     # (Legacy models only: thinking_budget: 4096)
 
   # Google Gemini configuration (Gemini 2.x / 3.x)
-  gemini-3.7-flash:
+  gemini-3.8-flash:
     provider: gemini
-    model: gemini-3.7-flash
+    model: gemini-3.8-flash
+    google_search: true
     temperature: 0.0
-    max_tokens: 32768
+    max_tokens: 65536
     reasoning_level: high
     prompt_file: .gitlab/code_review_guidelines/generic_rules.md
     # Optional tuning parameters:
@@ -53,7 +71,7 @@ models:
     prompt_file: .gitlab/code_review_guidelines/generic_rules.md
     # Optional tuning parameters:
     max_tokens: 32768
-    # (Requires REVIEW_BASE_URL and REVIEW_API_VERSION provided via CI/CD inputs or environment variables)
+    #   # (Requires REVIEW_BASE_URL and REVIEW_API_VERSION provided via CI/CD inputs or environment variables)
 
   # xAI Grok configuration example (Grok 4.x flagship series)
   # grok-4-7:
@@ -67,8 +85,8 @@ models:
   #   # top_p: 0.95
 
 slots:
-  primary: claude-sonnet-5
-  fast: gemini-3.7-flash
+  primary: claude-sonnet-5.5
+  fast: gemini-3.8-flash
   # balanced: openai-gpt-6-sol
   # enterprise: azure-gpt-6-sol
   # grok: grok-4-7

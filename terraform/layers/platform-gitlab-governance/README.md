@@ -22,7 +22,7 @@ If automatic generation is disabled, the token must be generated and stored in V
         ```shell
         export VAULT_ADDR="https://172.16.136.250:443"
         export VAULT_CACERT="${PWD}/terraform/layers/shared-vault-frontend/tls/bootstrap-ca.crt"
-        export VAULT_TOKEN=$(VAULT_ADDR="https://127.0.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
+        export VAULT_TOKEN=$(VAULT_ADDR="https://172.16.0.1:8200" VAULT_CACERT="${PWD}/vault/tls/ca.pem" VAULT_TOKEN=$(cat $HOME/.vault-token) vault kv get -field=prod_vault_root_token secret/on-premise-gitlab-deployment/credentials)
         ```
 
     2. Before logging into the GitLab web interface, retrieve the initial password from Vault:

@@ -1,7 +1,0 @@
-
-observability_stack_config = {
-  grafana_version = "12.4.9"
-  mimir_version   = "6.0.6"
-  loki_version    = "17.4.10"
-  namespace       = "observability"
-}

@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "5.7.0"
     }
+    github = {
+      source  = "integrations/github"
+      version = "6.13.0"
+    }
     gitlab = {
       source  = "gitlabhq/gitlab"
       version = "19.2.0"
@@ -52,13 +56,15 @@ provider "azurerm" {
   features {}
 }
 
+provider "github" {
+  owner = var.github_owner
+  token = ephemeral.vault_kv_secret_v2.github_publication.data["deploy_token"]
+}
+
 provider "gitlab" {
   token = ephemeral.vault_kv_secret_v2.state_backend.data["token"]
 }
 
 provider "vault" {
-  alias        = "bastion"
-  address      = module.contexts_local_credential.bastion_vault_config.endpoint
-  ca_cert_file = module.contexts_local_credential.bastion_vault_config.ca_cert_path
-  token        = module.contexts_local_credential.bastion_vault_config.token_path
+  alias = "bastion"
 }

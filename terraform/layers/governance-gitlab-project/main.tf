@@ -1,14 +1,14 @@
 
-module "contexts_local_credential" {
-  source  = "gitlab.com/csning1998-lab/contexts-local-credential/gitlab"
-  version = "0.4.0"
+# The project code is the identity of this repository: the GitLab project, the WIF owner code, and the GitHub mirror share it.
+locals {
+  project_code = "on-premise-gitlab-deployment"
 }
 
 module "provisioner_gitlab_project" {
   source  = "gitlab.com/csning1998-lab/provisioner-gitlab-project/gitlab"
   version = "0.2.0"
 
-  name         = "on-premise-gitlab-deployment"
+  name         = local.project_code
   description  = "Multi-layer Terraform IaC for the on-premise GitLab and Harbor deployment on KVM/QEMU (Libvirt), provisioned end-to-end via Packer, Terraform, and Ansible."
   visibility   = "public"
   namespace_id = local.state.group_topology.subgroup_ids["platform-engineering-lab"]
@@ -17,14 +17,13 @@ module "provisioner_gitlab_project" {
 }
 
 module "workload_identity_federation" {
-  source    = "gitlab.com/csning1998-lab/provisioner-workload-identity-federation/gitlab"
-  version   = "0.3.1"
-  providers = { vault = vault.bastion }
+  source  = "gitlab.com/csning1998-lab/provisioner-workload-identity-federation/gitlab"
+  version = "0.4.0"
 
   gitlab_project = {
     id   = module.provisioner_gitlab_project.project_id
     path = module.provisioner_gitlab_project.full_path
-    code = "on-premise-gitlab-deployment"
+    code = local.project_code
   }
 
   anthropic_federation = {
@@ -57,4 +56,16 @@ module "code_reviewer" {
 
   gitlab_project_id    = module.provisioner_gitlab_project.project_id
   legacy_alias_enabled = true
+}
+
+module "github_mirror" {
+  source  = "gitlab.com/csning1998-lab/provisioner-github-mirror/gitlab"
+  version = "0.3.1"
+
+  gitlab_project_id = module.provisioner_gitlab_project.project_id
+
+  github_repository = {
+    name  = local.project_code
+    owner = var.github_owner
+  }
 }

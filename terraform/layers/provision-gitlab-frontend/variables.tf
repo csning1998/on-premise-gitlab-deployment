@@ -26,9 +26,9 @@ variable "cert_manager_config" {
 }
 
 variable "vault_dev_addr" {
-  description = "The address of the Bootstrapper Vault (Podman Vault)"
+  description = "The address of the Bastion Vault (Podman Vault)"
   type        = string
-  default     = "https://127.0.0.1:8200"
+  default     = "https://172.16.0.1:8200"
 }
 
 variable "metric_server_config" {
@@ -80,5 +80,3 @@ variable "local_path_config" {
     namespace = "kube-system"
   }
 }
-
-

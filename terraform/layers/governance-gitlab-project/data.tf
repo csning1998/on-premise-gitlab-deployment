@@ -18,6 +18,12 @@ ephemeral "vault_kv_secret_v2" "state_backend" {
   name     = "parent-group-governance/terraform/state-backend"
 }
 
+ephemeral "vault_kv_secret_v2" "github_publication" {
+  provider = vault.bastion
+  mount    = "secret"
+  name     = "parent-group-governance/github/publication"
+}
+
 ephemeral "vault_kv_secret_v2" "anthropic_admin_key" {
   provider = vault.bastion
   mount    = "secret"

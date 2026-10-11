@@ -19,10 +19,10 @@ data "terraform_remote_state" "provision" {
   config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-frontend" })
 }
 
-# Harbor Bootstrapper State
+# Harbor Origin State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-bootstrapper-frontend" })
+  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
 }
 
 data "terraform_remote_state" "provision_databases" {
@@ -30,11 +30,11 @@ data "terraform_remote_state" "provision_databases" {
   config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-databases" })
 }
 
-# Harbor Bootstrapper Robot Account (RBAC)
+# Harbor Origin Robot Account (RBAC)
 ephemeral "vault_kv_secret_v2" "harbor_bootstrapper_robot" {
   provider = vault.production
   mount    = "secret"
-  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-bootstrapper/robot"
+  name     = "${data.terraform_remote_state.vault_pki.outputs.vault_kv_namespace}/harbor-origin/robot"
 }
 
 # Fetch Kubeconfig from Production Vault

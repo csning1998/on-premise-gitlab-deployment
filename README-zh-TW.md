@@ -1,5 +1,10 @@
 # MVP: On-Premise GitLab HA on KVM/QEMU, Provisioned via Multi-Layer Terraform, Packer, and Ansible
 
+> [!CAUTION]
+> This repository is currently undergoing major refactoring and the `main` branch is temporarily unusable. It is recommended to refer to the latest stable commit [`676dedc`](https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment/-/commit/676dedc3b93dc6ac142207c645c792aab728f753).
+
+---
+
 > [!NOTE]
 > Refer to [README.md](README.md) for English (US) version.
 >
@@ -15,10 +20,10 @@
 
 3. 這個 repository 自 [#128](https://gitlab.com/csning1998/on-premise-gitlab-deployment/-/merge_requests/128) 起，已經遷移到 GitLab 上進行託管，後續更新都會在 [https://gitlab.com/csning1998/on-premise-gitlab-deployment](https://gitlab.com/csning1998/on-premise-gitlab-deployment) 上看到。而 GitHub 則是做為 GitLab 專案的 mirror
 
-4. 可透過以下指令 clone 這個專案：
+4. 可透過以下指令 clone 這個專案，在 Git 2.47.0 以上版本可用：
 
     ```shell
-    git clone --depth 1 https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment.git
+    git clone --depth 1 --revision=676dedc3b93dc6ac142207c645c792aab728f753 https://gitlab.com/csning1998-lab/platform-engineering-lab/on-premise-gitlab-deployment.git
     ```
 
 > [!WARNING]

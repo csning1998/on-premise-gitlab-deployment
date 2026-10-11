@@ -52,7 +52,7 @@ variable "enable_gitlab_pat_automation" {
 }
 
 variable "gitlab_pat_ttl_days" {
-  description = "Expiry, in days, for the generated PAT. GitLab enforces a mandatory expiry on all personal access tokens (365-day self-managed maximum); this only needs to be shorter than that ceiling, since the job re-validates and regenerates the token on every run where it has expired."
+  description = "Expiry, in days, for the generated PAT. GitLab enforces a mandatory expiry on all personal access tokens (365-day self-managed maximum); this only needs to be shorter than that ceiling since the job re-validates and regenerates the token on every run where it has expired."
   type        = number
   default     = 90
 }

@@ -1,6 +1,0 @@
----
-# 33-microk8s-addons Defaults
-microk8s_addons:
-  - dns
-  - hostpath-storage
-  - helm3

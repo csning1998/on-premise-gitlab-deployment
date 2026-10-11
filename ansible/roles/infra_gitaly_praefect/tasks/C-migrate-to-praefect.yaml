@@ -18,11 +18,13 @@
 - name: "Migrate: Build on-disk repository set excluding +gitaly internal state"
   ansible.builtin.set_fact:
     _migrate_disk_paths: >-
-      {{ _migrate_repos_found.files
+      {{
+        _migrate_repos_found.files
           | map(attribute='path')
           | map('regex_replace', '^' + gitaly_repo_base_path + '/', '')
           | reject('match', '^[+]gitaly/')
-          | list }}
+          | list
+      }}
 
 - name: "Migrate: Query repositories already tracked in Praefect DB"
   ansible.builtin.command:
@@ -45,8 +47,9 @@
 - name: "Migrate: Compute repositories present on disk but untracked"
   ansible.builtin.set_fact:
     _migrate_untracked: >-
-      {{ _migrate_disk_paths
-          | difference(_migrate_tracked.stdout_lines | map('trim') | select | list) }}
+      {{
+        _migrate_disk_paths | difference(_migrate_tracked.stdout_lines | map('trim') | select | list)
+      }}
 
 - name: "Migrate: Report reconciliation plan"
   ansible.builtin.debug:

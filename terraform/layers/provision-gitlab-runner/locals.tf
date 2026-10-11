@@ -49,7 +49,7 @@ locals {
 
   gitlab_frontend_fqdn     = local.state.vault_pki.global_pki_map["gitlab-frontend"].dns_san[0]
   vault_fqdn               = local.state.vault_pki.global_pki_map["vault-frontend"].dns_san[0]
-  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-bootstrapper-frontend"].dns_san[0]
+  harbor_bootstrapper_fqdn = local.state.vault_pki.global_pki_map["harbor-origin-frontend"].dns_san[0]
   harbor_frontend_fqdn     = local.state.vault_pki.global_pki_map["harbor-frontend"].dns_san[0]
   minio_fqdn               = local.state.vault_pki.global_pki_map["gitlab-minio"].dns_san[0]
   postgres_fqdn            = local.state.vault_pki.global_pki_map["gitlab-postgres"].dns_san[0]
