@@ -10,6 +10,7 @@ ansible/logs
 ansible/inventory-*.yaml
 ansible/packer-provisioner-ansible*
 ansible/fetched/
+ansible/collections/
 backup
 vault_pass.txt
 ansible-log*.log

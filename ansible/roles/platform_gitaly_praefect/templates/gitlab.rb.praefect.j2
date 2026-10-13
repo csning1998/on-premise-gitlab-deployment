@@ -23,7 +23,7 @@ praefect['auto_migrate'] = {{ 'true' if inventory_hostname in (groups['primary']
 praefect['configuration'] = {
   listen_addr: '0.0.0.0:2305',
   prometheus_listen_addr: '0.0.0.0:9652',
-{% if praefect_tls_enabled | default(false) %}
+{% if platform_gitaly_praefect_praefect_tls_enabled | default(false) %}
   tls_listen_addr: '0.0.0.0:2306',
   tls: {
     certificate_path: '/etc/gitlab/ssl/server.crt',
@@ -38,9 +38,9 @@ praefect['configuration'] = {
   database: {
     host: '{{ postgres_ha_vip }}',
     port: 5432,
-    user: '{{ praefect_db_user | default("praefect") }}',
+    user: '{{ platform_gitaly_praefect_db_user | default("praefect") }}',
     password: '{{ praefect_db_password }}',
-    dbname: '{{ praefect_db_name | default("praefect_production") }}',
+    dbname: '{{ platform_gitaly_praefect_db_name | default("praefect_production") }}',
     sslmode: 'verify-ca',
     sslrootcert: '/etc/gitlab/ssl/ca.crt',
     sslcert: '/etc/gitlab/ssl/server.crt',
@@ -54,7 +54,7 @@ praefect['configuration'] = {
 {% for host in groups['gitaly'] %}
         {
           storage: 'gitaly-{{ loop.index0 }}',
-{% if gitaly_tls_enabled | default(false) %}
+{% if platform_gitaly_praefect_gitaly_tls_enabled | default(false) %}
           address: 'tls://{{ hostvars[host]["advertise_ip"] }}:8076',
 {% else %}
           address: 'tcp://{{ hostvars[host]["advertise_ip"] }}:8075',

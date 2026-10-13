@@ -1,0 +1,5 @@
+---
+collections:
+  - name: >-
+      https://gitlab.com/api/v4/projects/84608830/packages/generic/csning1998_lab-platform_foundation/0.2.4/csning1998_lab-platform_foundation-0.2.4.tar.gz
+    type: url

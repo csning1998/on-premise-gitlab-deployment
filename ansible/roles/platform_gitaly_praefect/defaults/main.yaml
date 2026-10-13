@@ -1,0 +1,7 @@
+---
+platform_gitaly_praefect_db_user: "praefect"
+platform_gitaly_praefect_db_name: "praefect_production"
+platform_gitaly_praefect_gitaly_tls_enabled: true
+platform_gitaly_praefect_praefect_tls_enabled: true
+gitlab_external_url: "https://gitlab.example.com"
+platform_gitaly_praefect_repo_base_path: "/var/opt/gitlab/git-data/repositories"

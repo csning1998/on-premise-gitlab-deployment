@@ -16,3 +16,11 @@ include:
   - component: $CI_SERVER_FQDN/csning1998-lab/gitlab-ci-with-code-reviewer/auto-tag@1.7.3
     inputs:
       reviewer_image: $CI_REGISTRY/csning1998-lab/gitlab-ci-with-code-reviewer/reviewer:1.7.3
+
+# Ansible ignores an ansible.cfg in the world-writable checkout of the runner, unless ANSIBLE_CONFIG names the file.
+# The lint job MUST install the platform collection before ansible-lint resolves FQCN roles.
+lint:ansible:
+  variables:
+    ANSIBLE_CONFIG: "${CI_PROJECT_DIR}/ansible/ansible.cfg"
+  before_script:
+    - ansible-galaxy collection install -r ansible/requirements.yml -p ansible/collections

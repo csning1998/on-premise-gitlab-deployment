@@ -10,7 +10,7 @@
         key: "{{ node_role | replace('-', '_') }}"
     - name: "Verify data integrity before reverting to standalone Gitaly"
       ansible.builtin.include_role:
-        name: infra_gitaly_praefect
+        name: platform_gitaly_praefect
         tasks_from: C-migrate-to-standalone.yaml
       when:
         - groups['gitaly'] | default([]) | length > 0

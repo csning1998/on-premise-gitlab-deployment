@@ -55,7 +55,7 @@ This path is automatic. On every `terraform apply`, `C-migrate-to-praefect.yaml`
 
 ### Functions
 
-1. Finds all `*.git` directories under `gitaly_repo_base_path` on `gitaly-0`, excluding the `+gitaly/` internal state prefix.
+1. Finds all `*.git` directories under `platform_gitaly_praefect_repo_base_path` on `gitaly-0`, excluding the `+gitaly/` internal state prefix.
 2. Queries the Praefect DB for already-tracked `relative_path` values.
 3. Builds the diff and writes a NDJSON input file for `praefect track-repositories`.
 4. Runs `track-repositories --replicate-immediately`, which registers each missing repo and triggers replication to all other Gitaly nodes.
@@ -195,7 +195,7 @@ ssh core-gitlab-praefect-patroni-node-00 \
 
 ### TLS handshake failed between Praefect and Gitaly
 
-Vault Agent rotated the TLS certificates but Praefect still holds the old cert in memory. Praefect is configured to restart automatically via `vault_agent_post_command`. If not, restart manually:
+Vault Agent rotated the TLS certificates but Praefect still holds the old cert in memory. Praefect is configured to restart automatically via `utils_vault_agent_post_command`. If not, restart manually:
 
 ```bash
 ssh core-gitlab-praefect-node-00 "sudo gitlab-ctl restart praefect"

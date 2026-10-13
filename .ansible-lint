@@ -11,5 +11,6 @@ exclude_paths:
   - .git/
   - .gitlab/
   - .terraform/
+  - collections/
   - roles/utilities/tasks/main.yaml
   - inventory-*.yaml

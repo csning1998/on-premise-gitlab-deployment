@@ -1,40 +1,40 @@
 ---
 - name: "Setup: Derive per-service parameters from node_role"
   ansible.builtin.set_fact:
-    _svc_routes: "{{ gitaly_static_routes | default([])
+    _platform_gitaly_praefect_routes: "{{ gitaly_static_routes | default([])
       if node_role == 'gitaly'
       else praefect_static_routes | default([]) }}"
-    _svc_ha_vip: "{{ gitaly_ha_vip | default('')
+    _platform_gitaly_praefect_ha_vip: "{{ gitaly_ha_vip | default('')
       if node_role == 'gitaly'
       else praefect_ha_vip | default('') }}"
-    _svc_ports: "{{ ['8075', '8076']
+    _platform_gitaly_praefect_ports: "{{ ['8075', '8076']
       if node_role == 'gitaly'
       else ['2305', '2306'] }}"
-    _svc_post_cmd: "{{ 'gitlab-ctl hup gitaly'
+    _platform_gitaly_praefect_post_cmd: "{{ 'gitlab-ctl hup gitaly'
       if node_role == 'gitaly'
       else 'gitlab-ctl restart praefect' }}"
-    _svc_config_template: "{{ 'gitlab.rb.gitaly.j2'
+    _platform_gitaly_praefect_config_template: "{{ 'gitlab.rb.gitaly.j2'
       if node_role == 'gitaly'
       else 'gitlab.rb.praefect.j2' }}"
 
 - name: "Role 81: Configure Network Routing"
   ansible.builtin.include_role:
-    name: utils_asymmetric_routing
+    name: csning1998_lab.platform_foundation.utils_asymmetric_routing
   vars:
-    routing_static_routes: "{{ _svc_routes }}"
-  when: _svc_routes | length > 0
+    routing_static_routes: "{{ _platform_gitaly_praefect_routes }}"
+  when: _platform_gitaly_praefect_routes | length > 0
 
 - name: "Block A1: Render Service Configuration"
   block:
     - name: "A1a. Render gitlab.rb configuration"
       ansible.builtin.template:
-        src: "{{ _svc_config_template }}"
+        src: "{{ _platform_gitaly_praefect_config_template }}"
         dest: /etc/gitlab/gitlab.rb
         owner: root
         group: root
         mode: "0600"
       notify: Restart Service
-      register: _svc_config_rendered
+      register: _platform_gitaly_praefect_config_rendered
 
     - name: "A1b. Ensure SSL certificate directory exists"
       ansible.builtin.file:
@@ -53,7 +53,7 @@
         owner: root
         group: root
         mode: "0600"
-      register: _svc_secrets_rendered
+      register: _platform_gitaly_praefect_secrets_rendered
       when: node_role == 'gitaly'
 
     # Gitaly only: gitlab-shell calls the GitLab internal API at gitlab_external_url.
@@ -78,19 +78,19 @@
 
 - name: "Role 82: Prepare Environment for Vault Agent"
   ansible.builtin.include_role:
-    name: utils_vault_agent
+    name: csning1998_lab.platform_foundation.utils_vault_agent
   vars:
-    vault_agent_owner: "git"
-    vault_agent_group: "git"
-    vault_agent_cert_base_dir: "/etc/gitlab/ssl"
-    vault_agent_post_command: "{{ _svc_post_cmd }}"
-    vault_agent_ip_sans: "{{ advertise_ip }},{{ _svc_ha_vip }}"
+    utils_vault_agent_owner: "git"
+    utils_vault_agent_group: "git"
+    utils_vault_agent_cert_base_dir: "/etc/gitlab/ssl"
+    utils_vault_agent_post_command: "{{ _platform_gitaly_praefect_post_cmd }}"
+    utils_vault_agent_ip_sans: "{{ advertise_ip }},{{ _platform_gitaly_praefect_ha_vip }}"
     vault_agent_identities: "{{ vault_agent_identities_json | b64decode | from_json }}"
     vault_agent_role_id: "{{ vault_agent_identities[node_role].role_id }}"
     vault_agent_secret_id: "{{ vault_agent_identities[node_role].secret_id }}"
     vault_role_name: "{{ vault_agent_identities[node_role].role_name }}"
-    vault_agent_common_name: "{{ vault_agent_identities[node_role].common_name }}"
-    vault_agent_auth_path: "{{ vault_agent_identities[node_role].auth_path }}"
+    utils_vault_agent_common_name: "{{ vault_agent_identities[node_role].common_name }}"
+    utils_vault_agent_auth_path: "{{ vault_agent_identities[node_role].auth_path }}"
 
 - name: "Block A2: Trust Vault CA for System and Service"
   block:
@@ -121,29 +121,29 @@
     - name: "B1a. Check if gitlab-secrets.json exists"
       ansible.builtin.stat:
         path: /etc/gitlab/gitlab-secrets.json
-      register: _svc_secrets_stat
+      register: _platform_gitaly_praefect_secrets_stat
 
     - name: "B1b. Validate gitlab-secrets.json format"
       ansible.builtin.command:
         cmd: python3 -c "import json; json.loads(open('/etc/gitlab/gitlab-secrets.json').read())"
-      register: _svc_secrets_validation
+      register: _platform_gitaly_praefect_secrets_validation
       ignore_errors: true
       changed_when: false
-      when: _svc_secrets_stat.stat.exists
+      when: _platform_gitaly_praefect_secrets_stat.stat.exists
 
     - name: "B1c. Clean broken gitlab-secrets.json to ensure idempotency"
       ansible.builtin.file:
         path: /etc/gitlab/gitlab-secrets.json
         state: absent
-      register: _svc_secrets_cleaned
+      register: _platform_gitaly_praefect_secrets_cleaned
       when:
-        - _svc_secrets_stat.stat.exists
-        - _svc_secrets_validation.rc is defined and _svc_secrets_validation.rc != 0
+        - _platform_gitaly_praefect_secrets_stat.stat.exists
+        - _platform_gitaly_praefect_secrets_validation.rc is defined and _platform_gitaly_praefect_secrets_validation.rc != 0
 
     - name: "B1d. Check if UFW is installed"
       ansible.builtin.stat:
         path: /usr/sbin/ufw
-      register: _svc_ufw_stat
+      register: _platform_gitaly_praefect_ufw_stat
 
     - name: "B1e. Allow service ports"
       community.general.ufw:
@@ -151,8 +151,8 @@
         port: "{{ item }}"
         proto: tcp
         src: any
-      loop: "{{ _svc_ports }}"
-      when: _svc_ufw_stat.stat.exists
+      loop: "{{ _platform_gitaly_praefect_ports }}"
+      when: _platform_gitaly_praefect_ufw_stat.stat.exists
 
     - name: "B1f. Ensure gitlab-runsvdir service is running and enabled"
       ansible.builtin.systemd:
@@ -163,20 +163,20 @@
     - name: "B1g. Check service health"
       ansible.builtin.command:
         cmd: "gitlab-ctl status {{ node_role }}"
-      register: _svc_health_status
+      register: _platform_gitaly_praefect_health_status
       changed_when: false
       failed_when: false
 
     - name: "B1h. Run GitLab reconfigure to apply changes"
       ansible.builtin.command:
         cmd: gitlab-ctl reconfigure
-      register: _svc_reconfigure_result
+      register: _platform_gitaly_praefect_reconfigure_result
       changed_when: true
       when: >
-        (_svc_config_rendered.changed | default(false)) or
-        (_svc_secrets_rendered.changed | default(false)) or
-        (_svc_secrets_cleaned.changed | default(false)) or
-        (_svc_health_status.rc | default(1) != 0)
+        (_platform_gitaly_praefect_config_rendered.changed | default(false)) or
+        (_platform_gitaly_praefect_secrets_rendered.changed | default(false)) or
+        (_platform_gitaly_praefect_secrets_cleaned.changed | default(false)) or
+        (_platform_gitaly_praefect_health_status.rc | default(1) != 0)
 
   rescue:
     - name: "Block B: Start and Enable Service failed"

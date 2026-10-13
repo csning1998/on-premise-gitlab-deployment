@@ -47,4 +47,4 @@
   hosts: "{{ (groups['gitaly'] | default([])) + (groups['praefect'] | default([])) }}"
   become: true
   roles:
-    - infra_gitaly_praefect
+    - platform_gitaly_praefect

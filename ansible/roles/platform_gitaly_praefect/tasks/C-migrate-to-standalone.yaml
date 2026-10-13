@@ -12,12 +12,12 @@
       dataloss
   delegate_to: "{{ groups['praefect'][0] }}"
   become: true
-  register: _migrate_back_dataloss
+  register: _platform_gitaly_praefect_migrate_back_dataloss
   changed_when: false
 
 - name: "Pre-check: Display dataloss report"
   ansible.builtin.debug:
-    var: _migrate_back_dataloss.stdout_lines
+    var: _platform_gitaly_praefect_migrate_back_dataloss.stdout_lines
 
 - name: "Pre-check: Fail if gitaly-0 has missing replicas"
   ansible.builtin.fail:
@@ -26,7 +26,7 @@
       Reverting to standalone would cause data loss.
       Wait for replication to complete, then re-run the safety pre-check.
       Dataloss output:
-      {{ _migrate_back_dataloss.stdout }}
+      {{ _platform_gitaly_praefect_migrate_back_dataloss.stdout }}
   when:
-    - "'All repositories are available!' not in _migrate_back_dataloss.stdout"
-    - "'gitaly-0 (behind' in _migrate_back_dataloss.stdout"
+    - "'All repositories are available!' not in _platform_gitaly_praefect_migrate_back_dataloss.stdout"
+    - "'gitaly-0 (behind' in _platform_gitaly_praefect_migrate_back_dataloss.stdout"
