@@ -43,7 +43,10 @@ terraform {
 }
 
 provider "anthropic" {
-  admin_api_key = ephemeral.vault_kv_secret_v2.anthropic_admin_key.data["anthropic_admin_api_key"]
+  # The admin client sends admin_api_key as x-api-key for workspaces and the organization, while the federation and
+  # service account endpoints accept the org:admin OAuth token alone.
+  admin_api_key = ephemeral.vault_kv_secret_v2.anthropic_console.data["anthropic_admin_api_key"]
+  auth_token    = ephemeral.vault_kv_secret_v2.anthropic_console.data["anthropic_oauth_access_token"]
 }
 
 provider "azuread" {
