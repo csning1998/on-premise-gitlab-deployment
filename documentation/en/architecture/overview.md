@@ -16,14 +16,14 @@ This repo leverages Packer, Terraform, and Ansible to implement an automated pip
 
 The table below is ordered by provisioning sequence and dependency. Layer names carry no numeric prefix, and `terraform_remote_state` is the authoritative dependency declaration:
 
-| Layer(s)                       | Category       | Description                                                     |
-| ------------------------------ | -------------- | --------------------------------------------------------------- |
-| `foundation-libvirt-resources` | Foundation     | Resource metadata (SSoT), Libvirt networks, and storage volumes |
-| `infra-*`                      | Infrastructure | VM provisioning for all service clusters                        |
-| `provision-*`                  | Provisioning   | Ansible-based service configuration                             |
-| `platform-*-frontend`          | Platform       | Kubernetes add-ons (Ingress, cert-manager, Calico)              |
-| `platform-*-governance`        | Application    | GitLab and Harbor Helm chart deployment                         |
-| `governance-gitlab-project`    | Governance     | GitLab.com project settings, code review, and WIF bindings      |
+| Layer(s)                        | Category       | Description                                                     |
+| ------------------------------- | -------------- | --------------------------------------------------------------- |
+| `foundation-libvirt-resources`  | Foundation     | Resource metadata (SSoT), Libvirt networks, and storage volumes |
+| `infra-*`                       | Infrastructure | VM provisioning for all service clusters                        |
+| `provision-*`                   | Provisioning   | Ansible-based service configuration                             |
+| `platform-*-frontend`           | Platform       | Kubernetes add-ons (Ingress, cert-manager, Calico)              |
+| `platform-*-governance`         | Application    | GitLab and Harbor Helm chart deployment                         |
+| `administration-gitlab-project` | Governance     | GitLab.com project settings, code review, and WIF bindings      |
 
 ## Key Architectural Decisions
 

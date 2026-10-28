@@ -151,5 +151,5 @@ Shared services and their design records are documented in the upstream projects
 
 #### 6.1 GitLab.com Provider Automation
 
-- **State Control**: The `governance-gitlab-project` layer utilizes the provisioner modules of `parent-group-governance` to manage the GitLab.com project, branch protection, code reviewer variables, and workload identity federation bindings.
+- **State Control**: The `administration-gitlab-project` layer utilizes the provisioner modules of `parent-group-governance` to manage the GitLab.com project, branch protection, code reviewer variables, and workload identity federation bindings.
 - **Terraform Import**: The existing project and its branch protection are imported into the state using `terraform import` commands to prevent drift and establish centralized governance.

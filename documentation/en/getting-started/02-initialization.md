@@ -15,7 +15,7 @@
 ## GitLab.com Project Governance
 
 > [!NOTE]
-> The `terraform/layers/governance-gitlab-project` layer manages the GitLab.com project of this repository (project settings, branch protection, code reviewer variables, and workload identity federation bindings). This layer targets the **GitLab.com project**, not the on-premise GitLab instance deployed by this project.
+> The `terraform/layers/administration-gitlab-project` layer manages the GitLab.com project of this repository (project settings, branch protection, code reviewer variables, and workload identity federation bindings). This layer targets the **GitLab.com project**, not the on-premise GitLab instance deployed by this project.
 
 The layer requires no personal access token of its own:
 
