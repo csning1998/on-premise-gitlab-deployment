@@ -1,5 +1,5 @@
 
-# The project code is the identity of this repository: the GitLab project, the WIF owner code, and the GitHub mirror share it.
+# The project code is the identity of this repository: the GitLab project, the WIF owner code, and the GitHub mirror share the project code.
 locals {
   project_code = "on-premise-gitlab-deployment"
 }
