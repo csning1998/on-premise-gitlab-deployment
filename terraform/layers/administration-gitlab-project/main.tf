@@ -18,7 +18,7 @@ module "provisioner_gitlab_project" {
 
 module "workload_identity_federation" {
   source  = "gitlab.com/csning1998-lab/provisioner-workload-identity-federation/gitlab"
-  version = "0.4.0"
+  version = "0.5.0"
 
   gitlab_project = {
     id   = module.provisioner_gitlab_project.project_id

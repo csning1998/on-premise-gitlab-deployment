@@ -12,7 +12,7 @@ terraform {
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "5.7.0"
+      version = "5.11.0"
     }
     github = {
       source  = "integrations/github"
@@ -28,7 +28,7 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "5.5.0"
+      version = "5.13.0"
     }
   }
 
