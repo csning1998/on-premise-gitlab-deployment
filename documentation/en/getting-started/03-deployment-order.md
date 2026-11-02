@@ -115,9 +115,9 @@ flowchart LR
 
 ## Notes
 
-1. **governance-gitlab-project: GitLab.com Project (Optional)**
+1. **administration-gitlab-project: GitLab.com Project (Optional)**
 
-    `governance-gitlab-project` can be applied at any point and depends on no layer of this repository. An existing project requires a first-time `terraform import` of the project and the `main` branch protection before applying. See [Initialization: GitLab.com Project Governance](02-initialization.md#gitlabcom-project-governance).
+    `administration-gitlab-project` can be applied at any point and depends on no layer of this repository. An existing project requires a first-time `terraform import` of the project and the `main` branch protection before applying. See [Initialization: GitLab.com Project Governance](02-initialization.md#gitlabcom-project-governance).
 
 2. **platform-gitlab-frontend: `OpenSSL::Cipher::CipherError`**
 

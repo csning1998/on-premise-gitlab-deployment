@@ -2,57 +2,57 @@
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-vault-approle" })
+  config  = { address = "${local._state_base}/security-vault-approle" }
 }
 
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-pki" })
+  config  = { address = "${local._state_base}/security-pki" }
 }
 
 data "terraform_remote_state" "runner_cluster" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-runner" })
+  config  = { address = "${local._state_base}/infra-gitlab-runner" }
 }
 
 data "terraform_remote_state" "vault_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/shared-vault-frontend" })
+  config  = { address = "${local._state_base}/shared-vault-frontend" }
 }
 
 data "terraform_remote_state" "gitlab_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-frontend" })
+  config  = { address = "${local._state_base}/infra-gitlab-frontend" }
 }
 
 data "terraform_remote_state" "harbor_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-harbor-frontend" })
+  config  = { address = "${local._state_base}/infra-harbor-frontend" }
 }
 
 data "terraform_remote_state" "postgres" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-postgres" })
+  config  = { address = "${local._state_base}/infra-gitlab-postgres" }
 }
 
 data "terraform_remote_state" "redis" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-redis" })
+  config  = { address = "${local._state_base}/infra-gitlab-redis" }
 }
 
 data "terraform_remote_state" "minio" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-minio" })
+  config  = { address = "${local._state_base}/infra-gitlab-minio" }
 }
 
 data "terraform_remote_state" "observability_infra" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-observability-frontend" })
+  config  = { address = "${local._state_base}/infra-observability-frontend" }
 }
 
 data "terraform_remote_state" "harbor_bootstrapper_oci" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
+  config  = { address = "${local._state_base}/provision-harbor-origin-frontend" }
 }
 
 ephemeral "vault_kv_secret_v2" "kubeconfig" {

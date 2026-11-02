@@ -12,7 +12,7 @@ terraform {
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "5.7.0"
+      version = "5.11.0"
     }
     github = {
       source  = "integrations/github"
@@ -28,7 +28,7 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "5.5.0"
+      version = "5.13.0"
     }
   }
 
@@ -43,16 +43,19 @@ terraform {
 }
 
 provider "anthropic" {
-  admin_api_key = ephemeral.vault_kv_secret_v2.anthropic_admin_key.data["anthropic_admin_api_key"]
+  # The admin client sends admin_api_key as x-api-key for workspaces and the organization, while the federation and
+  # service account endpoints accept the org:admin OAuth token alone.
+  admin_api_key = ephemeral.vault_kv_secret_v2.anthropic_console.data["anthropic_admin_api_key"]
+  auth_token    = ephemeral.vault_kv_secret_v2.anthropic_console.data["anthropic_oauth_access_token"]
 }
 
 provider "azuread" {
-  tenant_id = local.state.group_federation_azure.tenant.id
+  tenant_id = local.ai_provider["azure"].tenant_id
 }
 
 provider "azurerm" {
-  subscription_id = local.state.group_federation_azure.subscription.id
-  tenant_id       = local.state.group_federation_azure.tenant.id
+  subscription_id = local.ai_provider["azure"].subscription_id
+  tenant_id       = local.ai_provider["azure"].tenant_id
   features {}
 }
 

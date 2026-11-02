@@ -50,7 +50,7 @@ Covers:
 - SSH NodePort workaround (GitLab Shell exposed on port `32022` because VIP:22 is occupied by the host daemon)
 - Clearing stale SSH host key after GitLab redeployment
 
-### GitLab.com Project Governance (governance-gitlab-project)
+### GitLab.com Project Governance (administration-gitlab-project)
 
 Covers:
 

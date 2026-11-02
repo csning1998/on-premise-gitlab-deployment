@@ -4,28 +4,13 @@
 
 All 33 layers store state on GitLab.com via the Terraform HTTP backend (Project ID: `82448331`). `terraform apply` and `terraform destroy` require no extra CLI flags after initialization.
 
-### Step A. Local Credential Files
+### Step A. Operator Credentials
 
-Two gitignored files must be created once by the operator. Neither enters version control.
+Every layer reads the GitLab HTTP backend credentials from `TF_HTTP_USERNAME` and `TF_HTTP_PASSWORD`. The operator MUST source `scripts/tf_env.sh` before any `terraform` command. The script runs `vault-proxy-env consumer-opgitlab`, which exports the Vault Proxy address, the client certificate, and the state backend token of `opgitlab` from the Bastion Vault. No credential file exists in the working tree. The layer `administration-gitlab-project` loads `credential-distributor-opgitlab` through its own `.envrc` instead.
 
-1. **`terraform/backend-auth.hcl`**
-
-    Used only by `terraform init -backend-config`. Contains the GitLab PAT with `api` scope.
-
-    ```hcl
-    username = "oauth2"
-    password = "glpat-xxxxxxxxxxxxxxxxxxxx"
-    ```
-
-2. **`terraform/backend-state.json`**
-
-    Read at plan/apply time by each layer's `locals.tf` via `jsondecode(file(...))`. Supplies credentials for cross-layer `data "terraform_remote_state"` reads without CLI injection.
-
-    ```json
-    { "username": "oauth2", "token": "glpat-xxxxxxxxxxxxxxxxxxxx" }
-    ```
-
-    The JSON file is usually required when working with multiple layers. However, it is not needed when working with a single layer.
+```bash
+source scripts/tf_env.sh
+```
 
 ### Step B. Initializing a Layer
 
@@ -33,39 +18,34 @@ Two gitignored files must be created once by the operator. Neither enters versio
 
     ```bash
     cd terraform/layers/<layer-name>
-    terraform init -backend-config=../../backend-auth.hcl
+    terraform init
     ```
 
 2. **Migrating existing local state to remote**
 
     ```bash
     cd terraform/layers/<layer-name>
-    terraform init -migrate-state -backend-config=../../backend-auth.hcl
+    terraform init -migrate-state
     ```
 
-    `-migrate-state` uploads the existing `terraform.tfstate` to GitLab.com and removes the local file reference. Layers that were never applied can use Step A directly.
+    `-migrate-state` uploads the existing `terraform.tfstate` to GitLab.com and removes the local file reference. A layer which was never applied uses Step B.1 directly.
 
 ### Step C. Cross-Layer State Read Mechanism
 
-1. **Authentication locals**: Each layer's `locals.tf` defines three locals consumed by all `data "terraform_remote_state"` blocks in that layer:
+1. **State base local**: The `locals.tf` of each layer defines `_state_base`, the state address prefix of the project:
 
     ```hcl
     locals {
-        _gl_creds   = jsondecode(file("${path.root}/../../backend-state.json"))
-        _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
-        _state_auth = {
-            username = local._gl_creds.username
-            password = local._gl_creds.token
-        }
+      _state_base = "https://gitlab.com/api/v4/projects/82448331/terraform/state"
     }
     ```
 
-2. **Data source pattern**: `data.tf` in every layer uses `merge()` to inject `_state_auth` alongside the layer-specific address:
+2. **Data source pattern**: The `config` of every `data "terraform_remote_state"` block carries the address alone, since the HTTP backend takes the credentials from the environment:
 
     ```hcl
     data "terraform_remote_state" "metadata" {
       backend = "http"
-      config  = merge(local._state_auth, { address = "${local._state_base}/foundation-metadata" })
+      config  = { address = "${local._state_base}/foundation-metadata" }
     }
     ```
 
@@ -113,7 +93,7 @@ Two gitignored files must be created once by the operator. Neither enters versio
     ```bash
     for dir in ./*; do
         if [ -d "$dir" ]; then
-            (echo -e "\n\n${dir}" && cd "$dir" && terraform init -upgrade -backend-config=../../backend-auth.hcl)
+            (echo -e "\n\n${dir}" && cd "$dir" && terraform init -upgrade)
         fi
     done
     ```

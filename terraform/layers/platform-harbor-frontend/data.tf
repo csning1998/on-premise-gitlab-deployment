@@ -1,33 +1,33 @@
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-vault-approle" })
+  config  = { address = "${local._state_base}/security-vault-approle" }
 }
 
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-pki" })
+  config  = { address = "${local._state_base}/security-pki" }
 }
 
 data "terraform_remote_state" "credentials" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-credentials" })
+  config  = { address = "${local._state_base}/security-credentials" }
 }
 
 data "terraform_remote_state" "provision" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-frontend" })
+  config  = { address = "${local._state_base}/provision-harbor-frontend" }
 }
 
 # Harbor Origin State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
+  config  = { address = "${local._state_base}/provision-harbor-origin-frontend" }
 }
 
 data "terraform_remote_state" "provision_databases" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-databases" })
+  config  = { address = "${local._state_base}/provision-harbor-databases" }
 }
 
 # Harbor Origin Robot Account (RBAC)

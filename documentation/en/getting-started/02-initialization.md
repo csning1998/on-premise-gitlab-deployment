@@ -15,11 +15,11 @@
 ## GitLab.com Project Governance
 
 > [!NOTE]
-> The `terraform/layers/governance-gitlab-project` layer manages the GitLab.com project of this repository (project settings, branch protection, code reviewer variables, and workload identity federation bindings). This layer targets the **GitLab.com project**, not the on-premise GitLab instance deployed by this project.
+> The `terraform/layers/administration-gitlab-project` layer manages the GitLab.com project of this repository (project settings, branch protection, code reviewer variables, and workload identity federation bindings). This layer targets the **GitLab.com project**, not the on-premise GitLab instance deployed by this project.
 
 The layer requires no personal access token of its own:
 
-1. The GitLab provider token is read from `secret/parent-group-governance/terraform/state-backend` in the Bastion Vault.
-2. The Bastion Vault login runs through the governance Vault Proxy of `parent-group-governance`, which the `.envrc` of the layer loads with `eval "$(vault-proxy-env governance)"` after one `direnv allow`.
+1. The GitLab provider token comes from `secret/<gitlab_token_owner_code>/terraform/state-backend` in the Bastion Vault. The variable `gitlab_token_owner_code` defaults to `opgitlab`. The value `parent-group-governance` applies only to the first creation of the project.
+2. The `.envrc` of the layer runs `eval "$(vault-proxy-env credential-distributor-opgitlab)"` after one `direnv allow`. The Bastion Vault login then runs through the Vault Proxy of that identity.
 3. The HTTP backend credentials come from `TF_HTTP_USERNAME` and `TF_HTTP_PASSWORD`, which the same `.envrc` exports.
-4. The workload identity federation bindings require an Anthropic `org:admin` OAuth token in `ANTHROPIC_AUTH_TOKEN`, which is not stored in Vault.
+4. The workload identity federation bindings read two fields of `secret/parent-group-governance/ai-provider-console/anthropic` in the Bastion Vault: the Admin API key in `anthropic_admin_api_key` and a fresh `org:admin` OAuth token in `anthropic_oauth_access_token`. The operator writes the OAuth token immediately before each apply, as `parent-group-governance/terraform/layers/group-ai-provider-anthropic/README.md` Section 3 Step B describes.

@@ -9,6 +9,10 @@ terraform {
     sshclient = {
       source = "local/csning1998-lab/sshclient"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "5.13.0"
+    }
   }
   backend "http" {
     address        = "https://gitlab.com/api/v4/projects/82448331/terraform/state/foundation-libvirt-resources"
@@ -25,3 +29,5 @@ provider "libvirt" {
 }
 
 provider "sshclient" {}
+
+provider "vault" {}

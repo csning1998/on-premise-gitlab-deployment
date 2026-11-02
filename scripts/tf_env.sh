@@ -1,14 +1,13 @@
 #!/bin/bash
 
-# Exports the GitLab HTTP backend credentials required by every layer's
-# `backend "http"` block. Must be sourced, not executed, so the exports
-# persist in the calling shell: `source scripts/tf_env.sh`.
-_TF_ENV_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
+# Exports the Vault Proxy environment and the GitLab HTTP backend credentials of consumer-opgitlab.
+# The exports persist in the calling shell only when the script is sourced: `source scripts/tf_env.sh`.
+if ! command -v vault-proxy-env >/dev/null; then
+    echo "vault-proxy-env is missing, run the first menu item of ./governance in parent-group-governance" >&2
+    return 1
+fi
 
-export TF_HTTP_USERNAME
-export TF_HTTP_PASSWORD
-TF_HTTP_USERNAME=$(python3 -c "import json; print(json.load(open('${_TF_ENV_REPO_ROOT}/terraform/backend-state.json'))['username'])")
-TF_HTTP_PASSWORD=$(python3 -c "import json; print(json.load(open('${_TF_ENV_REPO_ROOT}/terraform/backend-state.json'))['token'])")
-
-unset _TF_ENV_REPO_ROOT
-echo "TF_HTTP_USERNAME and TF_HTTP_PASSWORD exported for this shell."
+_tf_env_proxy=$(vault-proxy-env consumer-opgitlab) || { unset _tf_env_proxy; return 1; }
+eval "${_tf_env_proxy}"
+unset _tf_env_proxy
+echo "Vault Proxy environment and TF_HTTP_* of consumer-opgitlab exported for this shell."
