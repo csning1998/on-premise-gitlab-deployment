@@ -1,13 +1,10 @@
 
 locals {
-  state = {
-    platform_foundation = data.terraform_remote_state.platform_foundation.outputs
-  }
+  network_allocation = nonsensitive(data.vault_generic_secret.registry_platform_network_allocation.data)
+  network_baseline   = merge(jsondecode(local.network_allocation["network_baseline"]), { cidr_block = local.network_allocation["network_cidr"] })
 }
 
-data "terraform_remote_state" "platform_foundation" {
-  backend = "http"
-  config = {
-    address = "https://gitlab.com/api/v4/projects/84608830/terraform/state/foundation-libvirt-resources"
-  }
+# parent-group-governance publishes the domain suffix and the network baseline in the registry, in place of the state of platform-foundation.
+data "vault_generic_secret" "registry_platform_network_allocation" {
+  path = "registry/platform/network/allocation"
 }

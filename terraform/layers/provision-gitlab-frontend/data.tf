@@ -3,51 +3,51 @@
 
 data "terraform_remote_state" "vault_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/shared-vault-frontend" })
+  config  = { address = "${local._state_base}/shared-vault-frontend" }
 }
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-vault-approle" })
+  config  = { address = "${local._state_base}/security-vault-approle" }
 }
 
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-pki" })
+  config  = { address = "${local._state_base}/security-pki" }
 }
 
 # Infrastructure VIPs
 data "terraform_remote_state" "redis" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-redis" })
+  config  = { address = "${local._state_base}/infra-gitlab-redis" }
 }
 
 data "terraform_remote_state" "postgres" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-postgres" })
+  config  = { address = "${local._state_base}/infra-gitlab-postgres" }
 }
 
 data "terraform_remote_state" "minio" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-minio" })
+  config  = { address = "${local._state_base}/infra-gitlab-minio" }
 }
 
 # Kubeadm Cluster State
 data "terraform_remote_state" "kubeadm" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-frontend" })
+  config  = { address = "${local._state_base}/infra-gitlab-frontend" }
 }
 
 data "terraform_remote_state" "gitaly_praefect" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/infra-gitlab-gitaly-praefect" })
+  config  = { address = "${local._state_base}/infra-gitlab-gitaly-praefect" }
 }
 
 # Harbor Origin State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
+  config  = { address = "${local._state_base}/provision-harbor-origin-frontend" }
 }
 
 # Harbor Origin Admin Credentials (for Helm OCI Registry)
@@ -60,7 +60,7 @@ ephemeral "vault_kv_secret_v2" "harbor_bootstrapper" {
 # 1. Database Provisioning State
 data "terraform_remote_state" "provision_databases" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-gitlab-databases" })
+  config  = { address = "${local._state_base}/provision-gitlab-databases" }
 }
 
 # 2. Fetch Kubeconfig from Production Vault

@@ -11,7 +11,7 @@ module "provisioner_gitlab_project" {
   name         = local.project_code
   description  = "Multi-layer Terraform IaC for the on-premise GitLab and Harbor deployment on KVM/QEMU (Libvirt), provisioned end-to-end via Packer, Terraform, and Ansible."
   visibility   = "public"
-  namespace_id = local.state.group_topology.subgroup_ids["platform-engineering-lab"]
+  namespace_id = tonumber(local.gitlab_subgroup_ids["platform-engineering-lab"])
 
   only_allow_merge_if_pipeline_succeeds = true
 }
@@ -27,22 +27,22 @@ module "workload_identity_federation" {
   }
 
   anthropic_federation = {
-    issuer_id       = local.state.group_federation_anthropic.issuers.gitlab_saas.id
-    organization_id = local.state.group_federation_anthropic.organization.id
+    issuer_id       = local.ai_provider["anthropic"].issuer_id
+    organization_id = local.ai_provider["anthropic"].organization_id
   }
 
   google_federation = {
-    project_id     = local.state.group_federation_gcp.project.id
-    project_number = local.state.group_federation_gcp.project.number
-    pool_id        = local.state.group_federation_gcp.pool.id
-    provider_id    = local.state.group_federation_gcp.provider.id
+    project_id     = local.ai_provider["google-cloud"].project_id
+    project_number = local.ai_provider["google-cloud"].project_number
+    pool_id        = local.ai_provider["google-cloud"].pool_id
+    provider_id    = local.ai_provider["google-cloud"].provider_id
   }
 
   azure_federation = {
-    tenant_id            = local.state.group_federation_azure.tenant.id
-    subscription_id      = local.state.group_federation_azure.subscription.id
-    cognitive_account_id = local.state.group_federation_azure.openai.id
-    openai_endpoint      = local.state.group_federation_azure.openai.endpoint
+    tenant_id            = local.ai_provider["azure"].tenant_id
+    subscription_id      = local.ai_provider["azure"].subscription_id
+    cognitive_account_id = local.ai_provider["azure"].cognitive_account_id
+    openai_endpoint      = local.ai_provider["azure"].openai_endpoint
     subjects = [
       "project_path:${module.provisioner_gitlab_project.full_path}:ref_type:branch:ref:main",
     ]

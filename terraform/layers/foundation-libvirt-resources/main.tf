@@ -1,10 +1,9 @@
 
-# The domain suffix and the network baseline are global facts owned by platform-foundation.
 module "foundation_libvirt_resources" {
   source = "../../../../platform-foundation/terraform/modules/kvm-provisioning/configure/foundation-resources"
 
-  domain_suffix    = local.state.platform_foundation.foundation_network_global.domain_suffix
-  network_baseline = local.state.platform_foundation.foundation_network_global.network_baseline
+  domain_suffix    = local.network_allocation["domain_suffix"]
+  network_baseline = local.network_baseline
   service_catalog  = local.service_catalog
 }
 

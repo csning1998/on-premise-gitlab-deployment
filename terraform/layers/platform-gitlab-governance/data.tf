@@ -1,27 +1,27 @@
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-vault-approle" })
+  config  = { address = "${local._state_base}/security-vault-approle" }
 }
 
 data "terraform_remote_state" "vault_frontend" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/shared-vault-frontend" })
+  config  = { address = "${local._state_base}/shared-vault-frontend" }
 }
 
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-pki" })
+  config  = { address = "${local._state_base}/security-pki" }
 }
 
 data "terraform_remote_state" "credentials" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-credentials" })
+  config  = { address = "${local._state_base}/security-credentials" }
 }
 
 data "terraform_remote_state" "keycloak_oidc" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-keycloak-oidc" })
+  config  = { address = "${local._state_base}/provision-keycloak-oidc" }
 }
 
 # Fetch GitLab Admin/Root credentials for provider configuration

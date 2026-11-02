@@ -50,12 +50,12 @@ provider "anthropic" {
 }
 
 provider "azuread" {
-  tenant_id = local.state.group_federation_azure.tenant.id
+  tenant_id = local.ai_provider["azure"].tenant_id
 }
 
 provider "azurerm" {
-  subscription_id = local.state.group_federation_azure.subscription.id
-  tenant_id       = local.state.group_federation_azure.tenant.id
+  subscription_id = local.ai_provider["azure"].subscription_id
+  tenant_id       = local.ai_provider["azure"].tenant_id
   features {}
 }
 

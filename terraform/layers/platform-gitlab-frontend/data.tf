@@ -1,18 +1,18 @@
 
 data "terraform_remote_state" "vault_prod_bootstrap" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-vault-approle" })
+  config  = { address = "${local._state_base}/security-vault-approle" }
 }
 
 # HashiCorp Vault State
 data "terraform_remote_state" "vault_pki" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-pki" })
+  config  = { address = "${local._state_base}/security-pki" }
 }
 
 data "terraform_remote_state" "credentials" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/security-credentials" })
+  config  = { address = "${local._state_base}/security-credentials" }
 }
 
 data "vault_kv_secret_v2" "gitaly_secrets" {
@@ -24,13 +24,13 @@ data "vault_kv_secret_v2" "gitaly_secrets" {
 # 0. Infrastructure Provisioning State
 data "terraform_remote_state" "provision" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-gitlab-frontend" })
+  config  = { address = "${local._state_base}/provision-gitlab-frontend" }
 }
 
 # Harbor Origin State
 data "terraform_remote_state" "harbor_bootstrapper" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-harbor-origin-frontend" })
+  config  = { address = "${local._state_base}/provision-harbor-origin-frontend" }
 }
 
 # Harbor Origin Admin Credentials (for Helm OCI Registry)
@@ -43,7 +43,7 @@ data "vault_kv_secret_v2" "harbor_bootstrapper" {
 # 1. Database Provisioning State
 data "terraform_remote_state" "provision_databases" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-gitlab-databases" })
+  config  = { address = "${local._state_base}/provision-gitlab-databases" }
 }
 
 
@@ -92,7 +92,7 @@ data "vault_kv_secret_v2" "gitlab_app_database" {
 # 3. Keycloak OIDC State & Client Secret
 data "terraform_remote_state" "keycloak_oidc" {
   backend = "http"
-  config  = merge(local._state_auth, { address = "${local._state_base}/provision-keycloak-oidc" })
+  config  = { address = "${local._state_base}/provision-keycloak-oidc" }
 }
 
 data "vault_kv_secret_v2" "keycloak_gitlab_client" {
