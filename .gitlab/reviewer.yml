@@ -36,6 +36,14 @@ models:
     # (Legacy models only: thinking_budget: 4096)
 
   # Google Gemini configuration (Gemini 2.x / 3.x)
+  gemini-4-carbon:
+    provider: gemini
+    model: gemini-4-carbon
+    google_search: true
+    max_tokens: 65536
+    reasoning_level: medium
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+
   gemini-3.8-flash:
     provider: gemini
     model: gemini-3.8-flash
