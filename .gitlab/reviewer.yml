@@ -23,6 +23,14 @@ models:
     max_tokens: 128000
     reasoning_level: high
     prompt_file: .gitlab/code_review_guidelines/generic_rules.md
+  claude-fable-5.2:
+    provider: claude
+    model: claude-fable-5.2
+    web_search: true
+    thinking_type: adaptive
+    max_tokens: 128000
+    reasoning_level: high
+    prompt_file: .gitlab/code_review_guidelines/generic_rules.md
   claude-sonnet-5:
     provider: claude
     model: claude-sonnet-5
